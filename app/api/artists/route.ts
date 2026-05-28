@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const studioId = searchParams.get("studioId");
-  const style = searchParams.get("style");
+  void searchParams.get("studioId");
+  void searchParams.get("style");
 
   // TODO: query artists from Supabase, filter by studio + style
   return NextResponse.json({ artists: [] });
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { studioId, name, email, minimumRate, bio } = body;
+  const { studioId, name, email } = body;
 
   if (!studioId || !name || !email) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });

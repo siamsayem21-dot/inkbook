@@ -44,7 +44,8 @@ export async function POST(request: NextRequest) {
   if (!studio) return NextResponse.json({ error: "Studio not found" }, { status: 404 });
 
   // Check blacklist
-  const { data: blacklisted } = await (supabase.rpc as Function)("is_client_blacklisted", {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: blacklisted } = await (supabase.rpc as any)("is_client_blacklisted", {
     p_studio_id: studio.id,
     p_email: clientEmail,
     p_phone: clientPhone,
