@@ -29,7 +29,7 @@ export function useArtist(artistId: string) {
     const supabase = createClient();
     const { error } = await supabase
       .from("artists")
-      .update({ styles })
+      .update({ styles } as never)
       .eq("id", artistId);
     if (!error && artist) setArtist({ ...artist, styles });
   };

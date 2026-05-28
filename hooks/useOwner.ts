@@ -49,12 +49,13 @@ export function useStudioRevenue(studioId: string, period: "month" | "year" = "m
 
     supabase
       .from("bookings")
-      .select("deposit_amount")
+      .select("deposit_amount_cents")
       .eq("studio_id", studioId)
       .eq("deposit_paid", true)
       .gte("created_at", from)
       .then(({ data }) => {
-        const total = (data ?? []).reduce((sum, b) => sum + b.deposit_amount, 0);
+        const rows = data as { deposit_amount_cents: number }[] | null;
+        const total = (rows ?? []).reduce((sum, b) => sum + b.deposit_amount_cents, 0);
         setRevenue(total);
         setLoading(false);
       });
