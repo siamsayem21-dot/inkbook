@@ -69,26 +69,32 @@ export async function POST(request: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const bookingBase = `${baseUrl}/book/${studioSlug}/${artistId}/book`;
 
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: ["card"],
-    line_items: [
-      {
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: `Tattoo appointment deposit — ${artistName}`,
-            description: `${studioName} · Non-refundable on no-show or late cancellation`,
+  let session;
+  try {
+    session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: `Tattoo appointment deposit — ${artistName}`,
+              description: `${studioName} · Non-refundable on no-show or late cancellation`,
+            },
+            unit_amount: booking.deposit_amount_cents,
           },
-          unit_amount: booking.deposit_amount_cents,
+          quantity: 1,
         },
-        quantity: 1,
-      },
-    ],
-    mode: "payment",
-    success_url: `${bookingBase}/consent?booking_id=${bookingId}`,
-    cancel_url: `${bookingBase}/deposit?booking_id=${bookingId}&cancelled=1`,
-    metadata: { bookingId, studioSlug, artistId },
-  });
+      ],
+      mode: "payment",
+      success_url: `${bookingBase}/consent?booking_id=${bookingId}`,
+      cancel_url: `${bookingBase}/deposit?booking_id=${bookingId}&cancelled=1`,
+      metadata: { bookingId, studioSlug, artistId },
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown Stripe error";
+    return NextResponse.json({ error: `Stripe error: ${msg}` }, { status: 502 });
+  }
 
   // Record the pending deposit
   await supabase.from("deposits").insert({
