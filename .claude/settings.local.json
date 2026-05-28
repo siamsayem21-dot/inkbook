@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem \"c:\\\\Users\\\\asiacom\\\\Desktop\\\\inkbook\" -Recurse -File | Where-Object { $_.FullName -notmatch \"node_modules|\\\\.git|fonts\" } | Select-Object @{n=\"Path\";e={$_.FullName.Replace\\(\"c:\\\\Users\\\\asiacom\\\\Desktop\\\\inkbook\\\\\",\"\"\\)}} | Sort-Object Path | Format-Table -AutoSize)",
+      "PowerShell(Start-Sleep -Seconds 8; \\(New-Object System.Net.WebClient\\).DownloadString\\(\"http://localhost:3000\"\\) | Select-String -Pattern \"InkBook|html\" -SimpleMatch | Select-Object -First 5)",
+      "PowerShell(Get-Process node -ErrorAction SilentlyContinue)",
+      "PowerShell(netstat -ano)",
+      "PowerShell(npx --yes playwright@latest --version 2>&1)",
+      "PowerShell(Get-Process -Name \"chrome\",\"chromium\" -ErrorAction SilentlyContinue)",
+      "PowerShell(cd \"c:\\\\Users\\\\asiacom\\\\Desktop\\\\inkbook\"; $p = Start-Process -FilePath \"npm\" -ArgumentList \"run\",\"dev\" -WorkingDirectory \"c:\\\\Users\\\\asiacom\\\\Desktop\\\\inkbook\" -RedirectStandardOutput \"$env:TEMP\\\\inkbook-out.txt\" -RedirectStandardError \"$env:TEMP\\\\inkbook-err.txt\" -PassThru -NoNewWindow; Start-Sleep -Seconds 15; Get-Content \"$env:TEMP\\\\inkbook-out.txt\" -ErrorAction SilentlyContinue; Get-Content \"$env:TEMP\\\\inkbook-err.txt\" -ErrorAction SilentlyContinue)",
+      "PowerShell(\\(Get-Command npm\\).Source)",
+      "PowerShell(Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force; Start-Sleep -Seconds 2; $npmCmd = \"C:\\\\Program Files\\\\nodejs\\\\npm.cmd\"; $p = Start-Process -FilePath $npmCmd -ArgumentList \"run\",\"dev\" -WorkingDirectory \"c:\\\\Users\\\\asiacom\\\\Desktop\\\\inkbook\" -RedirectStandardOutput \"$env:TEMP\\\\inkbook-out2.txt\" -RedirectStandardError \"$env:TEMP\\\\inkbook-err2.txt\" -PassThru -NoNewWindow; Start-Sleep -Seconds 18; Get-Content \"$env:TEMP\\\\inkbook-out2.txt\"; Write-Host \"---ERR---\"; Get-Content \"$env:TEMP\\\\inkbook-err2.txt\")",
+      "PowerShell(Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2; $npmCmd = \"C:\\\\Program Files\\\\nodejs\\\\npm.cmd\"; $p = Start-Process -FilePath $npmCmd -ArgumentList \"run\",\"dev\" -WorkingDirectory \"c:\\\\Users\\\\asiacom\\\\Desktop\\\\inkbook\" -RedirectStandardOutput \"$env:TEMP\\\\inkbook-dev.txt\" -RedirectStandardError \"$env:TEMP\\\\inkbook-dev-err.txt\" -PassThru -NoNewWindow; Write-Host \"PID: $\\($p.Id\\)\")",
+      "PowerShell(Start-Sleep -Seconds 12; Get-Content \"$env:TEMP\\\\inkbook-dev.txt\"; Write-Host \"---STDERR---\"; Get-Content \"$env:TEMP\\\\inkbook-dev-err.txt\")",
+      "PowerShell(Get-Content \"$env:TEMP\\\\inkbook-dev.txt\" | Select-Object -Last 60)",
+      "PowerShell(try { $r = Invoke-WebRequest -Uri \"http://localhost:3000/artists\" -UseBasicParsing -TimeoutSec 8 -ErrorAction Stop; $r.Content | Select-String \"Error|error|Cannot|cannot|module|import\" | Select-Object -First 10 } catch { $_.Exception.Response | ConvertTo-Json -Depth 2 })",
+      "PowerShell(Get-Content \"$env:TEMP\\\\inkbook-dev-err.txt\")",
+      "PowerShell(claude *)",
+      "PowerShell(cmd /c \"dir C:\\\\Users\\\\asiacom\\\\Desktop\\\\inkbook\\\\app\\\\book /s\")",
+      "PowerShell(Stop-Process *)",
+      "PowerShell(cmd /c \"dir C:\\\\Users\\\\asiacom\\\\Desktop\\\\inkbook\\\\app\\\\book\")",
+      "PowerShell(cmd /c \"dir C:\\\\Users\\\\asiacom\\\\Desktop\\\\inkbook\\\\app\\\\book\\\\[studio]\")",
+      "PowerShell(vercel *)",
+      "PowerShell(npm install *)",
+      "PowerShell(winget *)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\asiacom\\Desktop"
+    ]
+  }
+}
