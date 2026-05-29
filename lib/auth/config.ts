@@ -3,9 +3,11 @@ import type { UserRole } from "@/lib/supabase/types";
 
 export async function getCurrentUser() {
   const supabase = createClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) return null;
-  return user;
+  // getSession() reads from the cookie set by middleware — no network round-trip.
+  // The middleware already verifies/refreshes the JWT on every request via getUser().
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) return null;
+  return session.user;
 }
 
 export async function getUserRole(userId: string): Promise<UserRole | null> {
