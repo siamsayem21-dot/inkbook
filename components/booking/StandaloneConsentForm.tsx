@@ -379,7 +379,7 @@ export default function StandaloneConsentForm({ studioSlug, studioName }: Props)
         disabled={loading || isMinor || !agreedToAftercare}
         className="w-full bg-gold text-black font-bold py-4 rounded-full hover:bg-gold-light disabled:opacity-40 transition-colors text-sm"
       >
-        {loading ? "Submitting…" : "Sign &amp; submit consent form →"}
+        {loading ? "Submitting…" : "Sign & submit consent form →"}
       </button>
 
       <p className="text-center text-white/20 text-xs pb-4">
