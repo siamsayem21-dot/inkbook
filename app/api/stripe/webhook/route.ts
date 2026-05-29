@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe/client";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { buildSmsMessage, trySendSms } from "@/lib/twilio/client";
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -10,10 +11,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing stripe-signature header" }, { status: 400 });
   }
 
+  if (!process.env.STRIPE_WEBHOOK_SECRET) {
+    console.error("STRIPE_WEBHOOK_SECRET is not configured");
+    return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
+  }
+
   let event;
   try {
     const stripe = getStripe();
-    event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!);
+    event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
     console.error("Webhook signature verification failed:", err);
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
@@ -50,6 +56,26 @@ export async function POST(request: NextRequest) {
         } as never)
         .eq("booking_id", bookingId),
     ]);
+
+    // Send booking_confirmed SMS (non-blocking)
+    const { data: bookingRow } = await supabase
+      .from("bookings")
+      .select("client_id, studio_id")
+      .eq("id", bookingId)
+      .single();
+
+    if (bookingRow) {
+      const { client_id, studio_id } = bookingRow as { client_id: string; studio_id: string };
+      const [{ data: clientData }, { data: studioData }] = await Promise.all([
+        supabase.from("clients").select("phone").eq("id", client_id).single(),
+        supabase.from("studios").select("name").eq("id", studio_id).single(),
+      ]);
+      const phone = (clientData as { phone: string } | null)?.phone;
+      const studioName = (studioData as { name: string } | null)?.name;
+      if (phone && studioName) {
+        void trySendSms(phone, buildSmsMessage("booking_confirmed", studioName));
+      }
+    }
   }
 
   return NextResponse.json({ received: true });

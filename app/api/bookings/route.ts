@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { buildSmsMessage, trySendSms } from "@/lib/twilio/client";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -110,6 +111,9 @@ export async function POST(request: NextRequest) {
   }
 
   const booking = bookingData as { id: string; deposit_amount_cents: number };
+
+  // Send deposit reminder SMS (non-blocking — booking succeeds even if SMS fails)
+  void trySendSms(clientPhone, buildSmsMessage("deposit_pending", studio.name));
 
   return NextResponse.json(
     {

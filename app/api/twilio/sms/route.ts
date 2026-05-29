@@ -1,29 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
+import { buildSmsMessage, trySendSms, SmsMessageType } from "@/lib/twilio/client";
+
+const VALID_TYPES: SmsMessageType[] = [
+  "booking_confirmed",
+  "48hr_reminder",
+  "day_of_reminder",
+  "deposit_pending",
+  "cancellation",
+];
 
 export async function POST(request: NextRequest) {
-  const body = await request.json();
-  const { to, bookingId, type } = body;
+  const authHeader = request.headers.get("authorization");
+  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  // type: "48hr_reminder" | "day_of_reminder" | "deposit_pending" | "cancellation"
-  if (!to || !bookingId || !type) {
+  const body = await request.json();
+  const { to, bookingId, type, studioName } = body as {
+    to?: string;
+    bookingId?: string;
+    type?: string;
+    studioName?: string;
+  };
+
+  if (!to || !bookingId || !type || !studioName) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  const messages: Record<string, string> = {
-    "48hr_reminder": "Reminder: your tattoo appointment is in 48 hours. Reply STOP to opt out.",
-    "day_of_reminder": "Today is your tattoo appointment! See you soon. Reply STOP to opt out.",
-    "deposit_pending": "Your booking is held — please pay your deposit within 24 hours or it will be cancelled.",
-    "cancellation": "Your booking has been cancelled. Contact the studio to rebook.",
-  };
-
-  const message = messages[type];
-  if (!message) {
+  if (!VALID_TYPES.includes(type as SmsMessageType)) {
     return NextResponse.json({ error: "Unknown message type" }, { status: 400 });
   }
 
-  // TODO: send via Twilio
-  // const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
-  // await client.messages.create({ to, from: process.env.TWILIO_PHONE_NUMBER, body: message })
+  const message = buildSmsMessage(type as SmsMessageType, studioName);
+  await trySendSms(to, message);
 
   return NextResponse.json({ sent: true, type });
 }

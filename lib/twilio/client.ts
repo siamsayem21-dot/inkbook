@@ -38,3 +38,19 @@ export async function sendSms(to: string, message: string): Promise<void> {
     body: message,
   });
 }
+
+export async function trySendSms(to: string, message: string): Promise<void> {
+  if (
+    !process.env.TWILIO_ACCOUNT_SID ||
+    !process.env.TWILIO_AUTH_TOKEN ||
+    !process.env.TWILIO_PHONE_NUMBER
+  ) {
+    console.warn("Twilio not configured — SMS skipped");
+    return;
+  }
+  try {
+    await sendSms(to, message);
+  } catch (err) {
+    console.error("Twilio SMS error:", err);
+  }
+}
