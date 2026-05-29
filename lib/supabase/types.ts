@@ -131,7 +131,16 @@ export interface Database {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      is_client_blacklisted: {
+        Args: { p_studio_id: string; p_email: string; p_phone: string };
+        Returns: boolean;
+      };
+      artist_bookings_this_month: {
+        Args: { p_artist_id: string };
+        Returns: number;
+      };
+    };
     Enums: {
       booking_status: BookingStatus;
       user_role: UserRole;

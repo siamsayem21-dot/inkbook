@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  void searchParams.get("studioId");
-  void searchParams.get("style");
-
-  // TODO: query artists from Supabase, filter by studio + style
+export async function GET() {
+  // TODO: query artists from Supabase, filter by studioId + style
   return NextResponse.json({ artists: [] });
 }
 

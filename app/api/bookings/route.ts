@@ -44,14 +44,24 @@ export async function POST(request: NextRequest) {
   const studio = studioData as { id: string; name: string; deposit_amount_cents: number } | null;
   if (!studio) return NextResponse.json({ error: "Studio not found" }, { status: 404 });
 
-  // Check blacklist
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: blacklisted } = await (supabase.rpc as any)("is_client_blacklisted", {
-    p_studio_id: studio.id,
-    p_email: clientEmail,
-    p_phone: clientPhone,
-  });
-  if (blacklisted) {
+  // Check blacklist — match on email OR phone within this studio
+  const [{ data: blockedByEmail }, { data: blockedByPhone }] = await Promise.all([
+    supabase
+      .from("blacklist")
+      .select("id")
+      .eq("studio_id", studio.id)
+      .eq("client_email", String(clientEmail))
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("blacklist")
+      .select("id")
+      .eq("studio_id", studio.id)
+      .eq("client_phone", String(clientPhone))
+      .limit(1)
+      .maybeSingle(),
+  ]);
+  if (blockedByEmail !== null || blockedByPhone !== null) {
     return NextResponse.json(
       { error: "Booking cannot be completed. Please contact the studio directly." },
       { status: 403 }
