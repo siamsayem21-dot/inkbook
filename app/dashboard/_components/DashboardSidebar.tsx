@@ -8,6 +8,7 @@ const NAV = [
   { label: "Overview", href: "/dashboard" },
   { label: "Bookings", href: "/dashboard/bookings" },
   { label: "Artists", href: "/dashboard/artists" },
+  { label: "Consent Forms", href: "/dashboard/consent-forms" },
 ];
 
 interface Props {
