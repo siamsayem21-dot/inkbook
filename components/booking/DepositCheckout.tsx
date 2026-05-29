@@ -9,7 +9,12 @@ interface Props {
   artistId: string;
 }
 
-export default function DepositCheckout({ bookingId, depositAmountCents, studioSlug, artistId }: Props) {
+export default function DepositCheckout({
+  bookingId,
+  depositAmountCents,
+  studioSlug,
+  artistId,
+}: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,29 +48,29 @@ export default function DepositCheckout({ bookingId, depositAmountCents, studioS
 
   return (
     <div className="space-y-5">
-      <div className="border border-zinc-200 rounded-xl p-5 space-y-3">
+      {/* Order summary */}
+      <div className="bg-zinc-900 border border-white/10 rounded-2xl p-5 space-y-3">
         <div className="flex justify-between text-sm">
-          <span className="text-zinc-500">Booking deposit</span>
+          <span className="text-white/50">Booking deposit</span>
           <span className="font-semibold">${depositDollars}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-zinc-500">Processing fee</span>
-          <span className="text-zinc-400">Included</span>
+          <span className="text-white/50">Processing fee</span>
+          <span className="text-white/30">Included</span>
         </div>
-        <hr className="border-zinc-200" />
-        <div className="flex justify-between font-semibold">
+        <div className="border-t border-white/10 pt-3 flex justify-between font-bold">
           <span>Total due today</span>
-          <span>${depositDollars}</span>
+          <span className="text-gold">${depositDollars}</span>
         </div>
       </div>
 
-      <p className="text-xs text-zinc-400">
+      <p className="text-xs text-white/30 leading-relaxed">
         You will be redirected to Stripe&apos;s secure payment page. The deposit is applied toward your session.
-        It is <strong>non-refundable</strong> if you no-show or cancel within 48 hours.
+        It is <span className="text-white/50">non-refundable</span> for no-shows or cancellations within 48 hours.
       </p>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
+        <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-xl px-4 py-3">
           {error}
         </div>
       )}
@@ -73,7 +78,7 @@ export default function DepositCheckout({ bookingId, depositAmountCents, studioS
       <button
         onClick={handleCheckout}
         disabled={loading}
-        className="w-full bg-zinc-900 text-white font-semibold py-3 rounded-full hover:bg-zinc-700 disabled:opacity-50 transition-colors"
+        className="w-full bg-gold text-black font-bold py-3.5 rounded-full hover:bg-gold-light disabled:opacity-50 transition-colors text-sm"
       >
         {loading ? "Redirecting to payment…" : `Pay $${depositDollars} deposit →`}
       </button>

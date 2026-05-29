@@ -7,6 +7,8 @@ interface Props {
   searchParams: { booking_id?: string };
 }
 
+const STEPS = ["Your details", "Pay deposit", "Sign consent"];
+
 export default async function ConsentPage({ params, searchParams }: Props) {
   const bookingId = searchParams.booking_id;
 
@@ -35,7 +37,6 @@ export default async function ConsentPage({ params, searchParams }: Props) {
     redirect(`/book/${params.studio}/${params.artistId}/book`);
   }
 
-  // Already confirmed with consent → skip to confirmation
   if (booking.status === "confirmed") {
     const { data: existingConsent } = await supabase
       .from("consent_forms")
@@ -44,9 +45,7 @@ export default async function ConsentPage({ params, searchParams }: Props) {
       .maybeSingle();
 
     if (existingConsent) {
-      redirect(
-        `/book/${params.studio}/${params.artistId}/book/confirmation?booking_id=${bookingId}`
-      );
+      redirect(`/book/${params.studio}/${params.artistId}/book/confirmation?booking_id=${bookingId}`);
     }
   }
 
@@ -64,34 +63,58 @@ export default async function ConsentPage({ params, searchParams }: Props) {
     year: "numeric",
     timeZone: "UTC",
   });
-  const appointmentTime = booking.time.slice(0, 5).replace(":", ":");
+  const appointmentTime = booking.time.slice(0, 5);
 
   return (
     <main className="max-w-xl mx-auto px-6 py-10">
-      <div className="mb-8">
-        <p className="text-sm text-zinc-500 mb-1">Step 3 of 3</p>
-        <h1 className="text-2xl font-bold">Sign consent form</h1>
-        <p className="text-zinc-500 text-sm mt-1">
-          Required before your appointment is confirmed.
-        </p>
+
+      {/* Step indicator */}
+      <div className="flex items-center gap-2 mb-10">
+        {STEPS.map((step, i) => (
+          <div key={step} className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <div
+                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                  i < 2
+                    ? "bg-gold/30 text-gold"
+                    : "bg-gold text-black"
+                }`}
+              >
+                {i < 2 ? "✓" : i + 1}
+              </div>
+              <span className={`text-xs ${i === 2 ? "text-white font-medium" : "text-white/40"} hidden sm:block`}>
+                {step}
+              </span>
+            </div>
+            {i < STEPS.length - 1 && (
+              <div className="w-8 h-px bg-white/10 mx-1" />
+            )}
+          </div>
+        ))}
       </div>
 
-      <div className="bg-zinc-50 border border-zinc-200 rounded-xl px-5 py-4 mb-7 space-y-1.5 text-sm">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold mb-1">Sign consent form</h1>
+        <p className="text-white/40 text-sm">Required before your appointment is confirmed.</p>
+      </div>
+
+      {/* Booking summary */}
+      <div className="bg-zinc-900 border border-white/10 rounded-2xl px-5 py-4 mb-7 space-y-2.5 text-sm">
         <div className="flex justify-between">
-          <span className="text-zinc-500">Artist</span>
+          <span className="text-white/50">Artist</span>
           <span className="font-medium">{artistName}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-zinc-500">Date</span>
+          <span className="text-white/50">Date</span>
           <span className="font-medium">{appointmentDate}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-zinc-500">Time</span>
+          <span className="text-white/50">Time</span>
           <span className="font-medium">{appointmentTime}</span>
         </div>
-        <div className="flex justify-between">
-          <span className="text-zinc-500">Deposit paid</span>
-          <span className="font-medium text-green-600">
+        <div className="flex justify-between border-t border-white/10 pt-2.5">
+          <span className="text-white/50">Deposit paid</span>
+          <span className="font-medium text-gold">
             ${(booking.deposit_amount_cents / 100).toFixed(2)}
           </span>
         </div>

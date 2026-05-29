@@ -8,7 +8,21 @@ interface Props {
   artistId: string;
 }
 
-const STYLES = ["Traditional", "Neo-traditional", "Blackwork", "Realism", "Japanese", "Fine Line", "Geometric", "Minimalist", "Other"];
+const STYLES = [
+  "Traditional",
+  "Neo-traditional",
+  "Blackwork",
+  "Realism",
+  "Japanese",
+  "Fine Line",
+  "Geometric",
+  "Minimalist",
+  "Other",
+];
+
+const TIMES = [
+  "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00",
+];
 
 export default function BookingForm({ studioSlug, artistId }: Props) {
   const router = useRouter();
@@ -33,7 +47,16 @@ export default function BookingForm({ studioSlug, artistId }: Props) {
       const res = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ artistId, clientName: fullName, clientEmail: email, clientPhone: phone, date, time, style, description }),
+        body: JSON.stringify({
+          artistId,
+          clientName: fullName,
+          clientEmail: email,
+          clientPhone: phone,
+          date,
+          time,
+          style,
+          description,
+        }),
       });
 
       const data = await res.json();
@@ -51,72 +74,124 @@ export default function BookingForm({ studioSlug, artistId }: Props) {
     }
   };
 
-  const inputClass = "w-full border border-zinc-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-zinc-500";
+  const inputClass =
+    "w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/25 focus:outline-none focus:border-gold transition-colors";
+  const labelClass = "block text-xs font-medium text-white/50 mb-2 uppercase tracking-wide";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
+        <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-xl px-4 py-3">
           {error}
         </div>
       )}
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="text-sm text-zinc-500 block mb-1.5">Full legal name</label>
-          <input required type="text" value={fullName} onChange={e => setFullName(e.target.value)} className={inputClass} placeholder="Jane Smith" />
+          <label className={labelClass}>Full legal name</label>
+          <input
+            required
+            type="text"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            className={inputClass}
+            placeholder="Jane Smith"
+          />
         </div>
         <div>
-          <label className="text-sm text-zinc-500 block mb-1.5">Email</label>
-          <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className={inputClass} placeholder="you@example.com" />
+          <label className={labelClass}>Email</label>
+          <input
+            required
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={inputClass}
+            placeholder="you@example.com"
+          />
         </div>
       </div>
 
       <div>
-        <label className="text-sm text-zinc-500 block mb-1.5">Phone (for SMS reminders)</label>
-        <input required type="tel" value={phone} onChange={e => setPhone(e.target.value)} className={inputClass} placeholder="+1 (555) 000-0000" />
+        <label className={labelClass}>Phone (for SMS reminders)</label>
+        <input
+          required
+          type="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          className={inputClass}
+          placeholder="+1 (555) 000-0000"
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="text-sm text-zinc-500 block mb-1.5">Preferred date</label>
-          <input required type="date" min={today} value={date} onChange={e => setDate(e.target.value)} className={inputClass} />
+          <label className={labelClass}>Preferred date</label>
+          <input
+            required
+            type="date"
+            min={today}
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className={`${inputClass} [color-scheme:dark]`}
+          />
         </div>
         <div>
-          <label className="text-sm text-zinc-500 block mb-1.5">Preferred time</label>
-          <input required type="time" value={time} onChange={e => setTime(e.target.value)} className={inputClass} />
+          <label className={labelClass}>Preferred time</label>
+          <select
+            required
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            className={inputClass}
+          >
+            <option value="">Select time</option>
+            {TIMES.map((t) => {
+              const [h] = t.split(":");
+              const hour = parseInt(h);
+              const label = hour < 12 ? `${hour}:00 AM` : hour === 12 ? "12:00 PM" : `${hour - 12}:00 PM`;
+              return (
+                <option key={t} value={t}>{label}</option>
+              );
+            })}
+          </select>
         </div>
       </div>
 
       <div>
-        <label className="text-sm text-zinc-500 block mb-1.5">Tattoo style</label>
-        <select required value={style} onChange={e => setStyle(e.target.value)} className={inputClass}>
+        <label className={labelClass}>Tattoo style</label>
+        <select
+          required
+          value={style}
+          onChange={(e) => setStyle(e.target.value)}
+          className={inputClass}
+        >
           <option value="">Select style</option>
-          {STYLES.map(s => <option key={s} value={s}>{s}</option>)}
+          {STYLES.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
         </select>
       </div>
 
       <div>
-        <label className="text-sm text-zinc-500 block mb-1.5">Description &amp; placement</label>
+        <label className={labelClass}>Description &amp; placement</label>
         <textarea
           required
           rows={3}
           value={description}
-          onChange={e => setDescription(e.target.value)}
+          onChange={(e) => setDescription(e.target.value)}
           placeholder="e.g. Small rose on inner wrist, approx 2 inches"
           className={`${inputClass} resize-none`}
         />
       </div>
 
-      <p className="text-xs text-zinc-400 bg-zinc-50 border border-zinc-200 rounded-lg p-3">
-        A deposit is required to confirm your booking. Your card will be charged on the next step.
-        Deposits are non-refundable for no-shows or cancellations within 48 hours.
-      </p>
+      <div className="bg-gold/5 border border-gold/15 rounded-xl px-4 py-3 text-xs text-white/40 leading-relaxed">
+        A deposit is required to confirm your booking and is applied toward your session.
+        It is <span className="text-white/60">non-refundable</span> for no-shows or cancellations within 48 hours.
+      </div>
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-zinc-900 text-white font-semibold py-3 rounded-full hover:bg-zinc-700 disabled:opacity-50 transition-colors"
+        className="w-full bg-gold text-black font-bold py-3.5 rounded-full hover:bg-gold-light disabled:opacity-50 transition-colors text-sm"
       >
         {loading ? "Creating booking…" : "Continue to deposit →"}
       </button>
