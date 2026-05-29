@@ -66,7 +66,11 @@ export async function POST(request: NextRequest) {
   const studioName = (studioData as { name: string } | null)?.name ?? "Studio";
   const artistName = (artistData as { name: string } | null)?.name ?? "Artist";
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  // NEXT_PUBLIC_APP_URL must be set in Vercel env vars to https://www.inkbook.tech
+  // VERCEL_URL is auto-injected by Vercel as a fallback (no protocol prefix)
+  const baseUrl =
+    process.env.NEXT_PUBLIC_APP_URL ??
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
   const bookingBase = `${baseUrl}/book/${studioSlug}/${artistId}/book`;
 
   let session;
