@@ -9,6 +9,7 @@ const ownerNav = [
   { label: "Bookings", href: "/owner/bookings" },
   { label: "Revenue", href: "/owner/revenue" },
   { label: "Blacklist", href: "/owner/blacklist" },
+  { label: "Consent Forms", href: "/dashboard/consent-forms" },
   { label: "Waitlist", href: "/owner/waitlist" },
   { label: "Settings", href: "/owner/settings" },
 ];
