@@ -7,7 +7,10 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard";
+  const type = searchParams.get("type");
+  // Recovery links go to the reset-password form; everything else goes to dashboard
+  const defaultNext = type === "recovery" ? "/reset-password" : "/dashboard";
+  const next = searchParams.get("next") ?? defaultNext;
 
   if (code) {
     const cookieStore = cookies();
