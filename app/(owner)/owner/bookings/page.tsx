@@ -1,14 +1,6 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth/config";
-
-function adminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
 
 type BookingStatus = "pending_deposit" | "confirmed" | "completed" | "cancelled" | "no_show";
 
@@ -32,7 +24,9 @@ export default async function OwnerBookingsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const supabase = adminClient();
+  // SSR client — uses the authenticated user's session + anon key.
+  // Works with RLS policies without needing SUPABASE_SERVICE_ROLE_KEY.
+  const supabase = createClient();
 
   // Fetch ALL studios for this owner — with multiple studios in the DB,
   // .limit(1) returns an arbitrary row that may not be the one with bookings.
