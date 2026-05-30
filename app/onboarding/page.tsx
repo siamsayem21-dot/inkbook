@@ -16,13 +16,14 @@ export default async function OnboardingPage() {
   if (!user) redirect("/login");
 
   const supabase = adminClient();
-  const { data: studio } = await supabase
+  // .limit(1) instead of .maybeSingle() — maybeSingle() returns null when >1 rows exist
+  const { data: studios } = await supabase
     .from("studios")
     .select("id")
     .eq("owner_id", user.id)
-    .maybeSingle();
+    .limit(1);
 
-  if (studio) redirect("/owner/dashboard");
+  if (studios && studios.length > 0) redirect("/owner/dashboard");
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center px-4 py-12">

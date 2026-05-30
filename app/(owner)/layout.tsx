@@ -16,14 +16,15 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
   if (!user) redirect("/login");
 
   const supabase = adminClient();
-  const { data: studio } = await supabase
+  // .limit(1) instead of .maybeSingle() — maybeSingle() returns null when >1 rows exist
+  const { data: studios } = await supabase
     .from("studios")
     .select("id")
     .eq("owner_id", user.id)
-    .maybeSingle();
+    .limit(1);
 
   // No studio yet — send them through onboarding first
-  if (!studio) redirect("/onboarding");
+  if (!studios || studios.length === 0) redirect("/onboarding");
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex">
