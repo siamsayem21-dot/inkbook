@@ -3,6 +3,22 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth/config";
 import CopyLinkButton from "@/components/artist/CopyLinkButton";
 
+function NoArtistProfile() {
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold text-[#E8E8E8]">Your Dashboard</h1>
+      </div>
+      <div className="bg-[#111] border border-[#1E1E1E] rounded-xl p-8 text-center">
+        <p className="text-sm text-zinc-400 mb-2">Artist profile not set up yet.</p>
+        <p className="text-xs text-zinc-600">
+          Ask your studio owner to add you as an artist in the owner dashboard.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // Bookings come back as objects because client_id is a singular FK
 type BookingWithClient = {
   id: string;
@@ -59,7 +75,12 @@ export default async function ArtistDashboardPage() {
     .single();
 
   const artist = artistData as ArtistRow | null;
-  if (!artist) redirect("/login");
+
+  // Artist profile not linked yet — show empty dashboard, do not redirect to login
+  // (redirecting causes an infinite loop: login redirects back here after auth)
+  if (!artist) {
+    return <NoArtistProfile />;
+  }
 
   const { data: studioData } = await supabase
     .from("studios")
@@ -85,7 +106,8 @@ export default async function ArtistDashboardPage() {
   const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
   const lastOfMonth = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(lastDay)}`;
 
-  // Today's bookings — client_name, appointment_time, deposit_amount, sorted by time asc
+  // Query: SELECT id, time, deposit_amount, clients(full_name)
+  //        FROM bookings WHERE artist_id = $1 AND date = $2 ORDER BY time ASC
   const { data: todayRaw } = await supabase
     .from("bookings")
     .select("id, time, deposit_amount, clients(full_name)")
@@ -95,7 +117,9 @@ export default async function ArtistDashboardPage() {
 
   const todayBookings = (todayRaw ?? []) as unknown as BookingWithClient[];
 
-  // Next 7 days — grouped by day after processing
+  // Query: SELECT id, date, time, clients(full_name)
+  //        FROM bookings WHERE artist_id = $1 AND date > $2 AND date <= $3
+  //        ORDER BY date ASC, time ASC
   const { data: upcomingRaw } = await supabase
     .from("bookings")
     .select("id, date, time, clients(full_name)")
@@ -113,7 +137,9 @@ export default async function ArtistDashboardPage() {
     (byDay[b.date] ??= []).push(b);
   }
 
-  // This month earnings — sum deposit_amount where status = confirmed
+  // Query: SELECT deposit_amount FROM bookings
+  //        WHERE artist_id = $1 AND status = 'confirmed'
+  //        AND date >= $2 AND date <= $3
   const { data: monthRaw } = await supabase
     .from("bookings")
     .select("deposit_amount")
