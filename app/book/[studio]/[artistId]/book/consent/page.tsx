@@ -95,25 +95,25 @@ export default async function ConsentPage({ params, searchParams }: Props) {
 
       <div className="mb-8">
         <h1 className="text-2xl font-bold mb-1">Sign consent form</h1>
-        <p className="text-white/40 text-sm">Required before your appointment is confirmed.</p>
+        <p className="text-gray-400 text-sm">Required before your appointment is confirmed.</p>
       </div>
 
       {/* Booking summary */}
       <div className="bg-zinc-900 border border-white/10 rounded-2xl px-5 py-4 mb-7 space-y-2.5 text-sm">
         <div className="flex justify-between">
-          <span className="text-white/50">Artist</span>
-          <span className="font-medium">{artistName}</span>
+          <span className="text-gray-400">Artist</span>
+          <span className="font-medium text-gray-200">{artistName}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-white/50">Date</span>
-          <span className="font-medium">{appointmentDate}</span>
+          <span className="text-gray-400">Date</span>
+          <span className="font-medium text-gray-200">{appointmentDate}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-white/50">Time</span>
-          <span className="font-medium">{appointmentTime}</span>
+          <span className="text-gray-400">Time</span>
+          <span className="font-medium text-gray-200">{appointmentTime}</span>
         </div>
         <div className="flex justify-between border-t border-white/10 pt-2.5">
-          <span className="text-white/50">Deposit paid</span>
+          <span className="text-gray-400">Deposit paid</span>
           <span className="font-medium text-gold">
             ${(booking.deposit_amount_cents / 100).toFixed(2)}
           </span>
