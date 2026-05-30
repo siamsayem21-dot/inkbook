@@ -28,25 +28,23 @@ export default async function OwnerBookingsPage() {
   // Works with RLS policies without needing SUPABASE_SERVICE_ROLE_KEY.
   const supabase = createClient();
 
-  // Fetch ALL studios for this owner — with multiple studios in the DB,
-  // .limit(1) returns an arbitrary row that may not be the one with bookings.
-  const { data: studios, error: studioError } = await supabase
+  // The owner layout already verified this user has a studio — no need to redirect here.
+  // Fetch all studio IDs so bookings from any of the owner's studios are included.
+  const { data: studios } = await supabase
     .from("studios")
     .select("id")
     .eq("owner_id", user.id);
 
-  if (studioError) console.error("[OwnerBookings] studio query failed:", studioError.message);
-  if (!studioError && (!studios || studios.length === 0)) redirect("/onboarding");
-
   const studioIds = (studios ?? []).map((s) => (s as { id: string }).id);
 
-  // Fetch bookings across all owner studios so the right one is always found
-  const { data: bookingsRaw, error } = await supabase
-    .from("bookings")
-    .select("id, date, time, status, deposit_amount, client_id, artist_id")
-    .in("studio_id", studioIds)
-    .order("date", { ascending: false })
-    .limit(200);
+  const { data: bookingsRaw, error } = studioIds.length > 0
+    ? await supabase
+        .from("bookings")
+        .select("id, date, time, status, deposit_amount, client_id, artist_id")
+        .in("studio_id", studioIds)
+        .order("date", { ascending: false })
+        .limit(200)
+    : { data: [], error: null };
 
   if (error) console.error("[OwnerBookings] query failed:", error.message);
 
