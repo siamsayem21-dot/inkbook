@@ -1,6 +1,14 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getCurrentUser } from "@/lib/auth/config";
+
+function adminClient() {
+  return createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+}
 
 type BookingStatus = "pending_deposit" | "confirmed" | "completed" | "cancelled" | "no_show";
 
@@ -24,20 +32,22 @@ export default async function OwnerBookingsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  // SSR client — uses the authenticated user's session + anon key.
-  // Works with RLS policies without needing SUPABASE_SERVICE_ROLE_KEY.
-  const supabase = createClient();
+  // Use admin client to bypass RLS — auth already verified above via getCurrentUser()
+  const supabase = adminClient();
 
-  // The owner layout already verified this user has a studio — no need to redirect here.
-  // Fetch all studio IDs so bookings from any of the owner's studios are included.
-  const { data: studios } = await supabase
+  console.log("[OwnerBookings] user.id:", user.id);
+
+  const { data: studios, error: studioError } = await supabase
     .from("studios")
     .select("id")
     .eq("owner_id", user.id);
 
-  const studioIds = (studios ?? []).map((s) => (s as { id: string }).id);
+  console.log("[OwnerBookings] studios found:", studios?.length ?? 0, "| error:", studioError?.message ?? "none");
 
-  const { data: bookingsRaw, error } = studioIds.length > 0
+  const studioIds = (studios ?? []).map((s) => (s as { id: string }).id);
+  console.log("[OwnerBookings] studioIds:", studioIds);
+
+  const { data: bookingsRaw, error: bookingsError } = studioIds.length > 0
     ? await supabase
         .from("bookings")
         .select("id, date, time, status, deposit_amount, client_id, artist_id")
@@ -46,7 +56,8 @@ export default async function OwnerBookingsPage() {
         .limit(200)
     : { data: [], error: null };
 
-  if (error) console.error("[OwnerBookings] query failed:", error.message);
+  console.log("[OwnerBookings] bookings found:", bookingsRaw?.length ?? 0, "| error:", bookingsError?.message ?? "none");
+  if (bookingsError) console.error("[OwnerBookings] bookings query error:", bookingsError);
 
   const bookings = (bookingsRaw ?? []) as {
     id: string;
