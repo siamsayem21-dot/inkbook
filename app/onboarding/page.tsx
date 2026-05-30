@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
-import Sidebar from "@/components/shared/Sidebar";
 import { getCurrentUser } from "@/lib/auth/config";
+import OnboardingForm from "./OnboardingForm";
 
 function adminClient() {
   return createClient(
@@ -11,7 +11,7 @@ function adminClient() {
   );
 }
 
-export default async function OwnerLayout({ children }: { children: React.ReactNode }) {
+export default async function OnboardingPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
@@ -22,13 +22,13 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
     .eq("owner_id", user.id)
     .maybeSingle();
 
-  // No studio yet — send them through onboarding first
-  if (!studio) redirect("/onboarding");
+  if (studio) redirect("/owner/dashboard");
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex">
-      <Sidebar role="owner" />
-      <main className="flex-1 p-8 overflow-y-auto">{children}</main>
+    <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-[480px]">
+        <OnboardingForm userId={user.id} />
+      </div>
     </div>
   );
 }
