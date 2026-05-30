@@ -30,6 +30,15 @@ export async function createStudio(data: {
   userId: string;
 }): Promise<{ error?: string }> {
   const supabase = adminClient();
+
+  // If they already own a studio, skip the insert — form will redirect to dashboard
+  const { data: existing } = await supabase
+    .from("studios")
+    .select("id")
+    .eq("owner_id", data.userId)
+    .limit(1);
+  if (existing && existing.length > 0) return {};
+
   const { error } = await supabase.from("studios").insert({
     name: data.name,
     slug: data.slug,
