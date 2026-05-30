@@ -17,23 +17,24 @@ export default async function ArtistsPage() {
 
   const supabase = adminClient();
 
-  // Get this user's studio
-  const { data: studio } = await supabase
+  // .limit(1) — .maybeSingle() returns null when multiple rows match
+  const { data: studios } = await supabase
     .from("studios")
     .select("id, name")
     .eq("owner_id", user.id)
-    .maybeSingle();
+    .limit(1);
 
+  const studio = studios?.[0] ?? null;
   if (!studio) redirect("/onboarding");
 
   // Guard: artists should not access owner pages
-  const { data: artistCheck } = await supabase
+  const { data: artistRows } = await supabase
     .from("artists")
     .select("id")
     .eq("user_id", user.id)
-    .maybeSingle();
+    .limit(1);
 
-  if (artistCheck) redirect("/artist/dashboard");
+  if (artistRows && artistRows.length > 0) redirect("/artist/dashboard");
 
   const { data: artists } = await supabase
     .from("artists")
