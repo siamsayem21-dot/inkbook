@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUser } from "@/lib/auth/config";
 import CopyLinkButton from "@/components/artist/CopyLinkButton";
 
@@ -63,16 +63,22 @@ export default async function ArtistDashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const supabase = createClient();
+  // Admin client bypasses RLS — auth already verified above via getCurrentUser()
+  const supabase = createAdminClient();
 
   type ArtistRow = { id: string; name: string; studio_id: string };
   type StudioRow = { subdomain: string };
 
-  const { data: artistData } = await supabase
+  // Query: SELECT id, name, studio_id FROM artists WHERE user_id = '<auth_uid>' LIMIT 1
+  const { data: artistData, error: artistError } = await supabase
     .from("artists")
     .select("id, name, studio_id")
     .eq("user_id", user.id)
     .single();
+
+  if (artistError) {
+    console.error("[artist/dashboard] artist lookup failed:", artistError.message, "| user_id:", user.id);
+  }
 
   const artist = artistData as ArtistRow | null;
 
