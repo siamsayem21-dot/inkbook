@@ -144,7 +144,7 @@ export default function ConsentForm({ bookingId, studioSlug, artistId }: Props) 
               type="text"
               value={guardianSignature}
               onChange={(e) => setGuardianSignature(e.target.value)}
-              className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 text-sm font-[cursive]"
+              className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 text-sm font-[cursive] text-zinc-900 bg-white"
             />
           </div>
         </div>
@@ -188,7 +188,7 @@ export default function ConsentForm({ bookingId, studioSlug, artistId }: Props) 
           value={signature}
           onChange={(e) => setSignature(e.target.value)}
           placeholder={fullName || "Your full name"}
-          className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 text-sm font-[cursive] focus:outline-none focus:border-zinc-500"
+          className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 text-sm font-[cursive] text-zinc-900 bg-white focus:outline-none focus:border-zinc-500"
         />
       </div>
 
