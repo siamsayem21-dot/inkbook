@@ -81,41 +81,45 @@ export default function ConsentForm({ bookingId, studioSlug, artistId }: Props) 
     }
   };
 
+  const inputClass =
+    "w-full border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:border-zinc-500";
+  const labelClass = "text-sm text-gray-700 block mb-1.5";
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label className="text-sm text-zinc-500 block mb-1.5">Full legal name</label>
+        <label className={labelClass}>Full legal name</label>
         <input
           required
           type="text"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           placeholder="As it appears on your ID"
-          className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-zinc-500"
+          className={inputClass}
         />
       </div>
 
       <div>
-        <label className="text-sm text-zinc-500 block mb-1.5">Date of birth</label>
+        <label className={labelClass}>Date of birth</label>
         <input
           required
           type="date"
           value={dob}
           onChange={(e) => handleDobChange(e.target.value)}
-          className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-zinc-500"
+          className={inputClass}
         />
       </div>
 
       <div>
-        <label className="text-sm text-zinc-500 block mb-1.5">Government ID photo</label>
+        <label className={labelClass}>Government ID photo</label>
         <input
           required
           type="file"
           accept="image/jpeg,image/png,image/webp,image/heic"
           onChange={(e) => setIdPhoto(e.target.files?.[0] ?? null)}
-          className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 text-sm"
+          className={inputClass}
         />
-        <p className="text-xs text-zinc-400 mt-1">
+        <p className="text-xs text-gray-500 mt-1">
           Driver&apos;s license or passport. Stored securely, never shared.
         </p>
       </div>
@@ -126,17 +130,17 @@ export default function ConsentForm({ bookingId, studioSlug, artistId }: Props) 
             Parental / guardian consent required
           </p>
           <div>
-            <label className="text-sm text-zinc-500 block mb-1.5">Guardian full name</label>
+            <label className="text-sm text-gray-700 block mb-1.5">Guardian full name</label>
             <input
               required
               type="text"
               value={guardianName}
               onChange={(e) => setGuardianName(e.target.value)}
-              className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 text-sm"
+              className={inputClass}
             />
           </div>
           <div>
-            <label className="text-sm text-zinc-500 block mb-1.5">
+            <label className="text-sm text-gray-700 block mb-1.5">
               Guardian signature (type full name)
             </label>
             <input
@@ -144,14 +148,14 @@ export default function ConsentForm({ bookingId, studioSlug, artistId }: Props) 
               type="text"
               value={guardianSignature}
               onChange={(e) => setGuardianSignature(e.target.value)}
-              className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 text-sm font-[cursive] text-zinc-900 bg-white"
+              className={`${inputClass} font-[cursive]`}
             />
           </div>
         </div>
       )}
 
-      <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 text-xs text-zinc-500 h-36 overflow-y-auto leading-relaxed">
-        <p className="font-semibold text-zinc-700 mb-2">Tattoo Consent &amp; Release Form</p>
+      <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 text-xs text-gray-800 h-36 overflow-y-auto leading-relaxed">
+        <p className="font-semibold text-gray-800 mb-2">Tattoo Consent &amp; Release Form</p>
         <p>
           I understand that tattooing involves the introduction of pigments under the skin
           using needles. I acknowledge the inherent risks including but not limited to
@@ -172,14 +176,14 @@ export default function ConsentForm({ bookingId, studioSlug, artistId }: Props) 
           onChange={(e) => setAgreed(e.target.checked)}
           className="mt-0.5 shrink-0"
         />
-        <span className="text-sm text-zinc-600">
+        <span className="text-sm text-gray-700">
           I have read, understood, and agree to the consent form above. I confirm all
           information provided is accurate and matches my government-issued ID.
         </span>
       </label>
 
       <div>
-        <label className="text-sm text-zinc-500 block mb-1.5">
+        <label className={labelClass}>
           Signature (type your full legal name)
         </label>
         <input
@@ -188,7 +192,7 @@ export default function ConsentForm({ bookingId, studioSlug, artistId }: Props) 
           value={signature}
           onChange={(e) => setSignature(e.target.value)}
           placeholder={fullName || "Your full name"}
-          className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 text-sm font-[cursive] text-zinc-900 bg-white focus:outline-none focus:border-zinc-500"
+          className={`${inputClass} font-[cursive]`}
         />
       </div>
 

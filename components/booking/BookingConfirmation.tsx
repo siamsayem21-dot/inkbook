@@ -30,15 +30,15 @@ export default function BookingConfirmation({ booking, studioSlug }: Props) {
       <div className="bg-zinc-50 border border-zinc-200 rounded-2xl p-6 text-left space-y-3">
         <div className="flex justify-between text-sm">
           <span className="text-zinc-500">Artist</span>
-          <span className="font-medium">{booking?.artistName ?? "—"}</span>
+          <span className="font-medium text-gray-900">{booking?.artistName ?? "—"}</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-zinc-500">Date</span>
-          <span className="font-medium">{booking?.date ?? "—"}</span>
+          <span className="font-medium text-gray-900">{booking?.date ?? "—"}</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-zinc-500">Time</span>
-          <span className="font-medium">{booking?.time ?? "—"}</span>
+          <span className="font-medium text-gray-900">{booking?.time ?? "—"}</span>
         </div>
         <hr className="border-zinc-200" />
         <div className="flex justify-between text-sm">
