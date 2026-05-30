@@ -16,15 +16,19 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
   if (!user) redirect("/login");
 
   const supabase = adminClient();
-  // .limit(1) instead of .maybeSingle() — maybeSingle() returns null when >1 rows exist
-  const { data: studios } = await supabase
+  const { data: studios, error: studioError } = await supabase
     .from("studios")
     .select("id")
     .eq("owner_id", user.id)
     .limit(1);
 
-  // No studio yet — send them through onboarding first
-  if (!studios || studios.length === 0) redirect("/onboarding");
+  if (studioError) {
+    // Log the real error — don't redirect on query failure or the user loops forever
+    console.error("[OwnerLayout] studio query failed:", studioError.message, "| user:", user.id);
+  }
+
+  // Only redirect when we're certain there are 0 rows — not on query error
+  if (!studioError && (!studios || studios.length === 0)) redirect("/onboarding");
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex">
