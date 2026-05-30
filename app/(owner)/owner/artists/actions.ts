@@ -35,36 +35,43 @@ export async function inviteArtist(data: {
       : { error: "Email already invited to this studio" };
   }
 
-  // Insert artist row first so we have the ID for the redirectTo URL
-  // user_id has a NOT NULL constraint — use a placeholder UUID until the artist accepts the invite
-  const { data: inserted, error: insertError } = await supabase
-    .from("artists")
-    .insert({ name: data.name, email: data.email, studio_id: data.studioId, is_active: false, user_id: randomUUID() })
-    .select("id")
-    .single();
+  // Pre-generate the artist row ID so we can embed it in the invite redirectTo URL
+  // before the row exists in the DB.
+  const artistId = randomUUID();
+  const redirectTo = `${BASE_URL}/auth/callback?next=/artist/dashboard&artist_id=${artistId}`;
 
-  if (insertError || !inserted) {
-    console.error("[inviteArtist] DB insert failed:", insertError?.message, insertError?.details);
-    return { error: insertError?.message ?? "Failed to create artist record — try again" };
-  }
-
-  // Embed artist_id in redirectTo so the callback can match the exact row
-  const redirectTo = `${BASE_URL}/auth/callback?next=/artist/dashboard&artist_id=${inserted.id}`;
-
-  const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(data.email, {
-    redirectTo,
-    data: { full_name: data.name },
-  });
+  // 1. Create the Supabase auth user first — this gives us the real user.id
+  //    which satisfies the artists_user_id_fkey foreign key constraint.
+  const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
+    data.email,
+    { redirectTo, data: { full_name: data.name } }
+  );
 
   if (inviteError) {
     console.error("[inviteArtist] inviteUserByEmail failed:", inviteError.message);
-    // Rollback the DB insert
-    await supabase.from("artists").delete().eq("id", inserted.id);
-
     if (inviteError.message?.toLowerCase().includes("already been registered")) {
       return { error: "This email already has an InkBook account" };
     }
     return { error: inviteError.message ?? "Failed to send invite email — try again" };
+  }
+
+  // 2. Insert artist row using the pre-generated ID and the real auth user.id
+  const { error: insertError } = await supabase
+    .from("artists")
+    .insert({
+      id: artistId,
+      user_id: inviteData.user.id,
+      name: data.name,
+      email: data.email,
+      studio_id: data.studioId,
+      is_active: false,
+    });
+
+  if (insertError) {
+    console.error("[inviteArtist] DB insert failed:", insertError.message, insertError.details);
+    // Rollback: delete the auth user we just created
+    await supabase.auth.admin.deleteUser(inviteData.user.id);
+    return { error: insertError.message ?? "Failed to create artist record — try again" };
   }
 
   revalidatePath("/owner/artists");
