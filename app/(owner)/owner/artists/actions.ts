@@ -42,7 +42,8 @@ export async function inviteArtist(data: {
     .single();
 
   if (insertError || !inserted) {
-    return { error: "Something went wrong — try again" };
+    console.error("[inviteArtist] DB insert failed:", insertError?.message, insertError?.details);
+    return { error: insertError?.message ?? "Failed to create artist record — try again" };
   }
 
   // Embed artist_id in redirectTo so the callback can match the exact row
@@ -54,9 +55,14 @@ export async function inviteArtist(data: {
   });
 
   if (inviteError) {
-    // Rollback the DB insert if email send fails
+    console.error("[inviteArtist] inviteUserByEmail failed:", inviteError.message);
+    // Rollback the DB insert
     await supabase.from("artists").delete().eq("id", inserted.id);
-    return { error: "Something went wrong — try again" };
+
+    if (inviteError.message?.toLowerCase().includes("already been registered")) {
+      return { error: "This email already has an InkBook account" };
+    }
+    return { error: inviteError.message ?? "Failed to send invite email — try again" };
   }
 
   revalidatePath("/owner/artists");
@@ -77,7 +83,10 @@ export async function resendInvite(data: {
   const redirectTo = `${BASE_URL}/auth/callback?next=/artist/dashboard&artist_id=${data.artistId}`;
 
   const { error } = await supabase.auth.admin.inviteUserByEmail(data.email, { redirectTo });
-  if (error) return { error: "Something went wrong — try again" };
+  if (error) {
+    console.error("[resendInvite] inviteUserByEmail failed:", error.message);
+    return { error: error.message ?? "Failed to send invite email — try again" };
+  }
 
   revalidatePath("/owner/artists");
   return {};
