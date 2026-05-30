@@ -34,20 +34,23 @@ export default async function OwnerBookingsPage() {
 
   const supabase = adminClient();
 
-  const { data: studios } = await supabase
+  // Fetch ALL studios for this owner — with multiple studios in the DB,
+  // .limit(1) returns an arbitrary row that may not be the one with bookings.
+  const { data: studios, error: studioError } = await supabase
     .from("studios")
     .select("id")
-    .eq("owner_id", user.id)
-    .limit(1);
+    .eq("owner_id", user.id);
 
-  const studioId = studios?.[0]?.id;
-  if (!studioId) redirect("/onboarding");
+  if (studioError) console.error("[OwnerBookings] studio query failed:", studioError.message);
+  if (!studioError && (!studios || studios.length === 0)) redirect("/onboarding");
 
-  // Fetch bookings for this studio
+  const studioIds = (studios ?? []).map((s) => (s as { id: string }).id);
+
+  // Fetch bookings across all owner studios so the right one is always found
   const { data: bookingsRaw, error } = await supabase
     .from("bookings")
     .select("id, date, time, status, deposit_amount, client_id, artist_id")
-    .eq("studio_id", studioId)
+    .in("studio_id", studioIds)
     .order("date", { ascending: false })
     .limit(200);
 
