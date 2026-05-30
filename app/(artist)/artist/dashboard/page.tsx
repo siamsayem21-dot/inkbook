@@ -1,200 +1,265 @@
-'use client'
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/config";
+import CopyLinkButton from "@/components/artist/CopyLinkButton";
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+// Bookings come back as objects because client_id is a singular FK
+type BookingWithClient = {
+  id: string;
+  time: string;
+  deposit_amount: number;
+  clients: { full_name: string } | null;
+};
 
-// Mock data — replace with real Supabase queries later
-const MOCK_TODAY = [
-  { id: 1, client: 'Sarah Chen', style: 'Japanese sleeve · 3hr', time: '10:00 AM', deposit: 80, status: 'confirmed' },
-  { id: 2, client: 'Jake Morrison', style: 'Geometric · 2hr', time: '1:30 PM', deposit: 60, status: 'confirmed' },
-  { id: 3, client: 'Priya Nair', style: 'Floral forearm · 2hr', time: '4:00 PM', deposit: 50, status: 'pending' },
-  { id: 4, client: 'Dylan Park', style: 'Script lettering · 1hr', time: '6:30 PM', deposit: 40, status: 'pending' },
-]
+type UpcomingBookingWithClient = {
+  id: string;
+  date: string;
+  time: string;
+  clients: { full_name: string } | null;
+};
 
-const MOCK_UPCOMING = [
-  { id: 5, client: 'Lena Hart', detail: '2:00 PM · Black & grey portrait', day: 30, month: 'May' },
-  { id: 6, client: 'Carlos Vega', detail: '11:00 AM · Traditional eagle', day: 31, month: 'May' },
-  { id: 7, client: 'Amara Osei', detail: '3:00 PM · Tribal back piece', day: 1, month: 'Jun' },
-  { id: 8, client: 'Tina Walters', detail: '10:00 AM · Watercolor bird', day: 2, month: 'Jun' },
-  { id: 9, client: 'Ryan Cho + 4 more', detail: 'Various times · See full schedule', day: 3, month: 'Jun' },
-]
+function fmt12h(time: string) {
+  const [h, m] = time.split(":").map(Number);
+  const ampm = h >= 12 ? "PM" : "AM";
+  const hour = h % 12 || 12;
+  return `${hour}:${String(m).padStart(2, "0")} ${ampm}`;
+}
 
-type ArtistRow = { id: string; name: string; studio_id: string }
+function fmtMoney(amount: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
 
-export default function ArtistDashboard() {
-  const router = useRouter()
-  const supabase = createClient()
-  const [artist, setArtist] = useState<ArtistRow | null>(null)
-  const [studioSlug, setStudioSlug] = useState('my-studio')
-  const [artistId, setArtistId] = useState('')
-  const [copied, setCopied] = useState(false)
-  const [loading, setLoading] = useState(true)
+function fmtDayLabel(dateStr: string) {
+  // dateStr is YYYY-MM-DD — force local midnight to avoid UTC-offset shift
+  const [y, mo, d] = dateStr.split("-").map(Number);
+  return new Date(y, mo - 1, d).toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
 
-  useEffect(() => {
-    async function init() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { router.push('/login'); return }
+export default async function ArtistDashboardPage() {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
 
-      const { data: artistRow } = await supabase
-        .from('artists')
-        .select('id, name, studio_id')
-        .eq('user_id', session.user.id)
-        .single()
+  const supabase = createClient();
 
-      if (artistRow) {
-        const row = artistRow as ArtistRow
-        setArtist(row)
-        setArtistId(row.id)
+  type ArtistRow = { id: string; name: string; studio_id: string };
+  type StudioRow = { subdomain: string };
 
-        const { data: studioRow } = await supabase
-          .from('studios')
-          .select('subdomain')
-          .eq('id', row.studio_id)
-          .single()
+  const { data: artistData } = await supabase
+    .from("artists")
+    .select("id, name, studio_id")
+    .eq("user_id", user.id)
+    .single();
 
-        if (studioRow) setStudioSlug((studioRow as { subdomain: string }).subdomain)
-      }
-      setLoading(false)
-    }
-    init()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  const artist = artistData as ArtistRow | null;
+  if (!artist) redirect("/login");
 
-  const bookingLink = `inkbook.tech/book/${studioSlug}/${artistId}`
+  const { data: studioData } = await supabase
+    .from("studios")
+    .select("subdomain")
+    .eq("id", artist.studio_id)
+    .single();
 
-  function copyLink() {
-    navigator.clipboard.writeText(bookingLink)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  const studio = studioData as StudioRow | null;
+
+  const studioSlug = studio?.subdomain ?? "my-studio";
+  const bookingLink = `inkbook.tech/book/${studioSlug}/${artist.id}`;
+
+  // Date helpers
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+
+  const future = new Date(now);
+  future.setDate(future.getDate() + 7);
+  const in7Str = `${future.getFullYear()}-${pad(future.getMonth() + 1)}-${pad(future.getDate())}`;
+
+  const firstOfMonth = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-01`;
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const lastOfMonth = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(lastDay)}`;
+
+  // Today's bookings — client_name, appointment_time, deposit_amount, sorted by time asc
+  const { data: todayRaw } = await supabase
+    .from("bookings")
+    .select("id, time, deposit_amount, clients(full_name)")
+    .eq("artist_id", artist.id)
+    .eq("date", todayStr)
+    .order("time", { ascending: true });
+
+  const todayBookings = (todayRaw ?? []) as unknown as BookingWithClient[];
+
+  // Next 7 days — grouped by day after processing
+  const { data: upcomingRaw } = await supabase
+    .from("bookings")
+    .select("id, date, time, clients(full_name)")
+    .eq("artist_id", artist.id)
+    .gt("date", todayStr)
+    .lte("date", in7Str)
+    .order("date", { ascending: true })
+    .order("time", { ascending: true });
+
+  const upcomingBookings = (upcomingRaw ?? []) as unknown as UpcomingBookingWithClient[];
+
+  // Group upcoming by date
+  const byDay: Record<string, UpcomingBookingWithClient[]> = {};
+  for (const b of upcomingBookings) {
+    (byDay[b.date] ??= []).push(b);
   }
 
-  if (loading) return (
-    <div style={{ background: '#0A0A0A', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#555' }}>
-      Loading...
-    </div>
-  )
+  // This month earnings — sum deposit_amount where status = confirmed
+  const { data: monthRaw } = await supabase
+    .from("bookings")
+    .select("deposit_amount")
+    .eq("artist_id", artist.id)
+    .eq("status", "confirmed")
+    .gte("date", firstOfMonth)
+    .lte("date", lastOfMonth);
+
+  const monthEarnings = ((monthRaw ?? []) as { deposit_amount: number }[]).reduce(
+    (sum, b) => sum + (b.deposit_amount ?? 0),
+    0
+  );
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#0A0A0A', color: '#E8E8E8', fontFamily: 'sans-serif' }}>
-
-      {/* Sidebar */}
-      <aside style={{ width: 220, background: '#111', borderRight: '1px solid #1E1E1E', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '24px 20px', borderBottom: '1px solid #1E1E1E' }}>
-          <div style={{ fontSize: 22, color: '#D4A853', fontWeight: 600 }}>InkBook</div>
-          <div style={{ fontSize: 10, color: '#555', letterSpacing: 3, textTransform: 'uppercase', marginTop: 2 }}>Artist Portal</div>
-        </div>
-        <nav style={{ padding: '16px 0', flex: 1 }}>
-          {[
-            { label: 'Dashboard', active: true },
-            { label: 'My Schedule', active: false },
-            { label: 'Portfolio', active: false },
-            { label: 'Earnings', active: false },
-            { label: 'Settings', active: false },
-          ].map(item => (
-            <div key={item.label} style={{
-              padding: '10px 20px', fontSize: 13.5, cursor: 'pointer',
-              color: item.active ? '#D4A853' : '#777',
-              borderLeft: item.active ? '2px solid #D4A853' : '2px solid transparent',
-              background: item.active ? 'rgba(212,168,83,0.06)' : 'transparent',
-            }}>
-              {item.label}
-            </div>
-          ))}
-        </nav>
-        <div style={{ padding: '16px 20px', borderTop: '1px solid #1E1E1E' }}>
-          <div style={{ fontSize: 13, color: '#BBB' }}>{artist?.name || 'Artist'}</div>
-          <div style={{ fontSize: 11, color: '#555' }}>Artist</div>
-        </div>
-      </aside>
-
-      {/* Main */}
-      <main style={{ flex: 1, padding: 32, overflowY: 'auto' }}>
-        <h1 style={{ fontSize: 26, color: '#F0F0F0', fontWeight: 400, marginBottom: 4 }}>
-          Your Dashboard
-        </h1>
-        <p style={{ fontSize: 13, color: '#555', marginBottom: 28 }}>
-          {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+    <div className="space-y-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-[#E8E8E8]">Your Dashboard</h1>
+        <p className="text-sm text-zinc-500 mt-1">
+          {now.toLocaleDateString("en-US", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
         </p>
+      </div>
 
-        {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 24 }}>
-          {[
-            { label: "Today's Bookings", value: MOCK_TODAY.length, sub: `${MOCK_TODAY.filter(b => b.status === 'confirmed').length} confirmed` },
-            { label: "This Month's Earnings", value: `$3,240`, sub: '18 confirmed bookings' },
-            { label: 'Next 7 Days', value: MOCK_UPCOMING.length, sub: 'appointments upcoming' },
-          ].map(stat => (
-            <div key={stat.label} style={{ background: '#111', border: '1px solid rgba(212,168,83,0.2)', borderRadius: 10, padding: '18px 20px' }}>
-              <div style={{ fontSize: 11, color: '#555', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 10 }}>{stat.label}</div>
-              <div style={{ fontSize: 28, fontWeight: 600, color: '#D4A853' }}>{stat.value}</div>
-              <div style={{ fontSize: 12, color: '#444', marginTop: 6 }}>{stat.sub}</div>
-            </div>
-          ))}
+      {/* Stats row */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-[#111] border border-[#1E1E1E] rounded-xl p-5">
+          <p className="text-xs text-zinc-500 uppercase tracking-widest mb-3">
+            This Month&apos;s Earnings
+          </p>
+          <p className="text-3xl font-semibold text-[#D4A853]">
+            {fmtMoney(monthEarnings)}
+          </p>
+          <p className="text-xs text-zinc-600 mt-2">confirmed deposits only</p>
         </div>
 
-        {/* Booking link */}
-        <div style={{ background: '#111', border: '1px solid #1E1E1E', borderRadius: 10, padding: '18px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 11, color: '#555', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 6 }}>Your Booking Link</div>
-            <div style={{ fontFamily: 'monospace', fontSize: 13.5, color: '#D4A853', wordBreak: 'break-all' }}>{bookingLink}</div>
+        <div className="bg-[#111] border border-[#1E1E1E] rounded-xl p-5">
+          <p className="text-xs text-zinc-500 uppercase tracking-widest mb-3">
+            Today&apos;s Bookings
+          </p>
+          <p className="text-3xl font-semibold text-[#D4A853]">
+            {todayBookings.length}
+          </p>
+          <p className="text-xs text-zinc-600 mt-2">appointments today</p>
+        </div>
+
+        <div className="bg-[#111] border border-[#1E1E1E] rounded-xl p-5">
+          <p className="text-xs text-zinc-500 uppercase tracking-widest mb-3">
+            Next 7 Days
+          </p>
+          <p className="text-3xl font-semibold text-[#D4A853]">
+            {upcomingBookings.length}
+          </p>
+          <p className="text-xs text-zinc-600 mt-2">upcoming appointments</p>
+        </div>
+      </div>
+
+      {/* Booking link */}
+      <div className="bg-[#111] border border-[#1E1E1E] rounded-xl p-5 flex items-center gap-4">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-zinc-500 uppercase tracking-widest mb-2">
+            Your Booking Link
+          </p>
+          <p className="font-mono text-sm text-[#D4A853] break-all">{bookingLink}</p>
+        </div>
+        <CopyLinkButton link={bookingLink} />
+      </div>
+
+      {/* Main grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {/* Today's bookings */}
+        <div className="bg-[#111] border border-[#1E1E1E] rounded-xl overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-[#1A1A1A]">
+            <h2 className="text-sm font-medium text-[#BBB]">Today&apos;s Bookings</h2>
+            <span className="text-xs bg-[#D4A853]/10 text-[#D4A853] rounded-full px-3 py-1">
+              {todayBookings.length} total
+            </span>
           </div>
-          <button onClick={copyLink} style={{
-            background: copied ? 'rgba(93,191,138,0.08)' : 'rgba(212,168,83,0.1)',
-            border: `1px solid ${copied ? 'rgba(93,191,138,0.3)' : 'rgba(212,168,83,0.3)'}`,
-            borderRadius: 8, color: copied ? '#5DBF8A' : '#D4A853',
-            fontSize: 13, padding: '9px 18px', cursor: 'pointer', whiteSpace: 'nowrap',
-          }}>
-            {copied ? '✅ Copied!' : '📋 Copy Link'}
-          </button>
-        </div>
 
-        {/* Two columns */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-          {/* Today */}
-          <div style={{ background: '#111', border: '1px solid #1E1E1E', borderRadius: 10, overflow: 'hidden' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #1A1A1A', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 13, color: '#BBB' }}>Today&apos;s Bookings</span>
-              <span style={{ fontSize: 11, background: 'rgba(212,168,83,0.12)', color: '#D4A853', borderRadius: 20, padding: '2px 10px' }}>{MOCK_TODAY.length} total</span>
-            </div>
-            {MOCK_TODAY.map(b => (
-              <div key={b.id} style={{ display: 'flex', alignItems: 'center', padding: '13px 20px', borderBottom: '1px solid #161616', gap: 14 }}>
-                <div style={{ fontSize: 12, color: '#D4A853', fontWeight: 500, width: 52, flexShrink: 0 }}>{b.time}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13.5, color: '#CCC', fontWeight: 500 }}>{b.client}</div>
-                  <div style={{ fontSize: 11.5, color: '#555', marginTop: 2 }}>{b.style}</div>
-                </div>
-                <div style={{ fontSize: 13, color: '#777' }}>${b.deposit}</div>
-                <span style={{
-                  fontSize: 11, padding: '3px 9px', borderRadius: 20, fontWeight: 500,
-                  background: b.status === 'confirmed' ? 'rgba(93,191,138,0.1)' : 'rgba(212,168,83,0.1)',
-                  color: b.status === 'confirmed' ? '#5DBF8A' : '#D4A853',
-                }}>{b.status}</span>
+          {todayBookings.length === 0 ? (
+            <p className="px-5 py-10 text-sm text-zinc-600 text-center">
+              No bookings today
+            </p>
+          ) : (
+            todayBookings.map((b) => (
+              <div
+                key={b.id}
+                className="flex items-center gap-4 px-5 py-3.5 border-b border-[#161616] last:border-0"
+              >
+                <span className="text-xs text-[#D4A853] font-medium w-16 shrink-0">
+                  {fmt12h(b.time)}
+                </span>
+                <span className="flex-1 text-sm text-[#CCC]">
+                  {b.clients?.full_name ?? "—"}
+                </span>
+                <span className="text-sm text-zinc-400">
+                  ${b.deposit_amount}
+                </span>
               </div>
-            ))}
+            ))
+          )}
+        </div>
+
+        {/* Next 7 days */}
+        <div className="bg-[#111] border border-[#1E1E1E] rounded-xl overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-[#1A1A1A]">
+            <h2 className="text-sm font-medium text-[#BBB]">Next 7 Days</h2>
+            <span className="text-xs bg-[#D4A853]/10 text-[#D4A853] rounded-full px-3 py-1">
+              {upcomingBookings.length} upcoming
+            </span>
           </div>
 
-          {/* Next 7 days */}
-          <div style={{ background: '#111', border: '1px solid #1E1E1E', borderRadius: 10, overflow: 'hidden' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #1A1A1A', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 13, color: '#BBB' }}>Next 7 Days</span>
-              <span style={{ fontSize: 11, background: 'rgba(212,168,83,0.12)', color: '#D4A853', borderRadius: 20, padding: '2px 10px' }}>{MOCK_UPCOMING.length} upcoming</span>
-            </div>
-            {MOCK_UPCOMING.map(u => (
-              <div key={u.id} style={{ display: 'flex', padding: '12px 20px', borderBottom: '1px solid #161616', gap: 14, alignItems: 'center' }}>
-                <div style={{ width: 44, flexShrink: 0, textAlign: 'center' }}>
-                  <div style={{ fontSize: 18, color: '#D4A853', fontWeight: 600, lineHeight: 1 }}>{u.day}</div>
-                  <div style={{ fontSize: 10, color: '#555', textTransform: 'uppercase', letterSpacing: 1 }}>{u.month}</div>
+          {Object.keys(byDay).length === 0 ? (
+            <p className="px-5 py-10 text-sm text-zinc-600 text-center">
+              No upcoming bookings
+            </p>
+          ) : (
+            Object.entries(byDay).map(([date, bookings]) => (
+              <div key={date}>
+                <div className="px-5 py-2 bg-[#0D0D0D] border-b border-[#161616]">
+                  <span className="text-xs text-zinc-500 uppercase tracking-wider">
+                    {fmtDayLabel(date)}
+                  </span>
                 </div>
-                <div style={{ width: 1, height: 36, background: '#1E1E1E', flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontSize: 13, color: '#CCC', fontWeight: 500 }}>{u.client}</div>
-                  <div style={{ fontSize: 11.5, color: '#555', marginTop: 2 }}>{u.detail}</div>
-                </div>
+                {bookings.map((b) => (
+                  <div
+                    key={b.id}
+                    className="flex items-center gap-4 px-5 py-3 border-b border-[#161616] last:border-0"
+                  >
+                    <span className="text-xs text-[#D4A853] w-16 shrink-0">
+                      {fmt12h(b.time)}
+                    </span>
+                    <span className="text-sm text-[#CCC]">
+                      {b.clients?.full_name ?? "—"}
+                    </span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            ))
+          )}
         </div>
-      </main>
+      </div>
     </div>
-  )
+  );
 }
