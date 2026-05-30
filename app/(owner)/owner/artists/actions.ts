@@ -2,6 +2,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { randomUUID } from "crypto";
 
 function adminClient() {
   return createClient(
@@ -35,9 +36,10 @@ export async function inviteArtist(data: {
   }
 
   // Insert artist row first so we have the ID for the redirectTo URL
+  // user_id has a NOT NULL constraint — use a placeholder UUID until the artist accepts the invite
   const { data: inserted, error: insertError } = await supabase
     .from("artists")
-    .insert({ name: data.name, email: data.email, studio_id: data.studioId, is_active: false })
+    .insert({ name: data.name, email: data.email, studio_id: data.studioId, is_active: false, user_id: randomUUID() })
     .select("id")
     .single();
 

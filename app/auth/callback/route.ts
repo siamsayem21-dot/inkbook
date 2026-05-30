@@ -50,13 +50,14 @@ export async function GET(request: NextRequest) {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (user && artistId) {
-        // Use the embedded artist_id for precise row matching
+        // Primary path: use embedded artist_id + is_active=false
+        // (user_id is a placeholder UUID until invite is accepted, so don't check it)
         const admin = adminClient();
         const { data: artistRow } = await admin
           .from("artists")
           .select("id")
           .eq("id", artistId)
-          .is("user_id", null)
+          .eq("is_active", false)
           .maybeSingle();
 
         if (artistRow) {
@@ -68,13 +69,13 @@ export async function GET(request: NextRequest) {
           return NextResponse.redirect(new URL("/artist/dashboard", origin));
         }
       } else if (user?.email && !artistId) {
-        // Fallback: check by email in case artist_id wasn't in the URL
+        // Fallback: match by email + is_active=false in case artist_id wasn't in URL
         const admin = adminClient();
         const { data: artistRow } = await admin
           .from("artists")
           .select("id")
           .eq("email", user.email)
-          .is("user_id", null)
+          .eq("is_active", false)
           .maybeSingle();
 
         if (artistRow) {
