@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser, getUserRole } from "@/lib/auth/config";
+import { getCurrentUser } from "@/lib/auth/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import DashboardSidebar from "./_components/DashboardSidebar";
 
@@ -11,17 +11,15 @@ export default async function DashboardLayout({
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const role = await getUserRole(user.id);
-  if (role !== "owner") redirect("/login");
-
+  // .limit(1) — .single() returns null when multiple rows match
   const supabase = createAdminClient();
-  const { data: studioData } = await supabase
+  const { data: studios } = await supabase
     .from("studios")
     .select("name, subdomain")
     .eq("owner_id", user.id)
-    .single();
+    .limit(1);
 
-  const studio = studioData as { name: string; subdomain: string } | null;
+  const studio = studios?.[0] as { name: string; subdomain: string } | undefined;
 
   return (
     <div className="min-h-screen bg-ink text-white flex">

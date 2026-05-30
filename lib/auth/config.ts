@@ -14,23 +14,22 @@ export const getCurrentUser = cache(async () => {
 export async function getUserRole(userId: string): Promise<UserRole | null> {
   const supabase = createClient();
 
-  // Check if user owns a studio
-  const { data: studio } = await supabase
+  // .limit(1) — .single() returns null when multiple rows match
+  const { data: studios } = await supabase
     .from("studios")
     .select("id")
     .eq("owner_id", userId)
-    .single();
+    .limit(1);
 
-  if (studio) return "owner";
+  if (studios && studios.length > 0) return "owner";
 
-  // Check if user is an artist
-  const { data: artist } = await supabase
+  const { data: artists } = await supabase
     .from("artists")
     .select("id")
     .eq("user_id", userId)
-    .single();
+    .limit(1);
 
-  if (artist) return "artist";
+  if (artists && artists.length > 0) return "artist";
 
   return null;
 }
