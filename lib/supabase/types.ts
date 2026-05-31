@@ -19,6 +19,10 @@ export interface Database {
           address: string | null;
           state: string | null;
           owner_id: string;
+          plan: string;
+          subscription_status: string;
+          stripe_customer_id: string | null;
+          stripe_subscription_id: string | null;
           created_at: string;
         };
         Insert: Omit<Database["public"]["Tables"]["studios"]["Row"], "id" | "created_at">;

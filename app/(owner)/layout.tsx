@@ -18,7 +18,7 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
   const supabase = adminClient();
   const { data: studios, error: studioError } = await supabase
     .from("studios")
-    .select("id")
+    .select("id, subscription_status")
     .eq("owner_id", user.id)
     .limit(1);
 
@@ -29,6 +29,13 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
 
   // Only redirect when we're certain there are 0 rows — not on query error
   if (!studioError && (!studios || studios.length === 0)) redirect("/onboarding");
+
+  // Gate on subscription status — canceled/unpaid studios cannot access the dashboard
+  const studio = studios?.[0] as { id: string; subscription_status?: string } | undefined;
+  const BLOCKED = ["canceled", "unpaid"];
+  if (studio?.subscription_status && BLOCKED.includes(studio.subscription_status)) {
+    redirect("/pricing");
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex">
