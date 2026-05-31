@@ -1,4 +1,4 @@
-import { redirect, notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import Link from "next/link";
@@ -14,7 +14,6 @@ type BookingDetail = {
   deposit_kept: boolean;
   deposit_amount: number;
   clients: { full_name: string; email: string; phone: string } | null;
-  consent_forms: { id: string }[] | null;
 };
 
 function fmtDate(dateStr: string) {
@@ -38,6 +37,23 @@ const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   no_show:         { label: "No-show",         className: "bg-red-500/10 text-red-400 border-red-500/20" },
 };
 
+function ErrorCard({ message }: { message: string }) {
+  return (
+    <div className="max-w-2xl space-y-6">
+      <Link href="/artist/bookings" className="text-zinc-500 hover:text-white text-sm transition-colors">
+        ← Back to bookings
+      </Link>
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center space-y-3">
+        <p className="text-zinc-300 font-medium">Booking unavailable</p>
+        <p className="text-zinc-500 text-sm">{message}</p>
+        <Link href="/artist/bookings" className="inline-block mt-2 text-sm text-[#D4A853] hover:underline">
+          Return to my bookings →
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 interface Props {
   params: { bookingId: string };
 }
@@ -57,38 +73,54 @@ export default async function ArtistBookingDetailPage({ params }: Props) {
   const artist = artistRaw as { id: string } | null;
   if (!artist) redirect("/artist/dashboard");
 
-  const { data: bookingRaw } = await supabase
+  // Fetch booking without the consent_forms join — that join can fail when PostgREST
+  // can't cleanly resolve the reverse-FK path, silently returning null and triggering 404.
+  // Consent form status is fetched separately below.
+  const { data: bookingRaw, error: bookingError } = await supabase
     .from("bookings")
-    .select("id, date, time, style, description, status, deposit_paid, deposit_kept, deposit_amount, clients(full_name, email, phone), consent_forms(id)")
+    .select("id, date, time, style, description, status, deposit_paid, deposit_kept, deposit_amount, clients(full_name, email, phone)")
     .eq("id", params.bookingId)
     .eq("artist_id", artist.id)
     .maybeSingle();
 
-  if (!bookingRaw) notFound();
+  if (bookingError) {
+    console.error("[artist/booking-detail] query error:", bookingError.message, "| bookingId:", params.bookingId);
+    return <ErrorCard message="Could not load this booking. Please try again or contact support." />;
+  }
+
+  if (!bookingRaw) {
+    return <ErrorCard message="This booking doesn't exist or you don't have access to it." />;
+  }
 
   const b = bookingRaw as unknown as BookingDetail;
+
+  // Separate query for consent form to avoid join ambiguity
+  const { data: consentRaw } = await supabase
+    .from("consent_forms")
+    .select("id")
+    .eq("booking_id", params.bookingId)
+    .maybeSingle();
+
+  const hasConsent = !!consentRaw;
   const statusInfo = STATUS_LABELS[b.status] ?? { label: b.status, className: "bg-zinc-800 text-zinc-400 border-zinc-700" };
-  const hasConsent = Array.isArray(b.consent_forms) ? b.consent_forms.length > 0 : !!b.consent_forms;
 
   const fields = [
-    { label: "Client name",   value: b.clients?.full_name ?? "—" },
-    { label: "Date",          value: fmtDate(b.date) },
-    { label: "Time",          value: fmt12h(b.time) },
-    { label: "Style",         value: b.style },
-    { label: "Deposit",       value: `$${b.deposit_amount} ${b.deposit_paid ? "✓ Paid" : "— Unpaid"}` },
-    { label: "Consent form",  value: hasConsent ? "✓ Signed" : "Not submitted" },
-    { label: "Description",   value: b.description ?? "—" },
-    { label: "Client email",  value: b.clients?.email ?? "—" },
-    { label: "Client phone",  value: b.clients?.phone ?? "—" },
+    { label: "Client name",  value: b.clients?.full_name ?? "—" },
+    { label: "Date",         value: fmtDate(b.date) },
+    { label: "Time",         value: fmt12h(b.time) },
+    { label: "Style",        value: b.style },
+    { label: "Deposit",      value: `$${b.deposit_amount} ${b.deposit_paid ? "✓ Paid" : "— Unpaid"}` },
+    { label: "Consent form", value: hasConsent ? "✓ Signed" : "Not submitted" },
+    { label: "Description",  value: b.description ?? "—" },
+    { label: "Client email", value: b.clients?.email ?? "—" },
+    { label: "Client phone", value: b.clients?.phone ?? "—" },
   ];
 
   return (
     <div className="max-w-2xl space-y-6">
-      <div className="flex items-center gap-3">
-        <Link href="/artist/bookings" className="text-zinc-500 hover:text-white text-sm transition-colors">
-          ← Bookings
-        </Link>
-      </div>
+      <Link href="/artist/bookings" className="text-zinc-500 hover:text-white text-sm transition-colors">
+        ← Bookings
+      </Link>
 
       <div className="flex items-start justify-between">
         <h1 className="text-2xl font-bold">Booking detail</h1>

@@ -1,15 +1,10 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { deletePhoto } from "./actions";
+import { uploadPhoto, deletePhoto, type Photo } from "./actions";
 
-export type Photo = {
-  id: string;
-  storage_path: string;
-  url: string;
-  style: string | null;
-};
+// Re-export so portfolio/page.tsx import path stays unchanged
+export type { Photo };
 
 const ACCEPTED = "image/jpeg,image/png,image/webp,image/gif";
 const MAX_MB = 5;
@@ -39,41 +34,19 @@ export default function PortfolioClient({
     setError(null);
     setUploading(true);
 
-    const supabase = createClient();
-    const ext = file.name.split(".").pop() ?? "jpg";
-    const storagePath = `${artistId}/${Date.now()}.${ext}`;
+    // Pass file through FormData to the server action, which uses the
+    // service-role client — no RLS policies needed on either storage or the
+    // portfolio_photos table.
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("artistId", artistId);
 
-    const { error: uploadError } = await supabase.storage
-      .from("portfolio")
-      .upload(storagePath, file, { upsert: false });
+    const result = await uploadPhoto(formData);
 
-    if (uploadError) {
-      setError("Upload failed — " + uploadError.message);
-      setUploading(false);
-      if (fileRef.current) fileRef.current.value = "";
-      return;
-    }
-
-    const { data: urlData } = supabase.storage.from("portfolio").getPublicUrl(storagePath);
-    const publicUrl = urlData.publicUrl;
-
-    // Insert metadata row
-    const { data: row, error: dbError } = await supabase
-      .from("portfolio_photos" as never)
-      .insert({ artist_id: artistId, storage_path: storagePath } as never)
-      .select("id, storage_path, style")
-      .single();
-
-    if (dbError || !row) {
-      setError("Saved to storage but DB insert failed — refresh to see photo.");
-    } else {
-      const newPhoto: Photo = {
-        id: (row as { id: string }).id,
-        storage_path: (row as { storage_path: string }).storage_path,
-        url: publicUrl,
-        style: (row as { style: string | null }).style,
-      };
-      setPhotos((prev) => [newPhoto, ...prev]);
+    if (result.error) {
+      setError(result.error);
+    } else if (result.photo) {
+      setPhotos((prev) => [result.photo!, ...prev]);
     }
 
     setUploading(false);
