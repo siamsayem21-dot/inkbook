@@ -1,9 +1,16 @@
-export default function BookingOverview() {
+interface BookingCounts {
+  confirmed: number;
+  pending_deposit: number;
+  completed: number;
+  cancelled: number;
+}
+
+export default function BookingOverview({ counts }: { counts: BookingCounts }) {
   const statuses = [
-    { label: "Confirmed", count: 28, color: "bg-green-500" },
-    { label: "Deposit pending", count: 5, color: "bg-yellow-500" },
-    { label: "Completed", count: 104, color: "bg-zinc-500" },
-    { label: "Cancelled", count: 5, color: "bg-red-500" },
+    { label: "Confirmed",       count: counts.confirmed,       color: "bg-green-500" },
+    { label: "Deposit pending", count: counts.pending_deposit, color: "bg-yellow-500" },
+    { label: "Completed",       count: counts.completed,       color: "bg-zinc-500" },
+    { label: "Cancelled",       count: counts.cancelled,       color: "bg-red-500" },
   ];
 
   return (

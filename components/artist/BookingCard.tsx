@@ -33,7 +33,7 @@ export default function BookingCard({
         >
           {depositPaid ? "Deposit paid" : "Pending deposit"}
         </span>
-        <Link href={`/bookings/${bookingId}`} className="text-xs text-zinc-400 hover:text-white">
+        <Link href={`/artist/bookings/${bookingId}`} className="text-xs text-zinc-400 hover:text-white">
           View →
         </Link>
       </div>

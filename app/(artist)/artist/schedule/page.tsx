@@ -1,15 +1,36 @@
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth/config";
+import { createAdminClient } from "@/lib/supabase/admin";
 import ScheduleCalendar from "@/components/artist/ScheduleCalendar";
 
-export default function SchedulePage() {
+export default async function SchedulePage() {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
+  const supabase = createAdminClient();
+
+  const { data: artistRaw } = await supabase
+    .from("artists")
+    .select("id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const artist = artistRaw as { id: string } | null;
+  if (!artist) redirect("/artist/dashboard");
+
+  // Load existing availability
+  const { data: availRaw } = await supabase
+    .from("artist_availability" as never)
+    .select("day_of_week, hour")
+    .eq("artist_id" as never, artist.id);
+
+  const initialSlots = ((availRaw ?? []) as { day_of_week: number; hour: number }[])
+    .map((r) => `${r.day_of_week}-${r.hour}`);
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">My Schedule</h1>
-        <button className="text-sm bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-full">
-          Set availability
-        </button>
-      </div>
-      <ScheduleCalendar />
+      <h1 className="text-2xl font-bold">My Schedule</h1>
+      <ScheduleCalendar artistId={artist.id} initial={initialSlots} />
     </div>
   );
 }

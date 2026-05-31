@@ -17,10 +17,10 @@ export default async function ConsentFormsPage() {
     .from("studios")
     .select("id")
     .eq("owner_id", user.id)
-    .single();
+    .maybeSingle();
 
   const studio = studioData as { id: string } | null;
-  if (!studio) redirect("/register");
+  if (!studio) redirect("/onboarding");
 
   const { data: formsRaw } = await supabase
     .from("standalone_consent_forms" as never)

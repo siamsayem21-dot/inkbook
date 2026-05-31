@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 const sections = [
-  { label: "Studio profile", href: "/settings/studio", description: "Name, address, subdomain, logo" },
-  { label: "Billing & plan", href: "/settings/billing", description: "Subscription, payment method, invoices" },
+  { label: "Studio profile", href: "/owner/settings/studio", description: "Name, address, subdomain, logo" },
+  { label: "Billing & plan", href: "/owner/settings/billing", description: "Subscription, payment method, invoices" },
 ];
 
 export default function SettingsPage() {
