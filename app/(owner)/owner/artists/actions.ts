@@ -2,7 +2,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
-import { randomUUID } from "crypto";
+import { sendArtistInviteEmail } from "@/lib/email";
 
 function adminClient() {
   return createClient(
@@ -12,8 +12,6 @@ function adminClient() {
   );
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.inkbook.tech";
-
 export async function inviteArtist(data: {
   name: string;
   email: string;
@@ -21,57 +19,69 @@ export async function inviteArtist(data: {
 }): Promise<{ error?: string }> {
   const supabase = adminClient();
 
-  // Check for existing artist with this email in the same studio
-  const { data: existing } = await supabase
+  // Block if an active artist already has this email in this studio
+  const { data: activeArtist } = await supabase
     .from("artists")
     .select("id, is_active")
     .eq("email", data.email)
     .eq("studio_id", data.studioId)
     .maybeSingle();
 
-  if (existing) {
-    return existing.is_active
-      ? { error: "Email already has an active account" }
-      : { error: "Email already invited to this studio" };
+  if (activeArtist?.is_active) {
+    return { error: "Email already has an active account in this studio" };
   }
 
-  // Pre-generate the artist row ID so we can embed it in the invite redirectTo URL
-  // before the row exists in the DB.
-  const artistId = randomUUID();
-  const redirectTo = `${BASE_URL}/auth/callback?next=/artist/dashboard&artist_id=${artistId}`;
+  // Block if a pending (non-expired, non-accepted) invite already exists
+  const { data: pendingInvite } = await supabase
+    .from("artist_invites")
+    .select("id")
+    .eq("invited_email", data.email)
+    .eq("studio_id", data.studioId)
+    .is("accepted_at", null)
+    .gt("expires_at", new Date().toISOString())
+    .maybeSingle();
 
-  // 1. Create the Supabase auth user first — this gives us the real user.id
-  //    which satisfies the artists_user_id_fkey foreign key constraint.
-  const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
-    data.email,
-    { redirectTo, data: { full_name: data.name } }
-  );
-
-  if (inviteError) {
-    console.error("[inviteArtist] inviteUserByEmail failed:", inviteError.message);
-    if (inviteError.message?.toLowerCase().includes("already been registered")) {
-      return { error: "This email already has an InkBook account" };
-    }
-    return { error: inviteError.message ?? "Failed to send invite email — try again" };
+  if (pendingInvite) {
+    return { error: "Email already invited to this studio" };
   }
 
-  // 2. Insert artist row using the pre-generated ID and the real auth user.id
-  const { error: insertError } = await supabase
-    .from("artists")
+  // Look up studio name and owner_id
+  const { data: studio } = await supabase
+    .from("studios")
+    .select("name, owner_id")
+    .eq("id", data.studioId)
+    .single();
+
+  if (!studio) return { error: "Studio not found" };
+
+  // Insert invite — Postgres generates the token UUID automatically
+  const { data: invite, error: insertError } = await supabase
+    .from("artist_invites")
     .insert({
-      id: artistId,
-      user_id: inviteData.user.id,
-      name: data.name,
-      email: data.email,
       studio_id: data.studioId,
-      is_active: false,
-    });
+      invited_name: data.name,
+      invited_email: data.email,
+      invited_by: studio.owner_id as string,
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    })
+    .select("token")
+    .single();
 
-  if (insertError) {
-    console.error("[inviteArtist] DB insert failed:", insertError.message, insertError.details);
-    // Rollback: delete the auth user we just created
-    await supabase.auth.admin.deleteUser(inviteData.user.id);
-    return { error: insertError.message ?? "Failed to create artist record — try again" };
+  if (insertError || !invite) {
+    console.error("[inviteArtist] DB insert failed:", insertError?.message);
+    return { error: "Failed to create invite — please try again" };
+  }
+
+  try {
+    await sendArtistInviteEmail({
+      to: data.email,
+      inviteeName: data.name,
+      studioName: studio.name,
+      token: (invite as { token: string }).token,
+    });
+  } catch (err) {
+    console.error("[inviteArtist] email send failed:", err);
+    // Don't block — invite is in DB, link can still be used
   }
 
   revalidatePath("/owner/artists");
@@ -79,22 +89,61 @@ export async function inviteArtist(data: {
 }
 
 export async function resendInvite(data: {
-  artistId: string;
+  inviteId: string;
   email: string;
-  createdAt: string;
 }): Promise<{ error?: string }> {
-  const hoursSince = (Date.now() - new Date(data.createdAt).getTime()) / 3_600_000;
-  if (hoursSince < 24) {
-    return { error: "Invite sent recently, try again tomorrow" };
+  const supabase = adminClient();
+
+  // Extend expiry by 7 days from now and return the existing token
+  const { data: invite, error } = await supabase
+    .from("artist_invites")
+    .update({
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    })
+    .eq("id", data.inviteId)
+    .is("accepted_at", null) // safety: never touch accepted invites
+    .select("token, invited_name, studio_id")
+    .single();
+
+  if (error || !invite) {
+    console.error("[resendInvite] update failed:", error?.message);
+    return { error: "Invite not found or already accepted" };
   }
 
-  const supabase = adminClient();
-  const redirectTo = `${BASE_URL}/auth/callback?next=/artist/dashboard&artist_id=${data.artistId}`;
+  const inv = invite as { token: string; invited_name: string; studio_id: string };
 
-  const { error } = await supabase.auth.admin.inviteUserByEmail(data.email, { redirectTo });
+  const { data: studio } = await supabase
+    .from("studios")
+    .select("name")
+    .eq("id", inv.studio_id)
+    .single();
+
+  try {
+    await sendArtistInviteEmail({
+      to: data.email,
+      inviteeName: inv.invited_name,
+      studioName: (studio as { name: string } | null)?.name ?? "your studio",
+      token: inv.token,
+    });
+  } catch (err) {
+    console.error("[resendInvite] email send failed:", err);
+  }
+
+  revalidatePath("/owner/artists");
+  return {};
+}
+
+export async function cancelInvite(inviteId: string): Promise<{ error?: string }> {
+  const supabase = adminClient();
+  const { error } = await supabase
+    .from("artist_invites")
+    .delete()
+    .eq("id", inviteId)
+    .is("accepted_at", null); // never delete accepted invites
+
   if (error) {
-    console.error("[resendInvite] inviteUserByEmail failed:", error.message);
-    return { error: error.message ?? "Failed to send invite email — try again" };
+    console.error("[cancelInvite] delete failed:", error.message);
+    return { error: "Something went wrong — please try again" };
   }
 
   revalidatePath("/owner/artists");

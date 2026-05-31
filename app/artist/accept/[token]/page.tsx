@@ -1,0 +1,132 @@
+import { createClient } from "@supabase/supabase-js";
+import Link from "next/link";
+import AcceptForm from "./AcceptForm";
+
+function adminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+}
+
+function ErrorPage({ title, message }: { title: string; message: string }) {
+  return (
+    <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center px-4">
+      <div className="w-full max-w-md bg-[#111] border border-[#1E1E1E] rounded-2xl p-8 text-center">
+        <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-5">
+          <svg className="w-5 h-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+          </svg>
+        </div>
+        <h1 className="text-lg font-bold text-[#E8E8E8] mb-2">{title}</h1>
+        <p className="text-sm text-zinc-400 mb-6">{message}</p>
+        <Link
+          href="/login"
+          className="inline-block text-sm text-[#D4A853] hover:underline"
+        >
+          Sign in instead →
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+export default async function AcceptInvitePage({
+  params,
+}: {
+  params: { token: string };
+}) {
+  const supabase = adminClient();
+
+  const { data: invite } = await supabase
+    .from("artist_invites")
+    .select("id, invited_name, invited_email, accepted_at, expires_at, studio_id")
+    .eq("token", params.token)
+    .maybeSingle();
+
+  if (!invite) {
+    return (
+      <ErrorPage
+        title="Invalid invite link"
+        message="This invite link doesn't exist or has already been deleted. Ask your studio owner to send a new one."
+      />
+    );
+  }
+
+  const inv = invite as {
+    id: string;
+    invited_name: string;
+    invited_email: string;
+    accepted_at: string | null;
+    expires_at: string;
+    studio_id: string;
+  };
+
+  if (inv.accepted_at) {
+    return (
+      <ErrorPage
+        title="Invite already used"
+        message="This invite link has already been accepted. Sign in with your account below."
+      />
+    );
+  }
+
+  if (new Date(inv.expires_at) < new Date()) {
+    return (
+      <ErrorPage
+        title="Invite link expired"
+        message="This invite link expired after 7 days. Ask your studio owner to send a new one."
+      />
+    );
+  }
+
+  // Look up studio name for the form
+  const { data: studio } = await supabase
+    .from("studios")
+    .select("name")
+    .eq("id", inv.studio_id)
+    .single();
+
+  const studioName = (studio as { name: string } | null)?.name ?? "your studio";
+
+  return (
+    <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <div className="w-8 h-8 rounded-lg bg-[#D4A853] flex items-center justify-center">
+              <span className="text-black text-xs font-black">IB</span>
+            </div>
+            <span className="text-[#E8E8E8] font-bold text-lg">InkBook</span>
+          </div>
+          <h1 className="text-2xl font-bold text-[#E8E8E8] mb-2">
+            You&apos;re invited!
+          </h1>
+          <p className="text-sm text-zinc-400">
+            <span className="text-[#D4A853] font-medium">{studioName}</span> has invited you to
+            join their team. Set up your account below.
+          </p>
+        </div>
+
+        {/* Form card */}
+        <div className="bg-[#111] border border-[#1E1E1E] rounded-2xl p-8">
+          <AcceptForm
+            token={params.token}
+            inviteeName={inv.invited_name}
+            studioName={studioName}
+            email={inv.invited_email}
+          />
+        </div>
+
+        <p className="text-center text-xs text-zinc-600 mt-6">
+          Already have an account?{" "}
+          <Link href="/login" className="text-zinc-400 hover:text-[#D4A853] transition-colors">
+            Sign in
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}

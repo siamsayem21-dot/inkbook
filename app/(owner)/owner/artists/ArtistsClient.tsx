@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { inviteArtist, resendInvite, removeArtist, getUpcomingBookingsCount } from "./actions";
+import { inviteArtist, resendInvite, cancelInvite, removeArtist, getUpcomingBookingsCount } from "./actions";
 
 export type Artist = {
   id: string;
@@ -11,6 +11,8 @@ export type Artist = {
   email: string;
   created_at: string;
   is_active: boolean;
+  /** Set only for pending invites (not yet accepted). Used to call cancelInvite/resendInvite correctly. */
+  invite_id?: string;
 };
 
 // ─── Helpers ────────────────────────────────────────────────
@@ -268,14 +270,22 @@ export default function ArtistsClient({
   async function openRemove(artist: Artist) {
     setRemoveTarget(artist);
     setRemoveBookingCount(null);
-    const count = await getUpcomingBookingsCount(artist.id);
-    setRemoveBookingCount(count);
+    // Pending invites have no bookings — skip the async check
+    if (artist.invite_id) {
+      setRemoveBookingCount(0);
+    } else {
+      const count = await getUpcomingBookingsCount(artist.id);
+      setRemoveBookingCount(count);
+    }
   }
 
   async function confirmRemove() {
     if (!removeTarget) return;
     setRemoveConfirming(true);
-    const result = await removeArtist(removeTarget.id);
+    // Pending invite → cancel the invite row; active artist → deactivate
+    const result = removeTarget.invite_id
+      ? await cancelInvite(removeTarget.invite_id)
+      : await removeArtist(removeTarget.id);
     setRemoveConfirming(false);
     if (!result.error) {
       setRemoveTarget(null);
@@ -286,9 +296,8 @@ export default function ArtistsClient({
   async function handleResend(artist: Artist) {
     setRowLoading((p) => ({ ...p, [artist.id]: true }));
     const result = await resendInvite({
-      artistId: artist.id,
+      inviteId: artist.invite_id ?? artist.id,
       email: artist.email,
-      createdAt: artist.created_at,
     });
     setRowLoading((p) => ({ ...p, [artist.id]: false }));
     const msg = result.error ?? "Invite resent ✓";

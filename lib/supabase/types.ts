@@ -133,6 +133,22 @@ export interface Database {
         Insert: Omit<Database["public"]["Tables"]["waitlist"]["Row"], "id">;
         Update: Partial<Database["public"]["Tables"]["waitlist"]["Insert"]>;
       };
+      artist_invites: {
+        Row: {
+          id: string;
+          token: string;
+          studio_id: string;
+          invited_name: string;
+          invited_email: string;
+          invited_by: string | null;
+          expires_at: string;
+          accepted_at: string | null;
+          artist_id: string | null;
+          created_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["artist_invites"]["Row"], "id" | "token" | "created_at">;
+        Update: Partial<Database["public"]["Tables"]["artist_invites"]["Insert"]>;
+      };
     };
     Views: Record<string, never>;
     Functions: {
