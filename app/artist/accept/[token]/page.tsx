@@ -1,14 +1,8 @@
-import { createClient } from "@supabase/supabase-js";
+export const dynamic = "force-dynamic";
+
+import { createAdminClient } from "@/lib/supabase/admin";
 import Link from "next/link";
 import AcceptForm from "./AcceptForm";
-
-function adminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
 
 function ErrorPage({ title, message }: { title: string; message: string }) {
   return (
@@ -37,7 +31,7 @@ export default async function AcceptInvitePage({
 }: {
   params: { token: string };
 }) {
-  const supabase = adminClient();
+  const supabase = createAdminClient();
 
   const { data: invite } = await supabase
     .from("artist_invites")
