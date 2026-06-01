@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,8 +35,11 @@ function LoginForm() {
       return;
     }
 
-    router.push("/dashboard");
-    router.refresh();
+    // Full page navigation — guarantees the browser sends fresh auth cookies
+    // on the next HTTP request. router.push() + router.refresh() race each
+    // other and can cause the first login attempt to land before the session
+    // cookie is visible to the server.
+    window.location.href = "/dashboard";
   }
 
   async function handleForgotPassword() {
