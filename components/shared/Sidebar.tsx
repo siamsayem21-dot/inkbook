@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 const ownerNav = [
   { label: "Dashboard", href: "/owner/dashboard" },
@@ -30,7 +31,14 @@ interface Props {
 
 export default function Sidebar({ role }: Props) {
   const pathname = usePathname();
+  const router = useRouter();
   const nav = role === "owner" ? ownerNav : artistNav;
+
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/");
+  }
 
   return (
     <aside className="w-56 shrink-0 border-r border-zinc-800 flex flex-col py-6 px-4 gap-1">
@@ -55,7 +63,10 @@ export default function Sidebar({ role }: Props) {
         );
       })}
       <div className="mt-auto pt-6 border-t border-zinc-800">
-        <button className="w-full text-left px-3 py-2 text-sm text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800/50">
+        <button
+          onClick={handleSignOut}
+          className="w-full text-left px-3 py-2 text-sm text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800/50"
+        >
           Sign out
         </button>
       </div>

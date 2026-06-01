@@ -1,17 +1,12 @@
-import { createClient } from "@supabase/supabase-js";
-import { getCurrentUser } from "@/lib/auth/config";
+import { createAdminClient } from "@/lib/supabase/admin";
 import DashboardStats from "@/components/owner/DashboardStats";
 import BookingOverview from "@/components/owner/BookingOverview";
 import RevenueChart, { type MonthRevenue } from "@/components/owner/RevenueChart";
 import PlanBanner from "@/components/owner/PlanBanner";
 
-function adminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+export const dynamic = "force-dynamic";
+
+const STUDIO_ID = "5fe382a1-fee7-4387-b625-4bf7a52b8f45";
 
 const PLAN_LABELS: Record<string, string> = {
   solo: "Solo — $49/mo",
@@ -19,8 +14,8 @@ const PLAN_LABELS: Record<string, string> = {
   pro: "Pro — $129/mo",
 };
 
-function fmtMoney(n: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
+function fmtMoney(cents: number) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(cents / 100);
 }
 
 function monthRange(offsetMonths: number) {
@@ -42,31 +37,18 @@ export default async function OwnerDashboardPage({
 }: {
   searchParams: { subscribed?: string };
 }) {
-  const user = await getCurrentUser();
-  let planLabel = "Solo — $49/mo";
-  let subscriptionStatus = "trialing";
+  const supabase = createAdminClient();
 
-  const supabase = adminClient();
+  // Studio info for plan/status display
+  const { data: studioRaw } = await supabase
+    .from("studios")
+    .select("plan, subscription_status")
+    .eq("id", STUDIO_ID)
+    .maybeSingle();
 
-  type StudioRow = { id: string; plan: string; subscription_status: string };
-  let studio: StudioRow | null = null;
-
-  if (user) {
-    const { data } = await supabase
-      .from("studios")
-      .select("id, plan, subscription_status")
-      .eq("owner_id", user.id)
-      .maybeSingle();
-
-    studio = data as StudioRow | null;
-    if (studio) {
-      planLabel = PLAN_LABELS[studio.plan] ?? studio.plan;
-      subscriptionStatus = studio.subscription_status;
-    }
-  }
-
-  // ── Real stats ───────────────────────────────────────────────────────────────
-  const studioId = studio?.id ?? null;
+  const studio = studioRaw as { plan: string; subscription_status: string } | null;
+  const planLabel = studio ? (PLAN_LABELS[studio.plan] ?? studio.plan) : "Solo — $49/mo";
+  const subscriptionStatus = studio?.subscription_status ?? "trialing";
 
   const thisMonth = monthRange(0);
 
@@ -77,37 +59,35 @@ export default async function OwnerDashboardPage({
     { data: noShowData },
     { data: bookingsByStatus },
   ] = await Promise.all([
-    studioId
-      ? supabase.from("bookings").select("id", { count: "exact", head: true }).eq("studio_id", studioId)
-      : Promise.resolve({ count: 0, data: null, error: null }),
+    supabase.from("bookings").select("id", { count: "exact", head: true }).eq("studio_id", STUDIO_ID),
 
-    studioId
-      ? supabase.from("artists").select("id", { count: "exact", head: true }).eq("studio_id", studioId).eq("is_active", true)
-      : Promise.resolve({ count: 0, data: null, error: null }),
+    supabase.from("artists").select("id", { count: "exact", head: true }).eq("studio_id", STUDIO_ID),
 
-    studioId
-      ? supabase.from("bookings").select("deposit_amount").eq("studio_id", studioId)
-          .in("status", ["confirmed", "completed", "no_show"])
-          .gte("date", thisMonth.first).lte("date", thisMonth.last)
-      : Promise.resolve({ data: [], error: null }),
+    supabase.from("bookings")
+      .select("deposit_amount_cents")
+      .eq("studio_id", STUDIO_ID)
+      .eq("deposit_paid", true)
+      .gte("date", thisMonth.first)
+      .lte("date", thisMonth.last),
 
-    studioId
-      ? supabase.from("bookings").select("status").eq("studio_id", studioId)
-          .in("status", ["confirmed", "completed", "no_show"])
-      : Promise.resolve({ data: [], error: null }),
+    supabase.from("bookings")
+      .select("status")
+      .eq("studio_id", STUDIO_ID)
+      .in("status", ["confirmed", "completed", "no_show"]),
 
-    studioId
-      ? supabase.from("bookings").select("status").eq("studio_id", studioId)
-      : Promise.resolve({ data: [], error: null }),
+    supabase.from("bookings")
+      .select("status")
+      .eq("studio_id", STUDIO_ID),
   ]);
 
-  const monthRevenue = ((monthBookings ?? []) as { deposit_amount: number }[])
-    .reduce((s, b) => s + (b.deposit_amount ?? 0), 0);
+  const monthRevenueCents = ((monthBookings ?? []) as { deposit_amount_cents: number }[])
+    .reduce((s, b) => s + (b.deposit_amount_cents ?? 0), 0);
 
   const noShowRows = (noShowData ?? []) as { status: string }[];
   const noShows = noShowRows.filter((b) => b.status === "no_show").length;
-  const noShowTotal = noShowRows.length;
-  const noShowRate = noShowTotal > 0 ? ((noShows / noShowTotal) * 100).toFixed(1) + "%" : "0%";
+  const noShowRate = noShowRows.length > 0
+    ? ((noShows / noShowRows.length) * 100).toFixed(1) + "%"
+    : "0%";
 
   const statusRows = (bookingsByStatus ?? []) as { status: string }[];
   const counts = {
@@ -120,30 +100,28 @@ export default async function OwnerDashboardPage({
   const stats = [
     { label: "Total bookings",  value: String(totalBookings ?? 0) },
     { label: "Active artists",  value: String(activeArtists ?? 0) },
-    { label: "Monthly revenue", value: fmtMoney(monthRevenue) },
+    { label: "Monthly revenue", value: fmtMoney(monthRevenueCents) },
     { label: "No-show rate",    value: noShowRate, sub: "of confirmed bookings" },
   ];
 
-  // ── Revenue chart: last 6 months ─────────────────────────────────────────────
-  const monthData: MonthRevenue[] = await (async () => {
-    if (!studioId) return Array.from({ length: 6 }, (_, i) => ({ label: monthRange(i - 5).label, amount: 0 }));
+  // Revenue chart: last 6 months
+  const ranges = Array.from({ length: 6 }, (_, i) => monthRange(i - 5));
+  const chartResults = await Promise.all(
+    ranges.map(({ first, last }) =>
+      supabase.from("bookings")
+        .select("deposit_amount_cents")
+        .eq("studio_id", STUDIO_ID)
+        .eq("deposit_paid", true)
+        .gte("date", first)
+        .lte("date", last)
+    )
+  );
 
-    const ranges = Array.from({ length: 6 }, (_, i) => monthRange(i - 5));
-    const results = await Promise.all(
-      ranges.map(({ first, last }) =>
-        supabase.from("bookings").select("deposit_amount")
-          .eq("studio_id", studioId)
-          .in("status", ["confirmed", "completed", "no_show"])
-          .gte("date", first).lte("date", last)
-      )
-    );
-
-    return ranges.map(({ label }, i) => ({
-      label,
-      amount: ((results[i].data ?? []) as { deposit_amount: number }[])
-        .reduce((s, b) => s + (b.deposit_amount ?? 0), 0),
-    }));
-  })();
+  const monthData: MonthRevenue[] = ranges.map(({ label }, i) => ({
+    label,
+    amount: ((chartResults[i].data ?? []) as { deposit_amount_cents: number }[])
+      .reduce((s, b) => s + (b.deposit_amount_cents ?? 0), 0) / 100,
+  }));
 
   return (
     <div className="space-y-8">

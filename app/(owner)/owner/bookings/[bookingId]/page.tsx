@@ -85,11 +85,19 @@ export default async function BookingDetailPage({ params }: Props) {
   // Separate query for consent form to avoid join ambiguity
   const { data: consentRaw } = await supabase
     .from("consent_forms")
-    .select("id")
+    .select("id, signed_at, state_template, is_minor, guardian_name, id_photo_url")
     .eq("booking_id", params.bookingId)
     .maybeSingle();
 
   const hasConsent = !!consentRaw;
+  const consentForm = consentRaw as {
+    id: string;
+    signed_at: string;
+    state_template: string;
+    is_minor: boolean;
+    guardian_name: string | null;
+    id_photo_url: string;
+  } | null;
   const statusInfo = STATUS_LABELS[b.status] ?? { label: b.status, className: "bg-zinc-800 text-zinc-400 border-zinc-700" };
 
   const fields: { label: string; value: string; wide?: boolean }[] = [
@@ -138,6 +146,7 @@ export default async function BookingDetailPage({ params }: Props) {
         bookingId={params.bookingId}
         status={b.status}
         hasConsent={hasConsent}
+        consentForm={consentForm}
       />
     </div>
   );

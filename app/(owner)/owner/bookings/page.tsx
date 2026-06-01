@@ -108,7 +108,7 @@ export default async function OwnerBookingsPage() {
                       <td className="px-5 py-4 text-zinc-400">{artistName[b.artist_id] ?? "—"}</td>
                       <td className="px-5 py-4 text-zinc-400">{fmtDate(b.date)}</td>
                       <td className="px-5 py-4 text-zinc-400">{fmtTime(b.time)}</td>
-                      <td className="px-5 py-4 text-[#D4A853]">${b.deposit_amount_cents ?? "—"}</td>
+                      <td className="px-5 py-4 text-[#D4A853]">${b.deposit_amount_cents != null ? (b.deposit_amount_cents / 100).toFixed(2) : "—"}</td>
                       <td className="px-5 py-4">
                         <span className={`text-xs px-2.5 py-1 rounded-full ${STATUS_CLASS[b.status] ?? "bg-zinc-800 text-zinc-400"}`}>
                           {STATUS_LABEL[b.status] ?? b.status}
@@ -140,7 +140,7 @@ export default async function OwnerBookingsPage() {
                     <span>·</span>
                     <span>{fmtDate(b.date)} at {fmtTime(b.time)}</span>
                     <span>·</span>
-                    <span className="text-[#D4A853]">${b.deposit_amount_cents ?? "—"}</span>
+                    <span className="text-[#D4A853]">${b.deposit_amount_cents != null ? (b.deposit_amount_cents / 100).toFixed(2) : "—"}</span>
                   </div>
                 </Link>
               ))}
