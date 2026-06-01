@@ -41,7 +41,7 @@ export default async function OwnerBookingsPage() {
 
   const { data: bookingsRaw, error: bookingsError } = await supabase
     .from("bookings")
-    .select("id, date, time, status, deposit_amount, client_id, artist_id")
+    .select("id, date, time, status, deposit_amount_cents, client_id, artist_id")
     .eq("studio_id", STUDIO_ID)
     .order("date", { ascending: false });
 
@@ -50,7 +50,7 @@ export default async function OwnerBookingsPage() {
 
   const bookings = (bookingsRaw ?? []) as {
     id: string; date: string; time: string;
-    status: BookingStatus; deposit_amount: number;
+    status: BookingStatus; deposit_amount_cents: number;
     client_id: string; artist_id: string;
   }[];
 
@@ -108,7 +108,7 @@ export default async function OwnerBookingsPage() {
                       <td className="px-5 py-4 text-zinc-400">{artistName[b.artist_id] ?? "—"}</td>
                       <td className="px-5 py-4 text-zinc-400">{fmtDate(b.date)}</td>
                       <td className="px-5 py-4 text-zinc-400">{fmtTime(b.time)}</td>
-                      <td className="px-5 py-4 text-[#D4A853]">${b.deposit_amount ?? "—"}</td>
+                      <td className="px-5 py-4 text-[#D4A853]">${b.deposit_amount_cents ?? "—"}</td>
                       <td className="px-5 py-4">
                         <span className={`text-xs px-2.5 py-1 rounded-full ${STATUS_CLASS[b.status] ?? "bg-zinc-800 text-zinc-400"}`}>
                           {STATUS_LABEL[b.status] ?? b.status}
@@ -140,7 +140,7 @@ export default async function OwnerBookingsPage() {
                     <span>·</span>
                     <span>{fmtDate(b.date)} at {fmtTime(b.time)}</span>
                     <span>·</span>
-                    <span className="text-[#D4A853]">${b.deposit_amount ?? "—"}</span>
+                    <span className="text-[#D4A853]">${b.deposit_amount_cents ?? "—"}</span>
                   </div>
                 </Link>
               ))}
