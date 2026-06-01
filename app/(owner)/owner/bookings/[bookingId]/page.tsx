@@ -23,7 +23,7 @@ type BookingDetail = {
   style: string;
   description: string | null;
   status: BookingStatus;
-  deposit_amount: number;
+  deposit_amount_cents: number;
   deposit_paid: boolean;
   deposit_kept: boolean;
   clients: { full_name: string; email: string; phone: string } | null;
@@ -84,7 +84,7 @@ export default async function BookingDetailPage({ params }: Props) {
   // Consent forms fetched separately: PostgREST can silently fail on reverse-FK joins
   const { data: bookingRaw, error: bookingError } = await supabase
     .from("bookings")
-    .select("id, date, time, style, description, status, deposit_amount, deposit_paid, deposit_kept, clients(full_name, email, phone), artists(name)")
+    .select("id, date, time, style, description, status, deposit_amount_cents, deposit_paid, deposit_kept, clients(full_name, email, phone), artists(name)")
     .eq("id", params.bookingId)
     .eq("studio_id", studioId)
     .maybeSingle();
@@ -116,7 +116,7 @@ export default async function BookingDetailPage({ params }: Props) {
     { label: "Date",          value: fmtDate(b.date) },
     { label: "Time",          value: fmt12h(b.time) },
     { label: "Style",         value: b.style },
-    { label: "Deposit",       value: `$${b.deposit_amount} — ${b.deposit_paid ? "✓ Paid" : "Unpaid"}` },
+    { label: "Deposit",       value: `$${(b.deposit_amount_cents / 100).toFixed(2)} — ${b.deposit_paid ? "✓ Paid" : "Unpaid"}` },
     { label: "Consent form",  value: hasConsent ? "✓ Signed" : "Not submitted" },
     { label: "Client email",  value: b.clients?.email ?? "—" },
     { label: "Client phone",  value: b.clients?.phone ?? "—" },
