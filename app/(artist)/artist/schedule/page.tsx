@@ -1,28 +1,17 @@
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/config";
+export const dynamic = "force-dynamic";
+
 import { createAdminClient } from "@/lib/supabase/admin";
 import ScheduleCalendar from "@/components/artist/ScheduleCalendar";
 
-export default async function SchedulePage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
+const ARTIST_ID = "fa2900bc-f613-4f75-8f64-e1e0d7e32a79";
 
+export default async function SchedulePage() {
   const supabase = createAdminClient();
 
-  const { data: artistRaw } = await supabase
-    .from("artists")
-    .select("id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  const artist = artistRaw as { id: string } | null;
-  if (!artist) redirect("/artist/dashboard");
-
-  // Load existing availability
   const { data: availRaw } = await supabase
     .from("artist_availability" as never)
     .select("day_of_week, hour")
-    .eq("artist_id" as never, artist.id);
+    .eq("artist_id" as never, ARTIST_ID);
 
   const initialSlots = ((availRaw ?? []) as { day_of_week: number; hour: number }[])
     .map((r) => `${r.day_of_week}-${r.hour}`);
@@ -30,7 +19,7 @@ export default async function SchedulePage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">My Schedule</h1>
-      <ScheduleCalendar artistId={artist.id} initial={initialSlots} />
+      <ScheduleCalendar artistId={ARTIST_ID} initial={initialSlots} />
     </div>
   );
 }

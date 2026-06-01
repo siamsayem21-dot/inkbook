@@ -1,7 +1,9 @@
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/config";
+export const dynamic = "force-dynamic";
+
 import { createAdminClient } from "@/lib/supabase/admin";
 import Link from "next/link";
+
+const ARTIST_ID = "fa2900bc-f613-4f75-8f64-e1e0d7e32a79";
 
 type BookingDetail = {
   id: string;
@@ -12,7 +14,7 @@ type BookingDetail = {
   status: string;
   deposit_paid: boolean;
   deposit_kept: boolean;
-  deposit_amount: number;
+  deposit_amount_cents: number;
   clients: { full_name: string; email: string; phone: string } | null;
 };
 
@@ -59,28 +61,13 @@ interface Props {
 }
 
 export default async function ArtistBookingDetailPage({ params }: Props) {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
-
   const supabase = createAdminClient();
 
-  const { data: artistRaw } = await supabase
-    .from("artists")
-    .select("id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  const artist = artistRaw as { id: string } | null;
-  if (!artist) redirect("/artist/dashboard");
-
-  // Fetch booking without the consent_forms join — that join can fail when PostgREST
-  // can't cleanly resolve the reverse-FK path, silently returning null and triggering 404.
-  // Consent form status is fetched separately below.
   const { data: bookingRaw, error: bookingError } = await supabase
     .from("bookings")
-    .select("id, date, time, style, description, status, deposit_paid, deposit_kept, deposit_amount, clients(full_name, email, phone)")
+    .select("id, date, time, style, description, status, deposit_paid, deposit_kept, deposit_amount_cents, clients(full_name, email, phone)")
     .eq("id", params.bookingId)
-    .eq("artist_id", artist.id)
+    .eq("artist_id", ARTIST_ID)
     .maybeSingle();
 
   if (bookingError) {
@@ -94,7 +81,6 @@ export default async function ArtistBookingDetailPage({ params }: Props) {
 
   const b = bookingRaw as unknown as BookingDetail;
 
-  // Separate query for consent form to avoid join ambiguity
   const { data: consentRaw } = await supabase
     .from("consent_forms")
     .select("id")
@@ -109,7 +95,7 @@ export default async function ArtistBookingDetailPage({ params }: Props) {
     { label: "Date",         value: fmtDate(b.date) },
     { label: "Time",         value: fmt12h(b.time) },
     { label: "Style",        value: b.style },
-    { label: "Deposit",      value: `$${b.deposit_amount} ${b.deposit_paid ? "✓ Paid" : "— Unpaid"}` },
+    { label: "Deposit",      value: `$${(b.deposit_amount_cents / 100).toFixed(2)} ${b.deposit_paid ? "✓ Paid" : "— Unpaid"}` },
     { label: "Consent form", value: hasConsent ? "✓ Signed" : "Not submitted" },
     { label: "Description",  value: b.description ?? "—" },
     { label: "Client email", value: b.clients?.email ?? "—" },
