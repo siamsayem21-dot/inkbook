@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getCurrentUser } from "@/lib/auth/config";
+import Link from "next/link";
 
 function adminClient() {
   return createAdminClient(
@@ -129,6 +130,7 @@ export default async function OwnerBookingsPage() {
                     <th className="text-left px-5 py-3.5 font-medium">Time</th>
                     <th className="text-left px-5 py-3.5 font-medium">Deposit</th>
                     <th className="text-left px-5 py-3.5 font-medium">Status</th>
+                    <th className="px-5 py-3.5" />
                   </tr>
                 </thead>
                 <tbody>
@@ -153,6 +155,14 @@ export default async function OwnerBookingsPage() {
                           {STATUS_LABEL[b.status] ?? b.status}
                         </span>
                       </td>
+                      <td className="px-5 py-4 text-right">
+                        <Link
+                          href={`/owner/bookings/${b.id}`}
+                          className="text-xs text-zinc-500 hover:text-white transition-colors"
+                        >
+                          View →
+                        </Link>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -162,7 +172,7 @@ export default async function OwnerBookingsPage() {
             {/* Mobile card stack */}
             <div className="flex flex-col divide-y divide-[#161616] md:hidden">
               {bookings.map((b) => (
-                <div key={b.id} className="px-5 py-4 space-y-1.5">
+                <Link key={b.id} href={`/owner/bookings/${b.id}`} className="px-5 py-4 space-y-1.5 block hover:bg-white/[0.02] transition-colors">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-[#E8E8E8]">
                       {clientName[b.client_id] ?? "—"}
@@ -178,7 +188,7 @@ export default async function OwnerBookingsPage() {
                     <span>·</span>
                     <span className="text-[#D4A853]">${b.deposit_amount ?? "—"}</span>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </>
