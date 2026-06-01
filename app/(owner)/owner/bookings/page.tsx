@@ -3,7 +3,12 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getCurrentUser } from "@/lib/auth/config";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 function adminClient() {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error("[OwnerBookings] SUPABASE_SERVICE_ROLE_KEY is not set — admin client cannot bypass RLS");
+  }
   return createAdminClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
