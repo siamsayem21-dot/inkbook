@@ -50,5 +50,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: msg }, { status: 400 });
   }
 
+  // Auto-confirm the owner's email so they can sign in with password immediately
+  // (Supabase blocks signInWithPassword until email_confirm is true)
+  await supabase.auth.admin.updateUserById(userId, { email_confirm: true });
+
   return NextResponse.json({ studio: data }, { status: 201 });
 }

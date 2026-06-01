@@ -3,6 +3,14 @@ import { getCurrentUser } from "@/lib/auth/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import StudioSettingsClient from "./StudioSettingsClient";
 
+type StudioRow = {
+  id: string;
+  name: string;
+  subdomain: string;
+  address: string | null;
+  state: string | null;
+};
+
 export default async function StudioSettingsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
@@ -12,17 +20,21 @@ export default async function StudioSettingsPage() {
     .from("studios")
     .select("id, name, subdomain, address, state")
     .eq("owner_id", user.id)
-    .maybeSingle();
+    .limit(1);
 
-  if (!studioRaw) redirect("/onboarding");
+  const studio = (studioRaw as StudioRow[] | null)?.[0] ?? null;
 
-  const studio = studioRaw as {
-    id: string;
-    name: string;
-    subdomain: string;
-    address: string | null;
-    state: string | null;
-  };
+  if (!studio) {
+    return (
+      <div className="max-w-xl space-y-6">
+        <h1 className="text-2xl font-bold">Studio profile</h1>
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-center">
+          <p className="text-zinc-400 text-sm">Studio not found for your account.</p>
+          <p className="text-zinc-600 text-xs mt-1">Contact support if this issue persists.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-xl space-y-6">
