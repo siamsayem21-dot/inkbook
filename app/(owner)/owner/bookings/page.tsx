@@ -1,9 +1,9 @@
-import { redirect } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
-import { createClient as createServerClient } from "@/lib/supabase/server";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
+
+const STUDIO_ID = "5fe382a1-fee7-4387-b625-4bf7a52b8f45";
 
 function adminClient() {
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -48,37 +48,15 @@ function fmtTime(t: string) {
 }
 
 export default async function OwnerBookingsPage() {
-  const { data: { user } } = await createServerClient().auth.getUser();
-  if (!user) redirect("/login");
-
   const supabase = adminClient();
 
-  // Step 1: find this owner's studio
-  const { data: studio, error: studioError } = await supabase
-    .from("studios")
-    .select("id")
-    .eq("owner_id", user.id)
-    .single();
-
-  console.log("[OwnerBookings] user.id:", user.id);
-  console.log("[OwnerBookings] studio:", studio?.id ?? null, "| error:", studioError?.message ?? "none");
-
-  if (!studio) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold">All Bookings</h1>
-        <p className="text-sm text-zinc-500">No studio found for this account.</p>
-      </div>
-    );
-  }
-
-  // Step 2: fetch all bookings for the studio
   const { data: bookingsRaw, error: bookingsError } = await supabase
     .from("bookings")
     .select("id, date, time, status, deposit_amount, client_id, artist_id")
-    .eq("studio_id", studio.id)
+    .eq("studio_id", STUDIO_ID)
     .order("date", { ascending: false });
 
+  console.log("[OwnerBookings] hardcoded studioId:", STUDIO_ID);
   console.log("[OwnerBookings] bookings:", bookingsRaw?.length ?? 0, "| error:", bookingsError?.message ?? "none");
 
   const bookings = (bookingsRaw ?? []) as {
@@ -87,7 +65,6 @@ export default async function OwnerBookingsPage() {
     client_id: string; artist_id: string;
   }[];
 
-  // Step 3: batch-load client + artist names
   const clientIds = Array.from(new Set(bookings.map(b => b.client_id).filter(Boolean)));
   const artistIds = Array.from(new Set(bookings.map(b => b.artist_id).filter(Boolean)));
 
