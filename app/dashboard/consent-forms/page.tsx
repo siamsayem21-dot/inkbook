@@ -1,8 +1,8 @@
 export const dynamic = "force-dynamic";
 
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/config";
 import { createAdminClient } from "@/lib/supabase/admin";
+
+const STUDIO_ID = "5fe382a1-fee7-4387-b625-4bf7a52b8f45";
 
 type ArtistRef = { name: string };
 type BookingRef = { id: string; date: string; artists: ArtistRef | null };
@@ -27,38 +27,13 @@ function formatDate(iso: string) {
 }
 
 export default async function ConsentFormsPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
-
   const supabase = createAdminClient();
-
-  const { data: studioRaw } = await supabase
-    .from("studios")
-    .select("id")
-    .eq("owner_id", user.id)
-    .limit(1);
-
-  const studioData = (studioRaw as { id: string }[] | null)?.[0] ?? null;
-
-  if (!studioData) {
-    return (
-      <div>
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-1">Consent Forms</h1>
-        </div>
-        <div className="bg-zinc-900 border border-white/10 rounded-2xl px-5 py-16 text-center">
-          <p className="text-white/40 text-sm">Studio not found for your account.</p>
-          <p className="text-white/25 text-xs mt-1">Contact support if this issue persists.</p>
-        </div>
-      </div>
-    );
-  }
 
   // Get all bookings for this studio with artist names
   const { data: bookingsRaw } = await supabase
     .from("bookings")
     .select("id, date, artists(name)")
-    .eq("studio_id", studioData.id);
+    .eq("studio_id", STUDIO_ID);
 
   const bookings = (bookingsRaw as BookingRef[]) ?? [];
   const bookingIds = bookings.map((b) => b.id);

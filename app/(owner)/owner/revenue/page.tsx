@@ -1,10 +1,12 @@
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import RevenueChart, { type MonthRevenue } from "@/components/owner/RevenueChart";
 
-function fmtMoney(n: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
+export const dynamic = "force-dynamic";
+
+const STUDIO_ID = "5fe382a1-fee7-4387-b625-4bf7a52b8f45";
+
+function fmtMoney(cents: number) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(cents / 100);
 }
 
 function monthRange(offsetMonths: number) {
@@ -22,55 +24,44 @@ function monthRange(offsetMonths: number) {
 }
 
 export default async function RevenuePage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
-
   const supabase = createAdminClient();
 
-  const { data: studioRaw } = await supabase
-    .from("studios")
-    .select("id")
-    .eq("owner_id", user.id)
-    .maybeSingle();
+  const thisMonth = monthRange(0);
+  const lastMonth = monthRange(-1);
 
-  const studioId = (studioRaw as { id: string } | null)?.id ?? null;
-
-  const thisMonth  = monthRange(0);
-  const lastMonth  = monthRange(-1);
-
-  const fetchRevenue = async (first: string, last: string) => {
-    if (!studioId) return 0;
+  const fetchRevenueCents = async (first: string, last: string) => {
     const { data } = await supabase
       .from("bookings")
-      .select("deposit_amount")
-      .eq("studio_id", studioId)
-      .in("status", ["confirmed", "completed", "no_show"])
+      .select("deposit_amount_cents")
+      .eq("studio_id", STUDIO_ID)
+      .eq("deposit_paid", true)
       .gte("date", first)
       .lte("date", last);
-    return ((data ?? []) as { deposit_amount: number }[]).reduce((s, b) => s + (b.deposit_amount ?? 0), 0);
+    return ((data ?? []) as { deposit_amount_cents: number }[])
+      .reduce((s, b) => s + (b.deposit_amount_cents ?? 0), 0);
   };
 
-  const [thisMonthRev, lastMonthRev, noShowRev] = await Promise.all([
-    fetchRevenue(thisMonth.first, thisMonth.last),
-    fetchRevenue(lastMonth.first, lastMonth.last),
+  const [thisMonthCents, lastMonthCents, keptCents] = await Promise.all([
+    fetchRevenueCents(thisMonth.first, thisMonth.last),
+    fetchRevenueCents(lastMonth.first, lastMonth.last),
     (async () => {
-      if (!studioId) return 0;
       const { data } = await supabase
         .from("bookings")
-        .select("deposit_amount")
-        .eq("studio_id", studioId)
-        .eq("status", "no_show");
-      return ((data ?? []) as { deposit_amount: number }[]).reduce((s, b) => s + (b.deposit_amount ?? 0), 0);
+        .select("deposit_amount_cents")
+        .eq("studio_id", STUDIO_ID)
+        .eq("deposit_kept", true);
+      return ((data ?? []) as { deposit_amount_cents: number }[])
+        .reduce((s, b) => s + (b.deposit_amount_cents ?? 0), 0);
     })(),
   ]);
 
-  const txFee = Math.round(thisMonthRev * 0.01);
+  const txFeeCents = Math.round(thisMonthCents * 0.01);
 
   const statCards = [
-    { label: "This month",                  value: fmtMoney(thisMonthRev) },
-    { label: "Last month",                  value: fmtMoney(lastMonthRev) },
-    { label: "Transaction fees (1%)",        value: fmtMoney(txFee) },
-    { label: "Deposits kept (no-shows)",     value: fmtMoney(noShowRev) },
+    { label: "This month",               value: fmtMoney(thisMonthCents) },
+    { label: "Last month",               value: fmtMoney(lastMonthCents) },
+    { label: "Transaction fees (1%)",    value: fmtMoney(txFeeCents) },
+    { label: "Deposits kept (no-shows)", value: fmtMoney(keptCents) },
   ];
 
   // Revenue chart — last 6 months
@@ -78,7 +69,7 @@ export default async function RevenuePage() {
   const monthData: MonthRevenue[] = await Promise.all(
     ranges.map(async ({ first, last, label }) => ({
       label,
-      amount: await fetchRevenue(first, last),
+      amount: (await fetchRevenueCents(first, last)) / 100,
     }))
   );
 
