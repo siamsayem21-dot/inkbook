@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import { getCurrentUser } from "@/lib/auth/config";
 import Link from "next/link";
 
@@ -7,11 +7,11 @@ export const dynamic = "force-dynamic";
 
 function adminClient() {
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error("[OwnerBookings] SUPABASE_SERVICE_ROLE_KEY is not set — admin client cannot bypass RLS");
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY is not set");
   }
-  return createAdminClient(
+  return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 }
@@ -20,10 +20,10 @@ type BookingStatus = "pending_deposit" | "confirmed" | "completed" | "cancelled"
 
 const STATUS_LABEL: Record<BookingStatus, string> = {
   pending_deposit: "Awaiting deposit",
-  confirmed: "Confirmed",
-  completed: "Completed",
-  cancelled: "Cancelled",
-  no_show: "No-show",
+  confirmed:       "Confirmed",
+  completed:       "Completed",
+  cancelled:       "Cancelled",
+  no_show:         "No-show",
 };
 
 const STATUS_CLASS: Record<BookingStatus, string> = {
@@ -34,89 +34,86 @@ const STATUS_CLASS: Record<BookingStatus, string> = {
   no_show:         "bg-red-500/10 text-red-400 border border-red-500/20",
 };
 
+function fmtDate(d: string) {
+  const [y, mo, day] = d.split("-").map(Number);
+  return new Date(y, mo - 1, day).toLocaleDateString("en-US", {
+    month: "short", day: "numeric", year: "numeric",
+  });
+}
+
+function fmtTime(t: string) {
+  if (!t) return "—";
+  const [h, m] = t.split(":").map(Number);
+  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
+}
+
 export default async function OwnerBookingsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  // Use admin client to bypass RLS — auth already verified above via getCurrentUser()
   const supabase = adminClient();
 
-  console.log("[OwnerBookings] user.id:", user.id);
-
-  const { data: studios, error: studioError } = await supabase
+  // Step 1: find this owner's studio
+  const { data: studio, error: studioError } = await supabase
     .from("studios")
     .select("id")
-    .eq("owner_id", user.id);
+    .eq("owner_id", user.id)
+    .single();
 
-  console.log("[OwnerBookings] studios found:", studios?.length ?? 0, "| error:", studioError?.message ?? "none");
+  console.log("[OwnerBookings] user.id:", user.id);
+  console.log("[OwnerBookings] studio:", studio?.id ?? null, "| error:", studioError?.message ?? "none");
 
-  const studioIds = (studios ?? []).map((s) => (s as { id: string }).id);
-  console.log("[OwnerBookings] studioIds:", studioIds);
+  if (!studio) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">All Bookings</h1>
+        <p className="text-sm text-zinc-500">No studio found for this account.</p>
+      </div>
+    );
+  }
 
-  const { data: bookingsRaw, error: bookingsError } = studioIds.length > 0
-    ? await supabase
-        .from("bookings")
-        .select("id, date, time, status, deposit_amount, client_id, artist_id")
-        .in("studio_id", studioIds)
-        .order("date", { ascending: false })
-        .limit(200)
-    : { data: [], error: null };
+  // Step 2: fetch all bookings for the studio
+  const { data: bookingsRaw, error: bookingsError } = await supabase
+    .from("bookings")
+    .select("id, date, time, status, deposit_amount, client_id, artist_id")
+    .eq("studio_id", studio.id)
+    .order("date", { ascending: false });
 
-  console.log("[OwnerBookings] bookings found:", bookingsRaw?.length ?? 0, "| error:", bookingsError?.message ?? "none");
-  if (bookingsError) console.error("[OwnerBookings] bookings query error:", bookingsError);
+  console.log("[OwnerBookings] bookings:", bookingsRaw?.length ?? 0, "| error:", bookingsError?.message ?? "none");
 
   const bookings = (bookingsRaw ?? []) as {
-    id: string;
-    date: string;
-    time: string;
-    status: BookingStatus;
-    deposit_amount: number;
-    client_id: string;
-    artist_id: string;
+    id: string; date: string; time: string;
+    status: BookingStatus; deposit_amount: number;
+    client_id: string; artist_id: string;
   }[];
 
-  // Batch-fetch client and artist names
-  const clientIds = Array.from(new Set(bookings.map((b) => b.client_id).filter(Boolean)));
-  const artistIds = Array.from(new Set(bookings.map((b) => b.artist_id).filter(Boolean)));
+  // Step 3: batch-load client + artist names
+  const clientIds = [...new Set(bookings.map(b => b.client_id).filter(Boolean))];
+  const artistIds = [...new Set(bookings.map(b => b.artist_id).filter(Boolean))];
 
   const [{ data: clientsRaw }, { data: artistsRaw }] = await Promise.all([
-    clientIds.length > 0
+    clientIds.length
       ? supabase.from("clients").select("id, full_name").in("id", clientIds)
       : Promise.resolve({ data: [] }),
-    artistIds.length > 0
+    artistIds.length
       ? supabase.from("artists").select("id, name").in("id", artistIds)
       : Promise.resolve({ data: [] }),
   ]);
 
   const clientName = Object.fromEntries(
-    (clientsRaw ?? []).map((c) => [(c as { id: string; full_name: string }).id, (c as { id: string; full_name: string }).full_name])
+    (clientsRaw ?? []).map((c: any) => [c.id, c.full_name])
   );
   const artistName = Object.fromEntries(
-    (artistsRaw ?? []).map((a) => [(a as { id: string; name: string }).id, (a as { id: string; name: string }).name])
+    (artistsRaw ?? []).map((a: any) => [a.id, a.name])
   );
-
-  function fmtDate(d: string) {
-    const [y, mo, day] = d.split("-").map(Number);
-    return new Date(y, mo - 1, day).toLocaleDateString("en-US", {
-      month: "short", day: "numeric", year: "numeric",
-    });
-  }
-
-  function fmtTime(t: string) {
-    const [h, m] = t.split(":").map(Number);
-    const ampm = h >= 12 ? "PM" : "AM";
-    return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${ampm}`;
-  }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">All Bookings</h1>
-          <span className="text-xs bg-[#D4A853]/10 text-[#D4A853] border border-[#D4A853]/20 rounded-full px-2.5 py-1">
-            {bookings.length}
-          </span>
-        </div>
+      <div className="flex items-center gap-3">
+        <h1 className="text-2xl font-bold">All Bookings</h1>
+        <span className="text-xs bg-[#D4A853]/10 text-[#D4A853] border border-[#D4A853]/20 rounded-full px-2.5 py-1">
+          {bookings.length}
+        </span>
       </div>
 
       <div className="bg-[#111] border border-[#1E1E1E] rounded-xl overflow-hidden">
@@ -139,32 +136,20 @@ export default async function OwnerBookingsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {bookings.map((b) => (
-                    <tr
-                      key={b.id}
-                      className="border-b border-[#161616] last:border-0 hover:bg-white/[0.02] transition-colors"
-                    >
-                      <td className="px-5 py-4 text-[#E8E8E8] font-medium">
-                        {clientName[b.client_id] ?? "—"}
-                      </td>
-                      <td className="px-5 py-4 text-zinc-400">
-                        {artistName[b.artist_id] ?? "—"}
-                      </td>
+                  {bookings.map(b => (
+                    <tr key={b.id} className="border-b border-[#161616] last:border-0 hover:bg-white/[0.02] transition-colors">
+                      <td className="px-5 py-4 text-[#E8E8E8] font-medium">{clientName[b.client_id] ?? "—"}</td>
+                      <td className="px-5 py-4 text-zinc-400">{artistName[b.artist_id] ?? "—"}</td>
                       <td className="px-5 py-4 text-zinc-400">{fmtDate(b.date)}</td>
                       <td className="px-5 py-4 text-zinc-400">{fmtTime(b.time)}</td>
-                      <td className="px-5 py-4 text-[#D4A853]">
-                        ${b.deposit_amount ?? "—"}
-                      </td>
+                      <td className="px-5 py-4 text-[#D4A853]">${b.deposit_amount ?? "—"}</td>
                       <td className="px-5 py-4">
                         <span className={`text-xs px-2.5 py-1 rounded-full ${STATUS_CLASS[b.status] ?? "bg-zinc-800 text-zinc-400"}`}>
                           {STATUS_LABEL[b.status] ?? b.status}
                         </span>
                       </td>
                       <td className="px-5 py-4 text-right">
-                        <Link
-                          href={`/owner/bookings/${b.id}`}
-                          className="text-xs text-zinc-500 hover:text-white transition-colors"
-                        >
+                        <Link href={`/owner/bookings/${b.id}`} className="text-xs text-zinc-500 hover:text-white transition-colors">
                           View →
                         </Link>
                       </td>
@@ -176,12 +161,10 @@ export default async function OwnerBookingsPage() {
 
             {/* Mobile card stack */}
             <div className="flex flex-col divide-y divide-[#161616] md:hidden">
-              {bookings.map((b) => (
+              {bookings.map(b => (
                 <Link key={b.id} href={`/owner/bookings/${b.id}`} className="px-5 py-4 space-y-1.5 block hover:bg-white/[0.02] transition-colors">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-[#E8E8E8]">
-                      {clientName[b.client_id] ?? "—"}
-                    </span>
+                    <span className="text-sm font-medium text-[#E8E8E8]">{clientName[b.client_id] ?? "—"}</span>
                     <span className={`text-xs px-2.5 py-1 rounded-full ${STATUS_CLASS[b.status] ?? "bg-zinc-800 text-zinc-400"}`}>
                       {STATUS_LABEL[b.status] ?? b.status}
                     </span>
