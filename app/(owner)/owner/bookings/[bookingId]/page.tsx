@@ -1,8 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import BookingActions from "./BookingActions";
 
@@ -65,28 +63,12 @@ interface Props {
 }
 
 export default async function BookingDetailPage({ params }: Props) {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
-
   const supabase = createAdminClient();
 
-  // Resolve the owner's studio for the ownership security check
-  const { data: studioRaw } = await supabase
-    .from("studios")
-    .select("id")
-    .eq("owner_id", user.id)
-    .limit(1);
-
-  const studioId = (studioRaw as { id: string }[] | null)?.[0]?.id ?? null;
-  if (!studioId) return <ErrorCard message="Studio not found for your account." />;
-
-  // Fetch booking — studio_id filter enforces ownership
-  // Consent forms fetched separately: PostgREST can silently fail on reverse-FK joins
   const { data: bookingRaw, error: bookingError } = await supabase
     .from("bookings")
     .select("id, date, time, style, description, status, deposit_amount_cents, deposit_paid, deposit_kept, clients(full_name, email, phone), artists(name)")
     .eq("id", params.bookingId)
-    .eq("studio_id", studioId)
     .maybeSingle();
 
   if (bookingError) {
