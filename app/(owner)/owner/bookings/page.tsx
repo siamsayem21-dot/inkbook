@@ -101,10 +101,10 @@ export default async function OwnerBookingsPage() {
   ]);
 
   const clientName = Object.fromEntries(
-    (clientsRaw ?? []).map((c: any) => [c.id, c.full_name])
+    (clientsRaw ?? []).map((c: { id: string; full_name: string }) => [c.id, c.full_name])
   );
   const artistName = Object.fromEntries(
-    (artistsRaw ?? []).map((a: any) => [a.id, a.name])
+    (artistsRaw ?? []).map((a: { id: string; name: string }) => [a.id, a.name])
   );
 
   return (
