@@ -1,20 +1,9 @@
-import { createClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/admin";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
 const STUDIO_ID = "5fe382a1-fee7-4387-b625-4bf7a52b8f45";
-
-function adminClient() {
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error("SUPABASE_SERVICE_ROLE_KEY is not set");
-  }
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
 
 type BookingStatus = "pending_deposit" | "confirmed" | "completed" | "cancelled" | "no_show";
 
@@ -48,7 +37,7 @@ function fmtTime(t: string) {
 }
 
 export default async function OwnerBookingsPage() {
-  const supabase = adminClient();
+  const supabase = createAdminClient();
 
   const { data: bookingsRaw, error: bookingsError } = await supabase
     .from("bookings")
@@ -56,7 +45,7 @@ export default async function OwnerBookingsPage() {
     .eq("studio_id", STUDIO_ID)
     .order("date", { ascending: false });
 
-  console.log("[OwnerBookings] hardcoded studioId:", STUDIO_ID);
+  console.log("[OwnerBookings] studioId:", STUDIO_ID);
   console.log("[OwnerBookings] bookings:", bookingsRaw?.length ?? 0, "| error:", bookingsError?.message ?? "none");
 
   const bookings = (bookingsRaw ?? []) as {
