@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
-import { getCurrentUser } from "@/lib/auth/config";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -48,7 +48,7 @@ function fmtTime(t: string) {
 }
 
 export default async function OwnerBookingsPage() {
-  const user = await getCurrentUser();
+  const { data: { user } } = await createServerClient().auth.getUser();
   if (!user) redirect("/login");
 
   const supabase = adminClient();
