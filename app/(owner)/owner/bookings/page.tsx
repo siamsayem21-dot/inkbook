@@ -88,8 +88,8 @@ export default async function OwnerBookingsPage() {
   }[];
 
   // Step 3: batch-load client + artist names
-  const clientIds = [...new Set(bookings.map(b => b.client_id).filter(Boolean))];
-  const artistIds = [...new Set(bookings.map(b => b.artist_id).filter(Boolean))];
+  const clientIds = Array.from(new Set(bookings.map(b => b.client_id).filter(Boolean)));
+  const artistIds = Array.from(new Set(bookings.map(b => b.artist_id).filter(Boolean)));
 
   const [{ data: clientsRaw }, { data: artistsRaw }] = await Promise.all([
     clientIds.length
