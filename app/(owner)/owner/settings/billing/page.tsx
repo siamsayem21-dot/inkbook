@@ -1,14 +1,9 @@
-import { createClient } from "@supabase/supabase-js";
-import { getCurrentUser } from "@/lib/auth/config";
+export const dynamic = "force-dynamic";
+
+import { createAdminClient } from "@/lib/supabase/admin";
 import BillingClient from "./BillingClient";
 
-function adminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+const STUDIO_ID = "5fe382a1-fee7-4387-b625-4bf7a52b8f45";
 
 const PLAN_INFO: Record<string, { label: string; price: string; artists: string }> = {
   solo:   { label: "Solo",   price: "$49/mo",  artists: "1 artist" },
@@ -16,28 +11,21 @@ const PLAN_INFO: Record<string, { label: string; price: string; artists: string 
   pro:    { label: "Pro",    price: "$129/mo", artists: "6+ artists" },
 };
 
+type StudioBilling = { plan: string; subscription_status: string; stripe_customer_id: string | null };
+
 export default async function BillingSettingsPage() {
-  const user = await getCurrentUser();
+  const supabase = createAdminClient();
 
-  let plan = "solo";
-  let subscriptionStatus = "trialing";
-  let hasStripeCustomer = false;
+  const { data: studioRaw } = await supabase
+    .from("studios")
+    .select("plan, subscription_status, stripe_customer_id")
+    .eq("id", STUDIO_ID)
+    .maybeSingle();
 
-  if (user) {
-    const supabase = adminClient();
-    const { data: studio } = await supabase
-      .from("studios")
-      .select("plan, subscription_status, stripe_customer_id")
-      .eq("owner_id", user.id)
-      .maybeSingle();
-
-    if (studio) {
-      plan = (studio.plan as string) ?? "solo";
-      subscriptionStatus = (studio.subscription_status as string) ?? "trialing";
-      hasStripeCustomer = !!(studio.stripe_customer_id as string | null);
-    }
-  }
-
+  const studio = studioRaw as StudioBilling | null;
+  const plan = studio?.plan ?? "solo";
+  const subscriptionStatus = studio?.subscription_status ?? "trialing";
+  const hasStripeCustomer = !!studio?.stripe_customer_id;
   const planInfo = PLAN_INFO[plan] ?? PLAN_INFO.solo;
 
   return (

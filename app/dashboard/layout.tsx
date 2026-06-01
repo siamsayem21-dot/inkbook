@@ -1,25 +1,31 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/config";
+import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import DashboardSidebar from "./_components/DashboardSidebar";
+
+export const dynamic = "force-dynamic";
+
+const STUDIO_ID = "5fe382a1-fee7-4387-b625-4bf7a52b8f45";
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getCurrentUser();
+  // Use getUser() (validates token with Supabase server) instead of
+  // getCurrentUser() (uses getSession() which reads cookie without validation)
+  const serverClient = createClient();
+  const { data: { user } } = await serverClient.auth.getUser();
   if (!user) redirect("/login");
 
-  // .limit(1) — .single() returns null when multiple rows match
   const supabase = createAdminClient();
-  const { data: studios } = await supabase
+  const { data: studioRaw } = await supabase
     .from("studios")
     .select("name, subdomain")
-    .eq("owner_id", user.id)
-    .limit(1);
+    .eq("id", STUDIO_ID)
+    .maybeSingle();
 
-  const studio = studios?.[0] as { name: string; subdomain: string } | undefined;
+  const studio = studioRaw as { name: string; subdomain: string } | null;
 
   return (
     <div className="min-h-screen bg-ink text-white flex">

@@ -1,38 +1,31 @@
 "use server";
 
-import { createClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { sendArtistInviteEmail } from "@/lib/email";
-
-function adminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
 
 export async function inviteArtist(data: {
   name: string;
   email: string;
   studioId: string;
 }): Promise<{ error?: string }> {
-  const supabase = adminClient();
+  const supabase = createAdminClient();
 
   // Block if an active artist already has this email in this studio
-  const { data: activeArtist } = await supabase
+  const { data: activeArtistRaw } = await supabase
     .from("artists")
-    .select("id, is_active")
+    .select("id")
     .eq("email", data.email)
     .eq("studio_id", data.studioId)
     .maybeSingle();
 
-  if (activeArtist?.is_active) {
+  const activeArtist = activeArtistRaw as { id: string; is_active: boolean } | null;
+  if (activeArtist) {
     return { error: "Email already has an active account in this studio" };
   }
 
   // Block if a pending (non-expired, non-accepted) invite already exists
-  const { data: pendingInvite } = await supabase
+  const { data: pendingInviteRaw } = await supabase
     .from("artist_invites")
     .select("id")
     .eq("invited_email", data.email)
@@ -41,43 +34,46 @@ export async function inviteArtist(data: {
     .gt("expires_at", new Date().toISOString())
     .maybeSingle();
 
-  if (pendingInvite) {
+  if (pendingInviteRaw) {
     return { error: "Email already invited to this studio" };
   }
 
   // Look up studio name and owner_id
-  const { data: studio } = await supabase
+  const { data: studioRaw } = await supabase
     .from("studios")
     .select("name, owner_id")
     .eq("id", data.studioId)
     .single();
 
+  const studio = studioRaw as { name: string; owner_id: string } | null;
   if (!studio) return { error: "Studio not found" };
 
   // Insert invite — Postgres generates the token UUID automatically
-  const { data: invite, error: insertError } = await supabase
+  const { data: inviteRaw, error: insertError } = await supabase
     .from("artist_invites")
     .insert({
       studio_id: data.studioId,
       invited_name: data.name,
       invited_email: data.email,
-      invited_by: studio.owner_id as string,
+      invited_by: studio.owner_id,
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    })
+    } as never)
     .select("token")
     .single();
 
-  if (insertError || !invite) {
+  if (insertError || !inviteRaw) {
     console.error("[inviteArtist] DB insert failed:", insertError?.message);
     return { error: "Failed to create invite — please try again" };
   }
+
+  const invite = inviteRaw as { token: string };
 
   try {
     await sendArtistInviteEmail({
       to: data.email,
       inviteeName: data.name,
       studioName: studio.name,
-      token: (invite as { token: string }).token,
+      token: invite.token,
     });
   } catch (err) {
     console.error("[inviteArtist] email send failed:", err);
@@ -92,37 +88,38 @@ export async function resendInvite(data: {
   inviteId: string;
   email: string;
 }): Promise<{ error?: string }> {
-  const supabase = adminClient();
+  const supabase = createAdminClient();
 
-  // Extend expiry by 7 days from now and return the existing token
-  const { data: invite, error } = await supabase
+  const { data: inviteRaw, error } = await supabase
     .from("artist_invites")
     .update({
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    })
+    } as never)
     .eq("id", data.inviteId)
-    .is("accepted_at", null) // safety: never touch accepted invites
+    .is("accepted_at", null)
     .select("token, invited_name, studio_id")
     .single();
 
-  if (error || !invite) {
+  if (error || !inviteRaw) {
     console.error("[resendInvite] update failed:", error?.message);
     return { error: "Invite not found or already accepted" };
   }
 
-  const inv = invite as { token: string; invited_name: string; studio_id: string };
+  const inv = inviteRaw as { token: string; invited_name: string; studio_id: string };
 
-  const { data: studio } = await supabase
+  const { data: studioRaw } = await supabase
     .from("studios")
     .select("name")
     .eq("id", inv.studio_id)
     .single();
 
+  const studio = studioRaw as { name: string } | null;
+
   try {
     await sendArtistInviteEmail({
       to: data.email,
       inviteeName: inv.invited_name,
-      studioName: (studio as { name: string } | null)?.name ?? "your studio",
+      studioName: studio?.name ?? "your studio",
       token: inv.token,
     });
   } catch (err) {
@@ -134,12 +131,12 @@ export async function resendInvite(data: {
 }
 
 export async function cancelInvite(inviteId: string): Promise<{ error?: string }> {
-  const supabase = adminClient();
+  const supabase = createAdminClient();
   const { error } = await supabase
     .from("artist_invites")
     .delete()
     .eq("id", inviteId)
-    .is("accepted_at", null); // never delete accepted invites
+    .is("accepted_at", null);
 
   if (error) {
     console.error("[cancelInvite] delete failed:", error.message);
@@ -151,10 +148,10 @@ export async function cancelInvite(inviteId: string): Promise<{ error?: string }
 }
 
 export async function removeArtist(artistId: string): Promise<{ error?: string }> {
-  const supabase = adminClient();
+  const supabase = createAdminClient();
   const { error } = await supabase
     .from("artists")
-    .update({ is_active: false, user_id: null })
+    .update({ user_id: null } as never)
     .eq("id", artistId);
 
   if (error) return { error: "Something went wrong — try again" };
@@ -164,7 +161,7 @@ export async function removeArtist(artistId: string): Promise<{ error?: string }
 }
 
 export async function getUpcomingBookingsCount(artistId: string): Promise<number> {
-  const supabase = adminClient();
+  const supabase = createAdminClient();
   const today = new Date().toISOString().split("T")[0];
   const { count } = await supabase
     .from("bookings")

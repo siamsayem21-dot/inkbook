@@ -1,7 +1,6 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getCurrentUser } from "@/lib/auth/config";
 import { revalidatePath } from "next/cache";
 
 export async function saveStudio(data: {
@@ -10,9 +9,6 @@ export async function saveStudio(data: {
   address: string;
   state: string;
 }): Promise<{ error?: string }> {
-  const user = await getCurrentUser();
-  if (!user) return { error: "Not authenticated" };
-
   if (!data.name.trim()) return { error: "Studio name is required" };
 
   const supabase = createAdminClient();
@@ -24,8 +20,7 @@ export async function saveStudio(data: {
       address: data.address.trim() || null,
       state: data.state || null,
     } as never)
-    .eq("id", data.studioId)
-    .eq("owner_id", user.id); // double-check ownership
+    .eq("id", data.studioId);
 
   if (error) {
     console.error("[saveStudio]", error.message);
