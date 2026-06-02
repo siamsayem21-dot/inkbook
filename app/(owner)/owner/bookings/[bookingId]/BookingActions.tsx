@@ -122,7 +122,7 @@ export default function BookingActions({ bookingId, status, hasConsent, consentF
                   href={consentForm.id_photo_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#D4A853] hover:underline text-sm"
+                  className="text-[#c9a84c] hover:underline text-sm"
                 >
                   View ID →
                 </a>

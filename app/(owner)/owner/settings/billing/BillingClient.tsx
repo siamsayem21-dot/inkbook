@@ -71,7 +71,7 @@ export default function BillingClient({
       {subscriptionStatus === "trialing" && (
         <p className="text-sm text-zinc-400">
           You&apos;re on a free trial.{" "}
-          <Link href="/pricing" className="text-[#D4A853] hover:underline">
+          <Link href="/pricing" className="text-[#c9a84c] hover:underline">
             Choose a plan
           </Link>{" "}
           to keep access after your trial ends.
@@ -87,7 +87,7 @@ export default function BillingClient({
       {(subscriptionStatus === "canceled" || subscriptionStatus === "unpaid") && (
         <p className="text-sm text-red-400">
           Your subscription is inactive.{" "}
-          <Link href="/pricing" className="text-[#D4A853] hover:underline">
+          <Link href="/pricing" className="text-[#c9a84c] hover:underline">
             Resubscribe
           </Link>{" "}
           to restore access.
@@ -117,7 +117,7 @@ export default function BillingClient({
         <div className="pt-2">
           <Link
             href="/pricing"
-            className="inline-block text-sm bg-[#D4A853] text-black font-bold px-5 py-2 rounded-full hover:bg-[#C49843] transition-colors"
+            className="inline-block text-sm bg-[#c9a84c] text-black font-bold px-5 py-2 rounded-full hover:bg-[#a8832e] transition-colors"
           >
             Subscribe now
           </Link>

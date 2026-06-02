@@ -43,8 +43,8 @@ const spinnerSvg = (
 
 function Avatar({ name }: { name: string }) {
   return (
-    <div className="w-9 h-9 rounded-full bg-[#D4A853]/15 border border-[#D4A853]/25 flex items-center justify-center shrink-0">
-      <span className="text-[#D4A853] text-sm font-semibold">
+    <div className="w-9 h-9 rounded-full bg-[#c9a84c]/15 border border-[#c9a84c]/25 flex items-center justify-center shrink-0">
+      <span className="text-[#c9a84c] text-sm font-semibold">
         {name.trim()[0]?.toUpperCase() ?? "?"}
       </span>
     </div>
@@ -143,28 +143,28 @@ function InviteModal({ studioId, onClose, onSuccess }: InviteModalProps) {
 
             <div>
               <label className="text-sm text-zinc-400 block mb-1.5">
-                Full Name <span className="text-[#D4A853]">*</span>
+                Full Name <span className="text-[#c9a84c]">*</span>
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => { setName(e.target.value); setErrors((v) => ({ ...v, name: undefined })); }}
                 placeholder="Jane Smith"
-                className={`w-full bg-[#0A0A0A] border rounded-lg px-4 py-2.5 text-sm text-[#E8E8E8] focus:outline-none transition-colors placeholder:text-zinc-600 ${errors.name ? "border-red-700" : "border-[#2A2A2A] focus:border-[#D4A853]"}`}
+                className={`w-full bg-[#0A0A0A] border rounded-lg px-4 py-2.5 text-sm text-[#E8E8E8] focus:outline-none transition-colors placeholder:text-zinc-600 ${errors.name ? "border-red-700" : "border-[#2A2A2A] focus:border-[#c9a84c]"}`}
               />
               {errors.name && <p className="text-red-400 text-xs mt-1.5">{errors.name}</p>}
             </div>
 
             <div>
               <label className="text-sm text-zinc-400 block mb-1.5">
-                Email <span className="text-[#D4A853]">*</span>
+                Email <span className="text-[#c9a84c]">*</span>
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setErrors((v) => ({ ...v, email: undefined })); }}
                 placeholder="jane@studio.com"
-                className={`w-full bg-[#0A0A0A] border rounded-lg px-4 py-2.5 text-sm text-[#E8E8E8] focus:outline-none transition-colors placeholder:text-zinc-600 ${errors.email ? "border-red-700" : "border-[#2A2A2A] focus:border-[#D4A853]"}`}
+                className={`w-full bg-[#0A0A0A] border rounded-lg px-4 py-2.5 text-sm text-[#E8E8E8] focus:outline-none transition-colors placeholder:text-zinc-600 ${errors.email ? "border-red-700" : "border-[#2A2A2A] focus:border-[#c9a84c]"}`}
               />
               {errors.email && <p className="text-red-400 text-xs mt-1.5">{errors.email}</p>}
             </div>
@@ -172,7 +172,7 @@ function InviteModal({ studioId, onClose, onSuccess }: InviteModalProps) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#D4A853] text-black font-bold py-2.5 rounded-lg hover:bg-[#C49843] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-1"
+              className="w-full bg-[#c9a84c] text-black font-bold py-2.5 rounded-lg hover:bg-[#a8832e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-1"
             >
               {loading ? <>{spinnerSvg} Sending…</> : "Send Invite →"}
             </button>
@@ -322,7 +322,7 @@ export default function ArtistsClient({
         <button
           onClick={() => handleResend(artist)}
           disabled={!!rowLoading[artist.id]}
-          className="text-xs text-zinc-400 hover:text-[#D4A853] transition-colors disabled:opacity-50 whitespace-nowrap"
+          className="text-xs text-zinc-400 hover:text-[#c9a84c] transition-colors disabled:opacity-50 whitespace-nowrap"
         >
           {rowLoading[artist.id] ? "Sending…" : "Resend Invite"}
         </button>
@@ -342,13 +342,13 @@ export default function ArtistsClient({
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-[#E8E8E8]">Your Artists</h1>
-          <span className="text-xs bg-[#D4A853]/10 text-[#D4A853] border border-[#D4A853]/20 rounded-full px-2.5 py-1">
+          <span className="text-xs bg-[#c9a84c]/10 text-[#c9a84c] border border-[#c9a84c]/20 rounded-full px-2.5 py-1">
             {artists.length}
           </span>
         </div>
         <button
           onClick={() => setInviteOpen(true)}
-          className="bg-[#D4A853] text-black text-sm font-bold px-4 py-2 rounded-lg hover:bg-[#C49843] transition-colors"
+          className="bg-[#c9a84c] text-black text-sm font-bold px-4 py-2 rounded-lg hover:bg-[#a8832e] transition-colors"
         >
           + Invite Artist
         </button>
@@ -360,7 +360,7 @@ export default function ArtistsClient({
           <p className="text-zinc-500 text-sm mb-3">No artists yet.</p>
           <button
             onClick={() => setInviteOpen(true)}
-            className="text-[#D4A853] text-sm hover:underline"
+            className="text-[#c9a84c] text-sm hover:underline"
           >
             Invite your first artist →
           </button>

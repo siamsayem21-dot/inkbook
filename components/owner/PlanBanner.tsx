@@ -3,11 +3,11 @@
 import { useState } from "react";
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  active: { label: "Active", className: "bg-green-500/10 text-green-400 border-green-500/20" },
-  trialing: { label: "Trial", className: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
-  past_due: { label: "Past due", className: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
-  canceled: { label: "Canceled", className: "bg-red-500/10 text-red-400 border-red-500/20" },
-  unpaid: { label: "Unpaid", className: "bg-red-500/10 text-red-400 border-red-500/20" },
+  active:   { label: "Active",    className: "bg-green-500/10 text-green-400 border-green-500/20" },
+  trialing: { label: "Trial",     className: "bg-gold/10 text-gold border-gold/20" },
+  past_due: { label: "Past Due",  className: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
+  canceled: { label: "Canceled",  className: "bg-red-500/10 text-red-400 border-red-500/20" },
+  unpaid:   { label: "Unpaid",    className: "bg-red-500/10 text-red-400 border-red-500/20" },
 };
 
 export default function PlanBanner({
@@ -38,19 +38,17 @@ export default function PlanBanner({
   }
 
   return (
-    <div className="flex items-center justify-between bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4">
+    <div className="flex items-center justify-between border border-white/[0.08] px-5 py-4">
       <div className="flex items-center gap-3">
-        <span className="text-sm font-medium text-zinc-300">{planLabel}</span>
-        <span
-          className={`text-xs border px-2.5 py-0.5 rounded-full ${badge.className}`}
-        >
+        <span className="font-cinzel text-sm font-semibold text-zinc-300 tracking-wide">{planLabel}</span>
+        <span className={`label-xs border px-2.5 py-1 ${badge.className}`}>
           {badge.label}
         </span>
       </div>
       <button
         onClick={handleManagePlan}
         disabled={loading}
-        className="text-sm text-zinc-400 hover:text-[#D4A853] transition-colors disabled:opacity-50"
+        className="label-xs text-zinc-500 hover:text-gold transition-colors disabled:opacity-50"
       >
         {loading ? "Opening…" : "Manage Plan →"}
       </button>

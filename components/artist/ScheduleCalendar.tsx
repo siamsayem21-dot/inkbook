@@ -56,7 +56,7 @@ export default function ScheduleCalendar({ artistId, initial }: Props) {
     <div className="space-y-4">
       <div className="flex items-center gap-4">
         <p className="text-sm text-zinc-400">
-          Click a slot to mark it <span className="text-[#D4A853]">available</span> (gold) or unavailable (dark).
+          Click a slot to mark it <span className="text-[#c9a84c]">available</span> (gold) or unavailable (dark).
         </p>
         <div className="ml-auto flex items-center gap-3">
           {error && <span className="text-xs text-red-400">{error}</span>}
@@ -64,7 +64,7 @@ export default function ScheduleCalendar({ artistId, initial }: Props) {
           <button
             onClick={handleSave}
             disabled={isPending}
-            className="text-sm bg-[#D4A853] text-black px-4 py-2 rounded-full font-bold hover:bg-[#C49843] transition-colors disabled:opacity-50"
+            className="text-sm bg-[#c9a84c] text-black px-4 py-2 rounded-full font-bold hover:bg-[#a8832e] transition-colors disabled:opacity-50"
           >
             {isPending ? "Saving…" : "Save availability"}
           </button>
@@ -90,7 +90,7 @@ export default function ScheduleCalendar({ artistId, initial }: Props) {
                     title={`${DAYS[day]} ${fmt12h(hour)} — click to ${isAvail ? "remove" : "mark"} available`}
                     className={`h-8 rounded border transition-colors ${
                       isAvail
-                        ? "bg-[#D4A853]/20 border-[#D4A853]/50 hover:bg-[#D4A853]/30"
+                        ? "bg-[#c9a84c]/20 border-[#c9a84c]/50 hover:bg-[#c9a84c]/30"
                         : "border-zinc-800 hover:border-zinc-600"
                     }`}
                   />

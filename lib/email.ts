@@ -65,23 +65,23 @@ function buildEmailHtml({
       <table width="480" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1E1E1E;border-radius:16px;padding:40px;">
         <tr><td>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:32px;">
-            <div style="width:32px;height:32px;background:#D4A853;border-radius:8px;display:inline-block;text-align:center;line-height:32px;">
+            <div style="width:32px;height:32px;background:#c9a84c;border-radius:8px;display:inline-block;text-align:center;line-height:32px;">
               <span style="color:#000;font-size:11px;font-weight:900;">IB</span>
             </div>
             <span style="color:#E8E8E8;font-weight:700;font-size:18px;vertical-align:top;line-height:32px;margin-left:8px;">InkBook</span>
           </div>
           <h1 style="color:#E8E8E8;font-size:22px;font-weight:700;margin:0 0 8px;">You're invited!</h1>
           <p style="color:#A0A0A0;font-size:15px;margin:0 0 24px;">
-            Hi ${inviteeName}, <strong style="color:#D4A853;">${studioName}</strong> has invited you to join their team on InkBook.
+            Hi ${inviteeName}, <strong style="color:#c9a84c;">${studioName}</strong> has invited you to join their team on InkBook.
           </p>
           <p style="color:#888;font-size:14px;margin:0 0 32px;">
             Click the button below to accept your invite and set up your account. This link expires in 7 days.
           </p>
-          <a href="${inviteUrl}" style="display:inline-block;background:#D4A853;color:#000;font-weight:700;font-size:15px;text-decoration:none;padding:14px 28px;border-radius:10px;">
+          <a href="${inviteUrl}" style="display:inline-block;background:#c9a84c;color:#000;font-weight:700;font-size:15px;text-decoration:none;padding:14px 28px;border-radius:10px;">
             Accept Invite →
           </a>
           <p style="color:#555;font-size:12px;margin:32px 0 0;">
-            Or copy this link: <span style="color:#D4A853;">${inviteUrl}</span>
+            Or copy this link: <span style="color:#c9a84c;">${inviteUrl}</span>
           </p>
         </td></tr>
       </table>

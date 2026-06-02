@@ -131,7 +131,7 @@ export default async function OwnerDashboardPage({
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
-        <h1 className="text-2xl font-bold">Studio Dashboard</h1>
+        <h1 className="font-cinzel text-2xl md:text-3xl font-bold tracking-wide">Studio Dashboard</h1>
         {searchParams.subscribed === "true" && (
           <span className="text-xs bg-green-500/10 text-green-400 border border-green-500/20 px-3 py-1.5 rounded-full">
             Subscription active!
@@ -151,9 +151,9 @@ export default async function OwnerDashboardPage({
 
       {/* Empty state or charts */}
       {(totalBookings ?? 0) === 0 ? (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center">
-          <p className="text-base font-semibold mb-2">No bookings yet</p>
-          <p className="text-zinc-400 text-sm mb-6">
+        <div className="border border-white/[0.08] p-8 text-center">
+          <p className="font-cinzel text-base font-semibold tracking-wide mb-2">No Bookings Yet</p>
+          <p className="text-zinc-500 text-sm mb-6">
             Share your booking link to get started.
           </p>
           <div className="flex items-center justify-center gap-3 flex-wrap">

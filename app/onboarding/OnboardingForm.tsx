@@ -34,7 +34,7 @@ type FieldErrors = Partial<Record<"name" | "slug" | "phone" | "city" | "state" |
 
 const inputBase =
   "w-full bg-[#0A0A0A] border rounded-lg px-4 py-2.5 text-sm text-[#E8E8E8] focus:outline-none transition-colors placeholder:text-zinc-600";
-const inputNormal = "border-[#2A2A2A] focus:border-[#D4A853]";
+const inputNormal = "border-[#2A2A2A] focus:border-[#c9a84c]";
 const inputError = "border-red-700 focus:border-red-600";
 
 export default function OnboardingForm({ userId }: { userId: string }) {
@@ -141,13 +141,13 @@ export default function OnboardingForm({ userId }: { userId: string }) {
       ? "border-red-700"
       : slugStatus === "available"
       ? "border-green-700"
-      : "border-[#2A2A2A] focus-within:border-[#D4A853]";
+      : "border-[#2A2A2A] focus-within:border-[#c9a84c]";
 
   return (
     <div className="bg-[#111] border border-[#1E1E1E] rounded-2xl p-8">
       {/* Logo */}
       <div className="flex items-center gap-2.5 mb-8">
-        <div className="w-8 h-8 rounded-lg bg-[#D4A853] flex items-center justify-center shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-[#c9a84c] flex items-center justify-center shrink-0">
           <span className="text-black text-xs font-black">IB</span>
         </div>
         <span className="text-[#E8E8E8] font-bold text-lg">InkBook</span>
@@ -159,10 +159,10 @@ export default function OnboardingForm({ userId }: { userId: string }) {
           <span className="text-xs text-zinc-500 uppercase tracking-wider">
             Step 1 of 1 — Studio Setup
           </span>
-          <span className="text-xs text-[#D4A853]">100%</span>
+          <span className="text-xs text-[#c9a84c]">100%</span>
         </div>
         <div className="h-1 bg-[#1E1E1E] rounded-full overflow-hidden">
-          <div className="h-full bg-[#D4A853] rounded-full w-full" />
+          <div className="h-full bg-[#c9a84c] rounded-full w-full" />
         </div>
       </div>
 
@@ -181,7 +181,7 @@ export default function OnboardingForm({ userId }: { userId: string }) {
         {/* Studio Name */}
         <div>
           <label className="text-sm text-zinc-400 block mb-1.5">
-            Studio Name <span className="text-[#D4A853]">*</span>
+            Studio Name <span className="text-[#c9a84c]">*</span>
           </label>
           <input
             type="text"
@@ -199,7 +199,7 @@ export default function OnboardingForm({ userId }: { userId: string }) {
         {/* Slug */}
         <div>
           <label className="text-sm text-zinc-400 block mb-1.5">
-            Booking URL <span className="text-[#D4A853]">*</span>
+            Booking URL <span className="text-[#c9a84c]">*</span>
           </label>
           <div
             className={`flex items-center bg-[#0A0A0A] border rounded-lg overflow-hidden transition-colors ${slugBorderColor}`}
@@ -236,7 +236,7 @@ export default function OnboardingForm({ userId }: { userId: string }) {
         {/* Phone */}
         <div>
           <label className="text-sm text-zinc-400 block mb-1.5">
-            Phone <span className="text-[#D4A853]">*</span>
+            Phone <span className="text-[#c9a84c]">*</span>
           </label>
           <input
             type="tel"
@@ -254,7 +254,7 @@ export default function OnboardingForm({ userId }: { userId: string }) {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-sm text-zinc-400 block mb-1.5">
-              City <span className="text-[#D4A853]">*</span>
+              City <span className="text-[#c9a84c]">*</span>
             </label>
             <input
               type="text"
@@ -270,7 +270,7 @@ export default function OnboardingForm({ userId }: { userId: string }) {
 
           <div>
             <label className="text-sm text-zinc-400 block mb-1.5">
-              State <span className="text-[#D4A853]">*</span>
+              State <span className="text-[#c9a84c]">*</span>
             </label>
             <select
               value={state}
@@ -294,7 +294,7 @@ export default function OnboardingForm({ userId }: { userId: string }) {
         <button
           type="submit"
           disabled={loading || slugStatus === "taken"}
-          className="w-full bg-[#D4A853] text-black font-bold py-3 rounded-lg hover:bg-[#C49843] transition-colors mt-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full bg-[#c9a84c] text-black font-bold py-3 rounded-lg hover:bg-[#a8832e] transition-colors mt-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {loading ? (
             <>

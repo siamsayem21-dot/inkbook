@@ -7,7 +7,7 @@ import BookingActions from "./BookingActions";
 type BookingStatus = "pending_deposit" | "confirmed" | "completed" | "cancelled" | "no_show";
 
 const STATUS_LABELS: Record<BookingStatus, { label: string; className: string }> = {
-  confirmed:       { label: "Confirmed",        className: "bg-[#D4A853]/10 text-[#D4A853] border-[#D4A853]/20" },
+  confirmed:       { label: "Confirmed",        className: "bg-[#c9a84c]/10 text-[#c9a84c] border-[#c9a84c]/20" },
   pending_deposit: { label: "Awaiting deposit", className: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
   completed:       { label: "Completed",        className: "bg-green-500/10 text-green-400 border-green-500/20" },
   cancelled:       { label: "Cancelled",        className: "bg-white/5 text-white/30 border-white/10" },
@@ -50,7 +50,7 @@ function ErrorCard({ message }: { message: string }) {
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center space-y-3">
         <p className="text-zinc-300 font-medium">Booking unavailable</p>
         <p className="text-zinc-500 text-sm">{message}</p>
-        <Link href="/owner/bookings" className="inline-block mt-2 text-sm text-[#D4A853] hover:underline">
+        <Link href="/owner/bookings" className="inline-block mt-2 text-sm text-[#c9a84c] hover:underline">
           Return to bookings →
         </Link>
       </div>

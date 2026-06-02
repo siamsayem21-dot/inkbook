@@ -64,86 +64,98 @@ export default function RegisterPage() {
     router.push("/owner/dashboard");
   }
 
+  const inputClass = "w-full bg-zinc-900 border border-white/[0.1] px-4 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-gold/50 transition-colors";
+
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
-      <h1 className="text-2xl font-bold mb-1">Create your studio</h1>
-      <p className="text-zinc-400 text-sm mb-8">Start your free 14-day trial. No credit card required.</p>
+    <div className="border border-white/[0.08] bg-zinc-900/50 p-8">
+      {/* Logo */}
+      <div className="flex items-center gap-2.5 mb-8">
+        <div className="w-7 h-7 border border-gold/40 flex items-center justify-center">
+          <span className="font-cinzel text-gold text-[10px] font-bold">IB</span>
+        </div>
+        <span className="font-cinzel text-sm tracking-wider text-white">InkBook</span>
+      </div>
+
+      <h1 className="font-cinzel text-2xl font-bold tracking-wide mb-1">Create Your Studio</h1>
+      <p className="text-zinc-500 text-sm mb-8">Start your free 14-day trial. No credit card required.</p>
 
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         {error && (
-          <div className="bg-red-950 border border-red-800 text-red-300 text-sm rounded-lg px-4 py-3">
+          <div className="border border-red-800/60 text-red-400 text-sm px-4 py-3 bg-red-950/40">
             {error}
           </div>
         )}
 
         <div>
-          <label className="text-sm text-zinc-400 block mb-1.5">Studio name</label>
+          <label className="label-xs text-zinc-500 block mb-2">Studio Name</label>
           <input
             type="text"
             placeholder="Ink & Iron Studio"
             value={studioName}
             onChange={(e) => setStudioName(e.target.value)}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-zinc-500"
+            className={inputClass}
           />
         </div>
         <div>
-          <label className="text-sm text-zinc-400 block mb-1.5">Your name</label>
+          <label className="label-xs text-zinc-500 block mb-2">Your Name</label>
           <input
             type="text"
             placeholder="Jane Smith"
             value={ownerName}
             onChange={(e) => setOwnerName(e.target.value)}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-zinc-500"
+            className={inputClass}
           />
         </div>
         <div>
-          <label className="text-sm text-zinc-400 block mb-1.5">Email</label>
+          <label className="label-xs text-zinc-500 block mb-2">Email</label>
           <input
             type="email"
             placeholder="you@studio.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-zinc-500"
+            className={inputClass}
           />
         </div>
         <div>
-          <label className="text-sm text-zinc-400 block mb-1.5">Password</label>
+          <label className="label-xs text-zinc-500 block mb-2">Password</label>
           <input
             type="password"
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-zinc-500"
+            className={inputClass}
           />
         </div>
         <div>
-          <label className="text-sm text-zinc-400 block mb-1.5">Subdomain</label>
+          <label className="label-xs text-zinc-500 block mb-2">Subdomain</label>
           <div className="flex items-center">
             <input
               type="text"
               placeholder="inkandironstudio"
               value={subdomain}
               onChange={(e) => setSubdomain(e.target.value.toLowerCase())}
-              className="flex-1 bg-zinc-800 border border-zinc-700 rounded-l-lg px-4 py-2.5 text-sm focus:outline-none focus:border-zinc-500"
+              className="flex-1 bg-zinc-900 border border-white/[0.1] border-r-0 px-4 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-gold/50 transition-colors"
             />
-            <span className="bg-zinc-700 border border-l-0 border-zinc-700 rounded-r-lg px-3 py-2.5 text-sm text-zinc-400">
+            <span className="bg-zinc-800 border border-white/[0.1] px-3 py-2.5 text-xs text-zinc-500 shrink-0">
               .inkbook.app
             </span>
           </div>
         </div>
+
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-white text-black font-semibold py-2.5 rounded-lg hover:bg-zinc-200 transition-colors mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-gold text-black label-sm py-3 hover:bg-gold-light disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-2"
         >
-          {loading ? "Creating account…" : "Create account"}
+          {loading ? "Creating Account…" : "Create Account"}
         </button>
       </form>
 
-      <p className="text-zinc-500 text-sm text-center mt-6">
+      <div className="gold-divider mt-6" />
+      <p className="text-zinc-600 text-sm text-center mt-6">
         Already have an account?{" "}
-        <Link href="/login" className="text-white underline underline-offset-4">
-          Sign in
+        <Link href="/login" className="text-gold hover:text-gold-light transition-colors underline underline-offset-4">
+          Sign In
         </Link>
       </p>
     </div>

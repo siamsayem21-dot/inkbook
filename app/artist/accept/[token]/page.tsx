@@ -17,7 +17,7 @@ function ErrorPage({ title, message }: { title: string; message: string }) {
         <p className="text-sm text-zinc-400 mb-6">{message}</p>
         <Link
           href="/login"
-          className="inline-block text-sm text-[#D4A853] hover:underline"
+          className="inline-block text-sm text-[#c9a84c] hover:underline"
         >
           Sign in instead →
         </Link>
@@ -90,7 +90,7 @@ export default async function AcceptInvitePage({
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-6">
-            <div className="w-8 h-8 rounded-lg bg-[#D4A853] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-[#c9a84c] flex items-center justify-center">
               <span className="text-black text-xs font-black">IB</span>
             </div>
             <span className="text-[#E8E8E8] font-bold text-lg">InkBook</span>
@@ -99,7 +99,7 @@ export default async function AcceptInvitePage({
             You&apos;re invited!
           </h1>
           <p className="text-sm text-zinc-400">
-            <span className="text-[#D4A853] font-medium">{studioName}</span> has invited you to
+            <span className="text-[#c9a84c] font-medium">{studioName}</span> has invited you to
             join their team. Set up your account below.
           </p>
         </div>
@@ -116,7 +116,7 @@ export default async function AcceptInvitePage({
 
         <p className="text-center text-xs text-zinc-600 mt-6">
           Already have an account?{" "}
-          <Link href="/login" className="text-zinc-400 hover:text-[#D4A853] transition-colors">
+          <Link href="/login" className="text-zinc-400 hover:text-[#c9a84c] transition-colors">
             Sign in
           </Link>
         </p>

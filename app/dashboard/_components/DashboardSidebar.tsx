@@ -5,9 +5,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const NAV = [
-  { label: "Overview", href: "/dashboard" },
-  { label: "Bookings", href: "/dashboard/bookings" },
-  { label: "Artists", href: "/dashboard/artists" },
+  { label: "Overview",      href: "/dashboard" },
+  { label: "Bookings",      href: "/dashboard/bookings" },
+  { label: "Artists",       href: "/dashboard/artists" },
   { label: "Consent Forms", href: "/dashboard/consent-forms" },
 ];
 
@@ -28,31 +28,33 @@ export default function DashboardSidebar({ studioName, studioSubdomain }: Props)
   };
 
   return (
-    <aside className="w-56 shrink-0 border-r border-white/10 flex flex-col py-6 px-3 bg-[#0D0D0D]">
+    <aside className="w-56 shrink-0 border-r border-white/[0.06] flex flex-col py-6 bg-[#0D0D0D]">
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-3 mb-8">
-        <div className="w-7 h-7 rounded-lg bg-gold flex items-center justify-center shrink-0">
-          <span className="text-black text-[10px] font-black">IB</span>
+      <div className="px-4 mb-6">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 border border-gold/40 flex items-center justify-center shrink-0">
+            <span className="font-cinzel text-gold text-[10px] font-bold">IB</span>
+          </div>
+          <span className="font-cinzel text-[13px] tracking-wider text-white">InkBook</span>
         </div>
-        <span className="font-bold text-sm">InkBook</span>
       </div>
 
       {/* Studio */}
-      <div className="px-3 mb-6">
-        <p className="text-[10px] text-white/30 uppercase tracking-widest mb-2">Studio</p>
+      <div className="px-4 mb-5">
+        <p className="label-xs text-zinc-700 mb-2.5">Studio</p>
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-zinc-800 ring-2 ring-gold/30 flex items-center justify-center shrink-0">
-            <span className="text-white text-xs font-black">
+          <div className="w-7 h-7 bg-gold/10 border border-gold/25 flex items-center justify-center shrink-0">
+            <span className="font-cinzel text-gold text-[9px] font-bold">
               {studioName.charAt(0).toUpperCase()}
             </span>
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold truncate">{studioName}</p>
+            <p className="text-xs font-medium text-zinc-300 truncate">{studioName}</p>
             {studioSubdomain && (
               <a
                 href={`/book/${studioSubdomain}`}
                 target="_blank"
-                className="text-[11px] text-white/30 hover:text-gold transition-colors mt-0.5 inline-block"
+                className="text-[9px] uppercase tracking-[0.1em] text-zinc-600 hover:text-gold transition-colors mt-0.5 inline-block"
               >
                 /{studioSubdomain} ↗
               </a>
@@ -62,7 +64,7 @@ export default function DashboardSidebar({ studioName, studioSubdomain }: Props)
       </div>
 
       {/* Nav */}
-      <nav className="space-y-0.5">
+      <nav className="flex flex-col flex-1">
         {NAV.map((item) => {
           const active =
             item.href === "/dashboard"
@@ -72,14 +74,12 @@ export default function DashboardSidebar({ studioName, studioSubdomain }: Props)
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+              className={`py-2 px-4 text-[10px] uppercase tracking-[0.13em] font-medium transition-all flex items-center ${
                 active
-                  ? "bg-gold/10 text-gold font-medium"
-                  : "text-white/40 hover:text-white hover:bg-white/5"
+                  ? "text-gold bg-gold/[0.07] border-l-2 border-gold pl-[calc(1rem-2px)]"
+                  : "text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04]"
               }`}
             >
-              {active && <span className="w-1 h-4 rounded-full bg-gold shrink-0" />}
-              {!active && <span className="w-1 h-4 shrink-0" />}
               {item.label}
             </Link>
           );
@@ -87,12 +87,12 @@ export default function DashboardSidebar({ studioName, studioSubdomain }: Props)
       </nav>
 
       {/* Sign out */}
-      <div className="mt-auto pt-4 border-t border-white/10">
+      <div className="px-4 pt-4 border-t border-white/[0.06]">
         <button
           onClick={handleSignOut}
-          className="w-full text-left px-3 py-2 text-sm text-white/30 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+          className="w-full text-left py-1.5 text-[9px] uppercase tracking-[0.15em] text-zinc-600 hover:text-zinc-400 transition-colors"
         >
-          Sign out
+          Sign Out
         </button>
       </div>
     </aside>

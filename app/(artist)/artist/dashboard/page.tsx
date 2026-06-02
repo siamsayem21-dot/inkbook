@@ -7,7 +7,7 @@ function NoArtistProfile() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-[#E8E8E8]">Your Dashboard</h1>
+        <h1 className="font-cinzel text-2xl font-bold tracking-wide">Your Dashboard</h1>
       </div>
       <div className="bg-[#111] border border-[#1E1E1E] rounded-xl p-8 text-center">
         <p className="text-sm text-zinc-400 mb-2">Artist profile not set up yet.</p>
@@ -163,7 +163,7 @@ export default async function ArtistDashboardPage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-[#E8E8E8]">Your Dashboard</h1>
+        <h1 className="font-cinzel text-2xl font-bold tracking-wide">Your Dashboard</h1>
         <p className="text-sm text-zinc-500 mt-1">
           {now.toLocaleDateString("en-US", {
             weekday: "long",
@@ -180,7 +180,7 @@ export default async function ArtistDashboardPage() {
           <p className="text-xs text-zinc-500 uppercase tracking-widest mb-3">
             This Month&apos;s Earnings
           </p>
-          <p className="text-3xl font-semibold text-[#D4A853]">
+          <p className="text-3xl font-semibold text-[#c9a84c]">
             {fmtMoney(monthEarnings)}
           </p>
           <p className="text-xs text-zinc-600 mt-2">confirmed deposits only</p>
@@ -190,7 +190,7 @@ export default async function ArtistDashboardPage() {
           <p className="text-xs text-zinc-500 uppercase tracking-widest mb-3">
             Today&apos;s Bookings
           </p>
-          <p className="text-3xl font-semibold text-[#D4A853]">
+          <p className="text-3xl font-semibold text-[#c9a84c]">
             {todayBookings.length}
           </p>
           <p className="text-xs text-zinc-600 mt-2">appointments today</p>
@@ -200,7 +200,7 @@ export default async function ArtistDashboardPage() {
           <p className="text-xs text-zinc-500 uppercase tracking-widest mb-3">
             Next 7 Days
           </p>
-          <p className="text-3xl font-semibold text-[#D4A853]">
+          <p className="text-3xl font-semibold text-[#c9a84c]">
             {upcomingBookings.length}
           </p>
           <p className="text-xs text-zinc-600 mt-2">upcoming appointments</p>
@@ -213,7 +213,7 @@ export default async function ArtistDashboardPage() {
           <p className="text-xs text-zinc-500 uppercase tracking-widest mb-2">
             Your Booking Link
           </p>
-          <p className="font-mono text-sm text-[#D4A853] break-all">{bookingLink}</p>
+          <p className="font-mono text-sm text-[#c9a84c] break-all">{bookingLink}</p>
         </div>
         <CopyLinkButton link={bookingLink} />
       </div>
@@ -224,7 +224,7 @@ export default async function ArtistDashboardPage() {
         <div className="bg-[#111] border border-[#1E1E1E] rounded-xl overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-[#1A1A1A]">
             <h2 className="text-sm font-medium text-[#BBB]">Today&apos;s Bookings</h2>
-            <span className="text-xs bg-[#D4A853]/10 text-[#D4A853] rounded-full px-3 py-1">
+            <span className="text-xs bg-[#c9a84c]/10 text-[#c9a84c] rounded-full px-3 py-1">
               {todayBookings.length} total
             </span>
           </div>
@@ -239,7 +239,7 @@ export default async function ArtistDashboardPage() {
                 key={b.id}
                 className="flex items-center gap-4 px-5 py-3.5 border-b border-[#161616] last:border-0"
               >
-                <span className="text-xs text-[#D4A853] font-medium w-16 shrink-0">
+                <span className="text-xs text-[#c9a84c] font-medium w-16 shrink-0">
                   {fmt12h(b.time)}
                 </span>
                 <span className="flex-1 text-sm text-[#CCC]">
@@ -257,7 +257,7 @@ export default async function ArtistDashboardPage() {
         <div className="bg-[#111] border border-[#1E1E1E] rounded-xl overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-[#1A1A1A]">
             <h2 className="text-sm font-medium text-[#BBB]">Next 7 Days</h2>
-            <span className="text-xs bg-[#D4A853]/10 text-[#D4A853] rounded-full px-3 py-1">
+            <span className="text-xs bg-[#c9a84c]/10 text-[#c9a84c] rounded-full px-3 py-1">
               {upcomingBookings.length} upcoming
             </span>
           </div>
@@ -279,7 +279,7 @@ export default async function ArtistDashboardPage() {
                     key={b.id}
                     className="flex items-center gap-4 px-5 py-3 border-b border-[#161616] last:border-0"
                   >
-                    <span className="text-xs text-[#D4A853] w-16 shrink-0">
+                    <span className="text-xs text-[#c9a84c] w-16 shrink-0">
                       {fmt12h(b.time)}
                     </span>
                     <span className="text-sm text-[#CCC]">

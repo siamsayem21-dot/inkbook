@@ -89,47 +89,47 @@ export default function AcceptForm({
 
       <div>
         <label className="text-sm text-zinc-400 block mb-1.5">
-          Your name <span className="text-[#D4A853]">*</span>
+          Your name <span className="text-[#c9a84c]">*</span>
         </label>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Jane Smith"
-          className="w-full bg-[#0A0A0A] border border-[#2A2A2A] rounded-lg px-4 py-2.5 text-sm text-[#E8E8E8] focus:outline-none focus:border-[#D4A853] transition-colors placeholder:text-zinc-600"
+          className="w-full bg-[#0A0A0A] border border-[#2A2A2A] rounded-lg px-4 py-2.5 text-sm text-[#E8E8E8] focus:outline-none focus:border-[#c9a84c] transition-colors placeholder:text-zinc-600"
         />
       </div>
 
       <div>
         <label className="text-sm text-zinc-400 block mb-1.5">
-          Set a password <span className="text-[#D4A853]">*</span>
+          Set a password <span className="text-[#c9a84c]">*</span>
         </label>
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="At least 8 characters"
-          className="w-full bg-[#0A0A0A] border border-[#2A2A2A] rounded-lg px-4 py-2.5 text-sm text-[#E8E8E8] focus:outline-none focus:border-[#D4A853] transition-colors placeholder:text-zinc-600"
+          className="w-full bg-[#0A0A0A] border border-[#2A2A2A] rounded-lg px-4 py-2.5 text-sm text-[#E8E8E8] focus:outline-none focus:border-[#c9a84c] transition-colors placeholder:text-zinc-600"
         />
       </div>
 
       <div>
         <label className="text-sm text-zinc-400 block mb-1.5">
-          Confirm password <span className="text-[#D4A853]">*</span>
+          Confirm password <span className="text-[#c9a84c]">*</span>
         </label>
         <input
           type="password"
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
           placeholder="Repeat your password"
-          className="w-full bg-[#0A0A0A] border border-[#2A2A2A] rounded-lg px-4 py-2.5 text-sm text-[#E8E8E8] focus:outline-none focus:border-[#D4A853] transition-colors placeholder:text-zinc-600"
+          className="w-full bg-[#0A0A0A] border border-[#2A2A2A] rounded-lg px-4 py-2.5 text-sm text-[#E8E8E8] focus:outline-none focus:border-[#c9a84c] transition-colors placeholder:text-zinc-600"
         />
       </div>
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-[#D4A853] text-black font-bold py-3 rounded-lg hover:bg-[#C49843] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-1"
+        className="w-full bg-[#c9a84c] text-black font-bold py-3 rounded-lg hover:bg-[#a8832e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-1"
       >
         {loading ? (
           <>

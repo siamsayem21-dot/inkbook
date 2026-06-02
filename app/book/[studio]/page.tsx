@@ -39,22 +39,21 @@ export default async function StudioLandingPage({ params }: Props) {
     .order("name");
 
   const artists = (artistsData ?? []) as ArtistRow[];
-
   const location = [studio.address, studio.state].filter(Boolean).join(", ");
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 md:py-14">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 md:py-16">
 
       {/* Studio hero */}
-      <div className="mb-14">
-        <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-4 py-1.5 text-xs text-gold mb-6">
-          <span className="w-1.5 h-1.5 rounded-full bg-gold" />
-          Deposit required to book
+      <div className="mb-16">
+        <div className="inline-flex items-center gap-2.5 border border-gold/25 px-4 py-1.5 mb-7">
+          <span className="w-1.5 h-1.5 rounded-full bg-gold shrink-0" />
+          <span className="label-xs text-gold/80">Deposit Required to Book</span>
         </div>
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3">
-          Book your appointment
+        <h1 className="font-cinzel text-4xl md:text-5xl font-bold tracking-wide mb-3">
+          Book Your Appointment
         </h1>
-        <p className="text-white/50 text-lg">
+        <p className="text-zinc-500 text-base">
           {location ? `${location} · ` : ""}Choose an artist to get started.
         </p>
       </div>
@@ -76,30 +75,31 @@ export default async function StudioLandingPage({ params }: Props) {
           ))}
         </div>
       ) : (
-        <div className="text-center py-20 border border-white/10 rounded-2xl">
-          <p className="text-white/40 text-lg font-medium mb-1">No artists available yet.</p>
-          <p className="text-white/25 text-sm">Check back soon.</p>
+        <div className="text-center py-20 border border-white/[0.08]">
+          <p className="font-cinzel text-base font-semibold tracking-wide text-zinc-400 mb-1">No Artists Available Yet</p>
+          <p className="text-zinc-600 text-sm">Check back soon.</p>
         </div>
       )}
 
       {/* Deposit notice */}
-      <p className="text-center text-white/25 text-xs mt-12">
+      <p className="label-xs text-zinc-700 text-center mt-14">
         A deposit is collected at booking and applied toward your session.
         It is non-refundable for no-shows or cancellations within 48 hours.
       </p>
 
       {/* Footer */}
-      <footer className="mt-12 pt-6 border-t border-white/10 text-center text-xs text-white/25">
+      <div className="gold-divider mt-12" />
+      <footer className="mt-8 text-center">
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-          <Link href="/privacy" className="hover:text-white/50 transition-colors">
+          <Link href="/privacy" className="label-xs text-zinc-700 hover:text-zinc-500 transition-colors">
             Privacy Policy
           </Link>
-          <span aria-hidden>|</span>
-          <Link href="/terms" className="hover:text-white/50 transition-colors">
+          <span className="text-zinc-700" aria-hidden>·</span>
+          <Link href="/terms" className="label-xs text-zinc-700 hover:text-zinc-500 transition-colors">
             Terms of Service
           </Link>
-          <span aria-hidden>|</span>
-          <span>© 2026 InkBook</span>
+          <span className="text-zinc-700" aria-hidden>·</span>
+          <span className="label-xs text-zinc-700">© 2026 InkBook</span>
         </div>
       </footer>
     </div>

@@ -24,10 +24,7 @@ function LoginForm() {
     setLoading(true);
 
     const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
     if (signInError) {
       setError(signInError.message);
@@ -35,10 +32,6 @@ function LoginForm() {
       return;
     }
 
-    // Full page navigation — guarantees the browser sends fresh auth cookies
-    // on the next HTTP request. router.push() + router.refresh() race each
-    // other and can cause the first login attempt to land before the session
-    // cookie is visible to the server.
     window.location.href = "/dashboard";
   }
 
@@ -64,51 +57,53 @@ function LoginForm() {
   }
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
-      <div className="flex items-center gap-2 mb-8">
-        <div className="w-7 h-7 rounded-lg bg-gold flex items-center justify-center">
-          <span className="text-black text-xs font-black">IB</span>
+    <div className="border border-white/[0.08] bg-zinc-900/50 p-8">
+      {/* Logo */}
+      <div className="flex items-center gap-2.5 mb-10">
+        <div className="w-7 h-7 border border-gold/40 flex items-center justify-center">
+          <span className="font-cinzel text-gold text-[10px] font-bold">IB</span>
         </div>
-        <span className="font-bold">InkBook</span>
+        <span className="font-cinzel text-sm tracking-wider text-white">InkBook</span>
       </div>
 
-      <h1 className="text-2xl font-bold mb-1">Welcome back</h1>
-      <p className="text-zinc-400 text-sm mb-8">Sign in to your studio dashboard.</p>
+      <h1 className="font-cinzel text-2xl font-bold tracking-wide mb-1">Welcome Back</h1>
+      <p className="text-zinc-500 text-sm mb-8">Sign in to your studio dashboard.</p>
 
       {resetSent ? (
-        <div className="bg-green-950 border border-green-800 text-green-300 text-sm rounded-lg px-4 py-4 text-center">
-          <p className="font-medium mb-1">Password reset email sent</p>
-          <p className="text-green-400/70">Check your inbox for {email} and click the link to reset your password.</p>
+        <div className="border border-green-800/60 text-green-400 text-sm px-4 py-4 text-center bg-green-950/40">
+          <p className="font-cinzel font-semibold text-xs tracking-wide mb-1">Password Reset Sent</p>
+          <p className="text-green-500/70 text-xs">Check your inbox for {email} and click the link to reset your password.</p>
         </div>
       ) : (
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           {error && (
-            <div className="bg-red-950 border border-red-800 text-red-300 text-sm rounded-lg px-4 py-3">
+            <div className="border border-red-800/60 text-red-400 text-sm px-4 py-3 bg-red-950/40">
               {error}
             </div>
           )}
 
           <div>
-            <label className="text-sm text-zinc-400 block mb-1.5">Email</label>
+            <label className="label-xs text-zinc-500 block mb-2">Email</label>
             <input
               required
               type="email"
               placeholder="you@studio.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold transition-colors"
+              className="w-full bg-zinc-900 border border-white/[0.1] px-4 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-gold/50 transition-colors"
             />
           </div>
+
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-sm text-zinc-400">Password</label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="label-xs text-zinc-500">Password</label>
               <button
                 type="button"
                 onClick={handleForgotPassword}
                 disabled={resetLoading}
-                className="text-xs text-zinc-500 hover:text-gold transition-colors disabled:opacity-50"
+                className="label-xs text-zinc-600 hover:text-gold transition-colors disabled:opacity-50"
               >
-                {resetLoading ? "Sending…" : "Forgot password?"}
+                {resetLoading ? "Sending…" : "Forgot Password?"}
               </button>
             </div>
             <input
@@ -117,23 +112,25 @@ function LoginForm() {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold transition-colors"
+              className="w-full bg-zinc-900 border border-white/[0.1] px-4 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-gold/50 transition-colors"
             />
           </div>
+
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gold text-black font-bold py-2.5 rounded-lg hover:bg-gold-light disabled:opacity-50 transition-colors mt-2"
+            className="w-full bg-gold text-black label-sm py-3 hover:bg-gold-light disabled:opacity-50 transition-colors mt-2"
           >
-            {loading ? "Signing in…" : "Sign in"}
+            {loading ? "Signing In…" : "Sign In"}
           </button>
         </form>
       )}
 
-      <p className="text-zinc-500 text-sm text-center mt-6">
+      <div className="gold-divider mt-6" />
+      <p className="text-zinc-600 text-sm text-center mt-6">
         Don&apos;t have an account?{" "}
-        <Link href="/register" className="text-gold hover:text-gold-light underline underline-offset-4">
-          Create studio
+        <Link href="/register" className="text-gold hover:text-gold-light transition-colors underline underline-offset-4">
+          Create Studio
         </Link>
       </p>
     </div>

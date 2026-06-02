@@ -2,41 +2,41 @@ import Link from "next/link";
 
 const features = [
   {
-    icon: "💳",
-    title: "Mandatory deposits, enforced automatically",
+    symbol: "▣",
+    title: "Mandatory Deposits, Enforced Automatically",
     body: "Every booking requires a deposit before it's confirmed. Artists stop feeling guilty — the platform says no for them.",
   },
   {
-    icon: "📋",
-    title: "Digital consent forms, state-specific",
+    symbol: "◈",
+    title: "Digital Consent Forms, State-Specific",
     body: "Auto-generated forms for each state. Minor age verification built in. Signed before every single session.",
   },
   {
-    icon: "📱",
-    title: "SMS reminders that actually work",
+    symbol: "◉",
+    title: "SMS Reminders That Actually Work",
     body: "Automatic texts at 48 hours and day-of. No-show rate drops from 20% industry average to under 4%.",
   },
   {
-    icon: "🏷️",
-    title: "Your brand. Your URL.",
+    symbol: "◎",
+    title: "Your Brand. Your URL.",
     body: "bookings.yourstudio.com — clients never see InkBook. Looks like you built it yourself.",
   },
   {
-    icon: "🚫",
-    title: "Client blacklist",
+    symbol: "✕",
+    title: "Client Blacklist",
     body: "Block problem clients studio-wide. Add by email or phone. They can't book anyone on your roster.",
   },
   {
-    icon: "📝",
-    title: "Session scope agreements",
+    symbol: "◆",
+    title: "Session Scope Agreements",
     body: "Lock in the design before the needle touches skin. Kills scope creep and last-minute change demands.",
   },
 ];
 
 const steps = [
-  { n: "01", title: "Set up your studio", body: "Studio name, subdomain, logo — 10 minutes. Artists get an invite link." },
-  { n: "02", title: "Clients book online", body: "They pick artist, date, style. No deposit = no booking. Simple." },
-  { n: "03", title: "Platform handles the rest", body: "SMS reminders, consent forms, deposit enforcement. Automatic." },
+  { n: "01", title: "Set Up Your Studio", body: "Studio name, subdomain, logo — 10 minutes. Artists get an invite link." },
+  { n: "02", title: "Clients Book Online", body: "They pick artist, date, style. No deposit = no booking. Simple." },
+  { n: "03", title: "Platform Handles the Rest", body: "SMS reminders, consent forms, deposit enforcement. Automatic." },
 ];
 
 const plans = [
@@ -64,236 +64,266 @@ const testimonials = [
 ];
 
 const stats = [
-  { value: "21,000+", label: "tattoo studios in USA & Canada" },
-  { value: "$400/mo", label: "average lost to no-shows per artist" },
-  { value: "1 no-show", label: "covers a full month of InkBook" },
-  { value: "4%", label: "no-show rate on InkBook vs 20% industry avg" },
+  { value: "21,000+", label: "Tattoo Studios in USA & Canada" },
+  { value: "$400/mo", label: "Average Lost to No-Shows Per Artist" },
+  { value: "1 No-Show", label: "Covers a Full Month of InkBook" },
+  { value: "4%", label: "No-Show Rate vs 20% Industry Avg" },
 ];
 
 export default function HomePage() {
   return (
-    <div className="bg-zinc-950 text-white min-h-screen">
+    <div className="bg-ink text-white min-h-screen font-inter">
 
-      {/* Nav */}
-      <nav className="sticky top-0 z-50 border-b border-zinc-800/60 bg-zinc-950/90 backdrop-blur-sm px-6 py-4 flex items-center justify-between max-w-6xl mx-auto">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center">
-            <span className="text-black text-xs font-black">IB</span>
+      {/* ── Nav ── */}
+      <nav className="sticky top-0 z-50 border-b border-white/[0.06] bg-ink/90 backdrop-blur-sm px-6 py-4">
+        <div className="flex items-center justify-between max-w-6xl mx-auto">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 border border-gold/50 flex items-center justify-center shrink-0">
+              <span className="font-cinzel text-gold text-[10px] font-bold tracking-wider">IB</span>
+            </div>
+            <span className="font-cinzel text-base tracking-wider text-white">InkBook</span>
           </div>
-          <span className="font-bold text-lg tracking-tight">InkBook</span>
-        </div>
-        <div className="hidden md:flex items-center gap-6 text-sm text-zinc-400">
-          <a href="#features" className="hover:text-white transition-colors">Features</a>
-          <a href="#how-it-works" className="hover:text-white transition-colors">How it works</a>
-          <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link href="/login" className="text-sm text-zinc-400 hover:text-white transition-colors hidden md:block">
-            Log in
-          </Link>
-          <Link
-            href="/register"
-            className="bg-white text-black text-sm px-4 py-2 rounded-full font-semibold hover:bg-zinc-100 transition-colors"
-          >
-            Start free trial
-          </Link>
+          <div className="hidden md:flex items-center gap-8">
+            <a href="#features" className="label-xs text-zinc-500 hover:text-gold transition-colors">Features</a>
+            <a href="#how-it-works" className="label-xs text-zinc-500 hover:text-gold transition-colors">How It Works</a>
+            <a href="#pricing" className="label-xs text-zinc-500 hover:text-gold transition-colors">Pricing</a>
+          </div>
+          <div className="flex items-center gap-5">
+            <Link href="/login" className="label-xs text-zinc-500 hover:text-white transition-colors hidden md:block">
+              Sign In
+            </Link>
+            <Link
+              href="/register"
+              className="label-xs border border-gold text-gold px-5 py-2.5 hover:bg-gold hover:text-black transition-all duration-200"
+            >
+              Start Free Trial
+            </Link>
+          </div>
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="text-center px-6 pt-24 pb-20 max-w-4xl mx-auto">
-        <div className="inline-flex items-center gap-2 bg-zinc-800/60 border border-zinc-700/50 rounded-full px-4 py-1.5 text-xs text-zinc-300 mb-8">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-          Built for USA & Canada tattoo studios
+      {/* ── Hero ── */}
+      <section className="grain relative text-center px-6 pt-28 pb-24 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(201,168,76,0.07),transparent)] pointer-events-none" />
+        <div className="relative z-10 max-w-4xl mx-auto">
+          <div className="inline-flex items-center gap-2.5 border border-gold/25 px-5 py-2 mb-10">
+            <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse shrink-0" />
+            <span className="label-xs text-gold/80">Built for USA & Canada Tattoo Studios</span>
+          </div>
+
+          <h1 className="font-cinzel text-5xl md:text-7xl font-bold leading-[1.08] tracking-wide mb-8 text-balance">
+            Stop Losing Money to<br />
+            <span className="text-gold">No-Shows</span> and Chaos
+          </h1>
+
+          <p className="text-zinc-400 text-lg md:text-xl mb-12 max-w-2xl mx-auto leading-relaxed font-light">
+            White-label booking pages, mandatory deposits, digital consent forms,
+            and SMS reminders — all under your studio&apos;s brand.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/register"
+              className="label-sm bg-gold text-black px-8 py-3.5 hover:bg-gold-light transition-colors"
+            >
+              Start 14-Day Free Trial →
+            </Link>
+            <Link
+              href="/book/demo-studio"
+              className="label-sm border border-white/20 text-zinc-400 px-8 py-3.5 hover:border-gold/40 hover:text-gold transition-all"
+            >
+              See a Live Booking Page
+            </Link>
+          </div>
+          <p className="label-xs text-zinc-700 mt-6">No Credit Card Required · Cancel Anytime</p>
         </div>
-        <h1 className="text-5xl md:text-6xl font-bold leading-[1.1] tracking-tight mb-6">
-          Stop losing money to<br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-200 to-zinc-500">
-            no-shows and chaos
-          </span>
-        </h1>
-        <p className="text-zinc-400 text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
-          White-label booking pages, mandatory deposits, digital consent forms,
-          and SMS reminders — all under your studio&apos;s brand.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link
-            href="/register"
-            className="bg-white text-black px-7 py-3.5 rounded-full font-semibold text-sm hover:bg-zinc-100 transition-colors"
-          >
-            Start 14-day free trial →
-          </Link>
-          <Link
-            href="/book/demo-studio"
-            className="border border-zinc-700 px-7 py-3.5 rounded-full text-zinc-300 text-sm hover:border-zinc-500 hover:text-white transition-colors"
-          >
-            See a live booking page
-          </Link>
-        </div>
-        <p className="text-zinc-600 text-xs mt-5">No credit card required · Cancel anytime</p>
       </section>
 
-      {/* Stats bar */}
-      <section className="border-y border-zinc-800 py-10 px-6">
+      <div className="gold-divider" />
+
+      {/* ── Stats ── */}
+      <section className="py-14 px-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
           {stats.map((s) => (
             <div key={s.label} className="text-center">
-              <div className="text-2xl font-bold text-white mb-1">{s.value}</div>
-              <div className="text-xs text-zinc-500">{s.label}</div>
+              <div className="font-cinzel text-2xl md:text-3xl font-bold text-gold mb-2">{s.value}</div>
+              <div className="label-xs text-zinc-600">{s.label}</div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Booking page mockup */}
-      <section className="px-6 py-20 max-w-5xl mx-auto">
-        <div className="text-center mb-10">
-          <p className="text-zinc-500 text-sm mb-2">White-label client experience</p>
-          <h2 className="text-3xl font-bold">Looks like your studio. Runs on InkBook.</h2>
+      <div className="gold-divider" />
+
+      {/* ── Booking page mockup ── */}
+      <section className="px-6 py-24 max-w-5xl mx-auto">
+        <div className="text-center mb-12">
+          <p className="label-xs text-gold/70 mb-4">White-Label Client Experience</p>
+          <h2 className="font-cinzel text-3xl md:text-4xl font-bold tracking-wide">
+            Looks Like Your Studio.<br />Runs on InkBook.
+          </h2>
         </div>
-        <div className="bg-white rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-zinc-700">
+        <div className="border border-white/10 overflow-hidden shadow-2xl shadow-black/80">
           {/* Mock browser bar */}
-          <div className="bg-zinc-100 px-4 py-3 flex items-center gap-3 border-b border-zinc-200">
+          <div className="bg-zinc-900 px-4 py-3 flex items-center gap-3 border-b border-white/[0.08]">
             <div className="flex gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-red-400" />
-              <div className="w-3 h-3 rounded-full bg-yellow-400" />
-              <div className="w-3 h-3 rounded-full bg-green-400" />
+              <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+              <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+              <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
             </div>
-            <div className="flex-1 bg-white rounded-md px-3 py-1 text-xs text-zinc-400 text-center">
+            <div className="flex-1 bg-zinc-800 border border-white/[0.07] px-3 py-1 text-[11px] text-zinc-500 text-center font-mono">
               bookings.blackanchortattoo.com
             </div>
           </div>
-          {/* Mock booking page content */}
-          <div className="bg-white text-zinc-900 p-8">
+          {/* Mock content — dark tattoo studio theme */}
+          <div className="bg-[#0d0d0d] text-white p-8">
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center">
-                <span className="text-white text-xs font-bold">BA</span>
+              <div className="w-9 h-9 border border-gold/35 flex items-center justify-center shrink-0">
+                <span className="font-cinzel text-gold text-[10px] font-bold">BA</span>
               </div>
               <div>
-                <h3 className="font-bold">Black Anchor Tattoo</h3>
-                <p className="text-zinc-500 text-xs">Austin, TX · Est. 2018</p>
+                <h3 className="font-cinzel font-bold tracking-wide text-sm">Black Anchor Tattoo</h3>
+                <p className="label-xs text-zinc-600 mt-0.5">Austin, TX · Est. 2018</p>
               </div>
             </div>
-            <h2 className="text-2xl font-bold mb-1">Book an appointment</h2>
+            <h2 className="font-cinzel text-2xl font-bold mb-1.5 tracking-wide">Book an Appointment</h2>
             <p className="text-zinc-500 text-sm mb-6">Choose an artist to get started.</p>
             <div className="grid grid-cols-3 gap-4">
               {[
-                { name: "Marcus", styles: ["Traditional", "Neo-trad"], rate: "$180" },
-                { name: "Leila", styles: ["Fine line", "Minimalist"], rate: "$150" },
+                { name: "Marcus", styles: ["Traditional", "Neo-Trad"], rate: "$180" },
+                { name: "Leila", styles: ["Fine Line", "Minimalist"], rate: "$150" },
                 { name: "Jonah", styles: ["Japanese", "Blackwork"], rate: "$200" },
               ].map((a) => (
-                <div key={a.name} className="border border-zinc-200 rounded-xl p-4 hover:border-zinc-400 cursor-pointer transition-colors">
-                  <div className="w-12 h-12 rounded-full bg-zinc-100 mb-3" />
-                  <p className="font-semibold text-sm">{a.name}</p>
-                  <p className="text-zinc-400 text-xs">From {a.rate}/hr</p>
+                <div key={a.name} className="bg-zinc-900/80 border border-white/[0.08] p-4 hover:border-gold/35 cursor-pointer transition-colors">
+                  <div className="w-12 h-12 bg-zinc-800 mb-3 ring-1 ring-white/[0.06]" />
+                  <p className="font-cinzel font-semibold text-xs tracking-wide">{a.name}</p>
+                  <p className="text-gold text-xs font-medium mt-0.5">From {a.rate}/hr</p>
                   <div className="flex flex-wrap gap-1 mt-2">
                     {a.styles.map((s) => (
-                      <span key={s} className="text-xs bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full">{s}</span>
+                      <span key={s} className="text-[9px] uppercase tracking-[0.07em] bg-white/[0.04] text-zinc-500 px-1.5 py-0.5 border border-white/[0.06]">{s}</span>
                     ))}
                   </div>
                 </div>
               ))}
             </div>
-            <p className="text-center text-xs text-zinc-300 mt-6">A deposit is required to confirm your booking</p>
+            <p className="text-center label-xs text-zinc-700 mt-6">A Deposit Is Required to Confirm Your Booking</p>
           </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section id="features" className="px-6 py-20 max-w-5xl mx-auto">
-        <div className="text-center mb-14">
-          <p className="text-zinc-500 text-sm mb-2">Everything you need</p>
-          <h2 className="text-3xl font-bold">Built around the real problems artists face</h2>
+      <div className="gold-divider" />
+
+      {/* ── Features ── */}
+      <section id="features" className="px-6 py-24 max-w-5xl mx-auto">
+        <div className="text-center mb-16">
+          <p className="label-xs text-gold/70 mb-4">Everything You Need</p>
+          <h2 className="font-cinzel text-3xl md:text-4xl font-bold tracking-wide">
+            Built Around the Real Problems<br />Artists Face
+          </h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-white/[0.05]">
           {features.map((f) => (
             <div
               key={f.title}
-              className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-zinc-700 transition-colors"
+              className="bg-ink p-8 hover:bg-zinc-900/60 transition-colors group"
             >
-              <div className="text-2xl mb-4">{f.icon}</div>
-              <h3 className="font-semibold mb-2 leading-snug">{f.title}</h3>
-              <p className="text-zinc-400 text-sm leading-relaxed">{f.body}</p>
+              <div className="text-gold/40 text-2xl mb-5 font-mono group-hover:text-gold/70 transition-colors">{f.symbol}</div>
+              <h3 className="font-cinzel font-semibold text-xs tracking-wide mb-3 leading-snug">{f.title}</h3>
+              <p className="text-zinc-500 text-sm leading-relaxed">{f.body}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* How it works */}
-      <section id="how-it-works" className="px-6 py-20 border-y border-zinc-800">
+      <div className="gold-divider" />
+
+      {/* ── How it works ── */}
+      <section id="how-it-works" className="px-6 py-24">
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-14">
-            <p className="text-zinc-500 text-sm mb-2">Simple by design</p>
-            <h2 className="text-3xl font-bold">Up and running in one afternoon</h2>
+          <div className="text-center mb-16">
+            <p className="label-xs text-gold/70 mb-4">Simple by Design</p>
+            <h2 className="font-cinzel text-3xl md:text-4xl font-bold tracking-wide">
+              Up and Running in One Afternoon
+            </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
             {steps.map((s) => (
               <div key={s.n} className="text-center">
-                <div className="text-5xl font-black text-zinc-800 mb-4">{s.n}</div>
-                <h3 className="font-semibold text-lg mb-2">{s.title}</h3>
-                <p className="text-zinc-400 text-sm leading-relaxed">{s.body}</p>
+                <div className="font-cinzel text-6xl font-black text-gold/12 mb-5 tracking-tighter leading-none">{s.n}</div>
+                <h3 className="font-cinzel font-semibold text-sm tracking-wide mb-3">{s.title}</h3>
+                <p className="text-zinc-500 text-sm leading-relaxed">{s.body}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="px-6 py-20 max-w-5xl mx-auto">
-        <div className="text-center mb-14">
-          <h2 className="text-3xl font-bold">What studios need from a booking tool</h2>
+      <div className="gold-divider" />
+
+      {/* ── Testimonials ── */}
+      <section className="px-6 py-24 max-w-5xl mx-auto">
+        <div className="text-center mb-16">
+          <p className="label-xs text-gold/70 mb-4">Studio Owners</p>
+          <h2 className="font-cinzel text-3xl md:text-4xl font-bold tracking-wide">
+            What Studios Need from a Booking Tool
+          </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {testimonials.map((t) => (
-            <div key={t.name} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-              <p className="text-zinc-200 text-sm leading-relaxed mb-5">&ldquo;{t.quote}&rdquo;</p>
-              <div>
-                <p className="font-semibold text-sm">{t.name}</p>
-                <p className="text-zinc-500 text-xs">{t.studio}</p>
+            <div key={t.name} className="bg-zinc-900/50 border border-white/[0.07] p-8">
+              <div className="font-cinzel text-5xl text-gold/20 leading-none mb-4 select-none">&ldquo;</div>
+              <p className="text-zinc-300 text-sm leading-relaxed italic mb-6">{t.quote}</p>
+              <div className="border-t border-white/[0.07] pt-4">
+                <p className="font-cinzel font-semibold text-xs tracking-wide">{t.name}</p>
+                <p className="label-xs text-zinc-600 mt-1">{t.studio}</p>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="px-6 py-20 border-t border-zinc-800">
+      <div className="gold-divider" />
+
+      {/* ── Pricing ── */}
+      <section id="pricing" className="px-6 py-24">
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-14">
-            <p className="text-zinc-500 text-sm mb-2">Transparent pricing</p>
-            <h2 className="text-3xl font-bold">One prevented no-show pays for the month</h2>
-            <p className="text-zinc-500 text-sm mt-3">+ 1% transaction fee on all bookings</p>
+          <div className="text-center mb-16">
+            <p className="label-xs text-gold/70 mb-4">Transparent Pricing</p>
+            <h2 className="font-cinzel text-3xl md:text-4xl font-bold tracking-wide">
+              One Prevented No-Show Pays for the Month
+            </h2>
+            <p className="label-xs text-zinc-600 mt-4">+ 1% Transaction Fee on All Bookings</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {plans.map((p) => (
               <div
                 key={p.name}
-                className={`rounded-2xl border p-8 flex flex-col items-center text-center ${
+                className={`border p-10 flex flex-col items-center text-center transition-all relative ${
                   p.highlight
-                    ? "border-white bg-zinc-900"
-                    : "border-zinc-800 bg-zinc-900/40"
+                    ? "border-gold/45 bg-zinc-900/60"
+                    : "border-white/[0.08] bg-zinc-900/25"
                 }`}
               >
                 {p.highlight && (
-                  <span className="text-xs bg-white text-black px-3 py-1 rounded-full font-semibold mb-4">
-                    Most popular
+                  <span className="label-xs text-black bg-gold px-4 py-1.5 absolute -top-3.5">
+                    Most Popular
                   </span>
                 )}
-                <h3 className="text-xl font-bold mb-1">{p.name}</h3>
-                <p className="text-zinc-400 text-sm mb-4">{p.artists}</p>
-                <div className="flex items-end gap-1 mb-8">
-                  <span className="text-4xl font-black">{p.price}</span>
-                  <span className="text-zinc-400 mb-1">/mo</span>
+                <h3 className="font-cinzel text-xl font-bold tracking-wide mb-1 mt-3">{p.name}</h3>
+                <p className="label-xs text-zinc-600 mb-6">{p.artists}</p>
+                <div className="flex items-end gap-1 mb-10">
+                  <span className="font-cinzel text-4xl font-black text-gold">{p.price}</span>
+                  <span className="text-zinc-500 mb-1 text-sm">/mo</span>
                 </div>
                 <Link
                   href="/register"
-                  className={`w-full py-3 rounded-full font-semibold text-sm transition-colors ${
+                  className={`w-full py-3 label-sm transition-all ${
                     p.highlight
-                      ? "bg-white text-black hover:bg-zinc-100"
-                      : "border border-zinc-700 text-zinc-300 hover:border-zinc-500"
+                      ? "bg-gold text-black hover:bg-gold-light"
+                      : "border border-white/20 text-zinc-400 hover:border-gold/40 hover:text-gold"
                   }`}
                 >
-                  Get started
+                  Get Started
                 </Link>
               </div>
             ))}
@@ -301,32 +331,45 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="px-6 py-24 text-center">
-        <div className="max-w-2xl mx-auto">
-          <h2 className="text-4xl font-bold mb-4">Ready to stop losing money?</h2>
-          <p className="text-zinc-400 mb-10">
+      <div className="gold-divider" />
+
+      {/* ── CTA ── */}
+      <section className="grain relative px-6 py-28 text-center overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_50%_50%,rgba(201,168,76,0.06),transparent)] pointer-events-none" />
+        <div className="relative z-10 max-w-2xl mx-auto">
+          <p className="label-xs text-gold/70 mb-5">Join InkBook</p>
+          <h2 className="font-cinzel text-4xl md:text-5xl font-bold tracking-wide mb-6">
+            Ready to Stop Losing Money?
+          </h2>
+          <p className="text-zinc-500 mb-12 leading-relaxed">
             Join studios already running on InkBook. 14-day free trial, no credit card required.
           </p>
           <Link
             href="/register"
-            className="inline-block bg-white text-black px-8 py-4 rounded-full font-bold text-sm hover:bg-zinc-100 transition-colors"
+            className="label-sm inline-block bg-gold text-black px-10 py-4 hover:bg-gold-light transition-colors"
           >
-            Create your studio for free →
+            Create Your Studio for Free →
           </Link>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-zinc-800 px-6 py-8 text-center text-zinc-600 text-xs max-w-5xl mx-auto">
-        <div className="flex items-center justify-center gap-2 mb-3">
-          <div className="w-5 h-5 rounded bg-white flex items-center justify-center">
-            <span className="text-black text-[9px] font-black">IB</span>
+      <div className="gold-divider" />
+
+      {/* ── Footer ── */}
+      <footer className="px-6 py-10 max-w-5xl mx-auto">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-7 h-7 border border-gold/35 flex items-center justify-center">
+              <span className="font-cinzel text-gold text-[9px] font-bold">IB</span>
+            </div>
+            <span className="font-cinzel text-sm tracking-wider text-zinc-500">InkBook</span>
           </div>
-          <span className="text-zinc-400 font-semibold">InkBook</span>
+          <div className="flex items-center gap-6">
+            <Link href="/privacy" className="label-xs text-zinc-700 hover:text-zinc-400 transition-colors">Privacy</Link>
+            <Link href="/terms" className="label-xs text-zinc-700 hover:text-zinc-400 transition-colors">Terms</Link>
+          </div>
+          <p className="label-xs text-zinc-700">© 2026 InkBook · USA & Canada</p>
         </div>
-        <p>White-label tattoo studio management · USA & Canada</p>
-        <p className="mt-1">© 2026 InkBook. All rights reserved.</p>
       </footer>
 
     </div>

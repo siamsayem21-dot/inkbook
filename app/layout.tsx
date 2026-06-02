@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+import { Cinzel, Inter } from "next/font/google";
 import "./globals.css";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
+const cinzel = Cinzel({
+  subsets: ["latin"],
+  variable: "--font-cinzel",
+  weight: ["400", "600", "700", "900"],
+  display: "swap",
 });
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -25,9 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${cinzel.variable} ${inter.variable} antialiased`}>
         {children}
       </body>
     </html>

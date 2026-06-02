@@ -11,12 +11,16 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
-        ink: "#0A0A0A",
+        ink: "#0a0a0a",
         gold: {
-          DEFAULT: "#D4A853",
-          light: "#E8C876",
-          dark: "#B8903D",
+          DEFAULT: "#c9a84c",
+          light: "#dbbe72",
+          dark: "#a8832e",
         },
+      },
+      fontFamily: {
+        cinzel: ["var(--font-cinzel)", "Georgia", "serif"],
+        inter: ["var(--font-inter)", "system-ui", "sans-serif"],
       },
     },
   },

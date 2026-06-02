@@ -17,7 +17,7 @@ const STATUS_LABEL: Record<BookingStatus, string> = {
 
 const STATUS_CLASS: Record<BookingStatus, string> = {
   pending_deposit: "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20",
-  confirmed:       "bg-[#D4A853]/10 text-[#D4A853] border border-[#D4A853]/20",
+  confirmed:       "bg-[#c9a84c]/10 text-[#c9a84c] border border-[#c9a84c]/20",
   completed:       "bg-green-500/10 text-green-400 border border-green-500/20",
   cancelled:       "bg-white/5 text-white/30 border border-white/10",
   no_show:         "bg-red-500/10 text-red-400 border border-red-500/20",
@@ -77,7 +77,7 @@ export default async function OwnerBookingsPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <h1 className="text-2xl font-bold">All Bookings</h1>
-        <span className="text-xs bg-[#D4A853]/10 text-[#D4A853] border border-[#D4A853]/20 rounded-full px-2.5 py-1">
+        <span className="text-xs bg-[#c9a84c]/10 text-[#c9a84c] border border-[#c9a84c]/20 rounded-full px-2.5 py-1">
           {bookings.length}
         </span>
       </div>
@@ -108,7 +108,7 @@ export default async function OwnerBookingsPage() {
                       <td className="px-5 py-4 text-zinc-400">{artistName[b.artist_id] ?? "—"}</td>
                       <td className="px-5 py-4 text-zinc-400">{fmtDate(b.date)}</td>
                       <td className="px-5 py-4 text-zinc-400">{fmtTime(b.time)}</td>
-                      <td className="px-5 py-4 text-[#D4A853]">${b.deposit_amount_cents != null ? (b.deposit_amount_cents / 100).toFixed(2) : "—"}</td>
+                      <td className="px-5 py-4 text-[#c9a84c]">${b.deposit_amount_cents != null ? (b.deposit_amount_cents / 100).toFixed(2) : "—"}</td>
                       <td className="px-5 py-4">
                         <span className={`text-xs px-2.5 py-1 rounded-full ${STATUS_CLASS[b.status] ?? "bg-zinc-800 text-zinc-400"}`}>
                           {STATUS_LABEL[b.status] ?? b.status}
@@ -140,7 +140,7 @@ export default async function OwnerBookingsPage() {
                     <span>·</span>
                     <span>{fmtDate(b.date)} at {fmtTime(b.time)}</span>
                     <span>·</span>
-                    <span className="text-[#D4A853]">${b.deposit_amount_cents != null ? (b.deposit_amount_cents / 100).toFixed(2) : "—"}</span>
+                    <span className="text-[#c9a84c]">${b.deposit_amount_cents != null ? (b.deposit_amount_cents / 100).toFixed(2) : "—"}</span>
                   </div>
                 </Link>
               ))}

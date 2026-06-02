@@ -38,7 +38,7 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex">
+    <div className="min-h-screen bg-ink text-white flex">
       <Sidebar role="owner" studioName={studio?.name} />
       <main className="flex-1 p-4 pt-16 md:p-8 overflow-y-auto">{children}</main>
     </div>

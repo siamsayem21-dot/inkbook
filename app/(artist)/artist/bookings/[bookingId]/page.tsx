@@ -48,7 +48,7 @@ function ErrorCard({ message }: { message: string }) {
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center space-y-3">
         <p className="text-zinc-300 font-medium">Booking unavailable</p>
         <p className="text-zinc-500 text-sm">{message}</p>
-        <Link href="/artist/bookings" className="inline-block mt-2 text-sm text-[#D4A853] hover:underline">
+        <Link href="/artist/bookings" className="inline-block mt-2 text-sm text-[#c9a84c] hover:underline">
           Return to my bookings →
         </Link>
       </div>

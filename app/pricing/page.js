@@ -99,7 +99,7 @@ export default function PricingPage() {
       {/* Header */}
       <div className="text-center mb-14 max-w-xl mx-auto">
         <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-8 h-8 rounded-lg bg-[#D4A853] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-[#c9a84c] flex items-center justify-center">
             <span className="text-black text-xs font-black">IB</span>
           </div>
           <span className="text-[#E8E8E8] font-bold text-lg">InkBook</span>
@@ -109,7 +109,7 @@ export default function PricingPage() {
         </h1>
         <p className="text-zinc-400 text-base">
           One plan. One price. Everything you need to run your studio.
-          <br />Plus a <span className="text-[#D4A853]">1% transaction fee</span> on bookings — only when you earn.
+          <br />Plus a <span className="text-[#c9a84c]">1% transaction fee</span> on bookings — only when you earn.
         </p>
       </div>
 
@@ -126,13 +126,13 @@ export default function PricingPage() {
             key={plan.id}
             className={`relative flex flex-col rounded-2xl border p-7 transition-colors ${
               plan.popular
-                ? "bg-[#111] border-[#D4A853]/50"
+                ? "bg-[#111] border-[#c9a84c]/50"
                 : "bg-[#111] border-[#1E1E1E] hover:border-[#2A2A2A]"
             }`}
           >
             {plan.popular && (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <span className="bg-[#D4A853] text-black text-xs font-bold px-3 py-1 rounded-full">
+                <span className="bg-[#c9a84c] text-black text-xs font-bold px-3 py-1 rounded-full">
                   Most Popular
                 </span>
               </div>
@@ -143,7 +143,7 @@ export default function PricingPage() {
               <p className="text-xs text-zinc-500 mb-4">{plan.description}</p>
 
               <div className="flex items-end gap-1 mb-1">
-                <span className="text-4xl font-bold text-[#D4A853]">${plan.price}</span>
+                <span className="text-4xl font-bold text-[#c9a84c]">${plan.price}</span>
                 <span className="text-zinc-500 text-sm mb-1.5">/mo</span>
               </div>
               <p className="text-xs text-zinc-500">{plan.artists}</p>
@@ -153,7 +153,7 @@ export default function PricingPage() {
               {plan.features.map((f) => (
                 <li key={f} className="flex items-start gap-2.5 text-sm text-zinc-300">
                   <svg
-                    className="w-4 h-4 text-[#D4A853] shrink-0 mt-0.5"
+                    className="w-4 h-4 text-[#c9a84c] shrink-0 mt-0.5"
                     viewBox="0 0 16 16"
                     fill="none"
                   >
@@ -175,8 +175,8 @@ export default function PricingPage() {
               disabled={loading !== null}
               className={`w-full py-3 rounded-lg font-bold text-sm transition-colors disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
                 plan.popular
-                  ? "bg-[#D4A853] text-black hover:bg-[#C49843] disabled:opacity-60"
-                  : "bg-[#1A1A1A] text-[#E8E8E8] border border-[#2A2A2A] hover:border-[#D4A853]/50 hover:text-[#D4A853] disabled:opacity-60"
+                  ? "bg-[#c9a84c] text-black hover:bg-[#a8832e] disabled:opacity-60"
+                  : "bg-[#1A1A1A] text-[#E8E8E8] border border-[#2A2A2A] hover:border-[#c9a84c]/50 hover:text-[#c9a84c] disabled:opacity-60"
               }`}
             >
               {loading === plan.id ? (
