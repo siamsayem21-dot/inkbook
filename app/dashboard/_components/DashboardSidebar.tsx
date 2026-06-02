@@ -39,17 +39,26 @@ export default function DashboardSidebar({ studioName, studioSubdomain }: Props)
 
       {/* Studio */}
       <div className="px-3 mb-6">
-        <p className="text-[10px] text-white/30 uppercase tracking-widest mb-1">Studio</p>
-        <p className="text-sm font-semibold truncate">{studioName}</p>
-        {studioSubdomain && (
-          <a
-            href={`/book/${studioSubdomain}`}
-            target="_blank"
-            className="text-[11px] text-white/30 hover:text-gold transition-colors mt-0.5 inline-block"
-          >
-            /{studioSubdomain} ↗
-          </a>
-        )}
+        <p className="text-[10px] text-white/30 uppercase tracking-widest mb-2">Studio</p>
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-full bg-zinc-800 ring-2 ring-gold/30 flex items-center justify-center shrink-0">
+            <span className="text-white text-xs font-black">
+              {studioName.charAt(0).toUpperCase()}
+            </span>
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold truncate">{studioName}</p>
+            {studioSubdomain && (
+              <a
+                href={`/book/${studioSubdomain}`}
+                target="_blank"
+                className="text-[11px] text-white/30 hover:text-gold transition-colors mt-0.5 inline-block"
+              >
+                /{studioSubdomain} ↗
+              </a>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Nav */}

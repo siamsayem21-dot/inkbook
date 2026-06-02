@@ -29,9 +29,10 @@ const artistNav = [
 
 interface Props {
   role: "owner" | "artist";
+  studioName?: string;
 }
 
-export default function Sidebar({ role }: Props) {
+export default function Sidebar({ role, studioName }: Props) {
   const pathname = usePathname();
   const router = useRouter();
   const nav = role === "owner" ? ownerNav : artistNav;
@@ -88,6 +89,16 @@ export default function Sidebar({ role }: Props) {
             onClick={() => setMobileOpen(false)}
           />
           <aside className="absolute top-12 left-0 bottom-0 w-56 bg-zinc-900 border-r border-zinc-800 flex flex-col pt-4 pb-6 px-4 gap-1 overflow-y-auto">
+            {studioName && (
+              <div className="flex items-center gap-2.5 px-2 pb-4 mb-2 border-b border-zinc-800">
+                <div className="w-8 h-8 rounded-full bg-zinc-800 ring-2 ring-gold/30 flex items-center justify-center shrink-0">
+                  <span className="text-white text-xs font-black">
+                    {studioName.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <span className="text-sm font-semibold text-white truncate">{studioName}</span>
+              </div>
+            )}
             {navLinks(() => setMobileOpen(false))}
             <div className="mt-auto pt-6 border-t border-zinc-800">
               <button
@@ -103,10 +114,22 @@ export default function Sidebar({ role }: Props) {
 
       {/* ── Desktop sidebar ── */}
       <aside className="hidden md:flex w-56 shrink-0 border-r border-zinc-800 flex-col py-6 px-4 gap-1">
-        <div className="px-2 mb-6">
+        <div className="px-2 mb-4">
           <span className="text-lg font-bold">InkBook</span>
           <span className="block text-xs text-zinc-500 capitalize mt-0.5">{role} portal</span>
         </div>
+
+        {studioName && (
+          <div className="flex items-center gap-2.5 px-2 mb-5">
+            <div className="w-8 h-8 rounded-full bg-zinc-800 ring-2 ring-gold/30 flex items-center justify-center shrink-0">
+              <span className="text-white text-xs font-black">
+                {studioName.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <span className="text-sm font-semibold text-white truncate">{studioName}</span>
+          </div>
+        )}
+
         {navLinks()}
         <div className="mt-auto pt-6 border-t border-zinc-800">
           <button

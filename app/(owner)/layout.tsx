@@ -18,7 +18,7 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
   const supabase = adminClient();
   const { data: studios, error: studioError } = await supabase
     .from("studios")
-    .select("id, subscription_status")
+    .select("id, subscription_status, name")
     .eq("owner_id", user.id)
     .limit(1);
 
@@ -31,7 +31,7 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
   if (!studioError && (!studios || studios.length === 0)) redirect("/onboarding");
 
   // Gate on subscription status — canceled/unpaid studios cannot access the dashboard
-  const studio = studios?.[0] as { id: string; subscription_status?: string } | undefined;
+  const studio = studios?.[0] as { id: string; subscription_status?: string; name?: string } | undefined;
   const BLOCKED = ["canceled", "unpaid"];
   if (studio?.subscription_status && BLOCKED.includes(studio.subscription_status)) {
     redirect("/pricing");
@@ -39,7 +39,7 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex">
-      <Sidebar role="owner" />
+      <Sidebar role="owner" studioName={studio?.name} />
       <main className="flex-1 p-4 pt-16 md:p-8 overflow-y-auto">{children}</main>
     </div>
   );
