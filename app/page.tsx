@@ -241,7 +241,7 @@ export default function HomePage() {
       {/* Testimonials */}
       <section className="px-6 py-20 max-w-5xl mx-auto">
         <div className="text-center mb-14">
-          <h2 className="text-3xl font-bold">Artists who switched stopped losing money</h2>
+          <h2 className="text-3xl font-bold">What studios need from a booking tool</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {testimonials.map((t) => (

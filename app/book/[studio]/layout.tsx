@@ -38,7 +38,7 @@ export default async function StudioBookingLayout({ children, params }: Props) {
             </div>
           )}
           <span className="font-bold">{studio.name}</span>
-          <span className="ml-auto text-[11px] text-white/20 tracking-widest uppercase">
+          <span className="ml-auto text-[11px] text-white/20 tracking-widest uppercase hidden sm:block">
             Powered by InkBook
           </span>
         </div>

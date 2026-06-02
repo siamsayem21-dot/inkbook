@@ -120,6 +120,10 @@ export default async function ConsentPage({ params, searchParams }: Props) {
         </div>
       </div>
 
+      <p className="text-center text-zinc-500 text-xs mb-5">
+        🔒 Your information is encrypted and securely stored
+      </p>
+
       <ConsentForm
         bookingId={booking.id}
         studioSlug={params.studio}

@@ -3,6 +3,8 @@ import DashboardStats from "@/components/owner/DashboardStats";
 import BookingOverview from "@/components/owner/BookingOverview";
 import RevenueChart, { type MonthRevenue } from "@/components/owner/RevenueChart";
 import PlanBanner from "@/components/owner/PlanBanner";
+import OnboardingChecklist from "@/components/owner/OnboardingChecklist";
+import CopyLinkButton from "@/components/artist/CopyLinkButton";
 
 export const dynamic = "force-dynamic";
 
@@ -39,16 +41,17 @@ export default async function OwnerDashboardPage({
 }) {
   const supabase = createAdminClient();
 
-  // Studio info for plan/status display
   const { data: studioRaw } = await supabase
     .from("studios")
-    .select("plan, subscription_status")
+    .select("plan, subscription_status, subdomain")
     .eq("id", STUDIO_ID)
     .maybeSingle();
 
-  const studio = studioRaw as { plan: string; subscription_status: string } | null;
+  const studio = studioRaw as { plan: string; subscription_status: string; subdomain: string } | null;
   const planLabel = studio ? (PLAN_LABELS[studio.plan] ?? studio.plan) : "Solo — $49/mo";
   const subscriptionStatus = studio?.subscription_status ?? "trialing";
+  const subdomain = studio?.subdomain ?? "my-studio";
+  const bookingLink = `inkbook.tech/book/${subdomain}`;
 
   const thisMonth = monthRange(0);
 
@@ -104,7 +107,6 @@ export default async function OwnerDashboardPage({
     { label: "No-show rate",    value: noShowRate, sub: "of confirmed bookings" },
   ];
 
-  // Revenue chart: last 6 months
   const ranges = Array.from({ length: 6 }, (_, i) => monthRange(i - 5));
   const chartResults = await Promise.all(
     ranges.map(({ first, last }) =>
@@ -123,8 +125,11 @@ export default async function OwnerDashboardPage({
       .reduce((s, b) => s + (b.deposit_amount_cents ?? 0), 0) / 100,
   }));
 
+  const artistsDone = (activeArtists ?? 0) > 0;
+  const linkDone    = (totalBookings ?? 0) > 0;
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex items-start justify-between">
         <h1 className="text-2xl font-bold">Studio Dashboard</h1>
         {searchParams.subscribed === "true" && (
@@ -134,12 +139,36 @@ export default async function OwnerDashboardPage({
         )}
       </div>
 
+      {/* Onboarding checklist — hides once all steps complete */}
+      <OnboardingChecklist
+        artistsDone={artistsDone}
+        linkDone={linkDone}
+        bookingLink={bookingLink}
+      />
+
       <PlanBanner planLabel={planLabel} subscriptionStatus={subscriptionStatus} />
       <DashboardStats stats={stats} />
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <RevenueChart months={monthData} />
-        <BookingOverview counts={counts} />
-      </div>
+
+      {/* Empty state or charts */}
+      {(totalBookings ?? 0) === 0 ? (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center">
+          <p className="text-base font-semibold mb-2">No bookings yet</p>
+          <p className="text-zinc-400 text-sm mb-6">
+            Share your booking link to get started.
+          </p>
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            <code className="text-sm font-mono text-gold bg-zinc-800 px-3 py-2 rounded-lg break-all">
+              {bookingLink}
+            </code>
+            <CopyLinkButton link={bookingLink} />
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <RevenueChart months={monthData} />
+          <BookingOverview counts={counts} />
+        </div>
+      )}
     </div>
   );
 }

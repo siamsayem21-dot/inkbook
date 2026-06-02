@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import ArtistCard from "@/components/booking/ArtistCard";
@@ -42,7 +43,7 @@ export default async function StudioLandingPage({ params }: Props) {
   const location = [studio.address, studio.state].filter(Boolean).join(", ");
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-14">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 md:py-14">
 
       {/* Studio hero */}
       <div className="mb-14">
@@ -86,6 +87,21 @@ export default async function StudioLandingPage({ params }: Props) {
         A deposit is collected at booking and applied toward your session.
         It is non-refundable for no-shows or cancellations within 48 hours.
       </p>
+
+      {/* Footer */}
+      <footer className="mt-12 pt-6 border-t border-white/10 text-center text-xs text-white/25">
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+          <Link href="/privacy" className="hover:text-white/50 transition-colors">
+            Privacy Policy
+          </Link>
+          <span aria-hidden>|</span>
+          <Link href="/terms" className="hover:text-white/50 transition-colors">
+            Terms of Service
+          </Link>
+          <span aria-hidden>|</span>
+          <span>© 2026 InkBook</span>
+        </div>
+      </footer>
     </div>
   );
 }
