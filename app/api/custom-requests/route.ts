@@ -111,7 +111,6 @@ export async function POST(request: NextRequest) {
       artistName: artistName ?? "Artist",
       clientName: client_name,
       studioName: studioRow.name,
-      studioSlug: studioRow.subdomain,
       requestId: newRequest.id,
       designDescription: design_description,
       placement,
