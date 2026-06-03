@@ -18,6 +18,78 @@ async function sendEmail(to: string, subject: string, html: string) {
   }
 }
 
+export async function sendBookingConfirmationEmail({
+  to,
+  clientName,
+  artistName,
+  studioName,
+  studioAddress,
+  date,
+  time,
+  depositAmountCents,
+}: {
+  to: string;
+  clientName: string;
+  artistName: string;
+  studioName: string;
+  studioAddress: string | null;
+  date: string;
+  time: string;
+  depositAmountCents: number;
+}) {
+  const subject = `Your booking is confirmed — ${studioName}`;
+  const depositDisplay = `$${(depositAmountCents / 100).toFixed(2)}`;
+
+  const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0A0A0A;font-family:sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0A0A;padding:40px 16px;">
+<tr><td align="center">
+<table width="520" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1E1E1E;border-radius:16px;padding:40px;">
+<tr><td>
+  <p style="color:#c9a84c;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 24px;">Booking Confirmed</p>
+  <h1 style="color:#E8E8E8;font-size:22px;font-weight:700;margin:0 0 8px;">You&apos;re booked, ${clientName}.</h1>
+  <p style="color:#A0A0A0;font-size:15px;margin:0 0 28px;">
+    Your appointment with <strong style="color:#c9a84c;">${artistName}</strong> at ${studioName} is confirmed.
+  </p>
+  <table width="100%" cellpadding="10" cellspacing="0" style="background:#0d0d0d;border:1px solid #1E1E1E;border-radius:10px;margin:0 0 28px;">
+    <tr>
+      <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;width:110px;">Artist</td>
+      <td style="color:#E8E8E8;font-size:14px;">${artistName}</td>
+    </tr>
+    <tr>
+      <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;">Date</td>
+      <td style="color:#E8E8E8;font-size:14px;">${date}</td>
+    </tr>
+    <tr>
+      <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;">Time</td>
+      <td style="color:#E8E8E8;font-size:14px;">${time}</td>
+    </tr>
+    <tr>
+      <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;">Deposit paid</td>
+      <td style="color:#c9a84c;font-size:14px;font-weight:700;">${depositDisplay}</td>
+    </tr>
+    ${studioAddress ? `<tr>
+      <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;vertical-align:top;">Location</td>
+      <td style="color:#A0A0A0;font-size:14px;">${studioAddress}</td>
+    </tr>` : ""}
+  </table>
+  <div style="background:#0d0d0d;border:1px solid #1E1E1E;border-radius:10px;padding:16px 20px;margin:0 0 28px;">
+    <p style="color:#A0A0A0;font-size:13px;margin:0;">
+      Please arrive on time. Late arrivals may result in a shortened session.
+      Your deposit is non-refundable for no-shows or cancellations within 48 hours.
+    </p>
+  </div>
+  <p style="color:#555;font-size:12px;margin:24px 0 0;text-align:center;">
+    Powered by InkBook &middot; inkbook.tech
+  </p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+
+  await sendEmail(to, subject, html);
+}
+
 export async function sendCustomRequestReceivedEmail({
   to,
   artistName,
