@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface Artist {
   id: string;
@@ -34,7 +35,7 @@ const BUDGET_OPTIONS = [
 ];
 
 export default function CustomRequestForm({ studioSlug, studioId, artists }: Props) {
-  const [submitted, setSubmitted] = useState(false);
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -91,27 +92,12 @@ export default function CustomRequestForm({ studioSlug, studioId, artists }: Pro
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Submission failed");
-      setSubmitted(true);
+      router.push(`/book/${studioSlug}/request/${data.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
-  }
-
-  if (submitted) {
-    return (
-      <div className="bg-gold/[0.07] border border-gold/25 rounded-xl px-6 py-10 text-center">
-        <div className="w-12 h-12 border border-gold/40 flex items-center justify-center mx-auto mb-5">
-          <span className="text-gold text-xl">✓</span>
-        </div>
-        <h2 className="font-cinzel text-xl font-bold mb-2">Request Submitted</h2>
-        <p className="text-zinc-400 text-sm max-w-sm mx-auto">
-          Your custom tattoo request has been sent. The artist will review it and email you a quote within 2–3 business days.
-        </p>
-        <p className="text-zinc-600 text-xs mt-4">Check your inbox — including spam.</p>
-      </div>
-    );
   }
 
   const inputCls =

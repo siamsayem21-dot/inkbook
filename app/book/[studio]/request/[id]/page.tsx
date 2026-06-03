@@ -162,7 +162,7 @@ export default async function ClientRequestPage({ params, searchParams }: Props)
         <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 mb-6">
           <p className="font-medium text-red-400 mb-1">Request Declined</p>
           <p className="text-sm text-zinc-500">
-            Unfortunately the artist wasn't able to take this project. Feel free to browse other artists
+            Unfortunately the artist was not able to take this project. Feel free to browse other artists
             or submit a new request.
           </p>
         </div>

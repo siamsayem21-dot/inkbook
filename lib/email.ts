@@ -23,7 +23,7 @@ export async function sendCustomRequestReceivedEmail({
   artistName,
   clientName,
   studioName,
-  studioSlug,
+  studioSlug: _studioSlug,
   requestId,
   designDescription,
   placement,
