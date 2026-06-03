@@ -4,12 +4,21 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import ArtistCard from "@/components/booking/ArtistCard";
+import FlashSection, { type FlashCard } from "@/components/booking/FlashSection";
 
 interface Props {
   params: { studio: string };
 }
 
-type StudioRow = { id: string; name: string; address: string | null; state: string | null };
+type StudioRow = {
+  id: string;
+  name: string;
+  address: string | null;
+  state: string | null;
+  primary_color: string | null;
+  font_choice: string | null;
+};
+
 type ArtistRow = {
   id: string;
   name: string;
@@ -19,12 +28,36 @@ type ArtistRow = {
   avatar_url: string | null;
 };
 
+type FlashRow = {
+  id: string;
+  artist_id: string;
+  title: string;
+  image_url: string;
+  price: number;
+  category: string | null;
+  is_repeatable: boolean;
+};
+
+function getBrand(hex: string) {
+  const h = hex.replace("#", "").padEnd(6, "0").slice(0, 6);
+  const r = parseInt(h.slice(0, 2), 16) || 0;
+  const g = parseInt(h.slice(2, 4), 16) || 0;
+  const b = parseInt(h.slice(4, 6), 16) || 0;
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return {
+    full: hex,
+    subtle: `rgba(${r},${g},${b},0.25)`,
+    medium: `rgba(${r},${g},${b},0.8)`,
+    textOnBrand: luminance > 0.5 ? "#000000" : "#ffffff",
+  };
+}
+
 export default async function StudioLandingPage({ params }: Props) {
   const supabase = createAdminClient();
 
   const { data: studioData } = await supabase
     .from("studios")
-    .select("id, name, address, state")
+    .select("id, name, address, state, primary_color, font_choice")
     .eq("subdomain", params.studio)
     .single();
 
@@ -39,18 +72,58 @@ export default async function StudioLandingPage({ params }: Props) {
     .order("name");
 
   const artists = (artistsData ?? []) as ArtistRow[];
+
+  // Fetch available flash designs for this studio
+  const { data: flashRaw } = await supabase
+    .from("flash_designs")
+    .select("id, artist_id, title, image_url, price, category, is_repeatable")
+    .eq("studio_id", studio.id)
+    .eq("is_available", true)
+    .order("created_at", { ascending: false });
+
+  const flashRows = (flashRaw ?? []) as FlashRow[];
+
+  // Join artist names into flash cards
+  const artistById = Object.fromEntries(artists.map((a) => [a.id, a.name]));
+  const flashCards: FlashCard[] = flashRows.map((f) => ({
+    ...f,
+    artist_name: artistById[f.artist_id] ?? "Artist",
+  }));
+
   const location = [studio.address, studio.state].filter(Boolean).join(", ");
+
+  const brand = getBrand(studio.primary_color ?? "#D4AF37");
+  const fontChoice = studio.font_choice ?? "default";
+  const brandFont =
+    fontChoice === "elegant"
+      ? "var(--font-inter), system-ui, sans-serif"
+      : "var(--font-cinzel), Georgia, serif";
+  const fontWeight = fontChoice === "bold" ? "900" : undefined;
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 md:py-16">
 
       {/* Studio hero */}
       <div className="mb-16">
-        <div className="inline-flex items-center gap-2.5 border border-gold/25 px-4 py-1.5 mb-7">
-          <span className="w-1.5 h-1.5 rounded-full bg-gold shrink-0" />
-          <span className="label-xs text-gold/80">Deposit Required to Book</span>
+        <div
+          className="inline-flex items-center gap-2.5 px-5 py-2.5 mb-7"
+          style={{
+            backgroundColor: `${brand.full}14`,
+            border: `1px solid ${brand.full}40`,
+          }}
+        >
+          <span
+            className="w-2 h-2 rounded-full shrink-0 animate-pulse"
+            style={{ backgroundColor: brand.full }}
+          />
+          <span className="label-xs font-bold" style={{ color: brand.full }}>
+            Deposit Required to Book
+          </span>
         </div>
-        <h1 className="font-cinzel text-4xl md:text-5xl font-bold tracking-wide mb-3">
+        <h1
+          className="text-5xl md:text-6xl font-black tracking-wide mb-3"
+          style={{ fontFamily: brandFont, fontWeight: fontWeight ?? 900 }}
+        >
           Book Your Appointment
         </h1>
         <p className="text-zinc-500 text-base">
@@ -81,15 +154,39 @@ export default async function StudioLandingPage({ params }: Props) {
         </div>
       )}
 
+      {/* Flash designs section */}
+      {flashCards.length > 0 && (
+        <FlashSection
+          studioSlug={params.studio}
+          designs={flashCards}
+          brandColor={brand.full}
+          textOnBrand={brand.textOnBrand}
+        />
+      )}
+
       {/* Custom Request CTA */}
-      <div className="mt-10 border border-gold/15 rounded-xl px-6 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div
+        className="mt-10 px-7 py-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 bg-zinc-900/70"
+        style={{
+          border: `1px solid ${brand.subtle}`,
+          borderLeft: `3px solid ${brand.full}`,
+        }}
+      >
         <div>
-          <p className="font-cinzel font-semibold text-sm tracking-wide mb-0.5">Have a Custom Idea?</p>
-          <p className="text-zinc-500 text-sm">Describe your vision and get a quote — no commitment until you pay a deposit.</p>
+          <p
+            className="font-bold text-base tracking-wide mb-1"
+            style={{ fontFamily: brandFont }}
+          >
+            Have a Custom Idea?
+          </p>
+          <p className="text-zinc-500 text-sm">
+            Describe your vision and get a quote — no commitment until you pay a deposit.
+          </p>
         </div>
         <Link
           href={`/book/${params.studio}/custom`}
-          className="shrink-0 bg-gold text-black text-xs font-bold uppercase tracking-widest px-5 py-2.5 hover:bg-gold-light transition-colors"
+          className="shrink-0 text-xs font-bold uppercase tracking-widest px-6 py-3 transition-all hover:opacity-90 hover:shadow-lg"
+          style={{ backgroundColor: brand.full, color: brand.textOnBrand }}
         >
           Submit Custom Request
         </Link>
@@ -113,7 +210,7 @@ export default async function StudioLandingPage({ params }: Props) {
             Terms of Service
           </Link>
           <span className="text-zinc-700" aria-hidden>·</span>
-          <span className="label-xs text-zinc-700">© 2026 InkBook</span>
+          <span className="label-xs text-zinc-700">Powered by InkBook</span>
         </div>
       </footer>
     </div>

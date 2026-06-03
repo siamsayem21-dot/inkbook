@@ -57,7 +57,8 @@
       "Bash(Get-ChildItem -Recurse \"C:\\\\Users\\\\asiacom\\\\Desktop\\\\inkbook\\\\app\\\\\\(owner\\)\\\\owner\\\\requests\" -ErrorAction SilentlyContinue)",
       "Bash(Get-ChildItem -Recurse \"C:\\\\Users\\\\asiacom\\\\Desktop\\\\inkbook\\\\app\\\\api\\\\custom-requests\" -ErrorAction SilentlyContinue)",
       "Bash(git *)",
-      "Bash(xargs head -60)"
+      "Bash(xargs head -60)",
+      "Bash(xargs grep -l \"resend\\\\|email\\\\|Resend\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\asiacom\\Desktop"

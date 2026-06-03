@@ -86,10 +86,11 @@ export async function POST(
   const { error } = await supabase
     .from("custom_requests")
     .update({
-      status: "quoted",
+      status:        "quoted",
       quote_amount,
-      quote_message: quote_message ?? null,
+      quote_message:  quote_message ?? null,
       deposit_amount,
+      artist_note:    quote_message ?? null,
     } as never)
     .eq("id", params.id);
 

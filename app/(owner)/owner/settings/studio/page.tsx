@@ -11,13 +11,17 @@ type StudioRow = {
   subdomain: string;
   address: string | null;
   state: string | null;
+  logo_url: string | null;
+  primary_color: string | null;
+  secondary_color: string | null;
+  font_choice: string | null;
 };
 
 export default async function StudioSettingsPage() {
   const supabase = createAdminClient();
   const { data: studioRaw } = await supabase
     .from("studios")
-    .select("id, name, subdomain, address, state")
+    .select("id, name, subdomain, address, state, logo_url, primary_color, secondary_color, font_choice")
     .eq("id", STUDIO_ID)
     .maybeSingle();
 
@@ -44,6 +48,10 @@ export default async function StudioSettingsPage() {
         initialSubdomain={studio.subdomain ?? ""}
         initialAddress={studio.address ?? ""}
         initialState={studio.state ?? ""}
+        initialLogoUrl={studio.logo_url ?? ""}
+        initialPrimaryColor={studio.primary_color ?? "#D4AF37"}
+        initialSecondaryColor={studio.secondary_color ?? "#FFFFFF"}
+        initialFontChoice={studio.font_choice ?? "default"}
       />
     </div>
   );

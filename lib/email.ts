@@ -119,6 +119,86 @@ Your appointment is only confirmed after the deposit is paid. Deposit is non-ref
   await sendEmail(to, subject, html);
 }
 
+export async function sendCustomRequestClientConfirmationEmail({
+  to,
+  clientName,
+  studioName,
+  requestId,
+  studioSlug,
+}: {
+  to: string;
+  clientName: string;
+  studioName: string;
+  requestId: string;
+  studioSlug: string;
+}) {
+  const statusUrl = `${BASE_URL}/book/${studioSlug}/request/${requestId}`;
+  const subject = `Request received — ${studioName} will respond within 48 hours`;
+  const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0A0A0A;font-family:sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0A0A;padding:40px 16px;">
+<tr><td align="center">
+<table width="520" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1E1E1E;border-radius:16px;padding:40px;">
+<tr><td>
+<p style="color:#c9a84c;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 24px;">Request Received</p>
+<h1 style="color:#E8E8E8;font-size:22px;margin:0 0 8px;">Hi ${clientName},</h1>
+<p style="color:#A0A0A0;font-size:15px;margin:0 0 24px;">
+We've received your custom tattoo request at <strong style="color:#c9a84c;">${studioName}</strong>. The artist will review it and respond within 48 hours.
+</p>
+<div style="background:#0d0d0d;border:1px solid #1E1E1E;border-radius:10px;padding:20px;margin:0 0 28px;">
+<p style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin:0 0 8px;">What happens next?</p>
+<p style="color:#A0A0A0;font-size:14px;margin:0;">The artist will review your idea and either approve it with a deposit amount, or reach out with questions. You'll get an email the moment they respond.</p>
+</div>
+<a href="${statusUrl}" style="display:inline-block;background:#c9a84c;color:#000;font-weight:700;font-size:15px;text-decoration:none;padding:14px 28px;border-radius:10px;">
+View Request Status →
+</a>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+  await sendEmail(to, subject, html);
+}
+
+export async function sendCustomRequestDeclinedEmail({
+  to,
+  clientName,
+  studioName,
+  studioSlug,
+  declinedReason,
+}: {
+  to: string;
+  clientName: string;
+  studioName: string;
+  studioSlug: string;
+  declinedReason?: string;
+}) {
+  const bookUrl = `${BASE_URL}/book/${studioSlug}`;
+  const subject = `Update on your tattoo request — ${studioName}`;
+  const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0A0A0A;font-family:sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0A0A;padding:40px 16px;">
+<tr><td align="center">
+<table width="520" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1E1E1E;border-radius:16px;padding:40px;">
+<tr><td>
+<p style="color:#666;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 24px;">Request Update</p>
+<h1 style="color:#E8E8E8;font-size:22px;margin:0 0 8px;">Hi ${clientName},</h1>
+<p style="color:#A0A0A0;font-size:15px;margin:0 0 24px;">
+Thank you for reaching out to <strong style="color:#E8E8E8;">${studioName}</strong>. Unfortunately, the artist is unable to take on this project at this time.
+</p>
+${declinedReason ? `<div style="background:#0d0d0d;border:1px solid #1E1E1E;border-radius:10px;padding:20px;margin:0 0 24px;"><p style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin:0 0 6px;">Note from the artist</p><p style="color:#A0A0A0;font-size:14px;margin:0;">${declinedReason}</p></div>` : ""}
+<p style="color:#A0A0A0;font-size:14px;margin:0 0 28px;">
+Feel free to browse other artists or submit a new request — we'd love to work with you in the future.
+</p>
+<a href="${bookUrl}" style="display:inline-block;background:#c9a84c;color:#000;font-weight:700;font-size:15px;text-decoration:none;padding:14px 28px;border-radius:10px;">
+Browse Artists →
+</a>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+  await sendEmail(to, subject, html);
+}
+
 export async function sendArtistInviteEmail({
   to,
   inviteeName,

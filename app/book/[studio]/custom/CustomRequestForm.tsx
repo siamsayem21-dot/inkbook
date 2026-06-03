@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { useState, useRef, useMemo } from "react";
+import Link from "next/link";
+import { submitCustomRequest } from "./actions";
 
 interface Artist {
   id: string;
@@ -10,203 +10,296 @@ interface Artist {
 }
 
 interface Props {
-  studioSlug: string;
-  studioId: string;
-  artists: Artist[];
+  studioSlug:   string;
+  studioId:     string;
+  studioName:   string;
+  artists:      Artist[];
+  primaryColor: string;
+  textOnBrand:  string;
 }
 
-const SIZE_OPTIONS = [
-  "Tiny (under 2\")",
-  "Small (2–4\")",
-  "Medium (4–6\")",
-  "Large (6–10\")",
-  "X-Large (10\"+)",
-  "Half sleeve",
-  "Full sleeve",
-  "Back piece",
+const STYLES = [
+  "Blackwork", "Fine Line", "Traditional", "Neo-Traditional",
+  "Watercolor", "Geometric", "Realism", "Japanese", "Tribal", "Other",
 ];
 
-const BUDGET_OPTIONS = [
-  "Under $300",
-  "$300 – $600",
-  "$600 – $1,000",
-  "$1,000 – $2,000",
-  "$2,000+",
-  "Let the artist quote",
+const SIZES = [
+  "Small (under 2\")",
+  "Medium (2–4\")",
+  "Large (4–6\")",
+  "Extra Large (6\"+)",
 ];
+
+const BUDGETS = ["$100–200", "$200–400", "$400–600", "$600–1,000", "$1,000+"];
 
 const MAX_PHOTOS = 3;
-const ACCEPTED = "image/jpeg,image/jpg,image/png,image/webp,image/gif";
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+const ACCEPTED = "image/jpeg,image/jpg,image/png,image/webp";
 
-export default function CustomRequestForm({ studioSlug, studioId, artists }: Props) {
-  const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+type Step = 1 | 2 | 3;
 
-  const [loading, setLoading] = useState(false);
-  const [loadingMsg, setLoadingMsg] = useState("");
-  const [error, setError] = useState<string | null>(null);
+const STEP_LABELS = ["About You", "Your Idea", "Final Details"] as const;
 
-  // Photo state — local File objects + object URL previews
-  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
-  const [previews, setPreviews] = useState<string[]>([]);
+type FormFields = {
+  clientName:       string;
+  clientEmail:      string;
+  clientPhone:      string;
+  artistId:         string;
+  style:            string;
+  placement:        string;
+  size:             string;
+  budgetRange:      string;
+  description:      string;
+  availabilityNote: string;
+};
 
-  const [form, setForm] = useState({
-    client_name: "",
-    client_email: "",
-    client_phone: "",
-    artist_id: "",
-    design_description: "",
-    placement: "",
-    size: "",
-    budget_range: "",
-    preferred_dates: "",
-    agreed: false,
-  });
+function validateStep1(f: FormFields) {
+  const e: Partial<Record<keyof FormFields, string>> = {};
+  if (f.clientName.trim().length < 2) e.clientName = "Name must be at least 2 characters";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.clientEmail)) e.clientEmail = "Enter a valid email address";
+  if (!f.clientPhone.trim()) e.clientPhone = "Phone number is required";
+  return e;
+}
 
-  function set(field: keyof typeof form, value: string | boolean) {
+function validateStep2(f: FormFields) {
+  const e: Partial<Record<keyof FormFields, string>> = {};
+  if (!f.style) e.style = "Please select a tattoo style";
+  if (!f.placement.trim()) e.placement = "Please describe the placement";
+  if (!f.size) e.size = "Please select a size";
+  if (!f.budgetRange) e.budgetRange = "Please select a budget range";
+  if (f.description.trim().length < 20)
+    e.description = "Please describe your idea in more detail (min 20 characters)";
+  return e;
+}
+
+const EMPTY: FormFields = {
+  clientName: "", clientEmail: "", clientPhone: "", artistId: "",
+  style: "", placement: "", size: "", budgetRange: "", description: "",
+  availabilityNote: "",
+};
+
+export default function CustomRequestForm({
+  studioSlug, studioId, studioName, artists, primaryColor, textOnBrand,
+}: Props) {
+  const [step, setStep]         = useState<Step>(1);
+  const [form, setForm]         = useState<FormFields>({ ...EMPTY });
+  const [touched, setTouched]   = useState<Set<string>>(new Set());
+  const [photoFiles, setPhotoFiles]   = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted]   = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const s1Errors = useMemo(() => validateStep1(form), [form]);
+  const s2Errors = useMemo(() => validateStep2(form), [form]);
+
+  function set(field: keyof FormFields, value: string) {
     setForm((f) => ({ ...f, [field]: value }));
+  }
+  function touch(field: string) {
+    setTouched((t) => new Set(t).add(field));
+  }
+  function err(field: keyof FormFields) {
+    if (!touched.has(field)) return null;
+    return step === 1 ? (s1Errors[field] ?? null) : (s2Errors[field] ?? null);
+  }
+
+  function handleNext() {
+    const fields = step === 1
+      ? (["clientName", "clientEmail", "clientPhone"] as (keyof FormFields)[])
+      : (["style", "placement", "size", "budgetRange", "description"] as (keyof FormFields)[]);
+    const newTouched = new Set(Array.from(touched).concat(fields));
+    setTouched(newTouched);
+    const errors = step === 1 ? validateStep1(form) : validateStep2(form);
+    if (Object.keys(errors).length > 0) return;
+    setStep((s) => (s + 1) as Step);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleBack() {
+    setStep((s) => (s - 1) as Step);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const incoming = Array.from(e.target.files ?? []);
-    // Only take as many as slots remain
     const slots = MAX_PHOTOS - photoFiles.length;
-    const toAdd = incoming.slice(0, slots);
-
+    const toAdd = incoming.slice(0, slots).filter((f) => f.size <= MAX_PHOTO_BYTES);
     const newPreviews = toAdd.map((f) => URL.createObjectURL(f));
-    setPhotoFiles((prev) => [...prev, ...toAdd]);
-    setPreviews((prev) => [...prev, ...newPreviews]);
-
-    // Reset so the same file can be re-selected after removal
+    setPhotoFiles((p) => [...p, ...toAdd]);
+    setPhotoPreviews((p) => [...p, ...newPreviews]);
     e.target.value = "";
   }
 
   function removePhoto(i: number) {
-    URL.revokeObjectURL(previews[i]);
-    setPhotoFiles((prev) => prev.filter((_, idx) => idx !== i));
-    setPreviews((prev) => prev.filter((_, idx) => idx !== i));
+    URL.revokeObjectURL(photoPreviews[i]);
+    setPhotoFiles((p) => p.filter((_, idx) => idx !== i));
+    setPhotoPreviews((p) => p.filter((_, idx) => idx !== i));
   }
 
-  async function uploadPhotos(): Promise<string[]> {
-    if (photoFiles.length === 0) return [];
+  async function handleSubmit() {
+    setSubmitting(true);
+    setSubmitError(null);
 
-    const supabase = createClient();
-    const urls: string[] = [];
+    const fd = new FormData();
+    fd.append("studioId",        studioId);
+    fd.append("studioSlug",      studioSlug);
+    fd.append("studioName",      studioName);
+    fd.append("artistId",        form.artistId);
+    fd.append("clientName",      form.clientName);
+    fd.append("clientEmail",     form.clientEmail);
+    fd.append("clientPhone",     form.clientPhone);
+    fd.append("style",           form.style);
+    fd.append("placement",       form.placement);
+    fd.append("size",            form.size);
+    fd.append("budgetRange",     form.budgetRange);
+    fd.append("description",     form.description);
+    fd.append("availabilityNote", form.availabilityNote);
+    photoFiles.forEach((f) => fd.append("photos", f));
 
-    for (const file of photoFiles) {
-      const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-      const path = `${studioId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { data, error: upErr } = await supabase.storage
-        .from("reference-photos")
-        .upload(path, file, { upsert: false });
-      if (!upErr && data) {
-        const { data: { publicUrl } } = supabase.storage
-          .from("reference-photos")
-          .getPublicUrl(data.path);
-        urls.push(publicUrl);
-      }
-    }
+    const result = await submitCustomRequest(fd);
+    setSubmitting(false);
 
-    return urls;
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-
-    if (!form.agreed) {
-      setError("Please confirm you understand how the quote process works.");
+    if (result.error) {
+      setSubmitError(result.error);
       return;
     }
-
-    setLoading(true);
-    try {
-      let reference_photos: string[] = [];
-
-      if (photoFiles.length > 0) {
-        setLoadingMsg("Uploading photos…");
-        reference_photos = await uploadPhotos();
-      }
-
-      setLoadingMsg("Submitting request…");
-      const res = await fetch("/api/custom-requests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          studio_id: studioId,
-          artist_id: form.artist_id || null,
-          client_name: form.client_name,
-          client_email: form.client_email,
-          client_phone: form.client_phone,
-          design_description: form.design_description,
-          placement: form.placement,
-          size: form.size,
-          budget_range: form.budget_range,
-          preferred_dates: form.preferred_dates,
-          reference_photos,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Submission failed");
-      router.push(`/book/${studioSlug}/request/${data.id}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setLoading(false);
-      setLoadingMsg("");
-    }
+    setSubmitted(true);
   }
 
-  const inputCls =
-    "w-full bg-zinc-900 border border-zinc-800 text-white text-sm rounded-lg px-4 py-3 placeholder-zinc-600 focus:outline-none focus:border-gold/50 transition-colors";
-  const labelCls = "block text-xs uppercase tracking-widest text-zinc-500 mb-1.5";
+  const selectedArtistName = artists.find((a) => a.id === form.artistId)?.name ?? null;
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Contact */}
-      <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-5 space-y-4">
-        <h2 className="text-xs uppercase tracking-widest text-zinc-500 font-medium">Your Contact Info</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className={labelCls}>Full Name *</label>
-            <input
-              required
-              type="text"
-              className={inputCls}
-              placeholder="Jane Smith"
-              value={form.client_name}
-              onChange={(e) => set("client_name", e.target.value)}
-            />
+  const ic = "w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/25 focus:outline-none transition-colors";
+  const lc = "block text-xs font-medium text-white/50 mb-2 uppercase tracking-wide";
+
+  // ── Success screen ────────────────────────────────────────────────────────
+  if (submitted) {
+    return (
+      <div className="text-center py-16 px-4">
+        <div
+          className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
+          style={{ backgroundColor: `${primaryColor}1a`, border: `1px solid ${primaryColor}4d` }}
+        >
+          <span className="text-2xl" style={{ color: primaryColor }}>✓</span>
+        </div>
+        <h2 className="font-cinzel text-2xl font-bold mb-3">Request Submitted!</h2>
+        <p className="text-zinc-400 text-sm leading-relaxed max-w-sm mx-auto mb-2">
+          <strong className="text-white">{selectedArtistName ?? "The studio"}</strong> will review
+          your request and respond within 48 hours.
+        </p>
+        <p className="text-zinc-500 text-xs mb-10">
+          Check your email for a confirmation.
+        </p>
+        <Link
+          href={`/book/${studioSlug}`}
+          className="text-sm text-zinc-500 hover:text-white transition-colors"
+        >
+          ← Back to {studioName}
+        </Link>
+      </div>
+    );
+  }
+
+  // ── Progress bar ──────────────────────────────────────────────────────────
+  const header = (
+    <div className="mb-8">
+      <div className="flex justify-between mb-2">
+        {STEP_LABELS.map((label, i) => (
+          <span
+            key={label}
+            className="text-xs transition-colors"
+            style={{ color: step > i ? primaryColor : step === i + 1 ? "#fff" : "#52525b" }}
+          >
+            {label}
+          </span>
+        ))}
+      </div>
+      <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${(step / 3) * 100}%`, backgroundColor: primaryColor }}
+        />
+      </div>
+      <p className="text-xs text-zinc-600 mt-2">Step {step} of 3</p>
+    </div>
+  );
+
+  const navButtons = (
+    <div className="flex items-center gap-3 pt-2">
+      {step > 1 && (
+        <button
+          type="button"
+          onClick={handleBack}
+          className="px-5 py-3 text-sm text-zinc-400 hover:text-white transition-colors"
+        >
+          ← Back
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={step === 3 ? handleSubmit : handleNext}
+        disabled={submitting}
+        className="flex-1 font-bold text-sm py-3.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        style={{ backgroundColor: primaryColor, color: textOnBrand }}
+      >
+        {submitting ? "Submitting…" : step === 3 ? "Submit Request →" : "Next →"}
+      </button>
+    </div>
+  );
+
+  // ── Step 1 — About You ────────────────────────────────────────────────────
+  if (step === 1) {
+    return (
+      <div>
+        {header}
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={lc}>Full Legal Name *</label>
+              <input
+                type="text"
+                value={form.clientName}
+                onChange={(e) => set("clientName", e.target.value)}
+                onBlur={() => touch("clientName")}
+                className={ic}
+                placeholder="Jane Smith"
+              />
+              {err("clientName") && <p className="text-red-400 text-xs mt-1">{err("clientName")}</p>}
+            </div>
+            <div>
+              <label className={lc}>Email *</label>
+              <input
+                type="email"
+                value={form.clientEmail}
+                onChange={(e) => set("clientEmail", e.target.value)}
+                onBlur={() => touch("clientEmail")}
+                className={ic}
+                placeholder="you@example.com"
+              />
+              {err("clientEmail") && <p className="text-red-400 text-xs mt-1">{err("clientEmail")}</p>}
+            </div>
           </div>
+
           <div>
-            <label className={labelCls}>Email *</label>
+            <label className={lc}>Phone *</label>
             <input
-              required
-              type="email"
-              className={inputCls}
-              placeholder="jane@email.com"
-              value={form.client_email}
-              onChange={(e) => set("client_email", e.target.value)}
-            />
-          </div>
-          <div>
-            <label className={labelCls}>Phone *</label>
-            <input
-              required
               type="tel"
-              className={inputCls}
+              value={form.clientPhone}
+              onChange={(e) => set("clientPhone", e.target.value)}
+              onBlur={() => touch("clientPhone")}
+              className={ic}
               placeholder="+1 (555) 000-0000"
-              value={form.client_phone}
-              onChange={(e) => set("client_phone", e.target.value)}
             />
+            {err("clientPhone") && <p className="text-red-400 text-xs mt-1">{err("clientPhone")}</p>}
           </div>
+
           <div>
-            <label className={labelCls}>Preferred Artist</label>
+            <label className={lc}>Preferred Artist</label>
             <select
-              className={inputCls}
-              value={form.artist_id}
-              onChange={(e) => set("artist_id", e.target.value)}
+              value={form.artistId}
+              onChange={(e) => set("artistId", e.target.value)}
+              className={ic}
             >
               <option value="">No preference / Studio choice</option>
               {artists.map((a) => (
@@ -214,184 +307,255 @@ export default function CustomRequestForm({ studioSlug, studioId, artists }: Pro
               ))}
             </select>
           </div>
+
+          {navButtons}
         </div>
       </div>
+    );
+  }
 
-      {/* Design Details */}
-      <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-5 space-y-4">
-        <h2 className="text-xs uppercase tracking-widest text-zinc-500 font-medium">Design Details</h2>
-
-        <div>
-          <label className={labelCls}>Design Description *</label>
-          <textarea
-            required
-            rows={4}
-            className={`${inputCls} resize-none`}
-            placeholder="Describe your tattoo idea in detail — subject matter, style (realism, traditional, neo-trad, blackwork, etc.), mood, and any specific elements you want included..."
-            value={form.design_description}
-            onChange={(e) => set("design_description", e.target.value)}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  // ── Step 2 — Your Idea ────────────────────────────────────────────────────
+  if (step === 2) {
+    return (
+      <div>
+        {header}
+        <div className="space-y-5">
           <div>
-            <label className={labelCls}>Placement *</label>
+            <label className={lc}>Tattoo Style *</label>
+            <select
+              value={form.style}
+              onChange={(e) => set("style", e.target.value)}
+              onBlur={() => touch("style")}
+              className={ic}
+            >
+              <option value="">Select style</option>
+              {STYLES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+            {err("style") && <p className="text-red-400 text-xs mt-1">{err("style")}</p>}
+          </div>
+
+          <div>
+            <label className={lc}>Placement *</label>
             <input
-              required
               type="text"
-              className={inputCls}
-              placeholder="e.g. Left forearm, inner wrist"
               value={form.placement}
               onChange={(e) => set("placement", e.target.value)}
+              onBlur={() => touch("placement")}
+              className={ic}
+              placeholder="e.g. left forearm, upper back"
             />
+            {err("placement") && <p className="text-red-400 text-xs mt-1">{err("placement")}</p>}
           </div>
-          <div>
-            <label className={labelCls}>Approximate Size *</label>
-            <select
-              required
-              className={inputCls}
-              value={form.size}
-              onChange={(e) => set("size", e.target.value)}
-            >
-              <option value="">Select size</option>
-              {SIZE_OPTIONS.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
-        </div>
 
-        {/* Reference Photos — file upload */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={lc}>Size *</label>
+              <select
+                value={form.size}
+                onChange={(e) => set("size", e.target.value)}
+                onBlur={() => touch("size")}
+                className={ic}
+              >
+                <option value="">Select size</option>
+                {SIZES.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+              {err("size") && <p className="text-red-400 text-xs mt-1">{err("size")}</p>}
+            </div>
+            <div>
+              <label className={lc}>Budget Range *</label>
+              <select
+                value={form.budgetRange}
+                onChange={(e) => set("budgetRange", e.target.value)}
+                onBlur={() => touch("budgetRange")}
+                className={ic}
+              >
+                <option value="">Select range</option>
+                {BUDGETS.map((b) => <option key={b} value={b}>{b}</option>)}
+              </select>
+              {err("budgetRange") && <p className="text-red-400 text-xs mt-1">{err("budgetRange")}</p>}
+            </div>
+          </div>
+
+          <div>
+            <label className={lc}>
+              Description *{" "}
+              <span className="normal-case tracking-normal text-zinc-600">
+                ({form.description.trim().length}/20 min)
+              </span>
+            </label>
+            <textarea
+              rows={5}
+              value={form.description}
+              onChange={(e) => set("description", e.target.value)}
+              onBlur={() => touch("description")}
+              className={`${ic} resize-none`}
+              placeholder="Describe your tattoo idea in detail. The more detail, the better — subject matter, style references, mood, elements to include or avoid…"
+            />
+            {err("description") && <p className="text-red-400 text-xs mt-1">{err("description")}</p>}
+          </div>
+
+          {navButtons}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Step 3 — Final Details ────────────────────────────────────────────────
+  return (
+    <div>
+      {header}
+      <div className="space-y-6">
+
+        {/* Reference photos */}
         <div>
-          <label className={labelCls}>
-            Reference Photos
-            <span className="normal-case tracking-normal text-zinc-600 ml-1.5">(optional · up to {MAX_PHOTOS})</span>
+          <label className={lc}>
+            Reference Photos{" "}
+            <span className="normal-case tracking-normal text-zinc-600">
+              (optional · up to {MAX_PHOTOS})
+            </span>
           </label>
 
-          {/* Thumbnails */}
-          {previews.length > 0 && (
-            <div className="flex gap-3 mb-3 flex-wrap">
-              {previews.map((src, i) => (
-                <div key={i} className="relative w-20 h-20 shrink-0 group">
+          {photoPreviews.length > 0 ? (
+            <div className="flex flex-wrap gap-3 mb-3">
+              {photoPreviews.map((src, i) => (
+                <div key={i} className="relative w-20 h-20 shrink-0">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={src}
-                    alt={`Reference ${i + 1}`}
+                    alt={`Ref ${i + 1}`}
                     className="w-full h-full object-cover rounded-lg border border-zinc-700"
                   />
                   <button
                     type="button"
                     onClick={() => removePhoto(i)}
-                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-zinc-900 border border-zinc-600 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:border-zinc-300 transition-colors text-[10px] leading-none"
-                    aria-label="Remove photo"
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-zinc-900 border border-zinc-600 rounded-full flex items-center justify-center text-zinc-400 hover:text-white text-[10px]"
                   >
                     ✕
                   </button>
                 </div>
               ))}
-
-              {/* Add-more slot if under limit */}
               {photoFiles.length < MAX_PHOTOS && (
                 <button
                   type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-20 h-20 shrink-0 border border-zinc-700 border-dashed rounded-lg flex items-center justify-center text-zinc-600 hover:text-zinc-400 hover:border-zinc-500 transition-colors text-xl"
-                  aria-label="Add another photo"
+                  onClick={() => fileRef.current?.click()}
+                  className="w-20 h-20 shrink-0 border border-dashed border-zinc-700 rounded-lg flex items-center justify-center text-zinc-600 hover:text-zinc-400 hover:border-zinc-500 transition-colors text-xl"
                 >
                   +
                 </button>
               )}
             </div>
-          )}
-
-          {/* Drop zone — only shown when no photos yet */}
-          {photoFiles.length === 0 && (
+          ) : (
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full flex flex-col items-center justify-center gap-2 border border-zinc-700 border-dashed rounded-lg py-7 px-4 text-center hover:border-zinc-500 hover:bg-zinc-900/60 transition-colors cursor-pointer"
+              onClick={() => fileRef.current?.click()}
+              className="w-full flex flex-col items-center justify-center gap-2 border border-dashed border-zinc-800 rounded-xl py-8 hover:border-zinc-600 transition-colors mb-2"
             >
-              <span className="text-2xl text-zinc-600">↑</span>
-              <span className="text-sm text-zinc-400">Tap to upload or use camera</span>
-              <span className="text-xs text-zinc-600">JPG, PNG, WebP, GIF</span>
+              <span className="text-2xl text-zinc-700">↑</span>
+              <span className="text-sm text-zinc-400">Tap to upload photos</span>
+              <span className="text-xs text-zinc-700">JPG, PNG, WebP · max 5 MB each</span>
             </button>
           )}
 
-          {/* Hidden real input — no capture attr so iOS shows camera+gallery sheet */}
           <input
-            ref={fileInputRef}
+            ref={fileRef}
             type="file"
             accept={ACCEPTED}
             multiple
-            className="sr-only"
             onChange={handleFileChange}
+            className="sr-only"
           />
-
-          <p className="text-zinc-600 text-xs mt-1.5">
-            Works with your phone camera or photo library.
-          </p>
         </div>
-      </div>
 
-      {/* Scheduling & Budget */}
-      <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-5 space-y-4">
-        <h2 className="text-xs uppercase tracking-widest text-zinc-500 font-medium">Scheduling & Budget</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Availability */}
+        <div>
+          <label className={lc}>Availability</label>
+          <input
+            type="text"
+            value={form.availabilityNote}
+            onChange={(e) => set("availabilityNote", e.target.value)}
+            className={ic}
+            placeholder="e.g. weekends, weekday evenings, anytime in March"
+          />
+        </div>
+
+        {/* Review summary */}
+        <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-5 space-y-4">
+          <h3 className="text-xs uppercase tracking-widest text-zinc-500 font-medium">
+            Review Your Request
+          </h3>
+
+          <Section title="Your Details">
+            <Row label="Name"   value={form.clientName} />
+            <Row label="Email"  value={form.clientEmail} />
+            <Row label="Phone"  value={form.clientPhone} />
+            <Row label="Artist" value={selectedArtistName ?? "No preference"} />
+          </Section>
+
+          <Section title="Tattoo Details">
+            <Row label="Style"       value={form.style} />
+            <Row label="Placement"   value={form.placement} />
+            <Row label="Size"        value={form.size} />
+            <Row label="Budget"      value={form.budgetRange} />
+            {form.availabilityNote && <Row label="Available" value={form.availabilityNote} />}
+          </Section>
+
           <div>
-            <label className={labelCls}>Budget Range *</label>
-            <select
-              required
-              className={inputCls}
-              value={form.budget_range}
-              onChange={(e) => set("budget_range", e.target.value)}
-            >
-              <option value="">Select range</option>
-              {BUDGET_OPTIONS.map((b) => (
-                <option key={b} value={b}>{b}</option>
-              ))}
-            </select>
+            <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Description</p>
+            <p className="text-sm text-zinc-400 leading-relaxed whitespace-pre-wrap line-clamp-4">
+              {form.description}
+            </p>
           </div>
-          <div>
-            <label className={labelCls}>Preferred Dates / Availability *</label>
-            <input
-              required
-              type="text"
-              className={inputCls}
-              placeholder="e.g. Weekends in Feb, prefer mornings"
-              value={form.preferred_dates}
-              onChange={(e) => set("preferred_dates", e.target.value)}
-            />
-          </div>
+
+          {photoPreviews.length > 0 && (
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-2">
+                Reference Photos
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                {photoPreviews.map((src, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={i} src={src} alt={`Ref ${i + 1}`}
+                    className="w-14 h-14 object-cover rounded-md border border-zinc-700"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
+
+        <div className="bg-gold/5 border border-gold/15 rounded-xl px-4 py-3 text-xs text-white/40 leading-relaxed">
+          Submitting this form is <span className="text-white/60">not a booking</span>.
+          The artist will review your request and send a deposit amount to confirm.
+          No charge until you accept.
+        </div>
+
+        {submitError && (
+          <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-xl px-4 py-3">
+            {submitError}
+          </div>
+        )}
+
+        {navButtons}
       </div>
+    </div>
+  );
+}
 
-      {/* Agreement */}
-      <label className="flex items-start gap-3 cursor-pointer">
-        <input
-          type="checkbox"
-          className="mt-0.5 accent-gold shrink-0"
-          checked={form.agreed}
-          onChange={(e) => set("agreed", e.target.checked)}
-        />
-        <span className="text-xs text-zinc-400 leading-relaxed">
-          I understand that submitting this form is <strong className="text-white">not a booking</strong>.
-          The artist will review my request and send a custom quote. A deposit is required to confirm the appointment.
-        </span>
-      </label>
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-2">{title}</p>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">{children}</div>
+    </div>
+  );
+}
 
-      {error && (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-xl px-4 py-3">
-          {error}
-        </div>
-      )}
-
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-gold text-black font-bold text-sm py-3.5 rounded-lg hover:bg-gold-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {loading ? (loadingMsg || "Submitting…") : "Submit Custom Request"}
-      </button>
-    </form>
+function Row({ label, value }: { label: string; value: string }) {
+  if (!value) return null;
+  return (
+    <div>
+      <span className="text-zinc-600 text-xs">{label}: </span>
+      <span className="text-zinc-300 text-xs">{value}</span>
+    </div>
   );
 }

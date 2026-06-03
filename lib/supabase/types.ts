@@ -31,6 +31,9 @@ export interface Database {
           stripe_customer_id: string | null;
           stripe_subscription_id: string | null;
           created_at: string;
+          primary_color: string | null;
+          secondary_color: string | null;
+          font_choice: string | null;
         };
         Insert: Omit<Database["public"]["Tables"]["studios"]["Row"], "id" | "created_at">;
         Update: Partial<Database["public"]["Tables"]["studios"]["Insert"]>;
@@ -175,10 +178,35 @@ export interface Database {
           quote_message: string | null;
           deposit_amount: number | null;
           stripe_payment_intent_id: string | null;
+          style: string | null;
+          artist_note: string | null;
+          declined_reason: string | null;
+          availability_note: string | null;
+          reference_photo_urls: string[] | null;
+          deposit_amount_cents: number | null;
+          deposit_link: string | null;
           created_at: string;
         };
         Insert: Omit<Database["public"]["Tables"]["custom_requests"]["Row"], "id" | "created_at">;
         Update: Partial<Database["public"]["Tables"]["custom_requests"]["Insert"]>;
+      };
+      flash_designs: {
+        Row: {
+          id: string;
+          studio_id: string;
+          artist_id: string;
+          title: string;
+          description: string | null;
+          image_url: string;
+          price: number;
+          category: string | null;
+          is_repeatable: boolean;
+          is_available: boolean;
+          is_booked: boolean;
+          created_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["flash_designs"]["Row"], "id" | "created_at">;
+        Update: Partial<Database["public"]["Tables"]["flash_designs"]["Insert"]>;
       };
     };
     Views: Record<string, never>;

@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     reference_photos?: string[];
   };
 
-  if (!studio_id || !client_name || !client_email || !client_phone || !design_description || !placement || !size || !budget_range || !preferred_dates) {
+  if (!studio_id || !client_name || !client_email || !client_phone || !design_description || !placement || !size || !budget_range) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
