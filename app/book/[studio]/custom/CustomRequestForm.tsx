@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 interface Artist {
   id: string;
@@ -34,10 +35,20 @@ const BUDGET_OPTIONS = [
   "Let the artist quote",
 ];
 
+const MAX_PHOTOS = 3;
+const ACCEPTED = "image/jpeg,image/jpg,image/png,image/webp,image/gif";
+
 export default function CustomRequestForm({ studioSlug, studioId, artists }: Props) {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [loading, setLoading] = useState(false);
+  const [loadingMsg, setLoadingMsg] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  // Photo state — local File objects + object URL previews
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
 
   const [form, setForm] = useState({
     client_name: "",
@@ -49,14 +60,54 @@ export default function CustomRequestForm({ studioSlug, studioId, artists }: Pro
     size: "",
     budget_range: "",
     preferred_dates: "",
-    ref1: "",
-    ref2: "",
-    ref3: "",
     agreed: false,
   });
 
   function set(field: keyof typeof form, value: string | boolean) {
     setForm((f) => ({ ...f, [field]: value }));
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const incoming = Array.from(e.target.files ?? []);
+    // Only take as many as slots remain
+    const slots = MAX_PHOTOS - photoFiles.length;
+    const toAdd = incoming.slice(0, slots);
+
+    const newPreviews = toAdd.map((f) => URL.createObjectURL(f));
+    setPhotoFiles((prev) => [...prev, ...toAdd]);
+    setPreviews((prev) => [...prev, ...newPreviews]);
+
+    // Reset so the same file can be re-selected after removal
+    e.target.value = "";
+  }
+
+  function removePhoto(i: number) {
+    URL.revokeObjectURL(previews[i]);
+    setPhotoFiles((prev) => prev.filter((_, idx) => idx !== i));
+    setPreviews((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  async function uploadPhotos(): Promise<string[]> {
+    if (photoFiles.length === 0) return [];
+
+    const supabase = createClient();
+    const urls: string[] = [];
+
+    for (const file of photoFiles) {
+      const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+      const path = `${studioId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { data, error: upErr } = await supabase.storage
+        .from("reference-photos")
+        .upload(path, file, { upsert: false });
+      if (!upErr && data) {
+        const { data: { publicUrl } } = supabase.storage
+          .from("reference-photos")
+          .getPublicUrl(data.path);
+        urls.push(publicUrl);
+      }
+    }
+
+    return urls;
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -68,10 +119,16 @@ export default function CustomRequestForm({ studioSlug, studioId, artists }: Pro
       return;
     }
 
-    const photos = [form.ref1, form.ref2, form.ref3].filter(Boolean);
-
     setLoading(true);
     try {
+      let reference_photos: string[] = [];
+
+      if (photoFiles.length > 0) {
+        setLoadingMsg("Uploading photos…");
+        reference_photos = await uploadPhotos();
+      }
+
+      setLoadingMsg("Submitting request…");
       const res = await fetch("/api/custom-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -86,7 +143,7 @@ export default function CustomRequestForm({ studioSlug, studioId, artists }: Pro
           size: form.size,
           budget_range: form.budget_range,
           preferred_dates: form.preferred_dates,
-          reference_photos: photos,
+          reference_photos,
         }),
       });
 
@@ -97,6 +154,7 @@ export default function CustomRequestForm({ studioSlug, studioId, artists }: Pro
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
+      setLoadingMsg("");
     }
   }
 
@@ -203,21 +261,75 @@ export default function CustomRequestForm({ studioSlug, studioId, artists }: Pro
           </div>
         </div>
 
+        {/* Reference Photos — file upload */}
         <div>
-          <label className={labelCls}>Reference Photos (optional — paste image URLs)</label>
-          <div className="space-y-2">
-            {[form.ref1, form.ref2, form.ref3].map((val, i) => (
-              <input
-                key={i}
-                type="url"
-                className={inputCls}
-                placeholder={`Image URL ${i + 1} (Imgur, Google Drive, etc.)`}
-                value={val}
-                onChange={(e) => set(`ref${i + 1}` as "ref1" | "ref2" | "ref3", e.target.value)}
-              />
-            ))}
-          </div>
-          <p className="text-zinc-600 text-xs mt-1.5">Paste direct image links. You can also email references after submitting.</p>
+          <label className={labelCls}>
+            Reference Photos
+            <span className="normal-case tracking-normal text-zinc-600 ml-1.5">(optional · up to {MAX_PHOTOS})</span>
+          </label>
+
+          {/* Thumbnails */}
+          {previews.length > 0 && (
+            <div className="flex gap-3 mb-3 flex-wrap">
+              {previews.map((src, i) => (
+                <div key={i} className="relative w-20 h-20 shrink-0 group">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={src}
+                    alt={`Reference ${i + 1}`}
+                    className="w-full h-full object-cover rounded-lg border border-zinc-700"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(i)}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-zinc-900 border border-zinc-600 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:border-zinc-300 transition-colors text-[10px] leading-none"
+                    aria-label="Remove photo"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+
+              {/* Add-more slot if under limit */}
+              {photoFiles.length < MAX_PHOTOS && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-20 h-20 shrink-0 border border-zinc-700 border-dashed rounded-lg flex items-center justify-center text-zinc-600 hover:text-zinc-400 hover:border-zinc-500 transition-colors text-xl"
+                  aria-label="Add another photo"
+                >
+                  +
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Drop zone — only shown when no photos yet */}
+          {photoFiles.length === 0 && (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full flex flex-col items-center justify-center gap-2 border border-zinc-700 border-dashed rounded-lg py-7 px-4 text-center hover:border-zinc-500 hover:bg-zinc-900/60 transition-colors cursor-pointer"
+            >
+              <span className="text-2xl text-zinc-600">↑</span>
+              <span className="text-sm text-zinc-400">Tap to upload or use camera</span>
+              <span className="text-xs text-zinc-600">JPG, PNG, WebP, GIF</span>
+            </button>
+          )}
+
+          {/* Hidden real input — no capture attr so iOS shows camera+gallery sheet */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={ACCEPTED}
+            multiple
+            className="sr-only"
+            onChange={handleFileChange}
+          />
+
+          <p className="text-zinc-600 text-xs mt-1.5">
+            Works with your phone camera or photo library.
+          </p>
         </div>
       </div>
 
@@ -278,7 +390,7 @@ export default function CustomRequestForm({ studioSlug, studioId, artists }: Pro
         disabled={loading}
         className="w-full bg-gold text-black font-bold text-sm py-3.5 rounded-lg hover:bg-gold-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {loading ? "Submitting…" : "Submit Custom Request"}
+        {loading ? (loadingMsg || "Submitting…") : "Submit Custom Request"}
       </button>
     </form>
   );
