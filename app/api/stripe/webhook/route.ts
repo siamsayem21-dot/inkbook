@@ -80,6 +80,8 @@ export async function POST(request: NextRequest) {
       .eq("id", bookingId)
       .single();
 
+    console.log("[webhook] bookingRow fetch:", bookingRow ? "found" : "null — email will not send");
+
     if (bookingRow) {
       const { client_id, artist_id, studio_id, date, time, deposit_amount_cents } = bookingRow as {
         client_id: string;
@@ -105,6 +107,9 @@ export async function POST(request: NextRequest) {
         void trySendSms(client.phone, buildSmsMessage("booking_confirmed", studioName));
       }
 
+      console.log("[email] API key present:", !!process.env.RESEND_API_KEY);
+      console.log("[email] client email:", client?.email ?? "null — skipping email");
+
       if (client?.email && studioName) {
         const formattedDate = new Date(date + "T12:00:00").toLocaleDateString("en-US", {
           weekday: "long",
@@ -113,16 +118,22 @@ export async function POST(request: NextRequest) {
         });
         const formattedTime = time.slice(0, 5);
 
-        void sendBookingConfirmationEmail({
-          to: client.email,
-          clientName: client.full_name,
-          artistName,
-          studioName,
-          studioAddress,
-          date: formattedDate,
-          time: formattedTime,
-          depositAmountCents: deposit_amount_cents,
-        });
+        console.log("[email] attempting to send to:", client.email);
+        try {
+          await sendBookingConfirmationEmail({
+            to: client.email,
+            clientName: client.full_name,
+            artistName,
+            studioName,
+            studioAddress,
+            date: formattedDate,
+            time: formattedTime,
+            depositAmountCents: deposit_amount_cents,
+          });
+          console.log("[email] send completed for:", client.email);
+        } catch (err) {
+          console.error("[email] send failed:", err);
+        }
       }
     }
   }
