@@ -46,7 +46,7 @@ export default async function ArtistRequestDetailPage({ params }: Props) {
   if (!artist) redirect("/artist/dashboard");
 
   const { data: reqData } = await supabase
-    .from("custom_requests" as never)
+    .from("custom_requests")
     .select("id, studio_id, artist_id, client_name, client_email, client_phone, design_description, placement, size, budget_range, preferred_dates, reference_photos, status, quote_amount, quote_message, deposit_amount, created_at")
     .eq("id", params.id)
     .eq("studio_id", artist.studio_id)

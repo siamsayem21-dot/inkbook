@@ -28,7 +28,7 @@ export async function POST(
 
   // Verify the request belongs to an artist or studio this user has access to
   const { data: reqData } = await supabase
-    .from("custom_requests" as never)
+    .from("custom_requests")
     .select("id, studio_id, artist_id, client_name, client_email, status")
     .eq("id", params.id)
     .single();
@@ -84,13 +84,13 @@ export async function POST(
   }
 
   const { error } = await supabase
-    .from("custom_requests" as never)
+    .from("custom_requests")
     .update({
       status: "quoted",
       quote_amount,
       quote_message: quote_message ?? null,
       deposit_amount,
-    })
+    } as never)
     .eq("id", params.id);
 
   if (error) {

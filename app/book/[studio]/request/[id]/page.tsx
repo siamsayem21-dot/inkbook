@@ -31,7 +31,7 @@ export default async function ClientRequestPage({ params, searchParams }: Props)
   if (!studio) notFound();
 
   const { data: reqData } = await supabase
-    .from("custom_requests" as never)
+    .from("custom_requests")
     .select("id, client_name, design_description, placement, size, budget_range, preferred_dates, status, quote_amount, quote_message, deposit_amount, created_at, artist_id")
     .eq("id", params.id)
     .eq("studio_id", studio.id)

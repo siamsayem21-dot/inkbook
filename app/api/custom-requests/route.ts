@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
   const studioRow = studio as { id: string; name: string; subdomain: string };
 
   const { data: req, error } = await supabase
-    .from("custom_requests" as never)
+    .from("custom_requests")
     .insert({
       studio_id,
       artist_id: artist_id ?? null,
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       preferred_dates,
       reference_photos: reference_photos ?? [],
       status: "pending",
-    })
+    } as never)
     .select("id")
     .single();
 

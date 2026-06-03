@@ -43,7 +43,7 @@ export default async function ArtistRequestsPage() {
   if (!artist) redirect("/artist/dashboard");
 
   const { data: reqsRaw } = await supabase
-    .from("custom_requests" as never)
+    .from("custom_requests")
     .select("id, client_name, placement, size, budget_range, status, created_at")
     .eq("studio_id", artist.studio_id)
     .or(`artist_id.eq.${artist.id},artist_id.is.null`)

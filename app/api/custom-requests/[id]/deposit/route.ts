@@ -26,7 +26,7 @@ export async function POST(
   const supabase = createAdminClient();
 
   const { data: reqData } = await supabase
-    .from("custom_requests" as never)
+    .from("custom_requests")
     .select("id, studio_id, artist_id, client_name, client_email, deposit_amount, status, stripe_payment_intent_id")
     .eq("id", params.id)
     .single();

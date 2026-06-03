@@ -33,11 +33,11 @@ export async function POST(request: NextRequest) {
     if (customRequestId) {
       const supabase = createAdminClient();
       await supabase
-        .from("custom_requests" as never)
+        .from("custom_requests")
         .update({
           status: "accepted",
           stripe_payment_intent_id: session.payment_intent as string,
-        })
+        } as never)
         .eq("id", customRequestId);
       return NextResponse.json({ received: true });
     }

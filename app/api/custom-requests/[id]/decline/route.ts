@@ -12,7 +12,7 @@ export async function POST(
   const supabase = createAdminClient();
 
   const { data: reqData } = await supabase
-    .from("custom_requests" as never)
+    .from("custom_requests")
     .select("id, studio_id, status")
     .eq("id", params.id)
     .single();
@@ -39,8 +39,8 @@ export async function POST(
   }
 
   const { error } = await supabase
-    .from("custom_requests" as never)
-    .update({ status: "declined" })
+    .from("custom_requests")
+    .update({ status: "declined" } as never)
     .eq("id", params.id);
 
   if (error) {

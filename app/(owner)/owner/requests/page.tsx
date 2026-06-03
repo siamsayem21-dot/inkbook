@@ -36,7 +36,7 @@ export default async function OwnerRequestsPage() {
   const supabase = createAdminClient();
 
   const { data: reqsRaw } = await supabase
-    .from("custom_requests" as never)
+    .from("custom_requests")
     .select("id, client_name, placement, size, budget_range, status, quote_amount, deposit_amount, artist_id, created_at")
     .eq("studio_id", STUDIO_ID)
     .order("created_at", { ascending: false });
