@@ -81,6 +81,20 @@ export default async function StudioLandingPage({ params }: Props) {
         </div>
       )}
 
+      {/* Custom Request CTA */}
+      <div className="mt-10 border border-gold/15 rounded-xl px-6 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <p className="font-cinzel font-semibold text-sm tracking-wide mb-0.5">Have a Custom Idea?</p>
+          <p className="text-zinc-500 text-sm">Describe your vision and get a quote — no commitment until you pay a deposit.</p>
+        </div>
+        <Link
+          href={`/book/${params.studio}/custom`}
+          className="shrink-0 bg-gold text-black text-xs font-bold uppercase tracking-widest px-5 py-2.5 hover:bg-gold-light transition-colors"
+        >
+          Submit Custom Request
+        </Link>
+      </div>
+
       {/* Deposit notice */}
       <p className="label-xs text-zinc-700 text-center mt-14">
         A deposit is collected at booking and applied toward your session.

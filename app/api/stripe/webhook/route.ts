@@ -27,6 +27,21 @@ export async function POST(request: NextRequest) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
+    const customRequestId = session.metadata?.customRequestId;
+
+    // Handle custom request deposit
+    if (customRequestId) {
+      const supabase = createAdminClient();
+      await supabase
+        .from("custom_requests" as never)
+        .update({
+          status: "accepted",
+          stripe_payment_intent_id: session.payment_intent as string,
+        })
+        .eq("id", customRequestId);
+      return NextResponse.json({ received: true });
+    }
+
     const bookingId = session.metadata?.bookingId;
 
     if (!bookingId) {

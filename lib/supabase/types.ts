@@ -7,6 +7,13 @@ export type BookingStatus =
   | "cancelled"
   | "no_show";
 
+export type CustomRequestStatus =
+  | "pending"
+  | "quoted"
+  | "accepted"
+  | "declined"
+  | "completed";
+
 export interface Database {
   public: {
     Tables: {
@@ -149,6 +156,30 @@ export interface Database {
         Insert: Omit<Database["public"]["Tables"]["artist_invites"]["Row"], "id" | "token" | "created_at">;
         Update: Partial<Database["public"]["Tables"]["artist_invites"]["Insert"]>;
       };
+      custom_requests: {
+        Row: {
+          id: string;
+          studio_id: string;
+          artist_id: string | null;
+          client_name: string;
+          client_email: string;
+          client_phone: string;
+          design_description: string;
+          placement: string;
+          size: string;
+          reference_photos: string[];
+          budget_range: string;
+          preferred_dates: string;
+          status: CustomRequestStatus;
+          quote_amount: number | null;
+          quote_message: string | null;
+          deposit_amount: number | null;
+          stripe_payment_intent_id: string | null;
+          created_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["custom_requests"]["Row"], "id" | "created_at">;
+        Update: Partial<Database["public"]["Tables"]["custom_requests"]["Insert"]>;
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -163,6 +194,7 @@ export interface Database {
     };
     Enums: {
       booking_status: BookingStatus;
+      custom_request_status: CustomRequestStatus;
       user_role: UserRole;
     };
   };
