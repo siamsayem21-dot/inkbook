@@ -7,7 +7,7 @@ import {
   DollarSign,
   FileText,
   MessageSquare,
-  X as XIcon,
+  Bird,
   Check,
 } from "lucide-react";
 import MobileNavMenu from "@/components/landing/MobileNavMenu";
@@ -130,14 +130,14 @@ const stats = [
 ];
 
 const galleryImages = [
-  "https://images.unsplash.com/photo-1568515045052-f9a854d70bfd?w=500&q=80",
-  "https://images.unsplash.com/photo-1611501275019-9b5cda994e8d?w=500&q=80",
-  "https://images.unsplash.com/photo-1562183241-b937e95585b6?w=500&q=80",
-  "https://images.unsplash.com/photo-1554777854-b1f2d6b54800?w=500&q=80",
-  "https://images.unsplash.com/photo-1598371839696-5c5bb00bdc28?w=500&q=80",
-  "https://images.unsplash.com/photo-1568515387631-8b650bbcdb90?w=500&q=80",
-  "https://images.unsplash.com/photo-1487956382158-bb926046304a?w=500&q=80",
-  "https://images.unsplash.com/photo-1590246814883-57c511e00e73?w=500&q=80",
+  "/tattoo/tattoo__(1).jpg",
+  "/tattoo/tattoo__(2).jpg",
+  "/tattoo/tattoo__(3).jpg",
+  "/tattoo/tattoo__(4).jpg",
+  "/tattoo/tattoo__(5).jpg",
+  "/tattoo/tattoo__(6).jpg",
+  "/tattoo/tattoo__(7).jpg",
+  "/tattoo/tattoo__(8).jpg",
 ];
 
 const whyItems = [
@@ -174,7 +174,7 @@ export default function HomePage() {
             </Link>
             <Link
               href="/register"
-              className="label-xs bg-[#DC2626] text-white px-5 py-2.5 hover:bg-[#b91c1c] transition-all duration-200"
+              className="label-xs bg-[#DC2626] text-white text-xs px-3 py-1.5 md:px-5 md:py-2.5 hover:bg-[#b91c1c] transition-all duration-200"
             >
               Start Free Trial
             </Link>
@@ -359,13 +359,14 @@ export default function HomePage() {
         {/* Fix 2: Mobile 2x2 grid (min 4 images) */}
         <div className="grid grid-cols-2 gap-3 px-4 sm:hidden">
           {galleryImages.slice(0, 4).map((src, i) => (
-            <div key={i} className="relative aspect-square overflow-hidden rounded-lg">
+            <div key={i} className="aspect-square overflow-hidden rounded-lg">
               <Image
                 src={src}
-                alt={`Tattoo studio ${i + 1}`}
-                fill
-                className="object-cover"
-                unoptimized
+                alt="Tattoo studio"
+                width={600}
+                height={400}
+                className="w-full h-full object-cover"
+                unoptimized={true}
                 loading="lazy"
               />
             </div>
@@ -379,13 +380,14 @@ export default function HomePage() {
           {/* Fix 26: loading="lazy" on gallery images */}
           <div className="flex gap-4 pl-4 animate-scroll-gallery">
             {[...galleryImages, ...galleryImages].map((src, i) => (
-              <div key={i} className="relative h-72 w-56 flex-shrink-0 overflow-hidden rounded-xl">
+              <div key={i} className="h-72 w-56 flex-shrink-0 overflow-hidden rounded-xl">
                 <Image
                   src={src}
-                  alt={`Tattoo studio ${(i % 8) + 1}`}
-                  fill
-                  className="object-cover"
-                  unoptimized
+                  alt="Tattoo studio"
+                  width={600}
+                  height={400}
+                  className="w-full h-full object-cover"
+                  unoptimized={true}
                   loading="lazy"
                 />
               </div>
@@ -521,7 +523,7 @@ export default function HomePage() {
               className="text-zinc-700 hover:text-zinc-400 transition-colors"
               aria-label="Twitter / X"
             >
-              <XIcon className="w-3.5 h-3.5" />
+              <Bird size={16} />
             </a>
           </div>
           {/* Fix 19: "Proudly serving USA & Canada" */}
