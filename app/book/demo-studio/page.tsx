@@ -167,7 +167,7 @@ function StudioLanding({ onSelectArtist }: { onSelectArtist: (a: Artist) => void
           Book your appointment
         </h1>
         <p className="text-white/50 text-lg">
-          Austin, TX · Choose an artist to get started.
+          Your City, USA · Choose an artist to get started.
         </p>
       </div>
 
@@ -363,11 +363,8 @@ export default function DemoBookingPage() {
           <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center shrink-0 ring-2 ring-gold/30">
             <span className="text-white text-xs font-black">BA</span>
           </div>
-          <span className="font-bold">Black Anchor Tattoo</span>
-          <span className="text-white/30 text-sm hidden sm:block">· Austin, TX</span>
-          <span className="ml-auto text-[11px] text-white/20 tracking-widest uppercase hidden sm:block">
-            Powered by InkBook
-          </span>
+          <span className="font-bold">Demo Studio</span>
+          <span className="text-white/30 text-sm hidden sm:block">· Your City, USA</span>
         </div>
       </header>
 

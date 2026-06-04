@@ -35,9 +35,11 @@ export default function ArtistCard({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <span className="font-cinzel text-white/20 text-6xl font-bold">
-              {name.charAt(0).toUpperCase()}
-            </span>
+            <div className="w-20 h-20 rounded-full bg-zinc-700 flex items-center justify-center ring-2 ring-white/10">
+              <span className="font-cinzel text-white/60 text-2xl font-bold">
+                {name.charAt(0).toUpperCase()}
+              </span>
+            </div>
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import ArtistCard from "@/components/booking/ArtistCard";
@@ -103,8 +104,18 @@ export default async function StudioLandingPage({ params }: Props) {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 md:py-16">
 
-      {/* Studio hero */}
-      <div className="mb-16">
+      {/* Studio hero — subtle tattoo background overlay */}
+      <div className="mb-16 relative overflow-hidden">
+        <Image
+          src="https://images.unsplash.com/photo-1568515045052-f9a854d70bfd?w=1600&q=80"
+          alt=""
+          fill
+          className="object-cover object-top"
+          unoptimized
+          loading="lazy"
+        />
+        <div className="absolute inset-0 bg-ink/92 pointer-events-none" />
+        <div className="relative z-10 py-10 px-2">
         <div
           className="inline-flex items-center gap-2.5 px-5 py-2.5 mb-7"
           style={{
@@ -129,6 +140,7 @@ export default async function StudioLandingPage({ params }: Props) {
         <p className="text-zinc-500 text-base">
           {location ? `${location} · ` : ""}Choose an artist to get started.
         </p>
+        </div>
       </div>
 
       {/* Artist grid */}
