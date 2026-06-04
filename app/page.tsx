@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 const features = [
   {
@@ -89,14 +90,17 @@ const painPoints = [
   {
     title: "No-shows are killing your income",
     body: "Every empty chair costs you $150+. InkBook collects deposits automatically. No-show? You keep it.",
+    image: "https://images.unsplash.com/photo-1611501275019-9b5cda994e8d?w=600&q=80",
   },
   {
     title: "Paper consent forms are a lawsuit waiting to happen",
     body: "Digital consent forms with ID photo verification. Signed before every session. Stored forever.",
+    image: "https://images.unsplash.com/photo-1590246814883-57c511e00e73?w=600&q=80",
   },
   {
     title: "Your booking page says 'Powered by someone else'",
     body: "White-label booking pages under your brand. Your URL. Your colors. Clients never know InkBook exists.",
+    image: "https://images.unsplash.com/photo-1568515387631-8b650bbcdb90?w=600&q=80",
   },
 ];
 
@@ -126,6 +130,17 @@ function renderCell(value: string | boolean) {
   }
   return <>{value}</>;
 }
+
+const galleryImages = [
+  "https://images.unsplash.com/photo-1598371839696-5c5bb00bdc28?w=500&q=80",
+  "https://images.unsplash.com/photo-1611501275019-9b5cda994e8d?w=500&q=80",
+  "https://images.unsplash.com/photo-1590246814883-57c511e00e73?w=500&q=80",
+  "https://images.unsplash.com/photo-1568515387631-8b650bbcdb90?w=500&q=80",
+  "https://images.unsplash.com/photo-1554777854-b1f2d6b54800?w=500&q=80",
+  "https://images.unsplash.com/photo-1562183241-b937e95585b6?w=500&q=80",
+  "https://images.unsplash.com/photo-1487956382158-bb926046304a?w=500&q=80",
+  "https://images.unsplash.com/photo-1473649085228-583485e6e4d7?w=500&q=80",
+];
 
 export default function HomePage() {
   return (
@@ -161,6 +176,15 @@ export default function HomePage() {
 
       {/* ── Hero ── */}
       <section className="grain relative text-center px-6 pt-24 pb-24 overflow-hidden min-h-[92vh] flex items-center justify-center">
+        <Image
+          src="https://images.unsplash.com/photo-1598371839696-5c5bb00bdc28?w=1920&q=80"
+          alt="Tattoo artist at work"
+          fill
+          className="object-cover"
+          unoptimized
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-black/60 to-black/90 pointer-events-none" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(220,38,38,0.04),transparent)] pointer-events-none" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_100%,rgba(201,168,76,0.03),transparent)] pointer-events-none" />
         <div className="relative z-10 max-w-5xl mx-auto w-full">
@@ -223,13 +247,25 @@ export default function HomePage() {
           {painPoints.map((p) => (
             <div
               key={p.title}
-              className="bg-zinc-900/50 border border-white/[0.07] p-8"
+              className="bg-zinc-900/50 border border-white/[0.07] overflow-hidden group"
               style={{ borderLeft: "3px solid #DC2626" }}
             >
-              <h3 className="font-cinzel font-bold text-sm tracking-wide mb-4 leading-snug text-white">
-                {p.title}
-              </h3>
-              <p className="text-zinc-500 text-sm leading-relaxed">{p.body}</p>
+              <div className="relative w-full h-48">
+                <Image
+                  src={p.image}
+                  alt={p.title}
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors" />
+              </div>
+              <div className="p-8">
+                <h3 className="font-cinzel font-bold text-sm tracking-wide mb-4 leading-snug text-white">
+                  {p.title}
+                </h3>
+                <p className="text-zinc-500 text-sm leading-relaxed">{p.body}</p>
+              </div>
             </div>
           ))}
         </div>
@@ -261,7 +297,7 @@ export default function HomePage() {
       <div className="gold-divider" />
 
       {/* ── Features ── */}
-      <section id="features" className="px-6 py-24 max-w-5xl mx-auto">
+      <section id="features" className="grain px-6 py-24 max-w-5xl mx-auto">
         <div className="text-center mb-16">
           <p className="label-xs text-gold/70 mb-4">Platform</p>
           <h2 className="font-cinzel text-3xl md:text-4xl font-bold tracking-wide">
@@ -280,6 +316,38 @@ export default function HomePage() {
               <p className="text-zinc-500 text-sm leading-relaxed">{f.body}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      <div className="gold-divider" />
+
+      {/* ── Gallery ── */}
+      <section className="py-24 overflow-hidden">
+        <div className="text-center mb-14 px-6">
+          <p className="label-xs text-gold/70 mb-4">The Community</p>
+          <h2 className="font-cinzel text-3xl md:text-4xl font-bold tracking-wide mb-4">
+            Built for studios like yours.
+          </h2>
+          <p className="text-zinc-500 text-sm">
+            Trusted by artists who take their craft seriously.
+          </p>
+        </div>
+        <div className="relative">
+          <div className="absolute left-0 top-0 bottom-0 w-24 z-10 bg-gradient-to-r from-black to-transparent pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-24 z-10 bg-gradient-to-l from-black to-transparent pointer-events-none" />
+          <div className="flex gap-4 pl-4 animate-scroll-gallery">
+            {[...galleryImages, ...galleryImages].map((src, i) => (
+              <div key={i} className="relative h-72 w-56 flex-shrink-0 overflow-hidden rounded-xl">
+                <Image
+                  src={src}
+                  alt={`Tattoo studio ${(i % 8) + 1}`}
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

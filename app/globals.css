@@ -44,6 +44,20 @@ body {
   );
 }
 
+/* Infinite horizontal gallery scroll */
+@keyframes scroll-gallery {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-scroll-gallery {
+  animation: scroll-gallery 30s linear infinite;
+}
+
+.animate-scroll-gallery:hover {
+  animation-play-state: paused;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
