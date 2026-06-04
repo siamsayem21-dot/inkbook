@@ -7,7 +7,6 @@ import {
   DollarSign,
   FileText,
   MessageSquare,
-  Bird,
   Check,
 } from "lucide-react";
 import MobileNavMenu from "@/components/landing/MobileNavMenu";
@@ -524,8 +523,11 @@ export default function HomePage() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Follow InkBook on X"
+              className="text-gray-400 hover:text-white transition-colors"
             >
-              <Bird size={18} className="text-gray-400 hover:text-white transition-colors cursor-pointer" />
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
             </a>
           </div>
           {/* Fix 19: "Proudly serving USA & Canada" */}
