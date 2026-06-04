@@ -156,8 +156,11 @@ export default function HomePage() {
       {/* ── Nav ── */}
       <nav className="sticky top-0 z-50 border-b border-white/[0.06] bg-ink/90 backdrop-blur-sm px-6 py-4">
         <div className="flex items-center justify-between max-w-6xl mx-auto">
-          <div className="flex items-center">
-            <span className="font-cinzel text-xl font-bold tracking-wider text-white">InkBook</span>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 border border-[#D4A853] flex items-center justify-center shrink-0">
+              <span className="font-cinzel text-[#D4A853] text-sm font-bold tracking-wider">IB</span>
+            </div>
+            <span className="font-cinzel text-base tracking-wider text-white">InkBook</span>
           </div>
           <div className="hidden md:flex items-center gap-8">
             <a href="#features" className="label-xs text-zinc-500 hover:text-white transition-colors">Features</a>
