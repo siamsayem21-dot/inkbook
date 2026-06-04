@@ -48,7 +48,7 @@ const features: FeatureItem[] = [
   {
     Icon: MessageSquare,
     title: "SMS Reminders",
-    body: "48hr and day-of reminders sent automatically. Reduce no-shows by up to 40%.",
+    body: "Automated reminders sent 48hr and day-of. Clients show up prepared.",
   },
 ];
 
@@ -81,6 +81,7 @@ const plans = [
     highlight: true,
     features: [
       "Everything in Solo",
+      "Flash management",
       "Multi-artist dashboard",
       "Owner revenue reports",
       "Client blacklist",
@@ -99,7 +100,7 @@ const plans = [
       "Advanced analytics",
       "Waitlist management",
       "ID verification",
-      "Dedicated onboarding",
+      "White-glove setup call",
     ],
   },
 ];
@@ -113,7 +114,7 @@ const painPoints = [
   {
     title: "Paper consent forms are a lawsuit waiting to happen",
     body: "Digital consent forms with ID photo verification. Signed before every session. Stored forever.",
-    image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600&q=80",
+    image: "/tattoo/tattoo__(4).png",
   },
   {
     title: "Your booking page says 'Powered by someone else'",
@@ -123,21 +124,21 @@ const painPoints = [
 ];
 
 const stats = [
-  { value: "21,000+", label: "Studios in Our Target Market" },
+  { value: "21,000+", label: "Studios Across USA & Canada" },
   { value: "Zero", label: "Hidden Fees" },
   { value: "All Plans", label: "Consent Forms Included" },
   { value: "Cancel", label: "Anytime" },
 ];
 
 const galleryImages = [
-  "/tattoo/tattoo__(1).jpg",
-  "/tattoo/tattoo__(2).jpg",
-  "/tattoo/tattoo__(3).jpg",
-  "/tattoo/tattoo__(4).jpg",
-  "/tattoo/tattoo__(5).jpg",
-  "/tattoo/tattoo__(6).jpg",
-  "/tattoo/tattoo__(7).jpg",
-  "/tattoo/tattoo__(8).jpg",
+  "/tattoo/tattoo__(1).png",
+  "/tattoo/tattoo__(2).png",
+  "/tattoo/tattoo__(3).png",
+  "/tattoo/tattoo__(4).png",
+  "/tattoo/tattoo__(5).png",
+  "/tattoo/tattoo__(6).png",
+  "/tattoo/tattoo__(7).png",
+  "/tattoo/tattoo__(8).png",
 ];
 
 const whyItems = [
@@ -145,7 +146,7 @@ const whyItems = [
   "Zero hidden fees — ever",
   "Flash + Custom booking — both in one platform",
   "Consent forms on every plan — no upsell",
-  "Built only for tattoo studios — not a generic tool",
+  "Save 5+ hours per week on admin work",
   "Cancel anytime — no contracts",
 ];
 
@@ -207,11 +208,11 @@ export default function HomePage() {
           <h1 className="font-cinzel text-6xl md:text-8xl font-bold leading-[1.05] tracking-wide mb-8 text-balance">
             Your Studio.<br />
             Your Brand.<br />
-            <span className="text-[#DC2626]">Zero Chaos.</span>
+            <span className="text-red-500">Zero Chaos.</span>
           </h1>
 
-          <p className="text-zinc-400 text-lg md:text-xl mb-12 max-w-2xl mx-auto leading-relaxed font-light">
-            Branded booking pages, automatic deposits, digital consent forms, and flash management — built exclusively for tattoo studios.
+          <p className="text-zinc-400 text-lg md:text-xl mb-12 max-w-sm sm:max-w-2xl mx-auto leading-relaxed font-light">
+            Auto deposits. Digital consent forms. White-label booking — built exclusively for tattoo studios.
           </p>
 
           {/* Fix 16: max 12px gap on mobile between CTA buttons */}
@@ -235,7 +236,7 @@ export default function HomePage() {
 
       {/* ── Stats Bar ── */}
       <div className="border-y border-white/[0.06] bg-zinc-900/40">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 divide-x divide-white/[0.06]">
+        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
           {stats.map((s) => (
             <div key={s.label} className="text-center py-7 px-4">
               <div className="font-cinzel text-xl md:text-2xl font-bold text-white mb-1.5">{s.value}</div>
@@ -250,17 +251,17 @@ export default function HomePage() {
         <div className="text-center mb-16">
           {/* Fix 25: changed "vibes" → "spreadsheets" */}
           <h2 className="font-cinzel text-3xl md:text-5xl font-bold tracking-wide mb-5 text-balance">
-            Still running your studio on<br />Instagram DMs and spreadsheets?
+            Still Running Your Studio On Instagram DMs And Spreadsheets?
           </h2>
           <p className="text-zinc-400 text-lg max-w-xl mx-auto">
             You&apos;re losing money every week. Here&apos;s how.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
           {painPoints.map((p) => (
             <div
               key={p.title}
-              className="bg-zinc-900/50 border border-white/[0.07] overflow-hidden group"
+              className="bg-zinc-900/50 border border-white/[0.07] overflow-hidden group flex flex-col h-full"
               style={{ borderLeft: "3px solid #DC2626" }}
             >
               <div className="relative w-full h-48">
@@ -275,7 +276,7 @@ export default function HomePage() {
                 />
                 <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors" />
               </div>
-              <div className="p-8">
+              <div className="p-8 flex-1">
                 <h3 className="font-cinzel font-bold text-sm tracking-wide mb-4 leading-snug text-white">
                   {p.title}
                 </h3>
@@ -301,10 +302,7 @@ export default function HomePage() {
             {steps.map((s) => (
               <div key={s.n} className="text-center">
                 {/* Fix 23: step numbers 30% smaller on mobile */}
-                <div
-                  className="font-cinzel text-[2.1rem] md:text-5xl font-black mb-5 tracking-tighter leading-none"
-                  style={{ color: "rgba(220,38,38,0.18)" }}
-                >
+                <div className="font-cinzel text-4xl md:text-5xl font-bold text-red-500 mb-5 tracking-tighter leading-none">
                   {s.n}
                 </div>
                 <h3 className="font-cinzel font-semibold text-xs tracking-wide mb-3">{s.title}</h3>
@@ -345,27 +343,27 @@ export default function HomePage() {
       <div className="gold-divider" />
 
       {/* ── Gallery ── */}
-      <section className="py-24 overflow-hidden">
+      <section className="py-16 overflow-hidden">
         <div className="text-center mb-14 px-6">
           <p className="label-xs text-gold/70 mb-4">The Community</p>
           <h2 className="font-cinzel text-3xl md:text-4xl font-bold tracking-wide mb-4">
             Built for studios like yours.
           </h2>
           <p className="text-zinc-500 text-sm">
-            Trusted by artists who take their craft seriously.
+            Join studios already ditching the DM chaos.
           </p>
         </div>
 
         {/* Fix 2: Mobile 2x2 grid (min 4 images) */}
         <div className="grid grid-cols-2 gap-3 px-4 sm:hidden">
           {galleryImages.slice(0, 4).map((src, i) => (
-            <div key={i} className="aspect-square overflow-hidden rounded-lg">
+            <div key={i} className="overflow-hidden rounded-lg">
               <Image
                 src={src}
                 alt="Tattoo studio"
-                width={600}
-                height={400}
-                className="w-full h-full object-cover"
+                width={300}
+                height={220}
+                className="object-cover rounded-lg w-full h-[220px]"
                 unoptimized={true}
                 loading="lazy"
               />
@@ -380,13 +378,13 @@ export default function HomePage() {
           {/* Fix 26: loading="lazy" on gallery images */}
           <div className="flex gap-4 pl-4 animate-scroll-gallery">
             {[...galleryImages, ...galleryImages].map((src, i) => (
-              <div key={i} className="h-72 w-56 flex-shrink-0 overflow-hidden rounded-xl">
+              <div key={i} className="flex-shrink-0">
                 <Image
                   src={src}
                   alt="Tattoo studio"
-                  width={600}
-                  height={400}
-                  className="w-full h-full object-cover"
+                  width={300}
+                  height={220}
+                  className="object-cover rounded-lg w-[300px] h-[220px]"
                   unoptimized={true}
                   loading="lazy"
                 />
@@ -407,9 +405,9 @@ export default function HomePage() {
               Built Different. On Purpose.
             </h2>
           </div>
-          <ul className="space-y-5">
+          <ul className="space-y-4">
             {whyItems.map((item) => (
-              <li key={item} className="flex items-start gap-4">
+              <li key={item} className="flex items-center gap-3 py-1">
                 <Check className="w-4 h-4 text-[#D4A853] shrink-0 mt-0.5" />
                 <span className="text-zinc-300 text-sm leading-relaxed">{item}</span>
               </li>
@@ -467,11 +465,16 @@ export default function HomePage() {
                   className={`text-center py-3.5 label-sm transition-all ${
                     p.highlight
                       ? "bg-[#DC2626] text-white hover:bg-[#b91c1c]"
+                      : p.name === "Pro"
+                      ? "bg-amber-600 hover:bg-amber-700 text-white rounded-md"
                       : "border border-white/20 text-zinc-400 hover:border-white/40 hover:text-white"
                   }`}
                 >
                   Start Free Trial
                 </Link>
+                <p className="text-xs text-gray-500 text-center mt-2">
+                  14-day free trial · No credit card required
+                </p>
               </div>
             ))}
           </div>
@@ -489,7 +492,7 @@ export default function HomePage() {
           </h2>
           {/* Fix 12: updated CTA copy */}
           <p className="text-zinc-500 mb-12 leading-relaxed">
-            Be the first studio in your city to run on InkBook.
+            Early studios get priority onboarding and locked-in pricing.
           </p>
           <Link
             href="/register"
@@ -517,13 +520,12 @@ export default function HomePage() {
             <Link href="/terms" className="label-xs text-zinc-700 hover:text-zinc-400 transition-colors">Terms</Link>
             {/* Fix 20: Twitter/X icon link */}
             <a
-              href="https://x.com/MohammadSiam21"
+              href="https://x.com/inkbook_tech"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-zinc-700 hover:text-zinc-400 transition-colors"
-              aria-label="Twitter / X"
+              aria-label="Follow InkBook on X"
             >
-              <Bird size={16} />
+              <Bird size={18} className="text-gray-400 hover:text-white transition-colors cursor-pointer" />
             </a>
           </div>
           {/* Fix 19: "Proudly serving USA & Canada" */}
