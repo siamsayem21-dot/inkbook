@@ -250,7 +250,7 @@ export default function HomePage() {
         <div className="text-center mb-16">
           {/* Fix 25: changed "vibes" → "spreadsheets" */}
           <h2 className="font-cinzel text-3xl md:text-5xl font-bold tracking-wide mb-5 text-balance">
-            STILL RUNNING YOUR STUDIO ON INSTAGRAM DMS AND SPREADSHEETS?
+            Still Running Your Studio On Instagram DMs And Spreadsheets?
           </h2>
           <p className="text-zinc-400 text-lg max-w-xl mx-auto">
             You&apos;re losing money every week. Here&apos;s how.
