@@ -12,7 +12,7 @@ export default async function ArtistsPage() {
 
   const { data: artistsRaw } = await supabase
     .from("artists")
-    .select("id, user_id, name, email, created_at")
+    .select("id, user_id, name, email, is_active, created_at")
     .eq("studio_id", STUDIO_ID)
     .order("name");
 

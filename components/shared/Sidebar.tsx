@@ -14,7 +14,7 @@ const ownerNav = [
   { label: "Clients",       href: "/owner/clients" },
   { label: "Revenue",       href: "/owner/revenue" },
   { label: "Blacklist",     href: "/owner/blacklist" },
-  { label: "Consent Forms", href: "/dashboard/consent-forms" },
+  { label: "Consent Forms", href: "/owner/consent-forms" },
   { label: "Waitlist",      href: "/owner/waitlist" },
   { label: "Settings",      href: "/owner/settings" },
 ];

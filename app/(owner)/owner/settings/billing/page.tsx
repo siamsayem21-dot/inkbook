@@ -1,9 +1,9 @@
 export const dynamic = "force-dynamic";
 
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import BillingClient from "./BillingClient";
-
-const STUDIO_ID = "5fe382a1-fee7-4387-b625-4bf7a52b8f45";
 
 const PLAN_INFO: Record<string, { label: string; price: string; artists: string }> = {
   solo:   { label: "Solo",   price: "$49/mo",  artists: "1 artist" },
@@ -14,12 +14,15 @@ const PLAN_INFO: Record<string, { label: string; price: string; artists: string 
 type StudioBilling = { plan: string; subscription_status: string; stripe_customer_id: string | null };
 
 export default async function BillingSettingsPage() {
-  const supabase = createAdminClient();
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
-  const { data: studioRaw } = await supabase
+  const admin = createAdminClient();
+  const { data: studioRaw } = await admin
     .from("studios")
     .select("plan, subscription_status, stripe_customer_id")
-    .eq("id", STUDIO_ID)
+    .eq("owner_id", user.id)
     .maybeSingle();
 
   const studio = studioRaw as StudioBilling | null;

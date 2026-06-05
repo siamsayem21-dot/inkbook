@@ -55,12 +55,9 @@ export default async function RevenuePage() {
     })(),
   ]);
 
-  const txFeeCents = Math.round(thisMonthCents * 0.01);
-
   const statCards = [
     { label: "This month",               value: fmtMoney(thisMonthCents) },
     { label: "Last month",               value: fmtMoney(lastMonthCents) },
-    { label: "Transaction fees (1%)",    value: fmtMoney(txFeeCents) },
     { label: "Deposits kept (no-shows)", value: fmtMoney(keptCents) },
   ];
 
@@ -76,7 +73,7 @@ export default async function RevenuePage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Revenue</h1>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {statCards.map((s) => (
           <div key={s.label} className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
             <p className="text-zinc-400 text-xs mb-1">{s.label}</p>
