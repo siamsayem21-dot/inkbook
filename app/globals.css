@@ -78,4 +78,30 @@ body {
     letter-spacing: 0.14em;
     text-transform: uppercase;
   }
+
+  /* Gold gradient text */
+  .gradient-text {
+    background: linear-gradient(135deg, #c9a84c, #dbbe72);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Subtle dot grid background */
+  .bg-grid {
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+}
+
+/* Fade-in-up entrance animation */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.55s ease-out forwards;
 }
