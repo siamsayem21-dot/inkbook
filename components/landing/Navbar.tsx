@@ -2,74 +2,111 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import MobileNavMenu from "./MobileNavMenu";
 
-const NAV_LINKS = [
-  { href: "#how-it-works", label: "How It Works" },
-  { href: "#ai-assistant", label: "AI Assistant" },
-  { href: "#dashboard", label: "Dashboard" },
-  { href: "#pricing", label: "Pricing" },
+const NAV = [
+  { label: "Platform", href: "#platform" },
+  { label: "Pricing", href: "#pricing" },
+  { label: "Blog", href: "#" },
 ];
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handler, { passive: true });
-    return () => window.removeEventListener("scroll", handler);
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
-    <nav
-      className={`sticky top-0 z-50 transition-all duration-300 ${
+    <header
+      className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 ${
         scrolled
-          ? "border-b border-white/[0.07] bg-ink/95 backdrop-blur-md"
-          : "border-b border-white/[0.04] bg-ink"
+          ? "bg-[#090909]/85 backdrop-blur-xl border-b border-white/[0.06]"
+          : ""
       }`}
     >
-      <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 shrink-0">
-          <div className="w-8 h-8 border border-gold/50 flex items-center justify-center">
-            <span className="font-cinzel text-gold text-[10px] font-bold tracking-wider">IB</span>
-          </div>
-          <span className="font-cinzel text-sm tracking-wider text-white">InkBook</span>
-        </Link>
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="h-14 flex items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-7 h-7 border border-white/20 flex items-center justify-center group-hover:border-white/40 transition-colors duration-200">
+              <span className="text-[9px] font-bold tracking-widest text-white">IB</span>
+            </div>
+            <span className="text-[13px] font-medium text-white tracking-tight">
+              InkBook
+            </span>
+          </Link>
 
-        <div className="hidden md:flex items-center gap-8">
-          {NAV_LINKS.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="label-xs text-zinc-500 hover:text-white transition-colors"
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-8">
+            {NAV.map(({ label, href }) => (
+              <Link
+                key={label}
+                href={href}
+                className="text-[13px] text-zinc-500 hover:text-white transition-colors duration-200"
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Desktop actions */}
+          <div className="hidden md:flex items-center gap-5">
+            <Link
+              href="#"
+              className="text-[13px] text-zinc-500 hover:text-white transition-colors duration-200"
             >
-              {link.label}
-            </a>
-          ))}
-        </div>
+              Sign in
+            </Link>
+            <Link
+              href="#"
+              className="h-8 px-4 bg-white text-black text-[13px] font-medium hover:bg-zinc-100 transition-colors duration-200 flex items-center"
+            >
+              Start free trial
+            </Link>
+          </div>
 
-        <div className="flex items-center gap-3">
-          <Link
-            href="/login"
-            className="label-xs text-zinc-500 hover:text-white transition-colors hidden md:block"
+          {/* Mobile toggle */}
+          <button
+            className="md:hidden text-[13px] text-zinc-400 hover:text-white transition-colors"
+            onClick={() => setOpen(!open)}
+            aria-label="Toggle navigation"
           >
-            Sign In
-          </Link>
-          <Link
-            href="/book/demo-studio"
-            className="label-xs border border-white/20 text-zinc-300 px-4 py-2 hover:border-white/40 hover:text-white transition-all hidden md:block"
-          >
-            Book Demo
-          </Link>
-          <Link
-            href="/register"
-            className="label-xs bg-[#DC2626] text-white px-5 py-2 hover:bg-[#b91c1c] transition-colors"
-          >
-            Start Free Trial
-          </Link>
-          <MobileNavMenu />
+            {open ? "Close" : "Menu"}
+          </button>
         </div>
       </div>
-    </nav>
+
+      {/* Mobile menu */}
+      {open && (
+        <div className="md:hidden border-t border-white/[0.06] bg-[#090909]/95 backdrop-blur-xl">
+          <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col gap-5">
+            {NAV.map(({ label, href }) => (
+              <Link
+                key={label}
+                href={href}
+                className="text-sm text-zinc-400 hover:text-white transition-colors"
+                onClick={() => setOpen(false)}
+              >
+                {label}
+              </Link>
+            ))}
+            <div className="pt-5 border-t border-white/[0.06] flex flex-col gap-3">
+              <Link href="#" className="text-sm text-zinc-500">
+                Sign in
+              </Link>
+              <Link
+                href="#"
+                className="h-10 px-4 bg-white text-black text-sm font-medium hover:bg-zinc-100 transition-colors flex items-center justify-center"
+              >
+                Start free trial
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+    </header>
   );
 }

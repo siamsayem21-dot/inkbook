@@ -3,105 +3,82 @@
 @tailwind utilities;
 
 :root {
-  --background: #0a0a0a;
-  --foreground: #ede8de;
+  --background: #090909;
+  --foreground: #fafafa;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: var(--font-inter), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Grain texture — apply `.grain` to hero sections */
-.grain {
-  position: relative;
-  isolation: isolate;
+/* ── Keyframes ──────────────────────────────────── */
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.grain::after {
-  content: '';
-  position: absolute;
-  inset: -100%;
-  width: 300%;
-  height: 300%;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
-  background-size: 180px 180px;
-  opacity: 0.04;
-  pointer-events: none;
-  z-index: -1;
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-/* Thin gold gradient divider — use as a standalone div */
-.gold-divider {
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(201, 168, 76, 0.35) 30%,
-    rgba(201, 168, 76, 0.35) 70%,
-    transparent 100%
-  );
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
 }
 
-/* Infinite horizontal gallery scroll */
-@keyframes scroll-gallery {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+@keyframes marquee-left {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
-.animate-scroll-gallery {
-  animation: scroll-gallery 30s linear infinite;
+/* ── Animation classes ──────────────────────────── */
+
+.animate-fade-up {
+  animation: fade-up 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.animate-scroll-gallery:hover {
-  animation-play-state: paused;
+.animate-fade-in {
+  animation: fade-in 0.45s ease both;
 }
+
+.animate-pulse-dot {
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+
+.animate-marquee {
+  animation: marquee-left 40s linear infinite;
+}
+
+/* Stagger delays */
+.delay-75  { animation-delay: 75ms; }
+.delay-150 { animation-delay: 150ms; }
+.delay-225 { animation-delay: 225ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-375 { animation-delay: 375ms; }
+.delay-450 { animation-delay: 450ms; }
+.delay-525 { animation-delay: 525ms; }
+.delay-600 { animation-delay: 600ms; }
+
+/* ── Utilities ──────────────────────────────────── */
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
-
-  /* Uppercase label — tiny */
-  .label-xs {
-    font-size: 0.65rem;
-    font-weight: 500;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-  }
-
-  /* Uppercase label — small */
-  .label-sm {
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-  }
-
-  /* Gold gradient text */
-  .gradient-text {
-    background: linear-gradient(135deg, #c9a84c, #dbbe72);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  /* Subtle dot grid background */
-  .bg-grid {
-    background-image:
-      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
-    background-size: 48px 48px;
-  }
-}
-
-/* Fade-in-up entrance animation */
-@keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-in-up {
-  animation: fade-in-up 0.55s ease-out forwards;
 }
