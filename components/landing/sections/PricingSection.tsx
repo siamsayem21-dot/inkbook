@@ -18,7 +18,7 @@ const TIERS = [
   },
   {
     name: "Growing Studio",
-    price: 129,
+    price: 179,
     desc: "For established studios scaling their business.",
     featured: false,
   },
