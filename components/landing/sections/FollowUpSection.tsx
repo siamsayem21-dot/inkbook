@@ -51,9 +51,9 @@ const QUEUE = [
 
 const POINTS = [
   "Every unanswered inquiry gets a follow-up — automatically",
-  "Every unseen quote gets a nudge at 48 hours",
-  "Every unpaid deposit gets a reminder before it expires",
-  "You tattoo. InkBook handles the follow-up.",
+  "Every unseen quote gets a nudge at 48 hours — no matter how busy you are",
+  "Every unpaid deposit gets a reminder before the booking expires",
+  "You tattoo. InkBook handles client communication.",
 ];
 
 export default function FollowUpSection() {
@@ -88,10 +88,45 @@ export default function FollowUpSection() {
       }}
     >
       <div className="mx-auto" style={{ maxWidth: "1120px", padding: "0 40px" }}>
+
+        {/* Full-width statement strip */}
+        <div
+          className="reveal stagger-1"
+          style={{
+            background: "#111111",
+            border: "1px solid #1C1C1C",
+            borderRadius: "10px",
+            padding: "20px 28px",
+            marginBottom: "48px",
+          }}
+        >
+          <p
+            style={{
+              fontFamily: "var(--font-serif)",
+              fontSize: "clamp(24px, 3vw, 36px)",
+              color: "#E8E0D0",
+              lineHeight: "1.2",
+              letterSpacing: "-0.02em",
+              marginBottom: "8px",
+            }}
+          >
+            More time tattooing. Zero time on follow-ups.
+          </p>
+          <p
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "12px",
+              color: "#525252",
+            }}
+          >
+            InkBook follows up on every inquiry, quote, and deposit — automatically, while you work.
+          </p>
+        </div>
+
         <div className="grid md:grid-cols-2 gap-16 items-center">
 
           {/* Left — follow-up queue */}
-          <div className="reveal stagger-1">
+          <div className="reveal stagger-2">
             <div
               style={{
                 background: "#1A1A1A",
@@ -158,25 +193,25 @@ export default function FollowUpSection() {
           {/* Right — copy */}
           <div>
             <p
-              className="reveal stagger-1"
+              className="reveal stagger-2"
               style={{ fontFamily: "var(--font-mono)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#525252", marginBottom: "24px" }}
             >
               AI Follow-Up
             </p>
             <h2
-              className="reveal stagger-2"
+              className="reveal stagger-3"
               style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(32px, 4vw, 52px)", color: "#F5F5F5", lineHeight: "1.1", letterSpacing: "-0.02em", marginBottom: "24px" }}
             >
               Most studios don&apos;t lose leads. They stop following up.
             </h2>
             <p
-              className="reveal stagger-3"
+              className="reveal stagger-4"
               style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#909090", lineHeight: "1.65", marginBottom: "36px", maxWidth: "420px" }}
             >
-              While you&apos;re tattooing, InkBook is following up on every inquiry that went quiet, every quote that was opened but not answered, every deposit that hasn&apos;t been paid. Automatically. Every time.
+              While you&apos;re tattooing, InkBook is following up on every inquiry that went quiet, every quote that was opened but not answered, every deposit that hasn&apos;t been paid. Automatically. Every time. Whether you run a solo practice or manage a team, the follow-up runs without you.
             </p>
             <ul
-              className="reveal stagger-4"
+              className="reveal stagger-5"
               style={{ display: "flex", flexDirection: "column", gap: "14px" }}
             >
               {POINTS.map((point) => (
@@ -189,7 +224,7 @@ export default function FollowUpSection() {
 
             {/* Stat callout */}
             <div
-              className="reveal stagger-5"
+              className="reveal stagger-6"
               style={{ marginTop: "36px", padding: "18px 20px", background: "#141414", border: "1px solid #222222", borderRadius: "10px" }}
             >
               <div style={{ fontFamily: "var(--font-serif)", fontSize: "32px", color: "#E8E0D0", lineHeight: "1", marginBottom: "6px" }}>40%</div>

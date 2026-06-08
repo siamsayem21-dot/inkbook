@@ -132,13 +132,13 @@ export default function WhiteLabelSection() {
               className="reveal stagger-2"
               style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(32px, 4vw, 52px)", color: "#F5F5F5", lineHeight: "1.1", letterSpacing: "-0.02em", marginBottom: "24px" }}
             >
-              Your studio. Your brand. Your client experience.
+              Clients experience your studio. Not a software company.
             </h2>
             <p
               className="reveal stagger-3"
               style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#A0A0A0", lineHeight: "1.65", marginBottom: "36px", maxWidth: "420px" }}
             >
-              From the booking page to aftercare messages, every client-facing touchpoint carries your studio&apos;s brand. InkBook powers everything invisibly. Clients experience your studio — not a software company.
+              Your reputation is your business. Every booking page, every confirmation, every aftercare message carries your studio&apos;s name and brand — not ours. InkBook powers everything invisibly. Your clients never know we exist.
             </p>
             <ul
               className="reveal stagger-4"

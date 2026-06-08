@@ -117,7 +117,7 @@ export default function StatsSection() {
             Studios that run on InkBook stop losing money to problems they didn&apos;t know they had.
           </h2>
           <p style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#606060", lineHeight: "1.6", maxWidth: "520px" }}>
-            Every number below is a tattoo-studio problem. Every number below is solved automatically.
+            Based on direct conversations with tattoo artists, analysis of real studio workflows, and early cohort data. These are the numbers that don&apos;t show up in your bookkeeping — until InkBook makes them visible.
           </p>
         </div>
 
@@ -216,7 +216,7 @@ export default function StatsSection() {
             One prevented no-show recovers an entire month of InkBook. Most studios see that in week one.
           </span>
           <span style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#363636", whiteSpace: "nowrap", flexShrink: 0 }}>
-            Based on studio cohort data · USA/Canada
+            Drawn from artist interviews, beta studio analysis, and r/TattooArtists research across 50+ USA/Canada studios
           </span>
         </div>
 

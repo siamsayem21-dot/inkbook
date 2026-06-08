@@ -4,6 +4,7 @@ import HeroSection from "@/components/landing/sections/HeroSection";
 import ProblemSection from "@/components/landing/sections/ProblemSection";
 import CategorySection from "@/components/landing/sections/CategorySection";
 import MigrationSection from "@/components/landing/sections/MigrationSection";
+import AudienceSection from "@/components/landing/sections/AudienceSection";
 import AIConsultantSection from "@/components/landing/sections/AIConsultantSection";
 import FollowUpSection from "@/components/landing/sections/FollowUpSection";
 import QuotesDepositsSection from "@/components/landing/sections/QuotesDepositsSection";
@@ -12,6 +13,7 @@ import WhiteLabelSection from "@/components/landing/sections/WhiteLabelSection";
 import AIFollowUpSection from "@/components/landing/sections/AIFollowUpSection";
 import StatsSection from "@/components/landing/sections/StatsSection";
 import TestimonialsSection from "@/components/landing/sections/TestimonialsSection";
+import OperatingSystemSection from "@/components/landing/sections/OperatingSystemSection";
 import PricingSection from "@/components/landing/sections/PricingSection";
 import CTASection from "@/components/landing/sections/CTASection";
 
@@ -28,6 +30,8 @@ export default function HomePage() {
         <CategorySection />
         {/* 4 — Everything you use today, replaced */}
         <MigrationSection />
+        {/* 4b — Built for solo artists and growing studios */}
+        <AudienceSection />
         {/* 5 — AI Consultation: every inquiry qualified */}
         <AIConsultantSection />
         {/* 6 — AI Follow-Up: most studios don't lose leads, they stop following up */}
@@ -44,6 +48,8 @@ export default function HomePage() {
         <StatsSection />
         {/* 12 — Why InkBook exists */}
         <TestimonialsSection />
+        {/* 13b — One tool solves one step. InkBook runs the whole journey. */}
+        <OperatingSystemSection />
         {/* 13 — Pricing */}
         <PricingSection />
         {/* 14 — Demo CTA */}

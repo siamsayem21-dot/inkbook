@@ -73,13 +73,13 @@ export default function TestimonialsSection() {
             className="reveal stagger-2"
             style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(32px, 4vw, 52px)", color: "#F5F5F5", lineHeight: "1.1", letterSpacing: "-0.02em", maxWidth: "640px", marginBottom: "16px" }}
           >
-            Built from 3 years of listening to tattoo artists.
+            Built from listening to tattoo artists describe the same problems, over and over.
           </h2>
           <p
             className="reveal stagger-3"
             style={{ fontFamily: "var(--font-sans)", fontSize: "16px", color: "#606060", lineHeight: "1.65", maxWidth: "540px" }}
           >
-            These are real artists. Real complaints. Shared publicly. InkBook exists because every one of these problems is solvable with the right software — software that nobody had built yet.
+            Every complaint below is from r/TattooArtists — voted up by hundreds of artists who recognized themselves in it. InkBook exists because every single one of these problems is solvable — and nobody had built the solution yet.
           </p>
         </div>
 

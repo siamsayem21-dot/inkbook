@@ -58,7 +58,7 @@ export default function CTASection() {
               className="reveal stagger-3"
               style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#707070", lineHeight: "1.65", maxWidth: "440px" }}
             >
-              InkBook is accepting its founding cohort of studios. The first studios in will shape the product, receive white-glove onboarding, and lock founding pricing permanently — before it changes for everyone else.
+              Studios on InkBook spend more time tattooing and less time on admin. Fewer no-shows, fewer unanswered inquiries, fewer lost deposits. The first studios in will shape the product, receive white-glove onboarding, and lock founding pricing permanently.
             </p>
           </div>
 
