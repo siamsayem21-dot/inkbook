@@ -59,7 +59,7 @@ export default function QuotesDepositsSection() {
             className="reveal stagger-1"
             style={{ fontFamily: "var(--font-mono)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#525252", marginBottom: "24px" }}
           >
-            Steps 3 & 4 — Quote & Deposit
+            Quote & Deposit
           </p>
           <h2
             className="reveal stagger-2"
@@ -71,7 +71,7 @@ export default function QuotesDepositsSection() {
             className="reveal stagger-3"
             style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#A0A0A0", lineHeight: "1.65", maxWidth: "520px" }}
           >
-            Every booking requires a mandatory Stripe deposit — no exceptions, no overrides. One prevented no-show pays for an entire month of InkBook.
+            AI collects the brief. Artists set the price. InkBook collects the deposit before anyone shows up. One prevented no-show pays for an entire month of InkBook.
           </p>
         </div>
 

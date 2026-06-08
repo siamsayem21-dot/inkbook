@@ -10,10 +10,10 @@ const TIMELINE = [
 ];
 
 const POINTS = [
-  "Aftercare sent the moment the session ends — no artist action",
-  "Day 3, Day 7, Day 14 follow-ups scheduled automatically",
-  "Review request fires on Day 14 — drives Google ratings",
-  "Repeat client rebooking prompt included at Day 30",
+  "Aftercare instructions sent automatically when the session closes",
+  "Healing check-ins keep clients engaged and reduce complication anxiety",
+  "Review request at Day 14 turns satisfied clients into Google ratings",
+  "Rebooking prompt at Day 30 turns one-time clients into regulars",
 ];
 
 export default function AIFollowUpSection() {
@@ -55,19 +55,19 @@ export default function AIFollowUpSection() {
               className="reveal stagger-1"
               style={{ fontFamily: "var(--font-mono)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#525252", marginBottom: "24px" }}
             >
-              After the Session
+              Client Retention
             </p>
             <h2
               className="reveal stagger-2"
               style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(32px, 4vw, 52px)", color: "#F5F5F5", lineHeight: "1.1", letterSpacing: "-0.02em", marginBottom: "24px" }}
             >
-              The relationship doesn&apos;t end when the needle does.
+              Clients who feel cared for come back. Clients who feel forgotten don&apos;t.
             </h2>
             <p
               className="reveal stagger-3"
               style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#A0A0A0", lineHeight: "1.65", marginBottom: "36px", maxWidth: "420px" }}
             >
-              InkBook sends aftercare, check-ins, and review requests on a 14-day automated schedule. Artists do nothing. The client relationship stays warm — and five-star reviews write themselves.
+              The session ends. InkBook takes over. Aftercare, healing check-ins, review requests, and rebooking prompts run on a 30-day automated schedule. Your clients feel looked after. You spend zero time making it happen.
             </p>
             <ul
               className="reveal stagger-4"

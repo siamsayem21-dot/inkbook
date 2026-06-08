@@ -3,17 +3,17 @@
 import { useEffect, useRef } from "react";
 
 const FEATURES = [
-  "Style detection from reference images and text",
-  "Placement, size, and budget collected automatically",
-  "Lead qualified before any artist is notified",
-  "Structured AI brief delivered to matched artist",
-  "Zero artist time spent on unqualified inquiries",
+  "Style, placement, size, budget — collected before anyone sees the inquiry",
+  "Reference images accepted and analyzed automatically",
+  "Lead scored and qualified — no human intake required",
+  "Structured brief ready for quoting within minutes",
+  "Artists spend zero time on unqualified or incomplete inquiries",
 ];
 
 const MSGS = [
   { role: "ai", text: "Hi! I'm the booking assistant for Ink & Iron Studio. What style are you thinking?" },
   { role: "client", text: "Blackwork wolf on my forearm. Geometric style. About 6 inches." },
-  { role: "ai", text: "Great. I detect Blackwork and Geometric — I'll match you with the right artist. What's your budget?" },
+  { role: "ai", text: "Got it — Blackwork, Geometric, forearm, 6 inches. What budget are you working with? I'll prepare a brief for your quote." },
   { role: "client", text: "Around $400–600." },
 ];
 
@@ -65,19 +65,19 @@ export default function AIConsultantSection() {
               className="reveal stagger-1"
               style={{ fontFamily: "var(--font-mono)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#525252", marginBottom: "24px" }}
             >
-              Step 1 — AI Consultation
+              AI Consultation
             </p>
             <h2
               className="reveal stagger-2"
               style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(32px, 4vw, 52px)", color: "#F5F5F5", lineHeight: "1.1", letterSpacing: "-0.02em", marginBottom: "24px" }}
             >
-              Every inquiry qualified before an artist sees it.
+              Every inquiry qualified before it reaches your team.
             </h2>
             <p
               className="reveal stagger-3"
               style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#A0A0A0", lineHeight: "1.65", marginBottom: "36px", maxWidth: "420px" }}
             >
-              InkBook AI handles the first conversation for your studio. Style, placement, size, budget — collected and structured before it reaches your team. Artists receive a complete brief, not a cold DM.
+              InkBook AI handles the first conversation for your studio — 24 hours a day, seven days a week. Style, placement, size, budget, references — collected, structured, and ready to quote. No artist involvement until the lead is worth their time.
             </p>
             <ul
               className="reveal stagger-4"
@@ -177,7 +177,7 @@ export default function AIConsultantSection() {
                   ))}
                 </div>
                 <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#525252" }}>
-                  Routing to Sarah M. · Notification sent · Lead brief attached
+                  Lead brief ready · Quote workflow triggered · Artist notified
                 </div>
               </div>
             </div>

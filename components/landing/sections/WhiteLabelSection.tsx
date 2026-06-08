@@ -3,10 +3,10 @@
 import { useEffect, useRef } from "react";
 
 const POINTS = [
-  "Your studio name, logo, and domain — not InkBook's",
-  "Clients book directly from your branded page",
-  "Works on any device — mobile-optimized out of the box",
-  "Powered invisibly by InkBook — no client-facing InkBook branding",
+  "Clients see your studio name, your logo, your domain — not InkBook",
+  "Every touchpoint from booking to aftercare carries your brand",
+  "Mobile-optimized, fast, and built to convert on any device",
+  "InkBook powers the system invisibly — your clients never know it exists",
 ];
 
 const FORM_FIELDS = [
@@ -126,19 +126,19 @@ export default function WhiteLabelSection() {
               className="reveal stagger-1"
               style={{ fontFamily: "var(--font-mono)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#525252", marginBottom: "24px" }}
             >
-              White-Label Booking
+              Your Brand. Your Experience.
             </p>
             <h2
               className="reveal stagger-2"
               style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(32px, 4vw, 52px)", color: "#F5F5F5", lineHeight: "1.1", letterSpacing: "-0.02em", marginBottom: "24px" }}
             >
-              Your studio&apos;s booking page. Your brand. Your domain.
+              Your studio. Your brand. Your client experience.
             </h2>
             <p
               className="reveal stagger-3"
               style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#A0A0A0", lineHeight: "1.65", marginBottom: "36px", maxWidth: "420px" }}
             >
-              Clients see your studio name, your logo, your custom domain. InkBook powers the entire system invisibly — from inquiry to booking to payment. They think it&apos;s your own software. It is.
+              From the booking page to aftercare messages, every client-facing touchpoint carries your studio&apos;s brand. InkBook powers everything invisibly. Clients experience your studio — not a software company.
             </p>
             <ul
               className="reveal stagger-4"

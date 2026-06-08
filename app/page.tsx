@@ -5,7 +5,7 @@ import ProblemSection from "@/components/landing/sections/ProblemSection";
 import CategorySection from "@/components/landing/sections/CategorySection";
 import MigrationSection from "@/components/landing/sections/MigrationSection";
 import AIConsultantSection from "@/components/landing/sections/AIConsultantSection";
-import ArtistMatchingSection from "@/components/landing/sections/ArtistMatchingSection";
+import FollowUpSection from "@/components/landing/sections/FollowUpSection";
 import QuotesDepositsSection from "@/components/landing/sections/QuotesDepositsSection";
 import OwnerSection from "@/components/landing/sections/OwnerSection";
 import WhiteLabelSection from "@/components/landing/sections/WhiteLabelSection";
@@ -20,33 +20,33 @@ export default function HomePage() {
     <div style={{ minHeight: "100vh", background: "#0A0A0A", isolation: "isolate" }}>
       <Navbar />
       <main>
-        {/* 1 — Category declaration + pipeline visual */}
+        {/* 1 — Category declaration + pipeline: Inquiry → Consultation → Follow-Up → Quote → Deposit → Booking */}
         <HeroSection />
-        {/* 2 — The cost of chaos (dollar-led) */}
+        {/* 2 — The real cost of disconnected tools */}
         <ProblemSection />
-        {/* 3 — Why this category exists + competitive positioning */}
+        {/* 3 — Why a new category exists */}
         <CategorySection />
         {/* 4 — Everything you use today, replaced */}
         <MigrationSection />
-        {/* 5 — AI Consultation workflow */}
+        {/* 5 — AI Consultation: every inquiry qualified */}
         <AIConsultantSection />
-        {/* 6 — Artist Matching */}
-        <ArtistMatchingSection />
-        {/* 7 — Quote & Deposit (mandatory revenue protection) */}
+        {/* 6 — AI Follow-Up: most studios don't lose leads, they stop following up */}
+        <FollowUpSection />
+        {/* 7 — Quote & Deposit: revenue protection */}
         <QuotesDepositsSection />
         {/* 8 — Owner revenue intelligence */}
         <OwnerSection />
-        {/* 9 — White-label brand ownership */}
+        {/* 9 — White-label: your studio, your brand, your experience */}
         <WhiteLabelSection />
-        {/* 10 — Post-session automation */}
+        {/* 10 — Client retention: aftercare + rebooking */}
         <AIFollowUpSection />
-        {/* 11 — Proof (single proof moment) */}
+        {/* 11 — Results */}
         <StatsSection />
-        {/* 12 — Why InkBook exists (real artist pain + early access) */}
+        {/* 12 — Why InkBook exists */}
         <TestimonialsSection />
         {/* 13 — Pricing */}
         <PricingSection />
-        {/* 14 — Demo booking CTA */}
+        {/* 14 — Demo CTA */}
         <CTASection />
       </main>
       <Footer />
