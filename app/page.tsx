@@ -9,6 +9,7 @@ import AudienceSection from "@/components/landing/sections/AudienceSection";
 import AIConsultantSection from "@/components/landing/sections/AIConsultantSection";
 import FollowUpSection from "@/components/landing/sections/FollowUpSection";
 import QuotesDepositsSection from "@/components/landing/sections/QuotesDepositsSection";
+import ROISection from "@/components/landing/sections/ROISection";
 import OwnerSection from "@/components/landing/sections/OwnerSection";
 import WhiteLabelSection from "@/components/landing/sections/WhiteLabelSection";
 import AIFollowUpSection from "@/components/landing/sections/AIFollowUpSection";
@@ -41,6 +42,8 @@ export default function HomePage() {
         <FollowUpSection />
         {/* 7 — Quote & Deposit: revenue protection */}
         <QuotesDepositsSection />
+        {/* 7b — Simple ROI math */}
+        <ROISection />
         {/* 8 — Owner revenue intelligence */}
         <OwnerSection />
         {/* 9 — White-label: your studio, your brand, your experience */}

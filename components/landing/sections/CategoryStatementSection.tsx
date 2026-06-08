@@ -262,7 +262,7 @@ export default function CategoryStatementSection() {
               display: "inline-block",
             }}
           >
-            The operating system for tattoo businesses
+            Tattoo Business Operating System
           </span>
         </div>
 

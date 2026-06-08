@@ -3,10 +3,10 @@
 import { useEffect, useRef } from "react";
 
 const POINTS = [
-  "Clients see your studio name, your logo, your domain — not InkBook",
-  "Every touchpoint from booking to aftercare carries your brand",
-  "Mobile-optimized, fast, and built to convert on any device",
-  "InkBook powers the system invisibly — your clients never know it exists",
+  "Your domain, your name, your logo — clients never see InkBook",
+  "Every booking, confirmation, and aftercare message reinforces your reputation",
+  "Clients remember you as the studio that had everything right from the first message",
+  "InkBook runs the system invisibly — your clients never know we exist",
 ];
 
 const FORM_FIELDS = [
@@ -138,7 +138,7 @@ export default function WhiteLabelSection() {
               className="reveal stagger-3"
               style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#A0A0A0", lineHeight: "1.65", marginBottom: "36px", maxWidth: "420px" }}
             >
-              Your reputation is your business. Every booking page, every confirmation, every aftercare message carries your studio&apos;s name and brand — not ours. InkBook powers everything invisibly. Your clients never know we exist.
+              Your reputation took years to build. Clients don&apos;t book InkBook — they book you. Every page, every message, every aftercare follow-up carries your studio&apos;s name and brand. InkBook powers everything invisibly. Your clients never know we exist.
             </p>
             <ul
               className="reveal stagger-4"

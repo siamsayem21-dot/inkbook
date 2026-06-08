@@ -77,11 +77,11 @@ export default function AIConsultantSection() {
               className="reveal stagger-3"
               style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#A0A0A0", lineHeight: "1.65", marginBottom: "36px", maxWidth: "420px" }}
             >
-              InkBook AI handles the first conversation — 24 hours a day, seven days a week. Style, placement, size, budget, references — collected, structured, and ready to quote. No artist sees an inquiry until it&apos;s worth their time.
+              InkBook AI responds to every inquiry in seconds — 24 hours a day, seven days a week. The first studio to respond often wins the booking. Style, placement, size, budget, references — all collected and structured before you see anything. No artist sees an inquiry until it&apos;s worth their time.
             </p>
             <ul
               className="reveal stagger-4"
-              style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+              style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "28px" }}
             >
               {FEATURES.map((f) => (
                 <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
@@ -90,6 +90,24 @@ export default function AIConsultantSection() {
                 </li>
               ))}
             </ul>
+
+            {/* Human control callout */}
+            <div
+              className="reveal stagger-5"
+              style={{
+                padding: "16px 18px",
+                background: "#111111",
+                border: "1px solid #1E1E1E",
+                borderRadius: "10px",
+              }}
+            >
+              <p style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#484848", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px" }}>
+                You stay in control
+              </p>
+              <p style={{ fontFamily: "var(--font-sans)", fontSize: "13px", color: "#606060", lineHeight: "1.6", margin: 0 }}>
+                Artists set pricing. Artists approve quotes. Artists make every final decision. AI handles the repetitive communication — nothing goes to a client without your approval.
+              </p>
+            </div>
           </div>
 
           {/* Right — AI chat UI */}

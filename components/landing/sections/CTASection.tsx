@@ -46,7 +46,7 @@ export default function CTASection() {
               className="reveal stagger-1"
               style={{ fontFamily: "var(--font-mono)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#484848", marginBottom: "24px" }}
             >
-              The operating system for tattoo studios
+              Tattoo Business Operating System
             </p>
             <h2
               className="reveal stagger-2"

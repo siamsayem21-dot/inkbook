@@ -126,7 +126,7 @@ export default function CategorySection() {
           {/* Right — InkBook as OS */}
           <div>
             <p style={{ fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.07em", color: "#404040", marginBottom: "16px" }}>
-              InkBook — Tattoo Studio Operating System
+              InkBook — Tattoo Business Operating System
             </p>
             <div
               style={{
@@ -139,7 +139,7 @@ export default function CategorySection() {
             >
               <div style={{ padding: "14px 18px", borderBottom: "1px solid #222222", background: "#131313" }}>
                 <span style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#525252", textTransform: "uppercase", letterSpacing: "0.07em" }}>
-                  10 systems. One platform. Built for tattoo studios.
+                  10 systems. One platform. Built for tattoo businesses.
                 </span>
               </div>
               <div style={{ padding: "8px" }}>
