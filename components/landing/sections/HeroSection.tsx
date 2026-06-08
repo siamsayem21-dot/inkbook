@@ -122,6 +122,91 @@ export default function HeroSection() {
         }}
       />
 
+      {/* ── Background atmosphere: AI × Tattoo ── */}
+
+      {/* Top-right: mandala fragment */}
+      <svg
+        aria-hidden
+        viewBox="0 0 520 520"
+        style={{ position: "absolute", top: 0, right: 0, width: "520px", height: "520px", opacity: 0.055, pointerEvents: "none" }}
+      >
+        <g transform="translate(520,0)">
+          {[88, 148, 212, 280, 356, 432].map(r => (
+            <circle key={r} cx={0} cy={0} r={r} fill="none" stroke="#BDB3A0" strokeWidth="0.55" />
+          ))}
+          {Array.from({ length: 23 }, (_, i) => {
+            const a = (108 + i * 3) * Math.PI / 180;
+            return (
+              <line key={i} x1={0} y1={0} x2={Math.cos(a) * 440} y2={Math.sin(a) * 440}
+                stroke="#BDB3A0" strokeWidth={i % 4 === 0 ? "0.5" : "0.2"} />
+            );
+          })}
+          {([148, 280] as const).flatMap(r =>
+            Array.from({ length: 10 }, (_, i) => {
+              const a = (112 + i * 7) * Math.PI / 180;
+              return <circle key={`d-${r}-${i}`} cx={Math.cos(a) * r} cy={Math.sin(a) * r} r={1.8} fill="#BDB3A0" />;
+            })
+          )}
+        </g>
+      </svg>
+
+      {/* Top-left: overlapping circles (organic / ornamental) */}
+      <svg
+        aria-hidden
+        viewBox="0 0 500 500"
+        style={{ position: "absolute", top: 0, left: 0, width: "500px", height: "500px", opacity: 0.048, pointerEvents: "none" }}
+      >
+        <circle cx={0} cy={0} r={82} fill="none" stroke="#BDB3A0" strokeWidth="0.55" />
+        {Array.from({ length: 6 }, (_, i) => {
+          const a = i * 60 * Math.PI / 180;
+          return (
+            <circle key={i} cx={Math.cos(a) * 82} cy={Math.sin(a) * 82} r={82}
+              fill="none" stroke="#BDB3A0" strokeWidth="0.55" />
+          );
+        })}
+        {[164, 246, 328, 410].map(r => (
+          <circle key={r} cx={0} cy={0} r={r} fill="none" stroke="#BDB3A0" strokeWidth={r > 246 ? "0.3" : "0.42"} />
+        ))}
+        {Array.from({ length: 12 }, (_, i) => {
+          const a = i * 30 * Math.PI / 180;
+          return (
+            <line key={i} x1={0} y1={0} x2={Math.cos(a) * 420} y2={Math.sin(a) * 420}
+              stroke="#BDB3A0" strokeWidth="0.25" opacity="0.55" />
+          );
+        })}
+      </svg>
+
+      {/* Left edge: AI network nodes */}
+      <svg
+        aria-hidden
+        viewBox="0 0 80 700"
+        style={{ position: "absolute", top: "8%", left: 0, width: "80px", height: "700px", opacity: 0.04, pointerEvents: "none" }}
+      >
+        {([[8,55],[44,145],[10,250],[50,340],[14,430],[46,520],[8,605]] as [number,number][]).map(([x,y],i) => (
+          <circle key={i} cx={x} cy={y} r={2} fill="#BDB3A0" />
+        ))}
+        {([[8,55,44,145],[44,145,10,250],[10,250,50,340],[50,340,14,430],[14,430,46,520],[46,520,8,605]] as [number,number,number,number][]).map(([x1,y1,x2,y2],i) => (
+          <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#BDB3A0" strokeWidth="0.5" />
+        ))}
+      </svg>
+
+      {/* Right edge: AI network nodes */}
+      <svg
+        aria-hidden
+        viewBox="0 0 80 700"
+        style={{ position: "absolute", top: "14%", right: 0, width: "80px", height: "700px", opacity: 0.036, pointerEvents: "none" }}
+      >
+        {([[72,70],[36,160],[68,265],[30,355],[66,445],[36,535],[72,615]] as [number,number][]).map(([x,y],i) => (
+          <circle key={i} cx={x} cy={y} r={2} fill="#BDB3A0" />
+        ))}
+        {([[72,70,36,160],[36,160,68,265],[68,265,30,355],[30,355,66,445],[66,445,36,535],[36,535,72,615]] as [number,number,number,number][]).map(([x1,y1,x2,y2],i) => (
+          <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#BDB3A0" strokeWidth="0.5" />
+        ))}
+      </svg>
+
+      {/* Content — z-index: 1 paints above background SVGs */}
+      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", width: "100%", textAlign: "center" }}>
+
       {/* Eyebrow */}
       <div className={`mb-8 transition-all duration-500 ${mounted ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}>
         <span
@@ -426,6 +511,7 @@ export default function HeroSection() {
           </div>
         </div>
       </div>
+      </div>{/* /content wrapper */}
     </section>
   );
 }
