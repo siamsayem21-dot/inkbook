@@ -3,17 +3,70 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-const STAGES = ["New Inquiry", "Consultation", "Quote Sent", "Deposit Paid", "Booked"];
-
-const LEADS = [
-  { initials: "CT", name: "Carlos T.", style: "Neo-Trad Phoenix", placement: "Full back", budget: "$800–1,200", stage: "Deposit Paid", stageColor: "#86EFAC", stageBg: "rgba(134,239,172,0.08)", stageBorder: "rgba(134,239,172,0.25)" },
-  { initials: "JM", name: "Jordan M.", style: "Blackwork Sleeve", placement: "Full forearm", budget: "$400–600", stage: "Consultation", stageColor: "#E8E0D0", stageBg: "rgba(232,224,208,0.08)", stageBorder: "rgba(232,224,208,0.28)" },
-  { initials: "SL", name: "Sam L.", style: "Japanese Koi", placement: "Leg sleeve", budget: "$1,500–2,000", stage: "Booked", stageColor: "#C4B5FD", stageBg: "rgba(196,181,253,0.08)", stageBorder: "rgba(196,181,253,0.22)" },
-  { initials: "MR", name: "Maya R.", style: "Fine Line Floral", placement: "Inner wrist", budget: "$200–300", stage: "Quote Sent", stageColor: "#93C5FD", stageBg: "rgba(147,197,253,0.08)", stageBorder: "rgba(147,197,253,0.2)" },
-  { initials: "AK", name: "Alex K.", style: "Geometric Mandala", placement: "Chest piece", budget: "$300–500", stage: "New Inquiry", stageColor: "#606060", stageBg: "transparent", stageBorder: "#2E2E2E" },
-];
-
 const NAV = ["Pipeline", "Clients", "Artists", "Revenue", "Settings"];
+
+const PIPELINE = [
+  {
+    stage: "New Inquiry",
+    count: 2,
+    initials: "AK",
+    name: "Alex K.",
+    style: "Geometric Mandala",
+    detail: "Chest piece · $300–500",
+    badge: null,
+    highlight: false,
+  },
+  {
+    stage: "AI Qualified",
+    count: 4,
+    initials: "JM",
+    name: "Jordan M.",
+    style: "Blackwork Sleeve",
+    detail: "Forearm · $400–600",
+    badge: { label: "AI · 94 / 100", color: "#E8E0D0", bg: "rgba(232,224,208,0.10)", border: "rgba(232,224,208,0.28)" },
+    highlight: true,
+  },
+  {
+    stage: "Matched",
+    count: 3,
+    initials: "PD",
+    name: "Priya D.",
+    style: "Watercolor Portrait",
+    detail: "Shoulder · $500–700",
+    badge: { label: "→ Sarah M.", color: "#93C5FD", bg: "rgba(147,197,253,0.08)", border: "rgba(147,197,253,0.22)" },
+    highlight: false,
+  },
+  {
+    stage: "Quote Sent",
+    count: 2,
+    initials: "MR",
+    name: "Maya R.",
+    style: "Fine Line Floral",
+    detail: "Inner wrist · $200–300",
+    badge: { label: "$850 quoted", color: "#909090", bg: "rgba(255,255,255,0.04)", border: "#2A2A2A" },
+    highlight: false,
+  },
+  {
+    stage: "Deposit Paid",
+    count: 3,
+    initials: "CT",
+    name: "Carlos T.",
+    style: "Neo-Trad Phoenix",
+    detail: "Full back · $800–1,200",
+    badge: { label: "$280 collected", color: "#86EFAC", bg: "rgba(134,239,172,0.10)", border: "rgba(134,239,172,0.28)" },
+    highlight: true,
+  },
+  {
+    stage: "Booked",
+    count: 4,
+    initials: "SL",
+    name: "Sam L.",
+    style: "Japanese Koi",
+    detail: "Leg sleeve · $1,500–2,000",
+    badge: { label: "Feb 12 · 2:00 PM", color: "#C4B5FD", bg: "rgba(196,181,253,0.09)", border: "rgba(196,181,253,0.24)" },
+    highlight: true,
+  },
+];
 
 function countUp(target: number, duration: number, onTick: (v: number) => void) {
   const start = performance.now();
@@ -28,27 +81,20 @@ function countUp(target: number, duration: number, onTick: (v: number) => void) 
 
 export default function HeroSection() {
   const [mounted, setMounted] = useState(false);
-  const [rowsVisible, setRowsVisible] = useState(false);
-  const [activeStage, setActiveStage] = useState(1);
+  const [cardsVisible, setCardsVisible] = useState(false);
   const [revenue, setRevenue] = useState(0);
   const [conversion, setConversion] = useState(0);
   const [depRate, setDepRate] = useState(0);
 
   useEffect(() => {
     setMounted(true);
-    setTimeout(() => setRowsVisible(true), 700);
+    setTimeout(() => setCardsVisible(true), 600);
     setTimeout(() => {
       countUp(18240, 1600, setRevenue);
       countUp(73, 1200, setConversion);
       countUp(94, 1000, setDepRate);
-    }, 900);
-    const cycle = setInterval(() => {
-      setActiveStage(p => (p + 1) % STAGES.length);
-    }, 2200);
-    return () => clearInterval(cycle);
+    }, 800);
   }, []);
-
-  const fmtRevenue = `$${revenue.toLocaleString()}`;
 
   return (
     <section
@@ -63,7 +109,7 @@ export default function HeroSection() {
         overflow: "hidden",
       }}
     >
-      {/* Ambient top glow */}
+      {/* Ambient glow */}
       <div
         aria-hidden
         className="animate-ambient-drift pointer-events-none absolute -top-1/4 left-1/2 -translate-x-1/2 -z-10"
@@ -79,8 +125,7 @@ export default function HeroSection() {
       {/* Eyebrow */}
       <div className={`mb-8 transition-all duration-500 ${mounted ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}>
         <span
-          className="inline-block text-[#525252] uppercase"
-          style={{ fontFamily: "var(--font-mono)", fontSize: "11px", letterSpacing: "0.1em", border: "1px solid #2A2A2A", background: "#161616", padding: "6px 14px", borderRadius: "100px", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)" }}
+          style={{ fontFamily: "var(--font-mono)", fontSize: "11px", letterSpacing: "0.1em", color: "#525252", border: "1px solid #2A2A2A", background: "#161616", padding: "6px 14px", borderRadius: "100px", display: "inline-block", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)", textTransform: "uppercase" }}
         >
           AI-Powered Tattoo Studio Operating System
         </span>
@@ -88,33 +133,31 @@ export default function HeroSection() {
 
       {/* Headline */}
       <h1
-        className={`text-[#F5F5F5] text-center max-w-[720px] mb-6 transition-all duration-700 delay-100 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-        style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(52px, 7vw, 88px)", lineHeight: "1.05", letterSpacing: "-0.03em" }}
+        className={`text-center max-w-[720px] mb-6 transition-all duration-700 delay-100 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+        style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(52px, 7vw, 88px)", lineHeight: "1.05", letterSpacing: "-0.03em", color: "#F5F5F5" }}
       >
         Turn tattoo inquiries into paid bookings.
       </h1>
 
       {/* Sub */}
       <p
-        className={`text-[#A0A0A0] max-w-[520px] mb-10 transition-all duration-500 delay-200 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
-        style={{ fontFamily: "var(--font-sans)", fontSize: "18px", lineHeight: "1.65" }}
+        className={`max-w-[520px] mb-10 transition-all duration-500 delay-200 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
+        style={{ fontFamily: "var(--font-sans)", fontSize: "18px", lineHeight: "1.65", color: "#909090" }}
       >
         InkBook is the operating system for modern tattoo studios. One platform from first inquiry to completed tattoo.
       </p>
 
       {/* CTAs */}
-      <div
-        className={`flex flex-col sm:flex-row items-center gap-3 mb-12 transition-all duration-500 delay-300 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
-      >
+      <div className={`flex flex-col sm:flex-row items-center gap-3 mb-12 transition-all duration-500 delay-300 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}>
         <Link href="#" className="btn-primary" style={{ fontFamily: "var(--font-sans)", fontSize: "14px", fontWeight: 500, padding: "13px 28px", borderRadius: "8px", textDecoration: "none", display: "inline-block" }}>
           Book a Demo
         </Link>
-        <Link href="#workflow" className="btn-secondary" style={{ fontFamily: "var(--font-sans)", fontSize: "14px", color: "#A0A0A0", border: "1px solid #1F1F1F", padding: "13px 28px", borderRadius: "8px", textDecoration: "none", display: "inline-block" }}>
+        <Link href="#workflow" className="btn-secondary" style={{ fontFamily: "var(--font-sans)", fontSize: "14px", color: "#909090", border: "1px solid #222222", padding: "13px 28px", borderRadius: "8px", textDecoration: "none", display: "inline-block" }}>
           See How It Works
         </Link>
       </div>
 
-      {/* Hero visual */}
+      {/* Dashboard shell */}
       <div
         className={`w-full mx-auto transition-all duration-700 delay-500 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
         style={{ maxWidth: "1120px" }}
@@ -124,150 +167,211 @@ export default function HeroSection() {
           style={{ background: "#161616", border: "1px solid #2E2E2E", borderRadius: "16px", overflow: "hidden" }}
         >
           {/* Window chrome */}
-          <div style={{ background: "#0F0F0F", borderBottom: "1px solid #242424", padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ background: "#0F0F0F", borderBottom: "1px solid #202020", padding: "11px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", gap: "6px" }}>
-              <div aria-hidden style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#3A3A3A" }} />
-              <div aria-hidden style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#3A3A3A" }} />
-              <div aria-hidden style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#3A3A3A" }} />
+              {[0,1,2].map(i => <div key={i} aria-hidden style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#323232" }} />)}
             </div>
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: "#4A4A4A" }}>Studio Portal · Ink & Iron Studio</span>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: "#484848" }}>Studio Pipeline · Ink & Iron Studio</span>
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <span className="animate-pulse-dot" aria-hidden style={{ display: "inline-block", width: "6px", height: "6px", borderRadius: "50%", background: "#4ADE80" }} />
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: "#4A4A4A" }}>Live</span>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: "#4A4A4A" }}>Live · 14 active leads</span>
             </div>
           </div>
 
           {/* App body */}
           <div style={{ display: "flex" }}>
+
             {/* Sidebar */}
-            <div className="hidden md:flex flex-col" style={{ width: "180px", borderRight: "1px solid #1E1E1E", background: "#0D0D0D", flexShrink: 0 }}>
-              <div style={{ padding: "16px", borderBottom: "1px solid #1E1E1E" }}>
-                <div style={{ fontFamily: "var(--font-serif)", fontSize: "14px", color: "#E8E0D0" }}>Ink & Iron</div>
-                <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#484848", marginTop: "2px" }}>Studio Plan · 6 artists</div>
+            <div className="hidden lg:flex flex-col" style={{ width: "172px", borderRight: "1px solid #1C1C1C", background: "#0C0C0C", flexShrink: 0 }}>
+              <div style={{ padding: "16px", borderBottom: "1px solid #1C1C1C" }}>
+                <div style={{ fontFamily: "var(--font-serif)", fontSize: "14px", color: "#E8E0D0", marginBottom: "3px" }}>Ink & Iron</div>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#404040" }}>Studio Plan · 6 artists</div>
               </div>
               <nav style={{ padding: "8px 0", flex: 1 }}>
                 {NAV.map((item, i) => (
-                  <div key={item} style={{ padding: "9px 16px", background: i === 0 ? "rgba(232,224,208,0.09)" : "transparent", borderLeft: i === 0 ? "2px solid rgba(232,224,208,0.6)" : "2px solid transparent", fontFamily: "var(--font-sans)", fontSize: "13px", color: i === 0 ? "#E8E0D0" : "#484848", transition: "color 150ms" }}>
+                  <div
+                    key={item}
+                    style={{
+                      padding: "9px 16px",
+                      background: i === 0 ? "rgba(232,224,208,0.08)" : "transparent",
+                      borderLeft: i === 0 ? "2px solid rgba(232,224,208,0.55)" : "2px solid transparent",
+                      fontFamily: "var(--font-sans)",
+                      fontSize: "13px",
+                      color: i === 0 ? "#D8D0C0" : "#424242",
+                    }}
+                  >
                     {item}
                   </div>
                 ))}
               </nav>
-              <div style={{ padding: "12px 16px", borderTop: "1px solid #1E1E1E" }}>
-                <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#3A3A3A", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "8px" }}>Online now</div>
+              <div style={{ padding: "12px 16px", borderTop: "1px solid #1C1C1C" }}>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#323232", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "8px" }}>Online now</div>
                 {[["Sarah M.", true], ["Jake R.", true], ["Mia C.", false]].map(([name, on]) => (
-                  <div key={String(name)} style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "5px" }}>
-                    <span className={on ? "animate-pulse-dot" : ""} style={{ display: "inline-block", width: "5px", height: "5px", borderRadius: "50%", background: on ? "#4ADE80" : "#2A2A2A", flexShrink: 0 }} />
-                    <span style={{ fontFamily: "var(--font-sans)", fontSize: "11px", color: on ? "#888888" : "#404040" }}>{String(name)}</span>
+                  <div key={String(name)} style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "6px" }}>
+                    <span className={on ? "animate-pulse-dot" : ""} style={{ display: "inline-block", width: "5px", height: "5px", borderRadius: "50%", background: on ? "#4ADE80" : "#282828", flexShrink: 0 }} />
+                    <span style={{ fontFamily: "var(--font-sans)", fontSize: "12px", color: on ? "#7A7A7A" : "#383838" }}>{String(name)}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Main content */}
-            <div style={{ flex: 1, minWidth: 0, background: "#141414" }}>
-              {/* Stage tabs */}
-              <div style={{ padding: "14px 20px", borderBottom: "1px solid #1E1E1E", overflowX: "auto", WebkitOverflowScrolling: "touch", background: "#111111" }}>
-                <div style={{ display: "flex", gap: "4px", minWidth: "max-content" }}>
-                  {STAGES.map((stage, i) => {
-                    const isActive = i === activeStage;
-                    return (
-                      <div
-                        key={stage}
-                        style={{
-                          padding: "6px 12px",
-                          background: isActive ? "rgba(232,224,208,0.10)" : "transparent",
-                          border: `1px solid ${isActive ? "rgba(232,224,208,0.32)" : "#232323"}`,
-                          borderRadius: "6px",
-                          fontFamily: "var(--font-mono)",
-                          fontSize: "11px",
-                          color: isActive ? "#E8E0D0" : "#484848",
-                          whiteSpace: "nowrap",
-                          transition: "all 400ms cubic-bezier(0.16,1,0.3,1)",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "6px",
-                        }}
-                      >
-                        {stage}
-                        {i === 0 && <span style={{ background: isActive ? "rgba(232,224,208,0.18)" : "#1C1C1C", borderRadius: "100px", padding: "0 6px", fontSize: "10px", color: isActive ? "#E8E0D0" : "#3A3A3A", transition: "all 400ms" }}>2</span>}
-                        {i === 1 && <span style={{ background: isActive ? "rgba(232,224,208,0.18)" : "#1C1C1C", borderRadius: "100px", padding: "0 6px", fontSize: "10px", color: isActive ? "#E8E0D0" : "#3A3A3A", transition: "all 400ms" }}>3</span>}
-                        {i === 2 && <span style={{ background: isActive ? "rgba(232,224,208,0.18)" : "#1C1C1C", borderRadius: "100px", padding: "0 6px", fontSize: "10px", color: isActive ? "#E8E0D0" : "#3A3A3A", transition: "all 400ms" }}>2</span>}
-                        {i === 3 && <span style={{ background: isActive ? "rgba(134,239,172,0.15)" : "#1C1C1C", borderRadius: "100px", padding: "0 6px", fontSize: "10px", color: isActive ? "#86EFAC" : "#3A3A3A", transition: "all 400ms" }}>2</span>}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+            {/* Pipeline board */}
+            <div style={{ flex: 1, minWidth: 0, background: "#111111" }}>
 
-              {/* Column headers */}
-              <div className="hidden sm:grid" style={{ gridTemplateColumns: "1fr 160px 100px 140px", padding: "10px 20px", background: "#0F0F0F", borderBottom: "1px solid #1A1A1A" }}>
-                {["Client", "Style · Placement", "Budget", "Status"].map(h => (
-                  <span key={h} style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#484848", textTransform: "uppercase", letterSpacing: "0.07em" }}>{h}</span>
+              {/* Flow rail header */}
+              <div style={{ padding: "10px 16px", borderBottom: "1px solid #1A1A1A", background: "#0D0D0D", display: "flex", alignItems: "center", gap: "4px", overflowX: "auto" }}>
+                {PIPELINE.map((col, i) => (
+                  <div key={col.stage} style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: "4px 10px",
+                      borderRadius: "5px",
+                      background: col.highlight ? "rgba(255,255,255,0.04)" : "transparent",
+                      border: col.highlight ? "1px solid #252525" : "1px solid transparent",
+                    }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: col.highlight ? "#909090" : "#484848", textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
+                        {col.stage}
+                      </span>
+                      <span style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "9px",
+                        color: col.highlight ? "#606060" : "#363636",
+                        background: "#1C1C1C",
+                        padding: "0 5px",
+                        borderRadius: "100px",
+                      }}>
+                        {col.count}
+                      </span>
+                    </div>
+                    {i < PIPELINE.length - 1 && (
+                      <span aria-hidden style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#282828", flexShrink: 0 }}>›</span>
+                    )}
+                  </div>
                 ))}
               </div>
 
-              {/* Rows */}
-              {LEADS.map((lead, i) => {
-                const isPrimary = i === 0;
-                return (
+              {/* Kanban columns */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(6, 1fr)",
+                  minHeight: "220px",
+                }}
+              >
+                {PIPELINE.map((col, i) => (
                   <div
-                    key={lead.name}
+                    key={col.stage}
                     style={{
-                      opacity: rowsVisible ? 1 : 0,
-                      transform: rowsVisible ? "none" : "translateY(6px)",
-                      transition: `opacity 450ms ${i * 55}ms var(--ease-out), transform 450ms ${i * 55}ms var(--ease-out)`,
-                      borderBottom: i < LEADS.length - 1 ? "1px solid #1A1A1A" : "none",
-                      background: isPrimary ? "rgba(134,239,172,0.04)" : "transparent",
-                      borderLeft: isPrimary ? "2px solid rgba(134,239,172,0.35)" : "2px solid transparent",
+                      borderRight: i < PIPELINE.length - 1 ? "1px solid #181818" : "none",
+                      padding: "14px 12px",
+                      opacity: cardsVisible ? 1 : 0,
+                      transform: cardsVisible ? "none" : "translateY(8px)",
+                      transition: `opacity 500ms ${i * 60}ms cubic-bezier(0.16,1,0.3,1), transform 500ms ${i * 60}ms cubic-bezier(0.16,1,0.3,1)`,
                     }}
                   >
-                    {/* Desktop row */}
-                    <div className="hidden sm:grid" style={{ gridTemplateColumns: "1fr 160px 100px 140px", padding: "14px 20px", alignItems: "center" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                        <div style={{ width: "30px", height: "30px", borderRadius: "50%", background: isPrimary ? "rgba(134,239,172,0.10)" : "#1C1C1C", border: `1px solid ${isPrimary ? "rgba(134,239,172,0.3)" : "#2E2E2E"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          <span style={{ fontFamily: "var(--font-mono)", fontSize: "9px", color: isPrimary ? "#86EFAC" : "#484848" }}>{lead.initials}</span>
+                    {/* Card */}
+                    <div
+                      style={{
+                        background: col.highlight ? "#1C1C1C" : "#161616",
+                        border: `1px solid ${col.highlight ? "#2A2A2A" : "#1E1E1E"}`,
+                        borderRadius: "9px",
+                        padding: "12px",
+                        boxShadow: col.highlight
+                          ? "0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)"
+                          : "inset 0 1px 0 rgba(255,255,255,0.03)",
+                      }}
+                    >
+                      {/* Avatar + name */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                        <div style={{
+                          width: "24px", height: "24px", borderRadius: "50%", flexShrink: 0,
+                          background: col.badge?.color === "#86EFAC"
+                            ? "rgba(134,239,172,0.10)"
+                            : col.badge?.color === "#E8E0D0"
+                            ? "rgba(232,224,208,0.10)"
+                            : "#1E1E1E",
+                          border: `1px solid ${col.badge?.color === "#86EFAC"
+                            ? "rgba(134,239,172,0.25)"
+                            : col.badge?.color === "#E8E0D0"
+                            ? "rgba(232,224,208,0.22)"
+                            : "#282828"}`,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                        }}>
+                          <span style={{
+                            fontFamily: "var(--font-mono)", fontSize: "8px",
+                            color: col.badge?.color === "#86EFAC"
+                              ? "#86EFAC"
+                              : col.badge?.color === "#E8E0D0"
+                              ? "#E8E0D0"
+                              : "#484848",
+                          }}>{col.initials}</span>
                         </div>
-                        <div>
-                          <span style={{ fontFamily: "var(--font-sans)", fontSize: "13px", color: "#D0D0D0", fontWeight: 500 }}>{lead.name}</span>
-                        </div>
-                      </div>
-                      <div>
-                        <div style={{ fontFamily: "var(--font-sans)", fontSize: "12px", color: "#909090" }}>{lead.style}</div>
-                        <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#484848", marginTop: "2px" }}>{lead.placement}</div>
-                      </div>
-                      <span style={{ fontFamily: "var(--font-sans)", fontSize: "13px", color: "#B0B0B0", fontVariantNumeric: "tabular-nums" }}>{lead.budget}</span>
-                      <div>
-                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: lead.stageColor, background: lead.stageBg, border: `1px solid ${lead.stageBorder}`, padding: "3px 10px", borderRadius: "100px" }}>
-                          {lead.stage}
+                        <span style={{ fontFamily: "var(--font-sans)", fontSize: "13px", fontWeight: 500, color: "#D4D4D4", lineHeight: "1.2" }}>
+                          {col.name}
                         </span>
                       </div>
-                    </div>
-                    {/* Mobile row */}
-                    {i < 3 && (
-                      <div className="sm:hidden" style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <div>
-                          <div style={{ fontFamily: "var(--font-sans)", fontSize: "13px", color: "#D0D0D0" }}>{lead.name}</div>
-                          <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#484848", marginTop: "2px" }}>{lead.style}</div>
+
+                      {/* Style */}
+                      <div style={{ fontFamily: "var(--font-sans)", fontSize: "12px", color: "#787878", marginBottom: "4px", lineHeight: "1.3" }}>
+                        {col.style}
+                      </div>
+
+                      {/* Detail */}
+                      <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#484848", marginBottom: col.badge ? "10px" : "0" }}>
+                        {col.detail}
+                      </div>
+
+                      {/* Badge */}
+                      {col.badge && (
+                        <div style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          padding: "3px 8px",
+                          borderRadius: "5px",
+                          background: col.badge.bg,
+                          border: `1px solid ${col.badge.border}`,
+                        }}>
+                          <span style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: col.badge.color, whiteSpace: "nowrap" }}>
+                            {col.badge.label}
+                          </span>
                         </div>
-                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: lead.stageColor, border: `1px solid ${lead.stageBorder}`, padding: "3px 8px", borderRadius: "100px" }}>
-                          {lead.stage}
+                      )}
+                    </div>
+
+                    {/* Ghost card — extra lead indicator */}
+                    {col.count > 1 && (
+                      <div style={{
+                        marginTop: "6px",
+                        height: "28px",
+                        background: "#131313",
+                        border: "1px solid #1C1C1C",
+                        borderRadius: "9px",
+                        display: "flex",
+                        alignItems: "center",
+                        paddingLeft: "10px",
+                        gap: "6px",
+                      }}>
+                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "9px", color: "#363636" }}>
+                          +{col.count - 1} more
                         </span>
                       </div>
                     )}
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Stats strip */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", borderTop: "1px solid #1E1E1E", background: "#0D0D0D" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", borderTop: "1px solid #1C1C1C", background: "#0D0D0D" }}>
             {[
-              { label: "Monthly Revenue", value: fmtRevenue, sub: "↑ 23% this month", accent: false },
+              { label: "Monthly Revenue", value: `$${revenue.toLocaleString()}`, sub: "↑ 23% this month", accent: false },
               { label: "Booking Conversion", value: `${conversion}%`, sub: "↑ 8pts vs. last month", accent: false },
               { label: "Deposit Collection", value: `${depRate}%`, sub: "Fully automated", accent: true },
             ].map(({ label, value, sub, accent }, i) => (
-              <div key={label} style={{ padding: "20px 24px", borderRight: i < 2 ? "1px solid #1E1E1E" : "none" }}>
+              <div key={label} style={{ padding: "20px 24px", borderRight: i < 2 ? "1px solid #1C1C1C" : "none" }}>
                 <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#404040", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "6px" }}>{label}</div>
                 <div style={{ fontFamily: "var(--font-serif)", fontSize: "28px", color: accent ? "#86EFAC" : "#E8E0D0", lineHeight: "1", marginBottom: "4px", fontVariantNumeric: "tabular-nums" }}>{value}</div>
                 <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#606060" }}>{sub}</div>
