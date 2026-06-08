@@ -8,19 +8,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
-        ink: "#0a0a0a",
-        gold: {
-          DEFAULT: "#c9a84c",
-          light: "#dbbe72",
-          dark: "#a8832e",
-        },
-      },
       fontFamily: {
-        cinzel: ["var(--font-cinzel)", "Georgia", "serif"],
-        inter: ["var(--font-inter)", "system-ui", "sans-serif"],
+        serif: ["var(--font-serif)", "Georgia", "serif"],
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "monospace"],
       },
     },
   },

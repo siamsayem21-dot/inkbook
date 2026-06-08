@@ -1,26 +1,52 @@
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import HeroSection from "@/components/landing/sections/HeroSection";
-import StatsSection from "@/components/landing/sections/StatsSection";
 import ProblemSection from "@/components/landing/sections/ProblemSection";
-import PlatformSection from "@/components/landing/sections/PlatformSection";
+import AIConsultantSection from "@/components/landing/sections/AIConsultantSection";
+import ArtistMatchingSection from "@/components/landing/sections/ArtistMatchingSection";
+import QuotesDepositsSection from "@/components/landing/sections/QuotesDepositsSection";
+import StatsSection from "@/components/landing/sections/StatsSection";
+import OwnerSection from "@/components/landing/sections/OwnerSection";
+import WhiteLabelSection from "@/components/landing/sections/WhiteLabelSection";
 import WorkflowSection from "@/components/landing/sections/WorkflowSection";
-import ProofSection from "@/components/landing/sections/ProofSection";
+import ProjectSection from "@/components/landing/sections/ProjectSection";
+import AIFollowUpSection from "@/components/landing/sections/AIFollowUpSection";
+import MigrationSection from "@/components/landing/sections/MigrationSection";
 import PricingSection from "@/components/landing/sections/PricingSection";
 import CTASection from "@/components/landing/sections/CTASection";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-[#090909]">
+    <div style={{ minHeight: "100vh", background: "#0A0A0A", isolation: "isolate" }}>
       <Navbar />
       <main>
+        {/* 1 — Hero */}
         <HeroSection />
-        <StatsSection />
+        {/* 2 — The Problem */}
         <ProblemSection />
-        <PlatformSection />
+        {/* 3 — AI Consultation */}
+        <AIConsultantSection />
+        {/* 4 — Artist Matching */}
+        <ArtistMatchingSection />
+        {/* 5 — Quote & Deposit */}
+        <QuotesDepositsSection />
+        {/* 6 — Business Outcomes */}
+        <StatsSection />
+        {/* 7 — Owner Dashboard */}
+        <OwnerSection />
+        {/* 8 — White-Label Booking */}
+        <WhiteLabelSection />
+        {/* 9 — The Workflow */}
         <WorkflowSection />
-        <ProofSection />
+        {/* 10 — Project Board */}
+        <ProjectSection />
+        {/* 11 — AI Follow-Up */}
+        <AIFollowUpSection />
+        {/* 12 — Why Studios Switch */}
+        <MigrationSection />
+        {/* 13 — Pricing */}
         <PricingSection />
+        {/* 14 — CTA */}
         <CTASection />
       </main>
       <Footer />

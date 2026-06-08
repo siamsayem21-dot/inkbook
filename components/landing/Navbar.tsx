@@ -3,108 +3,147 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
-const NAV = [
-  { label: "Platform", href: "#platform" },
+const NAV_LINKS = [
+  { label: "Product", href: "#product" },
   { label: "Pricing", href: "#pricing" },
-  { label: "Blog", href: "#" },
+  { label: "Studio", href: "#studio" },
 ];
 
 export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
 
   return (
     <header
-      className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 ${
-        scrolled
-          ? "bg-[#090909]/85 backdrop-blur-xl border-b border-white/[0.06]"
-          : ""
-      }`}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        height: "64px",
+        zIndex: 100,
+        background: "rgba(10,10,10,0.88)",
+        backdropFilter: "blur(20px) saturate(180%)",
+        WebkitBackdropFilter: "blur(20px) saturate(180%)",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+      }}
     >
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="h-14 flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-7 h-7 border border-white/20 flex items-center justify-center group-hover:border-white/40 transition-colors duration-200">
-              <span className="text-[9px] font-bold tracking-widest text-white">IB</span>
-            </div>
-            <span className="text-[13px] font-medium text-white tracking-tight">
-              InkBook
-            </span>
-          </Link>
+      <div
+        className="flex items-center justify-between h-full mx-auto"
+        style={{ maxWidth: "1120px", padding: "0 40px" }}
+      >
+        {/* Wordmark */}
+        <Link
+          href="/"
+          style={{
+            fontFamily: "var(--font-serif)",
+            fontSize: "20px",
+            color: "#F5F5F5",
+            letterSpacing: "-0.02em",
+            textDecoration: "none",
+          }}
+        >
+          InkBook
+        </Link>
 
-          {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-8">
-            {NAV.map(({ label, href }) => (
-              <Link
-                key={label}
-                href={href}
-                className="text-[13px] text-zinc-500 hover:text-white transition-colors duration-200"
-              >
-                {label}
-              </Link>
-            ))}
-          </nav>
-
-          {/* Desktop actions */}
-          <div className="hidden md:flex items-center gap-5">
+        {/* Center nav — desktop */}
+        <nav className="hidden md:flex items-center gap-8">
+          {NAV_LINKS.map(({ label, href }) => (
             <Link
-              href="#"
-              className="text-[13px] text-zinc-500 hover:text-white transition-colors duration-200"
+              key={label}
+              href={href}
+              className="hover:text-[#F5F5F5] transition-colors duration-150"
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: "14px",
+                color: "#A0A0A0",
+                textDecoration: "none",
+              }}
             >
-              Sign in
+              {label}
             </Link>
-            <Link
-              href="#"
-              className="h-8 px-4 bg-white text-black text-[13px] font-medium hover:bg-zinc-100 transition-colors duration-200 flex items-center"
-            >
-              Start free trial
-            </Link>
-          </div>
+          ))}
+        </nav>
 
-          {/* Mobile toggle */}
-          <button
-            className="md:hidden text-[13px] text-zinc-400 hover:text-white transition-colors"
-            onClick={() => setOpen(!open)}
-            aria-label="Toggle navigation"
+        {/* Desktop CTA */}
+        <Link
+          href="#"
+          className="hidden md:flex items-center hover:bg-[#1A1A1A] transition-colors duration-150"
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: "14px",
+            color: "#F5F5F5",
+            border: "1px solid #363636",
+            padding: "10px 20px",
+            borderRadius: "8px",
+            textDecoration: "none",
+          }}
+        >
+          Get Early Access
+        </Link>
+
+        {/* Mobile: Early Access + menu toggle */}
+        <div className="md:hidden flex items-center gap-3">
+          <Link
+            href="#"
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: "13px",
+              color: "#F5F5F5",
+              border: "1px solid #363636",
+              padding: "8px 16px",
+              borderRadius: "8px",
+              textDecoration: "none",
+            }}
           >
-            {open ? "Close" : "Menu"}
+            Early Access
+          </Link>
+          <button
+            onClick={() => setOpen(!open)}
+            style={{ color: "#A0A0A0", background: "none", border: "none", cursor: "pointer", padding: "4px", fontSize: "13px" }}
+            aria-label={open ? "Close menu" : "Open menu"}
+          >
+            {open ? "✕" : "☰"}
           </button>
         </div>
       </div>
 
       {/* Mobile menu */}
       {open && (
-        <div className="md:hidden border-t border-white/[0.06] bg-[#090909]/95 backdrop-blur-xl">
-          <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col gap-5">
-            {NAV.map(({ label, href }) => (
+        <div
+          className="md:hidden"
+          style={{
+            background: "rgba(10,10,10,0.97)",
+            backdropFilter: "blur(20px)",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+            padding: "32px 24px",
+          }}
+        >
+          <nav className="flex flex-col gap-6">
+            {NAV_LINKS.map(({ label, href }) => (
               <Link
                 key={label}
                 href={href}
-                className="text-sm text-zinc-400 hover:text-white transition-colors"
                 onClick={() => setOpen(false)}
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "18px",
+                  color: "#A0A0A0",
+                  textDecoration: "none",
+                }}
               >
                 {label}
               </Link>
             ))}
-            <div className="pt-5 border-t border-white/[0.06] flex flex-col gap-3">
-              <Link href="#" className="text-sm text-zinc-500">
-                Sign in
-              </Link>
-              <Link
-                href="#"
-                className="h-10 px-4 bg-white text-black text-sm font-medium hover:bg-zinc-100 transition-colors flex items-center justify-center"
-              >
-                Start free trial
-              </Link>
-            </div>
-          </div>
+          </nav>
         </div>
       )}
     </header>

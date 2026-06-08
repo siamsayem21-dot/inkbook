@@ -3,82 +3,268 @@
 @tailwind utilities;
 
 :root {
-  --background: #090909;
-  --foreground: #fafafa;
+  --background: #0A0A0A;
+  --foreground: #F5F5F5;
+  --accent: #E8E0D0;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-gentle: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-html {
-  scroll-behavior: smooth;
-}
+html { scroll-behavior: smooth; }
 
 body {
-  color: var(--foreground);
   background: var(--background);
-  font-family: var(--font-inter), system-ui, sans-serif;
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Keyframes ──────────────────────────────────── */
+/* ─────────────────────────────────────────────────────
+   REVEAL SYSTEM — scroll-triggered, GPU-accelerated
+───────────────────────────────────────────────────── */
 
-@keyframes fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 600ms var(--ease-out),
+              transform 600ms var(--ease-out);
+  will-change: opacity, transform;
+}
+.reveal.in-view {
+  opacity: 1;
+  transform: translateY(0);
+  will-change: auto;
 }
 
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.reveal-up {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 700ms var(--ease-out),
+              transform 700ms var(--ease-out);
+  will-change: opacity, transform;
+}
+.reveal-up.in-view {
+  opacity: 1;
+  transform: translateY(0);
+  will-change: auto;
 }
 
+.reveal-scale {
+  opacity: 0;
+  transform: scale(0.96);
+  transition: opacity 500ms var(--ease-out),
+              transform 500ms var(--ease-out);
+}
+.reveal-scale.in-view {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Stagger delays — 80ms cadence */
+.stagger-1 { transition-delay: 0ms; }
+.stagger-2 { transition-delay: 80ms; }
+.stagger-3 { transition-delay: 160ms; }
+.stagger-4 { transition-delay: 240ms; }
+.stagger-5 { transition-delay: 320ms; }
+.stagger-6 { transition-delay: 400ms; }
+
+/* Fine-grained row stagger */
+.stagger-r0 { transition-delay: 0ms; }
+.stagger-r1 { transition-delay: 50ms; }
+.stagger-r2 { transition-delay: 100ms; }
+.stagger-r3 { transition-delay: 150ms; }
+.stagger-r4 { transition-delay: 200ms; }
+.stagger-r5 { transition-delay: 250ms; }
+
+/* ─────────────────────────────────────────────────────
+   KEYFRAMES
+───────────────────────────────────────────────────── */
+
+/* Signature: ink dot travels through pipeline */
+@keyframes ink-travel {
+  0%   { left: -8px; opacity: 0; }
+  5%   { opacity: 1; }
+  92%  { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
+}
+
+/* Subtle pulse on live indicators */
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.2; }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.85); }
 }
 
-@keyframes marquee-left {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+/* Glow breathe for featured pricing card — layered depth */
+@keyframes glow-breathe {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px #383838,
+      0 24px 48px rgba(0,0,0,0.55),
+      0 8px 24px rgba(0,0,0,0.65),
+      inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px #484848,
+      0 32px 64px rgba(0,0,0,0.65),
+      0 0 40px rgba(232,224,208,0.10),
+      inset 0 1px 0 rgba(255,255,255,0.11);
+  }
 }
 
-/* ── Animation classes ──────────────────────────── */
-
-.animate-fade-up {
-  animation: fade-up 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+/* Shimmer sweep for hero CTA */
+@keyframes shimmer-sweep {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
 }
 
-.animate-fade-in {
-  animation: fade-in 0.45s ease both;
+/* Counter value settle */
+@keyframes value-settle {
+  from { opacity: 0; transform: translateY(6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* Ambient top glow shift */
+@keyframes ambient-drift {
+  0%, 100% { opacity: 1; transform: scaleX(1) scaleY(1); }
+  50%       { opacity: 0.7; transform: scaleX(1.05) scaleY(0.9); }
+}
+
+/* Workflow row slide */
+@keyframes row-in {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ─────────────────────────────────────────────────────
+   ANIMATION CLASSES
+───────────────────────────────────────────────────── */
 
 .animate-pulse-dot {
-  animation: pulse-dot 1.8s ease-in-out infinite;
+  animation: pulse-dot 2s ease-in-out infinite;
 }
 
-.animate-marquee {
-  animation: marquee-left 40s linear infinite;
+.animate-ink-travel {
+  animation: ink-travel 3.8s linear infinite;
 }
 
-/* Stagger delays */
-.delay-75  { animation-delay: 75ms; }
-.delay-150 { animation-delay: 150ms; }
-.delay-225 { animation-delay: 225ms; }
-.delay-300 { animation-delay: 300ms; }
-.delay-375 { animation-delay: 375ms; }
-.delay-450 { animation-delay: 450ms; }
-.delay-525 { animation-delay: 525ms; }
-.delay-600 { animation-delay: 600ms; }
+.animate-glow-breathe {
+  animation: glow-breathe 4s ease-in-out infinite;
+}
 
-/* ── Utilities ──────────────────────────────────── */
+.animate-ambient-drift {
+  animation: ambient-drift 8s ease-in-out infinite;
+}
+
+/* ─────────────────────────────────────────────────────
+   INTERACTIVE COMPONENTS
+───────────────────────────────────────────────────── */
+
+/* Primary button — shimmer on hover */
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+  background: #F5F5F5;
+  color: #0A0A0A;
+  transition: background 150ms, transform 150ms var(--ease-out);
+}
+.btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.4) 50%, transparent 60%);
+  background-size: 200% 100%;
+  background-position: 200% center;
+  transition: background-position 0ms;
+  pointer-events: none;
+}
+.btn-primary:hover { background: #E8E0D0; }
+.btn-primary:hover::after { animation: shimmer-sweep 600ms linear; }
+.btn-primary:active { transform: scale(0.98); }
+
+/* Secondary button */
+.btn-secondary {
+  transition: border-color 150ms, color 150ms, background 150ms;
+}
+.btn-secondary:hover { border-color: #383838 !important; color: #F5F5F5 !important; background: rgba(255,255,255,0.03) !important; }
+.btn-secondary:active { transform: scale(0.98); }
+
+/* Pricing card hover */
+.pricing-card {
+  transition: transform 350ms var(--ease-out),
+              border-color 200ms,
+              box-shadow 350ms var(--ease-out);
+}
+.pricing-card:hover {
+  transform: translateY(-4px);
+  border-color: #383838 !important;
+  box-shadow: 0 24px 48px rgba(0,0,0,0.55), 0 8px 20px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.07) !important;
+}
+.pricing-card-featured {
+  transition: transform 350ms var(--ease-out),
+              box-shadow 350ms var(--ease-out);
+}
+.pricing-card-featured:hover {
+  transform: translateY(-18px) !important;
+}
+
+/* Workflow row hover */
+.workflow-row {
+  transition: background 200ms, padding-left 200ms;
+}
+.workflow-row:hover { background: #141414 !important; padding-left: 8px; }
+
+/* ─────────────────────────────────────────────────────
+   SURFACE DEPTH — layered shadows for real elevation
+───────────────────────────────────────────────────── */
+
+.surface-inset {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.surface-raised {
+  box-shadow: 0 2px 6px rgba(0,0,0,0.6), 0 1px 2px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.surface-floating {
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.9),
+    0 6px 20px rgba(0,0,0,0.75),
+    0 16px 64px rgba(0,0,0,0.65),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+/* ─────────────────────────────────────────────────────
+   FOCUS & ACCESSIBILITY
+───────────────────────────────────────────────────── */
+
+:focus-visible {
+  outline: 2px solid #E8E0D0;
+  outline-offset: 3px;
+}
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  .text-balance { text-wrap: balance; }
+}
+
+/* ─────────────────────────────────────────────────────
+   REDUCED MOTION OVERRIDES
+───────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal-up, .reveal-scale {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    will-change: auto !important;
   }
+  .animate-ink-travel,
+  .animate-glow-breathe,
+  .animate-ambient-drift,
+  .animate-pulse-dot {
+    animation: none !important;
+  }
+  .btn-primary::after { display: none; }
+  .pricing-card:hover,
+  .pricing-card-featured:hover { transform: none !important; }
+  .workflow-row:hover { padding-left: 0 !important; }
 }

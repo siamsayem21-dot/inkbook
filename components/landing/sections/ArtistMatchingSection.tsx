@@ -1,130 +1,192 @@
-import { Star, Clock, XCircle, CheckCircle } from "lucide-react";
+"use client";
 
-const artists = [
+import { useEffect, useRef } from "react";
+
+const ARTISTS = [
   {
-    initials: "SM",
-    name: "Sarah M.",
+    initials: "SM", name: "Sarah M.",
     styles: ["Blackwork", "Dotwork", "Geometric"],
-    rating: 5,
-    next: "Tue 2:00 PM",
-    available: true,
-    match: 98,
-    highlight: true,
+    match: 98, util: 90, next: "Tue 2:00 PM", available: true, top: true,
   },
   {
-    initials: "JR",
-    name: "Jake R.",
+    initials: "JR", name: "Jake R.",
     styles: ["Neo-Traditional", "Color", "Illustrative"],
-    rating: 4,
-    next: "Thu 10:00 AM",
-    available: true,
-    match: 72,
-    highlight: false,
+    match: 34, util: 68, next: "Thu 10:00 AM", available: true, top: false,
   },
   {
-    initials: "MC",
-    name: "Mia C.",
+    initials: "MC", name: "Mia C.",
     styles: ["Fine Line", "Minimal", "Botanical"],
-    rating: 5,
-    next: null,
-    available: false,
-    match: 61,
-    highlight: false,
+    match: 18, util: 100, next: null, available: false, top: false,
   },
 ];
 
-const criteria = [
-  "Style match — blackwork goes to blackwork artists",
-  "Portfolio match — client references vs. artist's actual work",
-  "Availability match — only open slots receive new leads",
-  "Waitlist — fully booked artists capture demand without losing clients",
+const CRITERIA = [
+  "Blackwork leads route only to Blackwork artists — no mismatches",
+  "Portfolio compatibility scored before the artist is notified",
+  "Only artists with open availability receive the lead",
+  "Fully-booked artists capture demand via the waitlist — no lost clients",
 ];
 
 export default function ArtistMatchingSection() {
-  return (
-    <section className="px-6 py-24" style={{ backgroundColor: "#070707" }}>
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+  const sectionRef = useRef<HTMLElement>(null);
 
-          {/* Left: artist cards */}
-          <div className="space-y-3">
-            {artists.map((artist) => (
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.querySelectorAll<HTMLElement>(".reveal").forEach((node, i) => {
+            setTimeout(() => node.classList.add("in-view"), i * 80);
+          });
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.12 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <section
+      ref={sectionRef}
+      style={{
+        padding: "128px 0",
+        background: "linear-gradient(180deg, rgba(255,255,255,0.018) 0px, rgba(255,255,255,0) 60px), #111111",
+        borderTop: "1px solid rgba(255,255,255,0.07)",
+        borderBottom: "1px solid rgba(255,255,255,0.04)",
+      }}
+    >
+      <div className="mx-auto" style={{ maxWidth: "1120px", padding: "0 40px" }}>
+        <div className="grid md:grid-cols-2 gap-16 items-center">
+
+          {/* Left — match cards */}
+          <div className="reveal stagger-1" style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {ARTISTS.map((artist) => (
               <div
                 key={artist.name}
-                className={`border p-5 flex items-start gap-4 transition-all ${
-                  artist.highlight
-                    ? "border-gold/35 bg-gold/[0.04]"
-                    : "border-white/[0.07] bg-zinc-900/30"
-                }`}
+                style={{
+                  background: artist.top ? "#1E1E1E" : "#171717",
+                  border: `1px solid ${artist.top ? "#383838" : "#242424"}`,
+                  borderRadius: "12px",
+                  padding: "16px",
+                  boxShadow: artist.top
+                    ? "0 8px 32px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.08)"
+                    : "inset 0 1px 0 rgba(255,255,255,0.03)",
+                  opacity: artist.available ? 1 : 0.5,
+                }}
               >
-                <div className={`w-10 h-10 flex items-center justify-center shrink-0 ${
-                  artist.highlight ? "bg-gold/15 border border-gold/30" : "bg-zinc-800 border border-white/[0.08]"
-                }`}>
-                  <span className={`font-cinzel text-xs font-bold ${artist.highlight ? "text-gold" : "text-zinc-400"}`}>
-                    {artist.initials}
-                  </span>
-                </div>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
+                  {/* Avatar */}
+                  <div
+                    style={{
+                      width: "36px", height: "36px", borderRadius: "50%",
+                      background: artist.top ? "rgba(232,224,208,0.12)" : "#252525",
+                      border: `1px solid ${artist.top ? "rgba(232,224,208,0.35)" : "#363636"}`,
+                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    }}
+                  >
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: artist.top ? "#E8E0D0" : "#525252" }}>
+                      {artist.initials}
+                    </span>
+                  </div>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <span className="text-sm font-medium text-white">{artist.name}</span>
-                    {artist.highlight && (
-                      <span className="label-xs text-black bg-gold px-2 py-0.5 shrink-0">Top Match</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-0.5 mb-2">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star key={i} className={`w-2.5 h-2.5 ${i < artist.rating ? "text-gold fill-gold" : "text-zinc-700"}`} />
-                    ))}
-                  </div>
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {artist.styles.map((s) => (
-                      <span key={s} className="text-[10px] bg-zinc-800 border border-white/[0.07] text-zinc-500 px-1.5 py-0.5">
-                        {s}
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                      <span style={{ fontFamily: "var(--font-sans)", fontSize: "14px", color: "#F5F5F5", fontWeight: 500 }}>
+                        {artist.name}
                       </span>
-                    ))}
+                      {artist.top && (
+                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "9px", color: "#E8E0D0", background: "rgba(232,224,208,0.10)", border: "1px solid rgba(232,224,208,0.25)", padding: "2px 7px", borderRadius: "100px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                          Top match
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "10px" }}>
+                      {artist.styles.map((s) => (
+                        <span key={s} style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#525252", background: "#1A1A1A", border: "1px solid #2A2A2A", padding: "2px 7px", borderRadius: "4px" }}>
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                    {/* Utilization bar */}
+                    <div style={{ height: "2px", background: "#222222", borderRadius: "1px", marginBottom: "6px" }}>
+                      <div
+                        style={{
+                          height: "100%",
+                          width: `${artist.util}%`,
+                          background: artist.util >= 95 ? "#F59E0B" : artist.top ? "#E8E0D0" : "#3A3A3A",
+                          borderRadius: "1px",
+                          boxShadow: artist.top ? "0 0 6px rgba(232,224,208,0.3)" : "none",
+                        }}
+                      />
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span
+                        aria-hidden
+                        style={{ display: "inline-block", width: "5px", height: "5px", borderRadius: "50%", background: artist.available ? "#4ADE80" : "#3A3A3A", flexShrink: 0 }}
+                      />
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#525252" }}>
+                        {artist.available ? `Next: ${artist.next} · ${artist.util}% booked` : "Fully booked — Waitlist open"}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    {artist.available ? (
-                      <>
-                        <Clock className="w-3 h-3 text-green-400" />
-                        <span className="text-[10px] text-zinc-500">Next: {artist.next}</span>
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="w-3 h-3 text-red-400" />
-                        <span className="text-[10px] text-zinc-600">Fully booked — Waitlist open</span>
-                      </>
-                    )}
-                  </div>
-                </div>
 
-                <div className="text-right shrink-0">
-                  <div className={`font-cinzel text-lg font-bold ${
-                    artist.match >= 90 ? "text-green-400" : artist.match >= 70 ? "text-gold" : "text-zinc-600"
-                  }`}>
-                    {artist.match}%
+                  {/* Match score */}
+                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                    <div style={{
+                      fontFamily: "var(--font-serif)",
+                      fontSize: "28px",
+                      lineHeight: "1",
+                      color: artist.match >= 90 ? "#4ADE80" : artist.match >= 50 ? "#A0A0A0" : "#3A3A3A",
+                    }}>
+                      {artist.match}
+                    </div>
+                    <div style={{ fontFamily: "var(--font-mono)", fontSize: "9px", color: "#525252", textTransform: "uppercase", letterSpacing: "0.06em" }}>match</div>
                   </div>
-                  <div className="text-[9px] text-zinc-700 uppercase tracking-widest">match</div>
                 </div>
               </div>
             ))}
+
+            {/* Routing confirmation */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "12px 16px", background: "#141414", border: "1px solid #222222", borderRadius: "8px" }}>
+              <span className="animate-pulse-dot" aria-hidden style={{ display: "inline-block", width: "5px", height: "5px", borderRadius: "50%", background: "#4ADE80", flexShrink: 0 }} />
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#525252" }}>
+                Notification sent to Sarah M. · Lead brief delivered
+              </span>
+            </div>
           </div>
 
-          {/* Right: copy */}
+          {/* Right — copy */}
           <div>
-            <p className="label-xs text-gold/70 mb-4">Smart Routing</p>
-            <h2 className="font-cinzel text-3xl md:text-4xl font-bold tracking-wide mb-5">
-              Every inquiry routed to the right artist, automatically.
-            </h2>
-            <p className="text-zinc-500 text-sm leading-relaxed mb-8 max-w-md">
-              InkBook matches clients to artists based on style compatibility, portfolio alignment, and real-time availability. No more &ldquo;who should handle this?&rdquo; debates. The right artist gets the right client, every time.
+            <p
+              className="reveal stagger-1"
+              style={{ fontFamily: "var(--font-mono)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#525252", marginBottom: "24px" }}
+            >
+              Step 2 — Artist Matching
             </p>
-            <ul className="space-y-3">
-              {criteria.map((item) => (
-                <li key={item} className="flex items-start gap-2.5">
-                  <CheckCircle className="w-3.5 h-3.5 text-gold shrink-0 mt-0.5" />
-                  <span className="text-zinc-400 text-sm">{item}</span>
+            <h2
+              className="reveal stagger-2"
+              style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(32px, 4vw, 52px)", color: "#F5F5F5", lineHeight: "1.1", letterSpacing: "-0.02em", marginBottom: "24px" }}
+            >
+              Every lead routed to the right artist. Automatically.
+            </h2>
+            <p
+              className="reveal stagger-3"
+              style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#A0A0A0", lineHeight: "1.65", marginBottom: "36px", maxWidth: "420px" }}
+            >
+              InkBook matches clients to artists based on style compatibility, portfolio alignment, and real-time availability. The right artist gets the right client — with a complete brief — before they even reply.
+            </p>
+            <ul
+              className="reveal stagger-4"
+              style={{ display: "flex", flexDirection: "column", gap: "14px" }}
+            >
+              {CRITERIA.map((item) => (
+                <li key={item} style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
+                  <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#E8E0D0", flexShrink: 0, marginTop: "7px" }} />
+                  <span style={{ fontFamily: "var(--font-sans)", fontSize: "14px", color: "#A0A0A0", lineHeight: "1.5" }}>{item}</span>
                 </li>
               ))}
             </ul>

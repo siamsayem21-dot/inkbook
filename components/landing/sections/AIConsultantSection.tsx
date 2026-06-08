@@ -1,111 +1,183 @@
-import { Bot, ImageIcon, MapPin, Ruler, DollarSign, Sparkles } from "lucide-react";
+"use client";
 
-const features = [
-  { Icon: ImageIcon, label: "Reference image upload + style detection" },
-  { Icon: MapPin, label: "Placement selection (forearm, back, chest, etc.)" },
-  { Icon: Ruler, label: "Size estimation in inches" },
-  { Icon: DollarSign, label: "Budget qualification before artist is involved" },
-  { Icon: Sparkles, label: "AI summary delivered to the matched artist" },
-  { Icon: Bot, label: "Zero artist time spent on unqualified leads" },
+import { useEffect, useRef } from "react";
+
+const FEATURES = [
+  "Style detection from reference images and text",
+  "Placement, size, and budget collected automatically",
+  "Lead qualified before any artist is notified",
+  "Structured AI brief delivered to matched artist",
+  "Zero artist time spent on unqualified inquiries",
+];
+
+const MSGS = [
+  { role: "ai", text: "Hi! I'm the booking assistant for Ink & Iron Studio. What style are you thinking?" },
+  { role: "client", text: "Blackwork wolf on my forearm. Geometric style. About 6 inches." },
+  { role: "ai", text: "Great. I detect Blackwork and Geometric — I'll match you with the right artist. What's your budget?" },
+  { role: "client", text: "Around $400–600." },
+];
+
+const TAGS = [
+  { label: "Blackwork", accent: true },
+  { label: "Geometric", accent: false },
+  { label: "Forearm", accent: false },
+  { label: '6"', accent: false },
+  { label: "$400–600", accent: false },
+  { label: "✓ Qualified", green: true },
 ];
 
 export default function AIConsultantSection() {
-  return (
-    <section id="ai-assistant" className="px-6 py-24">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+  const sectionRef = useRef<HTMLElement>(null);
 
-          {/* Left: copy */}
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.querySelectorAll<HTMLElement>(".reveal").forEach((node, i) => {
+            setTimeout(() => node.classList.add("in-view"), i * 80);
+          });
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.12 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <section
+      ref={sectionRef}
+      style={{
+        padding: "128px 0",
+        background: "#0A0A0A",
+        borderTop: "1px solid rgba(255,255,255,0.04)",
+      }}
+    >
+      <div className="mx-auto" style={{ maxWidth: "1120px", padding: "0 40px" }}>
+        <div className="grid md:grid-cols-2 gap-16 items-center">
+
+          {/* Left — copy */}
           <div>
-            <p className="label-xs text-gold/70 mb-4">AI-Powered Intake</p>
-            <h2 className="font-cinzel text-3xl md:text-4xl font-bold tracking-wide mb-5">
-              Your AI books the consultation before you wake up.
-            </h2>
-            <p className="text-zinc-500 text-sm leading-relaxed mb-10 max-w-md">
-              InkBook&apos;s AI assistant handles every new inquiry end-to-end. It collects everything your artist needs — style, placement, references, budget — and delivers a structured lead, not a chaotic DM thread.
+            <p
+              className="reveal stagger-1"
+              style={{ fontFamily: "var(--font-mono)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#525252", marginBottom: "24px" }}
+            >
+              Step 1 — AI Consultation
             </p>
-            <ul className="space-y-3">
-              {features.map((f) => (
-                <li key={f.label} className="flex items-center gap-3">
-                  <div className="w-7 h-7 bg-gold/[0.06] border border-gold/20 flex items-center justify-center shrink-0">
-                    <f.Icon className="w-3 h-3 text-gold" />
-                  </div>
-                  <span className="text-zinc-400 text-sm">{f.label}</span>
+            <h2
+              className="reveal stagger-2"
+              style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(32px, 4vw, 52px)", color: "#F5F5F5", lineHeight: "1.1", letterSpacing: "-0.02em", marginBottom: "24px" }}
+            >
+              Every inquiry qualified before an artist sees it.
+            </h2>
+            <p
+              className="reveal stagger-3"
+              style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#A0A0A0", lineHeight: "1.65", marginBottom: "36px", maxWidth: "420px" }}
+            >
+              InkBook AI handles the first conversation for your studio. Style, placement, size, budget — collected and structured before it reaches your team. Artists receive a complete brief, not a cold DM.
+            </p>
+            <ul
+              className="reveal stagger-4"
+              style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+            >
+              {FEATURES.map((f) => (
+                <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
+                  <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#E8E0D0", flexShrink: 0, marginTop: "7px" }} />
+                  <span style={{ fontFamily: "var(--font-sans)", fontSize: "14px", color: "#A0A0A0", lineHeight: "1.5" }}>{f}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Right: chat UI mockup */}
-          <div className="relative">
-            <div className="absolute -inset-6 bg-[radial-gradient(ellipse_60%_60%_at_50%_50%,rgba(201,168,76,0.05),transparent)] pointer-events-none" />
-            <div className="relative bg-zinc-900/80 border border-white/[0.09] overflow-hidden">
-              {/* Chat header */}
-              <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/[0.07] bg-zinc-950/70">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-gold/10 border border-gold/25 flex items-center justify-center">
-                    <Bot className="w-3 h-3 text-gold" />
-                  </div>
-                  <span className="text-xs text-zinc-300 font-medium">InkBook AI Assistant</span>
+          {/* Right — AI chat UI */}
+          <div
+            className="reveal stagger-2"
+            style={{
+              background: "#1A1A1A",
+              border: "1px solid #2E2E2E",
+              borderRadius: "16px",
+              overflow: "hidden",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.9), 0 8px 24px rgba(0,0,0,0.65), 0 24px 64px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
+            }}
+          >
+            {/* Chrome */}
+            <div style={{ background: "#111111", borderBottom: "1px solid #242424", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div style={{ width: "22px", height: "22px", background: "#E8E0D0", borderRadius: "5px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <span style={{ fontFamily: "var(--font-serif)", fontSize: "10px", color: "#0A0A0A", fontWeight: 600 }}>IB</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                  <span className="text-[10px] text-zinc-600">Online</span>
+                <div>
+                  <div style={{ fontFamily: "var(--font-sans)", fontSize: "12px", color: "#F5F5F5" }}>InkBook AI</div>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#525252" }}>Ink & Iron Studio · Booking assistant</div>
                 </div>
               </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span className="animate-pulse-dot" aria-hidden style={{ display: "inline-block", width: "6px", height: "6px", borderRadius: "50%", background: "#4ADE80" }} />
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#525252" }}>Online</span>
+              </div>
+            </div>
 
-              {/* Messages */}
-              <div className="p-4 space-y-3">
-                {/* Client */}
-                <div className="flex justify-end">
-                  <div className="bg-zinc-800 border border-white/[0.07] px-3 py-2 max-w-[76%]">
-                    <p className="text-xs text-zinc-300">Hey, I want a wolf tattoo on my forearm. Blackwork style.</p>
-                  </div>
-                </div>
-
-                {/* AI */}
-                <div className="flex gap-2 items-start">
-                  <div className="w-5 h-5 bg-gold/10 border border-gold/25 flex items-center justify-center shrink-0 mt-0.5">
-                    <Bot className="w-2.5 h-2.5 text-gold" />
-                  </div>
-                  <div className="bg-zinc-900 border border-white/[0.06] px-3 py-2 max-w-[78%]">
-                    <p className="text-xs text-zinc-400">
-                      Great choice! I detected <span className="text-gold font-medium">Blackwork</span> style. Let me collect a few details to match you with the right artist.
-                    </p>
-                  </div>
-                </div>
-
-                {/* AI */}
-                <div className="flex gap-2 items-start">
-                  <div className="w-5 h-5 bg-gold/10 border border-gold/25 flex items-center justify-center shrink-0 mt-0.5">
-                    <Bot className="w-2.5 h-2.5 text-gold" />
-                  </div>
-                  <div className="bg-zinc-900 border border-white/[0.06] px-3 py-2 max-w-[78%]">
-                    <p className="text-xs text-zinc-400 mb-2">Do you have reference images? Drop them here.</p>
-                    <div className="border border-dashed border-white/15 px-3 py-2 text-center">
-                      <ImageIcon className="w-3.5 h-3.5 text-zinc-700 mx-auto mb-0.5" />
-                      <p className="text-[10px] text-zinc-700">Drop image or click to upload</p>
+            {/* Messages */}
+            <div style={{ padding: "20px 16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+              {MSGS.map((msg, i) => (
+                <div
+                  key={i}
+                  style={{ display: "flex", justifyContent: msg.role === "client" ? "flex-end" : "flex-start", gap: "8px", alignItems: "flex-start" }}
+                >
+                  {msg.role === "ai" && (
+                    <div aria-hidden style={{ width: "20px", height: "20px", background: "#252525", border: "1px solid #363636", borderRadius: "4px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "1px" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "8px", color: "#525252" }}>AI</span>
                     </div>
+                  )}
+                  <div
+                    style={{
+                      maxWidth: "78%",
+                      padding: "10px 14px",
+                      borderRadius: msg.role === "client" ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
+                      background: msg.role === "client" ? "#E8E0D0" : "#242424",
+                      border: msg.role === "client" ? "none" : "1px solid #2E2E2E",
+                    }}
+                  >
+                    <span style={{ fontFamily: "var(--font-sans)", fontSize: "12px", color: msg.role === "client" ? "#0A0A0A" : "#C0C0C0", lineHeight: "1.55" }}>
+                      {msg.text}
+                    </span>
                   </div>
                 </div>
+              ))}
 
-                {/* Client */}
-                <div className="flex justify-end">
-                  <div className="bg-zinc-800 border border-white/[0.07] px-3 py-2 max-w-[76%]">
-                    <p className="text-xs text-zinc-300">Around 5–6 inches. Budget is $400–600.</p>
-                  </div>
+              {/* AI lead summary */}
+              <div
+                style={{ background: "#141414", border: "1px solid #272727", borderRadius: "10px", padding: "14px 16px", marginTop: "4px", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)" }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#525252", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                    AI Lead Summary
+                  </span>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#4ADE80" }}>94 / 100</span>
                 </div>
-
-                {/* AI Summary */}
-                <div className="bg-gold/[0.06] border border-gold/20 px-4 py-3">
-                  <p className="text-[10px] text-gold uppercase tracking-widest mb-2.5 font-medium">AI Lead Summary — Sending to artist</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {["Blackwork", "Wolf", "Forearm", '5–6"', "$400–600", "✓ Qualified"].map((tag) => (
-                      <span key={tag} className="text-[10px] bg-zinc-800 border border-white/[0.08] text-zinc-400 px-2 py-0.5">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "12px" }}>
+                  {TAGS.map(({ label, accent, green }) => (
+                    <span
+                      key={label}
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "10px",
+                        padding: "3px 9px",
+                        borderRadius: "100px",
+                        background: green ? "rgba(74,222,128,0.08)" : accent ? "rgba(232,224,208,0.10)" : "#1E1E1E",
+                        border: `1px solid ${green ? "rgba(74,222,128,0.25)" : accent ? "rgba(232,224,208,0.28)" : "#2C2C2C"}`,
+                        color: green ? "#4ADE80" : accent ? "#E8E0D0" : "#A0A0A0",
+                      }}
+                    >
+                      {label}
+                    </span>
+                  ))}
+                </div>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#525252" }}>
+                  Routing to Sarah M. · Notification sent · Lead brief attached
                 </div>
               </div>
             </div>

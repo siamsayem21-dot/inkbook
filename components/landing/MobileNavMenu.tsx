@@ -22,31 +22,33 @@ export default function MobileNavMenu() {
     <div ref={ref} className="md:hidden relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="text-zinc-400 hover:text-white transition-colors p-1 text-xl leading-none"
+        className="text-[#64748B] hover:text-[#0F172A] transition-colors p-1.5"
         aria-label="Open menu"
       >
-        ☰
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-52 bg-zinc-900 border border-white/[0.10] z-50 py-1">
-          <a href="#how-it-works" onClick={() => setOpen(false)} className="block px-5 py-3 label-xs text-zinc-400 hover:text-white hover:bg-white/5 transition-colors">
+        <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-[#E5E7EB] shadow-lg z-50 py-1.5">
+          <a href="#how-it-works" onClick={() => setOpen(false)} className="block px-5 py-2.5 text-sm text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-colors">
             How It Works
           </a>
-          <a href="#ai-assistant" onClick={() => setOpen(false)} className="block px-5 py-3 label-xs text-zinc-400 hover:text-white hover:bg-white/5 transition-colors">
+          <a href="#ai-assistant" onClick={() => setOpen(false)} className="block px-5 py-2.5 text-sm text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-colors">
             AI Assistant
           </a>
-          <a href="#dashboard" onClick={() => setOpen(false)} className="block px-5 py-3 label-xs text-zinc-400 hover:text-white hover:bg-white/5 transition-colors">
+          <a href="#dashboard" onClick={() => setOpen(false)} className="block px-5 py-2.5 text-sm text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-colors">
             Dashboard
           </a>
-          <a href="#pricing" onClick={() => setOpen(false)} className="block px-5 py-3 label-xs text-zinc-400 hover:text-white hover:bg-white/5 transition-colors">
+          <a href="#pricing" onClick={() => setOpen(false)} className="block px-5 py-2.5 text-sm text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-colors">
             Pricing
           </a>
-          <div className="border-t border-white/[0.07] mt-1 pt-1">
-            <Link href="/login" onClick={() => setOpen(false)} className="block px-5 py-3 label-xs text-zinc-400 hover:text-white hover:bg-white/5 transition-colors">
-              Sign In
+          <div className="border-t border-[#F3F4F6] mt-1.5 pt-1.5">
+            <Link href="/login" onClick={() => setOpen(false)} className="block px-5 py-2.5 text-sm text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-colors">
+              Sign in
             </Link>
-            <Link href="/book/demo-studio" onClick={() => setOpen(false)} className="block px-5 py-3 label-xs text-zinc-400 hover:text-white hover:bg-white/5 transition-colors">
-              Book Demo
+            <Link href="/book/demo-studio" onClick={() => setOpen(false)} className="block px-5 py-2.5 text-sm text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-colors">
+              Book demo
             </Link>
           </div>
         </div>

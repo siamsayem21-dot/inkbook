@@ -1,53 +1,102 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 
 export default function CTASection() {
-  return (
-    <section className="px-6 py-24 md:py-36 border-t border-white/[0.06]">
-      <div className="max-w-3xl mx-auto text-center">
-        <p className="text-[11px] tracking-[0.18em] uppercase text-zinc-600 font-medium mb-6">
-          Early access
-        </p>
+  const sectionRef = useRef<HTMLElement>(null);
 
-        <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[0.95] text-white mb-6 text-balance">
-          Your studio.
-          <br />
-          <span className="text-zinc-500">Running itself.</span>
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.querySelectorAll<HTMLElement>(".reveal").forEach((node, i) => {
+            setTimeout(() => node.classList.add("in-view"), i * 100);
+          });
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.15 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <section
+      ref={sectionRef}
+      className="relative text-center"
+      style={{ padding: "160px 24px", background: "#0A0A0A", borderTop: "1px solid rgba(255,255,255,0.04)" }}
+    >
+      {/* Background radial — bottom */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          background:
+            "radial-gradient(ellipse 70% 50% at 50% 100%, rgba(232,224,208,0.09) 0%, rgba(232,224,208,0.02) 60%, transparent 80%)",
+        }}
+      />
+
+      <div className="mx-auto" style={{ maxWidth: "800px" }}>
+        <h2
+          className="reveal stagger-1"
+          style={{
+            fontFamily: "var(--font-serif)",
+            fontSize: "clamp(40px, 6vw, 80px)",
+            color: "#F5F5F5",
+            letterSpacing: "-0.03em",
+            lineHeight: "1.05",
+            marginBottom: "16px",
+          }}
+        >
+          Your studio. One system.
         </h2>
 
-        <p className="text-zinc-500 text-base md:text-lg leading-relaxed mb-10 max-w-md mx-auto">
-          Early studios get priority onboarding, locked-in pricing, and a
-          dedicated setup call. Limited spots open now.
+        <p
+          className="reveal stagger-2"
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: "18px",
+            color: "#A0A0A0",
+            marginBottom: "40px",
+          }}
+        >
+          Join studios already building on InkBook.
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-10">
+        <div className="reveal stagger-3" style={{ marginBottom: "20px" }}>
           <Link
             href="#"
-            className="h-12 px-8 bg-white text-black text-[13px] font-semibold hover:bg-zinc-100 transition-colors duration-200 flex items-center gap-2 group"
+            className="inline-flex items-center hover:bg-[#E8E0D0] transition-colors duration-150"
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: "14px",
+              fontWeight: 500,
+              background: "#F5F5F5",
+              color: "#0A0A0A",
+              padding: "13px 28px",
+              borderRadius: "8px",
+              textDecoration: "none",
+            }}
           >
-            Start free trial
-            <span
-              className="group-hover:translate-x-0.5 transition-transform duration-150"
-              aria-hidden
-            >
-              →
-            </span>
-          </Link>
-          <Link
-            href="#"
-            className="h-12 px-8 border border-white/[0.12] text-zinc-400 text-[13px] hover:border-white/25 hover:text-white transition-all duration-200 flex items-center"
-          >
-            Book a demo call
+            Get Early Access
           </Link>
         </div>
 
-        {/* Social proof */}
-        <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1 text-[11px] text-zinc-700">
-          <span>14-day free trial</span>
-          <span className="mx-1">·</span>
-          <span>No credit card required</span>
-          <span className="mx-1">·</span>
-          <span>Cancel anytime</span>
-        </div>
+        <p
+          className="reveal stagger-4"
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "12px",
+            color: "#525252",
+            letterSpacing: "0.06em",
+          }}
+        >
+          No credit card required · Setup in minutes
+        </p>
       </div>
     </section>
   );

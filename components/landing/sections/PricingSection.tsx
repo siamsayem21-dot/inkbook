@@ -1,191 +1,150 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 const TIERS = [
   {
-    name: "Solo",
-    sub: "1 artist",
-    monthly: 49,
-    annual: 41,
-    popular: false,
-    features: [
-      "White-label booking page",
-      "AI consultation intake",
-      "Stripe deposit enforcement",
-      "Digital consent forms",
-      "SMS reminders (48hr + day-of)",
-      "Client profile & notes",
-      "Artist dashboard",
-    ],
+    name: "Independent Artist",
+    price: 49,
+    desc: "For solo artists managing their own bookings.",
+    featured: false,
   },
   {
     name: "Studio",
-    sub: "2–5 artists",
-    monthly: 79,
-    annual: 66,
-    popular: true,
-    features: [
-      "Everything in Solo",
-      "Multi-artist scheduling",
-      "Owner revenue dashboard",
-      "AI artist matching & routing",
-      "Client blacklist",
-      "Session agreements",
-      "Waitlist management",
-    ],
+    price: 79,
+    desc: "For multi-artist studios ready to systemize operations.",
+    featured: true,
   },
   {
-    name: "Pro",
-    sub: "6+ artists",
-    monthly: 129,
-    annual: 107,
-    popular: false,
-    features: [
-      "Everything in Studio",
-      "Unlimited artists",
-      "ID verification",
-      "Custom domain",
-      "Advanced analytics",
-      "White-glove setup call",
-      "Dedicated account manager",
-    ],
+    name: "Growing Studio",
+    price: 129,
+    desc: "For established studios scaling their business.",
+    featured: false,
   },
 ] as const;
 
 export default function PricingSection() {
-  const [annual, setAnnual] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
+      { threshold: 0.15 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <section id="pricing" className="px-6 py-24 md:py-32 border-t border-white/[0.06]">
-      <div className="max-w-6xl mx-auto">
+    <section id="pricing" ref={sectionRef} style={{ padding: "128px 0", background: "#0A0A0A" }}>
+      <div className="mx-auto" style={{ maxWidth: "1120px", padding: "0 40px" }}>
+
         {/* Header */}
-        <div className="mb-12 md:mb-14">
-          <p className="text-[11px] tracking-[0.18em] uppercase text-zinc-600 font-medium mb-4">
+        <div className="text-center mb-20">
+          <p style={{ fontFamily: "var(--font-mono)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#525252", marginBottom: "24px", opacity: inView ? 1 : 0, transform: inView ? "none" : "translateY(16px)", transition: "opacity 600ms var(--ease-out), transform 600ms var(--ease-out)" }}>
             Pricing
           </p>
-          <h2 className="text-4xl md:text-5xl font-bold tracking-tight leading-tight text-white mb-5">
-            Simple. Predictable.
-            <br />
-            No surprises.
+          <h2 style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(28px, 3.5vw, 48px)", color: "#F5F5F5", lineHeight: "1.1", maxWidth: "520px", margin: "0 auto 16px", opacity: inView ? 1 : 0, transform: inView ? "none" : "translateY(20px)", transition: "opacity 700ms 80ms var(--ease-out), transform 700ms 80ms var(--ease-out)" }}>
+            Simple pricing for studios of every size.
           </h2>
-          <p className="text-zinc-500 text-base max-w-md leading-relaxed mb-8">
-            14-day free trial on all plans. No credit card required.
+          <p style={{ fontFamily: "var(--font-sans)", fontSize: "16px", color: "#525252", opacity: inView ? 1 : 0, transition: "opacity 600ms 160ms var(--ease-out)" }}>
+            No setup fees. No contracts. Cancel anytime.
           </p>
+        </div>
 
-          {/* Toggle */}
-          <div className="flex items-center gap-3">
-            <span className={`text-[13px] transition-colors ${!annual ? "text-white" : "text-zinc-600"}`}>
-              Monthly
-            </span>
-            <button
-              onClick={() => setAnnual(!annual)}
-              className={`relative w-10 h-5 transition-colors duration-200 ${annual ? "bg-white" : "bg-white/10"}`}
-              aria-label="Toggle annual billing"
+        {/* Cards — vertically aligned to bottom of featured card */}
+        <div
+          className="grid grid-cols-1 md:grid-cols-3 items-end gap-4"
+          style={{ opacity: inView ? 1 : 0, transform: inView ? "none" : "translateY(24px)", transition: "opacity 700ms 240ms var(--ease-out), transform 700ms 240ms var(--ease-out)" }}
+        >
+          {TIERS.map(({ name, price, desc, featured }) => (
+            <div
+              key={name}
+              className={featured ? "pricing-card-featured animate-glow-breathe" : "pricing-card"}
+              style={{
+                background: featured ? "#1C1C1C" : "#181818",
+                border: `1px solid ${featured ? "#3A3A3A" : "#282828"}`,
+                borderRadius: "14px",
+                padding: featured ? "48px 36px 40px" : "36px",
+                position: "relative",
+                transform: featured ? "translateY(-14px)" : "none",
+                boxShadow: featured
+                  ? "0 0 0 1px #3A3A3A, 0 32px 64px rgba(0,0,0,0.65), 0 8px 24px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.09)"
+                  : "0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
+              }}
             >
-              <span
-                className={`absolute top-0.5 w-4 h-4 bg-black transition-transform duration-200 ${annual ? "translate-x-5" : "translate-x-0.5"}`}
-              />
-            </button>
-            <span className={`text-[13px] transition-colors ${annual ? "text-white" : "text-zinc-600"}`}>
-              Annual{" "}
-              <span className="text-emerald-400 text-[11px] font-medium">
-                — save 17%
-              </span>
-            </span>
-          </div>
-        </div>
-
-        {/* Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/[0.06]">
-          {TIERS.map((tier) => {
-            const price = annual ? tier.annual : tier.monthly;
-            return (
-              <div
-                key={tier.name}
-                className={`relative px-6 py-8 flex flex-col ${
-                  tier.popular
-                    ? "bg-white/[0.05]"
-                    : "bg-[#090909]"
-                }`}
-              >
-                {tier.popular && (
-                  <div className="absolute top-0 inset-x-0 h-px bg-white/20" />
-                )}
-
-                {/* Tier name */}
-                <div className="mb-6">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-[13px] font-semibold text-white">{tier.name}</h3>
-                    {tier.popular && (
-                      <span className="text-[10px] tracking-[0.1em] uppercase px-2 py-0.5 bg-white/10 text-zinc-300 font-medium">
-                        Most popular
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-zinc-600">{tier.sub}</p>
+              {/* Featured badge */}
+              {featured && (
+                <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", background: "#E8E0D0", borderRadius: "0 0 8px 8px", padding: "4px 16px" }}>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#0A0A0A", textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap" }}>Most Popular</span>
                 </div>
+              )}
+              {/* Top edge accent */}
+              {featured && (
+                <div aria-hidden style={{ position: "absolute", top: 0, left: 0, right: 0, height: "1px", borderRadius: "14px 14px 0 0", background: "linear-gradient(90deg, transparent, rgba(232,224,208,0.45), transparent)", pointerEvents: "none" }} />
+              )}
 
-                {/* Price */}
-                <div className="mb-8">
-                  <div className="flex items-end gap-1.5 mb-1">
-                    <span className="text-4xl font-bold text-white tabular-nums tracking-tight">
-                      ${price}
-                    </span>
-                    <span className="text-zinc-600 text-sm mb-1">/mo</span>
-                  </div>
-                  {annual && (
-                    <p className="text-[11px] text-zinc-600">
-                      Billed annually (${price * 12}/yr)
-                    </p>
-                  )}
-                </div>
-
-                {/* CTA */}
-                <Link
-                  href="#"
-                  className={`flex items-center justify-center h-10 text-[13px] font-medium mb-8 transition-colors duration-200 ${
-                    tier.popular
-                      ? "bg-white text-black hover:bg-zinc-100"
-                      : "border border-white/[0.12] text-zinc-300 hover:border-white/25 hover:text-white"
-                  }`}
-                >
-                  Start free trial
-                </Link>
-
-                {/* Features */}
-                <ul className="space-y-3 flex-1">
-                  {tier.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2.5">
-                      <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 12 12"
-                        fill="none"
-                        className="text-zinc-500 shrink-0 mt-0.5"
-                      >
-                        <path
-                          d="M2 6l3 3 5-5"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      <span className="text-[12px] text-zinc-500 leading-snug">{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <p className="mt-6 text-[11px] text-zinc-700">No credit card required</p>
+              {/* Tier name */}
+              <div style={{ fontFamily: "var(--font-sans)", fontSize: "12px", color: featured ? "#A0A0A0" : "#525252", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "20px", marginTop: featured ? "12px" : "0" }}>
+                {name}
               </div>
-            );
-          })}
+
+              {/* Price */}
+              <div style={{ display: "flex", alignItems: "flex-end", gap: "2px", marginBottom: "14px" }}>
+                <span style={{ fontFamily: "var(--font-serif)", fontSize: featured ? "64px" : "52px", color: "#F5F5F5", lineHeight: "1", transition: "font-size 300ms" }}>
+                  ${price}
+                </span>
+                <span style={{ fontFamily: "var(--font-sans)", fontSize: "18px", color: "#525252", marginBottom: "8px" }}>/mo</span>
+              </div>
+
+              {/* Desc */}
+              <p style={{ fontFamily: "var(--font-sans)", fontSize: "14px", color: "#A0A0A0", lineHeight: "1.55", marginBottom: "28px" }}>
+                {desc}
+              </p>
+
+              {/* Divider */}
+              <div style={{ height: "1px", background: featured ? "#3A3A3A" : "#282828", marginBottom: "28px" }} />
+
+              {/* CTA */}
+              <Link
+                href="#"
+                style={{
+                  display: "block",
+                  textAlign: "center",
+                  textDecoration: "none",
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "14px",
+                  fontWeight: featured ? 500 : 400,
+                  color: featured ? "#0A0A0A" : "#A0A0A0",
+                  background: featured ? "#F5F5F5" : "transparent",
+                  border: featured ? "none" : "1px solid #363636",
+                  padding: featured ? "14px" : "13px",
+                  borderRadius: "8px",
+                  transition: "background 150ms, color 150ms, border-color 150ms, transform 100ms",
+                }}
+                onMouseEnter={e => {
+                  const el = e.currentTarget;
+                  if (featured) el.style.background = "#E8E0D0";
+                  else { el.style.borderColor = "#3A3A3A"; el.style.color = "#F5F5F5"; }
+                }}
+                onMouseLeave={e => {
+                  const el = e.currentTarget;
+                  if (featured) el.style.background = "#F5F5F5";
+                  else { el.style.borderColor = "#363636"; el.style.color = "#A0A0A0"; }
+                }}
+              >
+                Get Started
+              </Link>
+            </div>
+          ))}
         </div>
 
-        <p className="text-[12px] text-zinc-700 mt-6 text-center">
-          + 1% transaction fee on all bookings · Annual billing saves 2 months · Enterprise pricing available
+        <p style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "#525252", textAlign: "center", marginTop: "48px", opacity: inView ? 1 : 0, transition: "opacity 600ms 400ms var(--ease-out)" }}>
+          + 1% transaction fee on all bookings
         </p>
       </div>
     </section>
