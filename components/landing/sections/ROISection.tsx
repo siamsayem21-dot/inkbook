@@ -77,13 +77,13 @@ export default function ROISection() {
             className="reveal stagger-2"
             style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(36px, 5vw, 62px)", color: "#F5F5F5", lineHeight: "1.05", letterSpacing: "-0.02em", maxWidth: "640px", marginBottom: "20px" }}
           >
-            One recovered booking pays for InkBook.
+            What is one missed booking worth?
           </h2>
           <p
             className="reveal stagger-3"
             style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#707070", lineHeight: "1.65", maxWidth: "520px" }}
           >
-            InkBook starts at $49/mo. A single tattoo appointment earns more than that. Which means one prevented no-show, one recovered lead, or one collected deposit covers your entire month — and every booking after that is pure upside.
+            A missed booking isn&apos;t just one lost session. It&apos;s a deposit that wasn&apos;t collected, a lead that went to a competitor, and a time slot you can&apos;t recover. InkBook starts at $49/mo. Most tattoo sessions earn more than that — which means a single recovered booking covers your entire month.
           </p>
         </div>
 

@@ -50,10 +50,10 @@ const QUEUE = [
 ];
 
 const POINTS = [
-  "Every unanswered inquiry gets a follow-up — automatically",
+  "Old inquiries, forgotten conversations, unanswered leads — all followed up automatically",
   "Every unseen quote gets a nudge at 48 hours — no matter how busy you are",
-  "Every unpaid deposit gets a reminder before the booking expires",
-  "You tattoo. InkBook handles client communication.",
+  "Every unpaid deposit gets a reminder before the booking window expires",
+  "You tattoo. InkBook recovers the revenue you would have left behind.",
 ];
 
 export default function FollowUpSection() {
@@ -208,7 +208,7 @@ export default function FollowUpSection() {
               className="reveal stagger-4"
               style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#909090", lineHeight: "1.65", marginBottom: "36px", maxWidth: "420px" }}
             >
-              While you&apos;re tattooing, InkBook is following up on every inquiry that went quiet, every quote that was opened but not answered, every deposit that hasn&apos;t been paid. Automatically. Every time. Whether you run a solo practice or manage a team, the follow-up runs without you.
+              Every cold lead, every unanswered quote, every missing deposit is recovered revenue. While you&apos;re tattooing, InkBook is working through every opportunity that went quiet — automatically, every time. Solo artists and studio owners keep every conversation moving without lifting a finger.
             </p>
             <ul
               className="reveal stagger-5"

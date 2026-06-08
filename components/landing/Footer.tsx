@@ -11,15 +11,30 @@ export default function Footer() {
       >
         {/* Row 1 */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-          <span
-            style={{
-              fontFamily: "var(--font-serif)",
-              fontSize: "16px",
-              color: "#525252",
-            }}
-          >
-            InkBook
-          </span>
+          <div>
+            <span
+              style={{
+                fontFamily: "var(--font-serif)",
+                fontSize: "16px",
+                color: "#525252",
+                display: "block",
+              }}
+            >
+              InkBook
+            </span>
+            <span
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "10px",
+                color: "#2E2E2E",
+                letterSpacing: "0.05em",
+                display: "block",
+                marginTop: "3px",
+              }}
+            >
+              Tattoo Business Operating System
+            </span>
+          </div>
           <nav className="flex items-center gap-6">
             {LINKS.map((item) => (
               <Link

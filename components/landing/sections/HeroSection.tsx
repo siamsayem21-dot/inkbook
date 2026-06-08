@@ -212,7 +212,7 @@ export default function HeroSection() {
         <span
           style={{ fontFamily: "var(--font-mono)", fontSize: "11px", letterSpacing: "0.1em", color: "#525252", border: "1px solid #2A2A2A", background: "#161616", padding: "6px 14px", borderRadius: "100px", display: "inline-block", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)", textTransform: "uppercase" }}
         >
-          AI-Powered Tattoo Studio Operating System
+          Tattoo Business Operating System
         </span>
       </div>
 
@@ -241,7 +241,7 @@ export default function HeroSection() {
             boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
           }}
         >
-          {(["Inquiry", "AI Consultation", "AI Follow-Up", "Quote", "Deposit", "Booking", "Aftercare"] as const).map((step, i, arr) => (
+          {(["Inquiry", "AI Consultation", "AI Follow-Up", "Quote", "Deposit", "Booking", "Aftercare", "CRM"] as const).map((step, i, arr) => (
             <span key={step} style={{ display: "inline-flex", alignItems: "center" }}>
               <span
                 style={{
@@ -275,7 +275,7 @@ export default function HeroSection() {
         className={`max-w-[480px] mb-10 transition-all duration-500 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
         style={{ transitionDelay: "220ms", fontFamily: "var(--font-sans)", fontSize: "17px", lineHeight: "1.7", color: "#606060" }}
       >
-        From first inquiry to final session — every step of the tattoo client journey connected, automated, and protected.
+        AI handles client communication at every step — from first inquiry to aftercare. Artists spend less time managing leads and more time tattooing.
       </p>
 
       {/* CTAs */}
