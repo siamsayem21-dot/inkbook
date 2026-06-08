@@ -2,7 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const FEATURES = ["Revenue tracking", "Lead conversion rates", "Artist utilization"];
+const FEATURES = [
+  "See which artists generate the most revenue — and who has capacity",
+  "Know your exact lead conversion rate and where inquiries drop off",
+  "Track deposit collection, booking trends, and monthly growth — no spreadsheets",
+];
 
 const BAR_DATA = [
   { mo: "Aug", target: 38 },
@@ -127,12 +131,12 @@ export default function OwnerSection() {
             <h2
               style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(28px, 3.5vw, 48px)", color: "#F5F5F5", lineHeight: "1.12", maxWidth: "440px", marginBottom: "24px", opacity: inView ? 1 : 0, transform: inView ? "none" : "translateY(20px)", transition: "opacity 700ms 80ms var(--ease-out), transform 700ms 80ms var(--ease-out)" }}
             >
-              Know exactly how your studio is performing.
+              Know exactly where your revenue comes from — and where it&apos;s leaking.
             </h2>
             <p
               style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#A0A0A0", lineHeight: "1.6", marginBottom: "32px", opacity: inView ? 1 : 0, transform: inView ? "none" : "translateY(16px)", transition: "opacity 600ms 160ms var(--ease-out), transform 600ms 160ms var(--ease-out)" }}
             >
-              Revenue, lead conversion, artist utilization, booking trends. All in one place. No spreadsheets. No guesswork.
+              Most studio owners find out their business is underperforming from their bank account. InkBook tells you before that happens — in real time, from your phone.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px", opacity: inView ? 1 : 0, transition: "opacity 600ms 240ms var(--ease-out)" }}>
               {FEATURES.map(f => (

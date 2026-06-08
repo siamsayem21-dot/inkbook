@@ -14,11 +14,12 @@ const BEFORE_TOOLS = [
 ];
 
 const FLOW_NODES = [
-  { label: "Inquiry", sub: "AI qualifies" },
-  { label: "Quote", sub: "Auto-sent" },
-  { label: "Deposit", sub: "Stripe" },
-  { label: "Booking", sub: "Confirmed" },
-  { label: "Complete", sub: "CRM updated" },
+  { label: "Inquiry", sub: "AI qualifies 24/7", highlight: false },
+  { label: "AI Consultation", sub: "Brief structured & scored", highlight: true },
+  { label: "Follow-Up", sub: "Auto-sequences if no reply", highlight: true },
+  { label: "Deposit", sub: "Stripe · non-refundable", highlight: true },
+  { label: "Booking", sub: "Confirmed", highlight: false },
+  { label: "Aftercare", sub: "Retention automated", highlight: false },
 ];
 
 export default function MigrationSection() {
@@ -130,18 +131,18 @@ export default function MigrationSection() {
                   Unified workflow
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
-                  {FLOW_NODES.map(({ label, sub }, i) => (
+                  {FLOW_NODES.map(({ label, sub, highlight }, i) => (
                     <div key={label} style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
                       {/* Line + dot */}
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, width: "16px" }}>
-                        {i > 0 && <div style={{ width: "1px", height: "8px", background: "#3A3A3A" }} />}
-                        <div style={{ width: "8px", height: "8px", borderRadius: "50%", border: "1px solid", borderColor: i === 2 ? "#E8E0D0" : "#3A3A3A", background: i === 2 ? "rgba(232,224,208,0.10)" : "#1A1A1A", flexShrink: 0 }} />
+                        {i > 0 && <div style={{ width: "1px", height: "8px", background: highlight ? "rgba(232,224,208,0.3)" : "#3A3A3A" }} />}
+                        <div style={{ width: "8px", height: "8px", borderRadius: "50%", border: "1px solid", borderColor: highlight ? "#E8E0D0" : "#3A3A3A", background: highlight ? "rgba(232,224,208,0.10)" : "#1A1A1A", flexShrink: 0 }} />
                         {i < FLOW_NODES.length - 1 && <div style={{ width: "1px", height: "8px", background: "#3A3A3A" }} />}
                       </div>
                       {/* Label */}
                       <div style={{ paddingTop: i === 0 ? "0" : "1px", paddingBottom: i < FLOW_NODES.length - 1 ? "6px" : "0" }}>
-                        <div style={{ fontFamily: "var(--font-sans)", fontSize: "13px", color: i === 2 ? "#F5F5F5" : "#A0A0A0" }}>{label}</div>
-                        <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#525252" }}>{sub}</div>
+                        <div style={{ fontFamily: "var(--font-sans)", fontSize: "13px", color: highlight ? "#F5F5F5" : "#A0A0A0" }}>{label}</div>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: highlight ? "#707070" : "#525252" }}>{sub}</div>
                       </div>
                     </div>
                   ))}

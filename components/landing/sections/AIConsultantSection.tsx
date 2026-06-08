@@ -3,15 +3,15 @@
 import { useEffect, useRef } from "react";
 
 const FEATURES = [
+  "Artists spend zero time on unqualified or incomplete inquiries",
   "Style, placement, size, budget — collected before anyone sees the inquiry",
   "Reference images accepted and analyzed automatically",
   "Lead scored and qualified — no human intake required",
   "Structured brief ready for quoting within minutes",
-  "Artists spend zero time on unqualified or incomplete inquiries",
 ];
 
 const MSGS = [
-  { role: "ai", text: "Hi! I'm the booking assistant for Ink & Iron Studio. What style are you thinking?" },
+  { role: "ai", text: "Welcome to Ink & Iron Studio. I'll help get your inquiry to the right artist. What style are you thinking?" },
   { role: "client", text: "Blackwork wolf on my forearm. Geometric style. About 6 inches." },
   { role: "ai", text: "Got it — Blackwork, Geometric, forearm, 6 inches. What budget are you working with? I'll prepare a brief for your quote." },
   { role: "client", text: "Around $400–600." },
@@ -71,13 +71,13 @@ export default function AIConsultantSection() {
               className="reveal stagger-2"
               style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(32px, 4vw, 52px)", color: "#F5F5F5", lineHeight: "1.1", letterSpacing: "-0.02em", marginBottom: "24px" }}
             >
-              Every inquiry qualified before it reaches your team.
+              Every inquiry qualified before it reaches your artists.
             </h2>
             <p
               className="reveal stagger-3"
               style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#A0A0A0", lineHeight: "1.65", marginBottom: "36px", maxWidth: "420px" }}
             >
-              InkBook AI handles the first conversation for your studio — 24 hours a day, seven days a week. Style, placement, size, budget, references — collected, structured, and ready to quote. No artist involvement until the lead is worth their time.
+              InkBook AI handles the first conversation — 24 hours a day, seven days a week. Style, placement, size, budget, references — collected, structured, and ready to quote. No artist sees an inquiry until it&apos;s worth their time.
             </p>
             <ul
               className="reveal stagger-4"

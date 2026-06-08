@@ -7,16 +7,19 @@ const PAIN_QUOTES = [
     quote: "I quoted a sleeve, client agreed, came in for session one, then wanted to add a full hand piece at session two for the same price. I had no written agreement. Ended up doing $600 of extra work for free because I was afraid of conflict.",
     source: "r/TattooArtists · 847 upvotes",
     context: "On scope creep and verbal agreements",
+    solve: "InkBook generates a session agreement before every appointment — scope is locked in writing before anyone picks up a needle.",
   },
   {
     quote: "I've started requiring a non-refundable deposit but I lose clients over it. Meanwhile I had four no-shows last month. Four. That's an entire day of my life gone.",
     source: "r/TattooArtists · 1,204 upvotes",
     context: "On deposits and no-shows",
+    solve: "InkBook enforces deposits automatically via Stripe on every booking. It cannot be turned off — by the artist or the studio.",
   },
   {
     quote: "Between Instagram DMs, texts, emails, and my booking app — I have no idea who's a serious client and who's just browsing. I replied to 60 inquiries last month and booked 7.",
     source: "r/TattooArtists · 612 upvotes",
     context: "On inquiry management",
+    solve: "InkBook AI qualifies every inquiry before an artist sees it. Unqualified leads never reach your schedule.",
   },
 ];
 
@@ -101,12 +104,17 @@ export default function TestimonialsSection() {
                 {q.context}
               </div>
               <p
-                style={{ fontFamily: "var(--font-sans)", fontSize: "14px", color: "#808080", lineHeight: "1.7", flex: 1, marginBottom: "20px" }}
+                style={{ fontFamily: "var(--font-sans)", fontSize: "14px", color: "#808080", lineHeight: "1.7", flex: 1, marginBottom: "16px" }}
               >
                 &ldquo;{q.quote}&rdquo;
               </p>
-              <div style={{ paddingTop: "16px", borderTop: "1px solid #1A1A1A" }}>
+              <div style={{ paddingTop: "14px", borderTop: "1px solid #1A1A1A", marginBottom: "14px" }}>
                 <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#484848" }}>{q.source}</div>
+              </div>
+              <div style={{ background: "rgba(232,224,208,0.04)", border: "1px solid rgba(232,224,208,0.10)", borderRadius: "7px", padding: "10px 12px" }}>
+                <div style={{ fontFamily: "var(--font-sans)", fontSize: "12px", color: "#707070", lineHeight: "1.55" }}>
+                  {q.solve}
+                </div>
               </div>
             </div>
           ))}

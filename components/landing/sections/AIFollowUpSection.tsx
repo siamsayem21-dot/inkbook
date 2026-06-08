@@ -6,14 +6,14 @@ const TIMELINE = [
   { day: "Day 0", label: "Session ends", sub: "Aftercare instructions sent automatically via SMS", done: true, time: "Feb 12 · 6:04 PM" },
   { day: "Day 3", label: "Healing check", sub: '"How\'s your tattoo healing?" — automated follow-up', done: true, time: "Feb 15 · 10:00 AM" },
   { day: "Day 7", label: "Photo check-in", sub: "Client asked to share a healing photo", done: false, time: "Feb 19 · 10:00 AM" },
-  { day: "Day 14", label: "Review request", sub: "Google review request sent — 5-star prompt", done: false, time: "Feb 26 · 10:00 AM" },
+  { day: "Day 14", label: "Review request", sub: "Google review request sent — high completion rate", done: false, time: "Feb 26 · 10:00 AM" },
 ];
 
 const POINTS = [
-  "Aftercare instructions sent automatically when the session closes",
-  "Healing check-ins keep clients engaged and reduce complication anxiety",
-  "Review request at Day 14 turns satisfied clients into Google ratings",
-  "Rebooking prompt at Day 30 turns one-time clients into regulars",
+  "Clients who hear from you after their tattoo come back for more work",
+  "Automated healing check-ins build loyalty without requiring your time",
+  "Review requests at Day 14 convert satisfied clients into Google ratings",
+  "Rebooking prompts at Day 30 turn one-time visits into long-term clients",
 ];
 
 export default function AIFollowUpSection() {

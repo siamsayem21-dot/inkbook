@@ -30,8 +30,8 @@ const TOOLS_VS = [
 ];
 
 const OS_MODULES = [
-  "AI Intake",
-  "Artist Routing",
+  "AI Inquiry Consultation",
+  "AI Follow-Up Sequences",
   "Quote Engine",
   "Deposit Collection",
   "Consent Forms",
@@ -81,10 +81,10 @@ export default function CategorySection() {
             A new category
           </p>
           <h2 style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(36px, 5vw, 64px)", color: "#F5F5F5", lineHeight: "1.05", letterSpacing: "-0.02em", marginBottom: "24px" }}>
-            InkBook is not another booking tool.
+            Booking tools schedule appointments. Operating systems run businesses.
           </h2>
           <p style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#707070", lineHeight: "1.65" }}>
-            Every tool that came before InkBook was either built for a different industry, or built to do one thing. Booking. Scheduling. Invoicing. None of them were designed around the tattoo workflow. InkBook was.
+            Every tool tattoo studios use today was built for someone else — salons, consultants, events. InkBook is the first software built specifically around how tattoo work actually happens: inquiry, consultation, follow-up, quote, deposit, booking, aftercare.
           </p>
         </div>
 
@@ -169,7 +169,7 @@ export default function CategorySection() {
 
             <div style={{ marginTop: "16px", padding: "16px 18px", background: "#0E0E0E", border: "1px solid #1C1C1C", borderRadius: "10px" }}>
               <p style={{ fontFamily: "var(--font-sans)", fontSize: "13px", color: "#505050", lineHeight: "1.6", margin: 0 }}>
-                Booking tools collect appointments. Operating systems run businesses. InkBook is the first software company to build an operating system specifically for tattoo studios — not adapted from beauty software, not repurposed from a general CRM.
+                Not adapted from beauty salon software. Not repurposed from a general CRM. Built from the ground up around the tattoo studio workflow — because no one else was going to do it.
               </p>
             </div>
           </div>
