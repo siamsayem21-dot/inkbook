@@ -1,6 +1,7 @@
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import HeroSection from "@/components/landing/sections/HeroSection";
+import CategoryStatementSection from "@/components/landing/sections/CategoryStatementSection";
 import ProblemSection from "@/components/landing/sections/ProblemSection";
 import CategorySection from "@/components/landing/sections/CategorySection";
 import MigrationSection from "@/components/landing/sections/MigrationSection";
@@ -24,6 +25,8 @@ export default function HomePage() {
       <main>
         {/* 1 — Category declaration + pipeline: Inquiry → Consultation → Follow-Up → Quote → Deposit → Booking */}
         <HeroSection />
+        {/* 1b — Category statement: what kind of software InkBook is */}
+        <CategoryStatementSection />
         {/* 2 — The real cost of disconnected tools */}
         <ProblemSection />
         {/* 3 — Why a new category exists */}
