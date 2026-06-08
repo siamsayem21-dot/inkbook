@@ -12,6 +12,8 @@ import WorkflowSection from "@/components/landing/sections/WorkflowSection";
 import ProjectSection from "@/components/landing/sections/ProjectSection";
 import AIFollowUpSection from "@/components/landing/sections/AIFollowUpSection";
 import MigrationSection from "@/components/landing/sections/MigrationSection";
+import TrustMetricsSection from "@/components/landing/sections/TrustMetricsSection";
+import TestimonialsSection from "@/components/landing/sections/TestimonialsSection";
 import PricingSection from "@/components/landing/sections/PricingSection";
 import CTASection from "@/components/landing/sections/CTASection";
 
@@ -44,9 +46,13 @@ export default function HomePage() {
         <AIFollowUpSection />
         {/* 12 — Why Studios Switch */}
         <MigrationSection />
-        {/* 13 — Pricing */}
+        {/* 13 — Proof: Metrics */}
+        <TrustMetricsSection />
+        {/* 14 — Proof: Testimonials */}
+        <TestimonialsSection />
+        {/* 15 — Pricing */}
         <PricingSection />
-        {/* 14 — CTA */}
+        {/* 16 — Final CTA */}
         <CTASection />
       </main>
       <Footer />
