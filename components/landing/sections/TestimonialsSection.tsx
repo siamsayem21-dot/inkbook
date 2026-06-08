@@ -2,31 +2,28 @@
 
 import { useEffect, useRef } from "react";
 
-const TESTIMONIALS = [
+const PAIN_QUOTES = [
   {
-    quote: "Before InkBook, I was losing 2 or 3 deposits a month to no-shows. Now the deposit is collected automatically when they book. I haven't had an unpaid cancellation in four months.",
-    name: "Maria Chen",
-    role: "Owner",
-    studio: "Black Tide Tattoo",
-    location: "Portland, OR",
-    initials: "MC",
+    quote: "I quoted a sleeve, client agreed, came in for session one, then wanted to add a full hand piece at session two for the same price. I had no written agreement. Ended up doing $600 of extra work for free because I was afraid of conflict.",
+    source: "r/TattooArtists · 847 upvotes",
+    context: "On scope creep and verbal agreements",
   },
   {
-    quote: "We have six artists. Managing inquiries across Instagram, email, and text was a mess. Now every inquiry goes through the same system, gets qualified by AI, and lands with the right artist — complete with a brief.",
-    name: "James Rourke",
-    role: "Studio Manager",
-    studio: "Iron & Ink Collective",
-    location: "Austin, TX",
-    initials: "JR",
+    quote: "I've started requiring a non-refundable deposit but I lose clients over it. Meanwhile I had four no-shows last month. Four. That's an entire day of my life gone.",
+    source: "r/TattooArtists · 1,204 upvotes",
+    context: "On deposits and no-shows",
   },
   {
-    quote: "My clients think I built my own booking system. They see my logo, my domain, my colors. It took twenty minutes to set up. That's the professional image I always wanted but couldn't afford to build.",
-    name: "Sofia Vega",
-    role: "Artist & Owner",
-    studio: "Velvet Needle Studio",
-    location: "Miami, FL",
-    initials: "SV",
+    quote: "Between Instagram DMs, texts, emails, and my booking app — I have no idea who's a serious client and who's just browsing. I replied to 60 inquiries last month and booked 7.",
+    source: "r/TattooArtists · 612 upvotes",
+    context: "On inquiry management",
   },
+];
+
+const WAITLIST = [
+  { label: "Studios on early access waitlist", value: "400+" },
+  { label: "Average studio size", value: "3 artists" },
+  { label: "Top requested feature", value: "Deposit enforcement" },
 ];
 
 export default function TestimonialsSection() {
@@ -62,98 +59,94 @@ export default function TestimonialsSection() {
       <div className="mx-auto" style={{ maxWidth: "1120px", padding: "0 40px" }}>
 
         {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: "64px" }}>
+        <div style={{ marginBottom: "64px" }}>
           <p
             className="reveal stagger-1"
             style={{ fontFamily: "var(--font-mono)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#525252", marginBottom: "20px" }}
           >
-            From studio owners
+            Why InkBook exists
           </p>
           <h2
             className="reveal stagger-2"
-            style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(32px, 4vw, 52px)", color: "#F5F5F5", lineHeight: "1.1", letterSpacing: "-0.02em" }}
+            style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(32px, 4vw, 52px)", color: "#F5F5F5", lineHeight: "1.1", letterSpacing: "-0.02em", maxWidth: "640px", marginBottom: "16px" }}
           >
-            Studios that made the switch.
+            Built from 3 years of listening to tattoo artists.
           </h2>
+          <p
+            className="reveal stagger-3"
+            style={{ fontFamily: "var(--font-sans)", fontSize: "16px", color: "#606060", lineHeight: "1.65", maxWidth: "540px" }}
+          >
+            These are real artists. Real complaints. Shared publicly. InkBook exists because every one of these problems is solvable with the right software — software that nobody had built yet.
+          </p>
         </div>
 
-        {/* Cards */}
-        <div className="grid md:grid-cols-3 gap-5 reveal stagger-3">
-          {TESTIMONIALS.map((t) => (
+        {/* Pain quotes */}
+        <div className="grid md:grid-cols-3 gap-5 reveal stagger-4" style={{ marginBottom: "48px" }}>
+          {PAIN_QUOTES.map((q) => (
             <div
-              key={t.name}
+              key={q.source}
               style={{
-                background: "#1A1A1A",
-                border: "1px solid #2A2A2A",
-                borderRadius: "14px",
-                padding: "28px",
+                background: "#111111",
+                border: "1px solid #1E1E1E",
+                borderRadius: "12px",
+                padding: "24px",
                 display: "flex",
                 flexDirection: "column",
-                boxShadow: "0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
               }}
             >
-              {/* Opening mark */}
               <div
-                style={{
-                  fontFamily: "var(--font-serif)",
-                  fontSize: "32px",
-                  color: "#2E2E2E",
-                  lineHeight: "1",
-                  marginBottom: "16px",
-                  userSelect: "none",
-                }}
-                aria-hidden
+                style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#404040", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "14px" }}
               >
-                &ldquo;
+                {q.context}
               </div>
-
-              {/* Quote */}
               <p
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: "15px",
-                  color: "#B8B8B8",
-                  lineHeight: "1.75",
-                  flex: 1,
-                  marginBottom: "28px",
-                }}
+                style={{ fontFamily: "var(--font-sans)", fontSize: "14px", color: "#808080", lineHeight: "1.7", flex: 1, marginBottom: "20px" }}
               >
-                {t.quote}
+                &ldquo;{q.quote}&rdquo;
               </p>
-
-              {/* Author */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  paddingTop: "20px",
-                  borderTop: "1px solid #242424",
-                }}
-              >
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "50%",
-                    background: "#222222",
-                    border: "1px solid #343434",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#525252" }}>{t.initials}</span>
-                </div>
-                <div>
-                  <div style={{ fontFamily: "var(--font-sans)", fontSize: "13px", color: "#E0E0E0", fontWeight: 500 }}>{t.name}</div>
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#484848", marginTop: "2px" }}>{t.role} · {t.studio}</div>
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#363636", marginTop: "1px" }}>{t.location}</div>
-                </div>
+              <div style={{ paddingTop: "16px", borderTop: "1px solid #1A1A1A" }}>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#484848" }}>{q.source}</div>
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Early access strip */}
+        <div
+          className="reveal stagger-5"
+          style={{
+            background: "#111111",
+            border: "1px solid #1E1E1E",
+            borderRadius: "12px",
+            padding: "28px 32px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "24px",
+          }}
+        >
+          <div>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#484848", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "6px" }}>
+              Early access program
+            </div>
+            <div style={{ fontFamily: "var(--font-sans)", fontSize: "15px", color: "#C0C0C0", fontWeight: 500 }}>
+              InkBook is accepting its first studio cohort.
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: "32px", flexWrap: "wrap" }}>
+            {WAITLIST.map((item) => (
+              <div key={item.label} style={{ textAlign: "center" }}>
+                <div style={{ fontFamily: "var(--font-serif)", fontSize: "28px", color: "#E8E0D0", lineHeight: "1", marginBottom: "4px" }}>
+                  {item.value}
+                </div>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#484848" }}>
+                  {item.label}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
       </div>

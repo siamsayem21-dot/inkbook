@@ -27,105 +27,119 @@ export default function CTASection() {
   return (
     <section
       ref={sectionRef}
-      className="relative text-center"
+      className="relative"
       style={{ padding: "160px 24px", background: "#0A0A0A", borderTop: "1px solid rgba(255,255,255,0.04)" }}
     >
-      {/* Background radial */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10"
-        style={{
-          background: "radial-gradient(ellipse 80% 60% at 50% 100%, rgba(232,224,208,0.12) 0%, rgba(232,224,208,0.03) 55%, transparent 80%)",
-        }}
+        style={{ background: "radial-gradient(ellipse 80% 60% at 50% 100%, rgba(232,224,208,0.11) 0%, rgba(232,224,208,0.02) 55%, transparent 80%)" }}
       />
 
-      <div className="mx-auto" style={{ maxWidth: "680px" }}>
+      <div className="mx-auto" style={{ maxWidth: "1120px" }}>
 
-        <p
-          className="reveal stagger-1"
-          style={{ fontFamily: "var(--font-mono)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#484848", marginBottom: "28px" }}
-        >
-          AI-Powered Tattoo Studio Operating System
-        </p>
+        <div className="grid md:grid-cols-2 gap-16 items-center">
 
-        <h2
-          className="reveal stagger-2"
-          style={{
-            fontFamily: "var(--font-serif)",
-            fontSize: "clamp(40px, 6vw, 72px)",
-            color: "#F5F5F5",
-            letterSpacing: "-0.03em",
-            lineHeight: "1.05",
-            marginBottom: "20px",
-          }}
-        >
-          See how InkBook works for your studio.
-        </h2>
+          {/* Left — conviction statement */}
+          <div>
+            <p
+              className="reveal stagger-1"
+              style={{ fontFamily: "var(--font-mono)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#484848", marginBottom: "24px" }}
+            >
+              The operating system for tattoo studios
+            </p>
+            <h2
+              className="reveal stagger-2"
+              style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(40px, 5vw, 68px)", color: "#F5F5F5", letterSpacing: "-0.03em", lineHeight: "1.05", marginBottom: "20px" }}
+            >
+              The studios that move first will be hardest to displace.
+            </h2>
+            <p
+              className="reveal stagger-3"
+              style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#707070", lineHeight: "1.65", maxWidth: "440px" }}
+            >
+              InkBook is in early access. The first cohort of studios will shape the product, receive white-glove onboarding, and lock in founding pricing before it changes.
+            </p>
+          </div>
 
-        <p
-          className="reveal stagger-3"
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: "17px",
-            color: "#808080",
-            lineHeight: "1.65",
-            maxWidth: "480px",
-            margin: "0 auto 40px",
-          }}
-        >
-          Book a 20-minute walkthrough. We&apos;ll show you the full workflow — from first inquiry to paid deposit — on your studio&apos;s branded page.
-        </p>
+          {/* Right — demo card */}
+          <div className="reveal stagger-3">
+            <div
+              style={{
+                background: "#161616",
+                border: "1px solid #2A2A2A",
+                borderRadius: "16px",
+                overflow: "hidden",
+                boxShadow: "0 8px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06)",
+              }}
+            >
+              <div style={{ padding: "28px 28px 24px" }}>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#484848", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "16px" }}>
+                  Book a demo
+                </div>
+                <div style={{ fontFamily: "var(--font-serif)", fontSize: "22px", color: "#E8E0D0", lineHeight: "1.2", marginBottom: "12px" }}>
+                  20 minutes. Your full pipeline, live.
+                </div>
+                <p style={{ fontFamily: "var(--font-sans)", fontSize: "14px", color: "#606060", lineHeight: "1.6", marginBottom: "24px" }}>
+                  We&apos;ll show you how InkBook handles your studio&apos;s specific workflow — from first inquiry to paid deposit — on your branded booking page.
+                </p>
 
-        <div
-          className="reveal stagger-4"
-          style={{ display: "flex", flexDirection: "row", gap: "12px", flexWrap: "wrap", justifyContent: "center", marginBottom: "28px" }}
-        >
-          <Link
-            href="#"
-            className="inline-flex items-center hover:bg-[#E8E0D0] transition-colors duration-150"
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: "14px",
-              fontWeight: 500,
-              background: "#F5F5F5",
-              color: "#0A0A0A",
-              padding: "13px 28px",
-              borderRadius: "8px",
-              textDecoration: "none",
-            }}
-          >
-            Book a Demo
-          </Link>
-          <Link
-            href="#pricing"
-            className="btn-secondary"
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: "14px",
-              color: "#808080",
-              border: "1px solid #242424",
-              padding: "13px 28px",
-              borderRadius: "8px",
-              textDecoration: "none",
-              display: "inline-block",
-            }}
-          >
-            View Pricing
-          </Link>
+                <Link
+                  href="#"
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    textAlign: "center",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    background: "#F5F5F5",
+                    color: "#0A0A0A",
+                    padding: "14px 28px",
+                    borderRadius: "8px",
+                    textDecoration: "none",
+                    marginBottom: "12px",
+                  }}
+                >
+                  Book your demo
+                </Link>
+                <Link
+                  href="#pricing"
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    textAlign: "center",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: "14px",
+                    color: "#525252",
+                    border: "1px solid #222222",
+                    padding: "13px 28px",
+                    borderRadius: "8px",
+                    textDecoration: "none",
+                  }}
+                >
+                  View pricing first
+                </Link>
+              </div>
+
+              <div style={{ padding: "16px 28px", borderTop: "1px solid #1C1C1C", background: "#0E0E0E" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {[
+                    "No credit card required to book",
+                    "Founding pricing locked for your studio",
+                    "White-glove setup included for early cohort",
+                  ].map((item) => (
+                    <div key={item} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ color: "#4ADE80", fontSize: "10px", flexShrink: 0 }}>✓</span>
+                      <span style={{ fontFamily: "var(--font-sans)", fontSize: "12px", color: "#484848" }}>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
-
-        <p
-          className="reveal stagger-5"
-          style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: "11px",
-            color: "#363636",
-            letterSpacing: "0.06em",
-          }}
-        >
-          No credit card required · Your brand · Setup in minutes
-        </p>
-
       </div>
     </section>
   );

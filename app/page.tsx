@@ -2,17 +2,15 @@ import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import HeroSection from "@/components/landing/sections/HeroSection";
 import ProblemSection from "@/components/landing/sections/ProblemSection";
+import CategorySection from "@/components/landing/sections/CategorySection";
+import MigrationSection from "@/components/landing/sections/MigrationSection";
 import AIConsultantSection from "@/components/landing/sections/AIConsultantSection";
 import ArtistMatchingSection from "@/components/landing/sections/ArtistMatchingSection";
 import QuotesDepositsSection from "@/components/landing/sections/QuotesDepositsSection";
-import StatsSection from "@/components/landing/sections/StatsSection";
 import OwnerSection from "@/components/landing/sections/OwnerSection";
 import WhiteLabelSection from "@/components/landing/sections/WhiteLabelSection";
-import WorkflowSection from "@/components/landing/sections/WorkflowSection";
-import ProjectSection from "@/components/landing/sections/ProjectSection";
 import AIFollowUpSection from "@/components/landing/sections/AIFollowUpSection";
-import MigrationSection from "@/components/landing/sections/MigrationSection";
-import TrustMetricsSection from "@/components/landing/sections/TrustMetricsSection";
+import StatsSection from "@/components/landing/sections/StatsSection";
 import TestimonialsSection from "@/components/landing/sections/TestimonialsSection";
 import PricingSection from "@/components/landing/sections/PricingSection";
 import CTASection from "@/components/landing/sections/CTASection";
@@ -22,37 +20,33 @@ export default function HomePage() {
     <div style={{ minHeight: "100vh", background: "#0A0A0A", isolation: "isolate" }}>
       <Navbar />
       <main>
-        {/* 1 — Hero */}
+        {/* 1 — Category declaration + pipeline visual */}
         <HeroSection />
-        {/* 2 — The Problem */}
+        {/* 2 — The cost of chaos (dollar-led) */}
         <ProblemSection />
-        {/* 3 — AI Consultation */}
-        <AIConsultantSection />
-        {/* 4 — Artist Matching */}
-        <ArtistMatchingSection />
-        {/* 5 — Quote & Deposit */}
-        <QuotesDepositsSection />
-        {/* 6 — Business Outcomes */}
-        <StatsSection />
-        {/* 7 — Owner Dashboard */}
-        <OwnerSection />
-        {/* 8 — White-Label Booking */}
-        <WhiteLabelSection />
-        {/* 9 — The Workflow */}
-        <WorkflowSection />
-        {/* 10 — Project Board */}
-        <ProjectSection />
-        {/* 11 — AI Follow-Up */}
-        <AIFollowUpSection />
-        {/* 12 — Why Studios Switch */}
+        {/* 3 — Why this category exists + competitive positioning */}
+        <CategorySection />
+        {/* 4 — Everything you use today, replaced */}
         <MigrationSection />
-        {/* 13 — Proof: Metrics */}
-        <TrustMetricsSection />
-        {/* 14 — Proof: Testimonials */}
+        {/* 5 — AI Consultation workflow */}
+        <AIConsultantSection />
+        {/* 6 — Artist Matching */}
+        <ArtistMatchingSection />
+        {/* 7 — Quote & Deposit (mandatory revenue protection) */}
+        <QuotesDepositsSection />
+        {/* 8 — Owner revenue intelligence */}
+        <OwnerSection />
+        {/* 9 — White-label brand ownership */}
+        <WhiteLabelSection />
+        {/* 10 — Post-session automation */}
+        <AIFollowUpSection />
+        {/* 11 — Proof (single proof moment) */}
+        <StatsSection />
+        {/* 12 — Why InkBook exists (real artist pain + early access) */}
         <TestimonialsSection />
-        {/* 15 — Pricing */}
+        {/* 13 — Pricing */}
         <PricingSection />
-        {/* 16 — Final CTA */}
+        {/* 14 — Demo booking CTA */}
         <CTASection />
       </main>
       <Footer />
