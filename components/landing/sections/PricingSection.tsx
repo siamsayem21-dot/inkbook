@@ -186,9 +186,9 @@ export default function PricingSection() {
                 <span style={{ fontFamily: "var(--font-sans)", fontSize: "18px", color: "#525252", marginBottom: "8px" }}>/mo</span>
               </div>
 
-              {/* 1% fee — inline, visible */}
+              {/* No fees */}
               <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#484848", marginBottom: "16px" }}>
-                + 1% per booking · No setup fee
+                No booking fees · No setup fees · Cancel anytime
               </div>
 
               {/* Desc */}

@@ -139,12 +139,58 @@ export default function HeroSection() {
         Turn tattoo inquiries into paid bookings.
       </h1>
 
+      {/* Workflow rail */}
+      <div
+        className={`mb-8 transition-all duration-500 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
+        style={{ transitionDelay: "160ms", overflowX: "auto", display: "flex", justifyContent: "center" }}
+      >
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            background: "#131313",
+            border: "1px solid #212121",
+            borderRadius: "10px",
+            padding: "11px 22px",
+            whiteSpace: "nowrap",
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
+          }}
+        >
+          {(["Inquiry", "AI Consultation", "AI Follow-Up", "Quote", "Deposit", "Booking", "Aftercare"] as const).map((step, i, arr) => (
+            <span key={step} style={{ display: "inline-flex", alignItems: "center" }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "11px",
+                  letterSpacing: "0.04em",
+                  color: step === "AI Consultation" || step === "AI Follow-Up" ? "#787878" : "#505050",
+                }}
+              >
+                {step}
+              </span>
+              {i < arr.length - 1 && (
+                <span
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "11px",
+                    color: "#242424",
+                    margin: "0 10px",
+                  }}
+                >
+                  →
+                </span>
+              )}
+            </span>
+          ))}
+        </div>
+      </div>
+
       {/* Sub */}
       <p
-        className={`max-w-[520px] mb-10 transition-all duration-500 delay-200 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
-        style={{ fontFamily: "var(--font-sans)", fontSize: "18px", lineHeight: "1.65", color: "#909090" }}
+        className={`max-w-[480px] mb-10 transition-all duration-500 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
+        style={{ transitionDelay: "220ms", fontFamily: "var(--font-sans)", fontSize: "17px", lineHeight: "1.7", color: "#606060" }}
       >
-        InkBook is the operating system for modern tattoo studios. One platform from first inquiry to completed tattoo.
+        Reduce no-shows. Recover lost leads. Automate client communication.
       </p>
 
       {/* CTAs */}

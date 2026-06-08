@@ -1,51 +1,39 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 
 export default function FinalCTASection() {
   return (
-    <section className="grain relative px-6 py-28 text-center overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_70%_at_50%_50%,rgba(220,38,38,0.06),transparent)] pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_35%_35%_at_80%_15%,rgba(201,168,76,0.04),transparent)] pointer-events-none" />
-      <div className="relative z-10 max-w-2xl mx-auto">
-        <p className="label-xs text-gold/70 mb-6">Early Access</p>
-        <h2 className="font-cinzel text-4xl md:text-5xl font-bold tracking-wide mb-5 text-balance">
-          Your studio. Running itself.
-        </h2>
-        <p className="text-zinc-500 mb-12 leading-relaxed max-w-md mx-auto text-sm">
-          Early studios get priority onboarding, locked-in pricing, and a dedicated setup call. Limited spots available.
+    <section
+      className="relative px-6 py-32 border-t border-white/[0.06] overflow-hidden"
+      style={{ background: "linear-gradient(180deg, #0B1020 0%, #0F172A 100%)" }}
+    >
+      {/* Glows */}
+      <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 70% 55% at 50% 110%, rgba(255,255,255,0.04) 0%, transparent 100%)" }} />
+      <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 50% 30% at 50% -5%, rgba(255,255,255,0.02) 0%, transparent 100%)" }} />
+
+      <div className="relative z-10 max-w-3xl mx-auto text-center">
+
+        <p className="text-white/20 text-sm mb-10 leading-relaxed">
+          21,000 tattoo studios still run on Instagram DMs and Venmo.<br />
+          The studios switching to InkBook won&apos;t go back.
         </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center mb-10">
-          <Link
-            href="/register"
-            className="inline-flex items-center justify-center gap-2 label-sm bg-[#DC2626] text-white px-10 py-4 hover:bg-[#b91c1c] transition-colors group"
-          >
-            Start Free Trial
-            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-          <Link
-            href="/book/demo-studio"
-            className="inline-flex items-center justify-center label-sm border border-white/20 text-zinc-300 px-10 py-4 hover:border-white/40 hover:text-white transition-all"
-          >
-            Book Demo Call
-          </Link>
-        </div>
 
-        {/* Social proof */}
-        <div className="flex items-center justify-center gap-3">
-          <div className="flex -space-x-2">
-            {["JM", "AT", "SK"].map((i) => (
-              <div
-                key={i}
-                className="w-7 h-7 bg-zinc-800 border-2 border-zinc-950 flex items-center justify-center"
-              >
-                <span className="text-[8px] text-zinc-400 font-bold">{i}</span>
-              </div>
-            ))}
-          </div>
-          <p className="text-xs text-zinc-600">200+ studios on the waitlist</p>
-        </div>
+        <h2 className="text-4xl md:text-[3.5rem] font-bold tracking-[-0.03em] mb-12 text-white leading-[1.06]">
+          Every inquiry answered.<br />
+          Every deposit collected.<br />
+          Every booking confirmed.
+        </h2>
 
-        <p className="label-xs text-zinc-700 mt-6">14-day free trial · No credit card required</p>
+        <Link
+          href="/register"
+          className="inline-flex items-center justify-center gap-2.5 bg-white text-[#0F172A] text-sm font-bold px-12 py-4 hover:bg-white/90 transition-colors group mb-10"
+        >
+          Activate your studio
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="group-hover:translate-x-0.5 transition-transform">
+            <path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </Link>
+
+        <p className="label-xs text-white/20">14-day free trial · No credit card required · All 11 modules included</p>
       </div>
     </section>
   );

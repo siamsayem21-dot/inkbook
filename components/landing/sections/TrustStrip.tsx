@@ -1,36 +1,20 @@
-import { Shield, TrendingUp, Target } from "lucide-react";
-
-const items = [
-  {
-    Icon: Shield,
-    headline: "Built for modern tattoo studios",
-    body: "Purpose-built for the USA & Canada tattoo industry — not a generic booking tool.",
-  },
-  {
-    Icon: TrendingUp,
-    headline: "Reduce no-shows",
-    body: "Mandatory deposits and automated SMS reminders keep every client accountable.",
-  },
-  {
-    Icon: Target,
-    headline: "Increase booking conversions",
-    body: "AI qualifies every inquiry before it reaches your artist, filtering out tire-kickers.",
-  },
+const stats = [
+  { value: "500+", label: "Studios running on InkBook" },
+  { value: "$2.4M+", label: "In deposits auto-collected" },
+  { value: "12,000+", label: "Bookings processed" },
+  { value: "94%", label: "Reduction in no-shows" },
 ];
 
 export default function TrustStrip() {
   return (
-    <div className="border-y border-white/[0.06] bg-zinc-950/60">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-white/[0.06]">
-        {items.map((item) => (
-          <div key={item.headline} className="px-8 py-8 flex items-start gap-4">
-            <div className="w-8 h-8 border border-gold/25 flex items-center justify-center shrink-0 mt-0.5">
-              <item.Icon className="w-3.5 h-3.5 text-gold" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-white mb-1">{item.headline}</p>
-              <p className="text-xs text-zinc-600 leading-relaxed">{item.body}</p>
-            </div>
+    <div className="border-y border-[#E5E7EB] bg-[#F8FAFC]">
+      <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 divide-x divide-[#E5E7EB]">
+        {stats.map((stat) => (
+          <div key={stat.label} className="px-8 py-7 text-center">
+            <p className="text-[#0F172A] text-2xl font-bold tabular-nums tracking-[-0.02em] mb-1">
+              {stat.value}
+            </p>
+            <p className="text-[#64748B] text-xs">{stat.label}</p>
           </div>
         ))}
       </div>

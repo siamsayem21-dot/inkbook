@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
 
 const faqs = [
   {
@@ -42,29 +41,34 @@ export default function FAQSection() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section className="px-6 py-24" style={{ backgroundColor: "#070707" }}>
+    <section className="px-6 py-24 bg-[#F8FAFC] border-t border-[#E5E7EB]">
       <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-14">
-          <p className="label-xs text-gold/70 mb-4">FAQ</p>
-          <h2 className="font-cinzel text-3xl md:text-4xl font-bold tracking-wide">
+        <div className="mb-14">
+          <p className="label-xs text-[#64748B] mb-4">FAQ</p>
+          <h2 className="text-4xl md:text-5xl font-bold tracking-[-0.02em] text-[#0F172A]">
             Common questions.
           </h2>
         </div>
-        <div className="space-y-px">
+        <div className="bg-white border border-[#E5E7EB] divide-y divide-[#E5E7EB]" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
           {faqs.map((faq, i) => (
-            <div key={i} className="border border-white/[0.07] bg-zinc-900/20">
+            <div key={i}>
               <button
                 onClick={() => setOpen(open === i ? null : i)}
-                className="w-full flex items-start justify-between px-6 py-5 text-left gap-4"
+                className={`w-full flex items-start justify-between px-6 py-5 text-left gap-4 transition-colors ${open === i ? "bg-white" : "hover:bg-[#F8FAFC]"}`}
               >
-                <span className="text-sm text-white font-medium leading-snug">{faq.q}</span>
-                <ChevronDown
-                  className={`w-4 h-4 text-zinc-500 shrink-0 mt-0.5 transition-transform duration-200 ${open === i ? "rotate-180" : ""}`}
-                />
+                <span className={`text-sm leading-snug transition-colors ${open === i ? "text-[#0F172A] font-semibold" : "text-[#0F172A] font-medium"}`}>{faq.q}</span>
+                <svg
+                  width="14" height="14" viewBox="0 0 14 14" fill="none"
+                  className={`shrink-0 mt-0.5 transition-transform duration-200 ${open === i ? "text-[#0F172A] rotate-180" : "text-[#94A3B8]"}`}
+                >
+                  <path d="M2.5 5l4.5 4 4.5-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </button>
               {open === i && (
-                <div className="px-6 pb-5">
-                  <p className="text-zinc-500 text-sm leading-relaxed">{faq.a}</p>
+                <div className="px-6 pb-6">
+                  <div className="pl-4 border-l-2 border-[#E5E7EB]">
+                    <p className="text-[#64748B] text-sm leading-relaxed">{faq.a}</p>
+                  </div>
                 </div>
               )}
             </div>
