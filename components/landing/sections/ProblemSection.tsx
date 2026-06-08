@@ -3,10 +3,10 @@
 import { useEffect, useRef } from "react";
 
 const LOSSES = [
-  { amount: "$600", label: "average no-show cost", sub: "3 hrs blocked · deposit not collected" },
-  { amount: "3 hrs", label: "per artist per week on DMs", sub: "answering unqualified inquiries" },
-  { amount: "40%", label: "of inquiries never replied to", sub: "gone to a competitor or forgotten" },
-  { amount: "$26k", label: "lost per studio per year", sub: "no-shows + missed leads + admin time" },
+  { amount: "$600", label: "average no-show cost", sub: "A full half-day blocked. No deposit held. No cancellation fee collected." },
+  { amount: "3 hrs", label: "per artist per week on DMs", sub: "Screening 'what's your minimum?' messages instead of tattooing." },
+  { amount: "40%", label: "of inquiries never replied to", sub: "2 in every 5 serious leads — gone to competitors or forgotten." },
+  { amount: "$26k", label: "lost per studio per year", sub: "This is what running a tattoo studio on the wrong tools actually costs." },
 ];
 
 const TOOLS = [
@@ -52,10 +52,10 @@ export default function ProblemSection() {
             The real cost
           </p>
           <h2 style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(36px, 5vw, 64px)", color: "#F5F5F5", lineHeight: "1.05", letterSpacing: "-0.02em", maxWidth: "680px", marginBottom: "24px" }}>
-            Running a studio on disconnected tools costs more than you think.
+            That no-show wasn&apos;t bad luck. It was a system failure.
           </h2>
           <p style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#707070", lineHeight: "1.65", maxWidth: "520px" }}>
-            Every no-show, every unanswered DM, every forgotten follow-up is a number. Studios that track it are shocked by what they find.
+            The deposit never collected. The DM never answered. The lead that went cold because you were tattooing. Every week without the right system, these losses repeat. Studios that actually track the numbers are shocked by what adds up.
           </p>
         </div>
 

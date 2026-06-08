@@ -7,39 +7,39 @@ const TOOLS_VS = [
     name: "Booksy",
     type: "Booking tool",
     does: "Online booking + calendar",
-    missing: "No AI qualification. No deposit enforcement. No owner reporting. No artist routing. No aftercare.",
+    missing: "Books single appointments — not 6-month sleeve projects. No consultation, no multi-session workflow, no deposit enforcement, no aftercare.",
   },
   {
     name: "Calendly",
     type: "Scheduling tool",
     does: "Link-based appointment scheduling",
-    missing: "No industry context. No deposits. No client vetting. No follow-up. Built for everyone.",
+    missing: "Built for 30-minute meetings. No deposits, no lead qualification, no tattoo-specific workflow. Treats a sleeve like a coffee chat.",
   },
   {
     name: "GlossGenius",
     type: "Beauty salon software",
-    does: "Booking + payments for beauty industry",
-    missing: "No AI consultation. No tattoo-specific workflow. No project management. Not built for multi-session work.",
+    does: "Booking + payments for hair and beauty",
+    missing: "Built for single-service beauty appointments. Has no concept of multi-session projects, consultation briefs, or deposit protection.",
   },
   {
     name: "HubSpot",
     type: "General CRM",
-    does: "Sales pipeline + CRM",
-    missing: "No booking layer. No deposit collection. No artist matching. Requires heavy customization. Expensive.",
+    does: "Sales pipeline + contact management",
+    missing: "No booking layer. No deposit collection. Requires months of setup. Designed for B2B sales cycles — not tattoo projects.",
   },
 ];
 
 const OS_MODULES = [
-  "AI Inquiry Consultation",
-  "AI Follow-Up Sequences",
-  "Quote Engine",
-  "Deposit Collection",
-  "Consent Forms",
-  "Session Management",
-  "Aftercare Automation",
-  "Client CRM",
+  "AI Client Qualification",
+  "Automated Follow-Up Sequences",
+  "Project Quote & Pricing",
+  "Mandatory Deposit Collection",
+  "State-Specific Consent Forms",
+  "Multi-Session Project Tracking",
+  "Aftercare & Review Automation",
+  "Client History & CRM",
   "Revenue Intelligence",
-  "White-Label Brand",
+  "White-Label Booking Experience",
 ];
 
 export default function CategorySection() {
@@ -81,10 +81,10 @@ export default function CategorySection() {
             A new category
           </p>
           <h2 style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(36px, 5vw, 64px)", color: "#F5F5F5", lineHeight: "1.05", letterSpacing: "-0.02em", marginBottom: "24px" }}>
-            Booking tools schedule appointments. Operating systems run businesses.
+            A tattoo sleeve isn&apos;t an appointment. It&apos;s a 6-month project.
           </h2>
           <p style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#707070", lineHeight: "1.65" }}>
-            Every tool tattoo studios use today was built for someone else — salons, consultants, events. InkBook is the first software built specifically around how tattoo work actually happens: inquiry, consultation, follow-up, quote, deposit, booking, aftercare.
+            Every tool the industry uses was built for 30-minute meetings and single-service bookings. Tattoo work doesn&apos;t fit that model — it involves consultation, design approval, deposits, multiple sessions across months, consent documentation, and aftercare. InkBook is the first software built around how tattoo work actually happens.
           </p>
         </div>
 

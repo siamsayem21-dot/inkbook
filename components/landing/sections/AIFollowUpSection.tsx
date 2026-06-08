@@ -55,7 +55,7 @@ export default function AIFollowUpSection() {
               className="reveal stagger-1"
               style={{ fontFamily: "var(--font-mono)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#525252", marginBottom: "24px" }}
             >
-              Client Retention
+              After the Session
             </p>
             <h2
               className="reveal stagger-2"
@@ -67,7 +67,7 @@ export default function AIFollowUpSection() {
               className="reveal stagger-3"
               style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#A0A0A0", lineHeight: "1.65", marginBottom: "36px", maxWidth: "420px" }}
             >
-              The session ends. InkBook takes over. Aftercare, healing check-ins, review requests, and rebooking prompts run on a 30-day automated schedule. Your clients feel looked after. You spend zero time making it happen.
+              Most booking tools treat the session as the end of the relationship. InkBook treats it as the beginning. Aftercare, healing check-ins, review requests, and rebooking prompts run on a 30-day automated schedule. Your clients feel looked after. You spend zero time making it happen.
             </p>
             <ul
               className="reveal stagger-4"

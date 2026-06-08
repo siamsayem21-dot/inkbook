@@ -79,7 +79,7 @@ export default function TestimonialsSection() {
             className="reveal stagger-3"
             style={{ fontFamily: "var(--font-sans)", fontSize: "16px", color: "#606060", lineHeight: "1.65", maxWidth: "540px" }}
           >
-            Every complaint below is from r/TattooArtists — voted up by hundreds of artists who recognized themselves in it. InkBook exists because every single one of these problems is solvable — and nobody had built the solution yet.
+            Every complaint below is from r/TattooArtists — voted up by hundreds of artists who recognized themselves in it. Tattoo artists have dealt with these problems for decades — not because they didn&apos;t want a solution, but because every tool they tried was built for restaurants, consultants, or beauty salons. InkBook exists because these problems are all solvable, and no one had built the solution yet.
           </p>
         </div>
 

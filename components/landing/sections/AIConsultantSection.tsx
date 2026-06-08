@@ -3,11 +3,11 @@
 import { useEffect, useRef } from "react";
 
 const FEATURES = [
-  "Artists spend zero time on unqualified or incomplete inquiries",
-  "Style, placement, size, budget — collected before anyone sees the inquiry",
-  "Reference images accepted and analyzed automatically",
-  "Lead scored and qualified — no human intake required",
-  "Structured brief ready for quoting within minutes",
+  "Only serious, qualified leads ever reach your artists",
+  "Every brief arrives structured and ready to quote — no back-and-forth",
+  "Zero time spent screening 'what's your minimum?' messages",
+  "Reference images collected and tagged before the artist sees anything",
+  "New inquiries become quote-ready briefs in under five minutes",
 ];
 
 const MSGS = [
@@ -65,7 +65,7 @@ export default function AIConsultantSection() {
               className="reveal stagger-1"
               style={{ fontFamily: "var(--font-mono)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#525252", marginBottom: "24px" }}
             >
-              AI Consultation
+              AI-Powered Qualification
             </p>
             <h2
               className="reveal stagger-2"

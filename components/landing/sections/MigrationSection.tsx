@@ -17,6 +17,7 @@ const FLOW_NODES = [
   { label: "Inquiry", sub: "AI qualifies 24/7", highlight: false },
   { label: "AI Consultation", sub: "Brief structured & scored", highlight: true },
   { label: "Follow-Up", sub: "Auto-sequences if no reply", highlight: true },
+  { label: "Quote", sub: "Priced, sent, and tracked", highlight: true },
   { label: "Deposit", sub: "Stripe · non-refundable", highlight: true },
   { label: "Booking", sub: "Confirmed", highlight: false },
   { label: "Aftercare", sub: "Retention automated", highlight: false },

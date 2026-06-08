@@ -59,7 +59,7 @@ export default function QuotesDepositsSection() {
             className="reveal stagger-1"
             style={{ fontFamily: "var(--font-mono)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#525252", marginBottom: "24px" }}
           >
-            Quote & Deposit
+            Revenue Protection
           </p>
           <h2
             className="reveal stagger-2"

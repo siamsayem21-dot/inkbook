@@ -117,7 +117,7 @@ export default function StatsSection() {
             Studios that run on InkBook stop losing money to problems they didn&apos;t know they had.
           </h2>
           <p style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#606060", lineHeight: "1.6", maxWidth: "520px" }}>
-            Based on direct conversations with tattoo artists, analysis of real studio workflows, and early cohort data. These are the numbers that don&apos;t show up in your bookkeeping — until InkBook makes them visible.
+            94% deposit collection. 40% of cold leads recovered. $2,400 in the first 30 days. 3 hours saved per artist per week. No single tool produces these numbers — they&apos;re what happens when the entire client journey runs on one connected system.
           </p>
         </div>
 
