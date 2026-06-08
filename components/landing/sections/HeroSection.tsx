@@ -275,7 +275,7 @@ export default function HeroSection() {
         className={`max-w-[480px] mb-10 transition-all duration-500 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
         style={{ transitionDelay: "220ms", fontFamily: "var(--font-sans)", fontSize: "17px", lineHeight: "1.7", color: "#606060" }}
       >
-        Reduce no-shows. Recover lost leads. Automate client communication.
+        From first inquiry to final session — every step of the tattoo client journey connected, automated, and protected.
       </p>
 
       {/* CTAs */}
