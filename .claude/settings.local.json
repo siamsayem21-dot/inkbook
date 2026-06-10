@@ -58,7 +58,13 @@
       "Bash(Get-ChildItem -Recurse \"C:\\\\Users\\\\asiacom\\\\Desktop\\\\inkbook\\\\app\\\\api\\\\custom-requests\" -ErrorAction SilentlyContinue)",
       "Bash(git *)",
       "Bash(xargs head -60)",
-      "Bash(xargs grep -l \"resend\\\\|email\\\\|Resend\")"
+      "Bash(xargs grep -l \"resend\\\\|email\\\\|Resend\")",
+      "PowerShell(New-Item *)",
+      "Skill(run)",
+      "Bash(npx playwright *)",
+      "Bash(vercel *)",
+      "Bash(dir /s /b \"C:\\\\Users\\\\asiacom\\\\Desktop\\\\inkbook\\\\src\")",
+      "PowerShell(Head *)"
     ],
     "additionalDirectories": [
       "c:\\Users\\asiacom\\Desktop"

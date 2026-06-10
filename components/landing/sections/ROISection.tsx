@@ -58,9 +58,9 @@ export default function ROISection() {
       ref={sectionRef}
       style={{
         padding: "128px 0",
-        background: "linear-gradient(180deg, rgba(255,255,255,0.018) 0px, rgba(255,255,255,0) 60px), #111111",
-        borderTop: "1px solid rgba(255,255,255,0.07)",
-        borderBottom: "1px solid rgba(255,255,255,0.04)",
+        background: "#F5F5F3",
+        borderTop: "1px solid #E8E8E6",
+        borderBottom: "1px solid #E8E8E6",
       }}
     >
       <div className="mx-auto" style={{ maxWidth: "1120px", padding: "0 40px" }}>
@@ -75,13 +75,13 @@ export default function ROISection() {
           </p>
           <h2
             className="reveal stagger-2"
-            style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(36px, 5vw, 62px)", color: "#F5F5F5", lineHeight: "1.05", letterSpacing: "-0.02em", maxWidth: "640px", marginBottom: "20px" }}
+            style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(36px, 5vw, 62px)", color: "#111111", lineHeight: "1.05", letterSpacing: "-0.02em", maxWidth: "640px", marginBottom: "20px" }}
           >
             What is one missed booking worth?
           </h2>
           <p
             className="reveal stagger-3"
-            style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#707070", lineHeight: "1.65", maxWidth: "520px" }}
+            style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#525252", lineHeight: "1.65", maxWidth: "520px" }}
           >
             A missed booking is a deposit not collected, a lead that went to a competitor, and a time slot you can&apos;t recover. InkBook starts at $49/mo. A single recovered booking covers your entire month.
           </p>

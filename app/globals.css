@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --background: #0A0A0A;
-  --foreground: #F5F5F5;
+  --background: #FFFFFF;
+  --foreground: #111111;
   --accent: #E8E0D0;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-gentle: cubic-bezier(0.4, 0, 0.2, 1);
@@ -165,21 +165,21 @@ body {
 .btn-primary {
   position: relative;
   overflow: hidden;
-  background: #F5F5F5;
-  color: #0A0A0A;
+  background: #111111;
+  color: #F5F5F5;
   transition: background 150ms, transform 150ms var(--ease-out);
 }
 .btn-primary::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.4) 50%, transparent 60%);
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.12) 50%, transparent 60%);
   background-size: 200% 100%;
   background-position: 200% center;
   transition: background-position 0ms;
   pointer-events: none;
 }
-.btn-primary:hover { background: #E8E0D0; }
+.btn-primary:hover { background: #2A2A2A; }
 .btn-primary:hover::after { animation: shimmer-sweep 600ms linear; }
 .btn-primary:active { transform: scale(0.98); }
 
@@ -187,7 +187,7 @@ body {
 .btn-secondary {
   transition: border-color 150ms, color 150ms, background 150ms;
 }
-.btn-secondary:hover { border-color: #383838 !important; color: #F5F5F5 !important; background: rgba(255,255,255,0.03) !important; }
+.btn-secondary:hover { border-color: #A0A0A0 !important; color: #111111 !important; background: rgba(0,0,0,0.04) !important; }
 .btn-secondary:active { transform: scale(0.98); }
 
 /* Pricing card hover */

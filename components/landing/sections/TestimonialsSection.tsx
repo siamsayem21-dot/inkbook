@@ -55,8 +55,8 @@ export default function TestimonialsSection() {
       ref={sectionRef}
       style={{
         padding: "128px 0",
-        background: "#0A0A0A",
-        borderTop: "1px solid rgba(255,255,255,0.04)",
+        background: "#FFFFFF",
+        borderTop: "1px solid #E8E8E6",
       }}
     >
       <div className="mx-auto" style={{ maxWidth: "1120px", padding: "0 40px" }}>
@@ -71,13 +71,13 @@ export default function TestimonialsSection() {
           </p>
           <h2
             className="reveal stagger-2"
-            style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(32px, 4vw, 52px)", color: "#F5F5F5", lineHeight: "1.1", letterSpacing: "-0.02em", maxWidth: "640px", marginBottom: "16px" }}
+            style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(32px, 4vw, 52px)", color: "#111111", lineHeight: "1.1", letterSpacing: "-0.02em", maxWidth: "640px", marginBottom: "16px" }}
           >
             Built from listening to tattoo artists describe the same problems, over and over.
           </h2>
           <p
             className="reveal stagger-3"
-            style={{ fontFamily: "var(--font-sans)", fontSize: "16px", color: "#606060", lineHeight: "1.65", maxWidth: "540px" }}
+            style={{ fontFamily: "var(--font-sans)", fontSize: "16px", color: "#525252", lineHeight: "1.65", maxWidth: "540px" }}
           >
             Every quote below is from r/TattooArtists — voted up by artists who recognized themselves in it. These problems are decades old. Every tool they tried was built for restaurants or beauty salons. InkBook exists because no one had built the right solution yet.
           </p>

@@ -105,7 +105,7 @@ export default function HeroSection() {
         paddingBottom: "80px",
         paddingLeft: "24px",
         paddingRight: "24px",
-        background: "#0A0A0A",
+        background: "#FAFAF9",
         overflow: "hidden",
       }}
     >
@@ -117,7 +117,7 @@ export default function HeroSection() {
           width: "1200px",
           height: "800px",
           borderRadius: "50%",
-          background: "radial-gradient(ellipse, rgba(232,224,208,0.13) 0%, rgba(232,224,208,0.04) 50%, transparent 70%)",
+          background: "radial-gradient(ellipse, rgba(180,168,148,0.09) 0%, rgba(180,168,148,0.02) 50%, transparent 65%)",
           filter: "blur(2px)",
         }}
       />
@@ -210,7 +210,7 @@ export default function HeroSection() {
       {/* Eyebrow */}
       <div className={`mb-6 transition-all duration-500 ${mounted ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}>
         <span
-          style={{ fontFamily: "var(--font-mono)", fontSize: "11px", letterSpacing: "0.1em", color: "#909090", border: "1px solid #303030", background: "#161616", padding: "6px 14px", borderRadius: "100px", display: "inline-block", textTransform: "uppercase" }}
+          style={{ fontFamily: "var(--font-mono)", fontSize: "11px", letterSpacing: "0.1em", color: "#686868", border: "1px solid #E0E0DE", background: "#F2F2F0", padding: "6px 14px", borderRadius: "100px", display: "inline-block", textTransform: "uppercase" }}
         >
           Tattoo Business Operating System
         </span>
@@ -219,7 +219,7 @@ export default function HeroSection() {
       {/* Headline */}
       <h1
         className={`text-center max-w-[720px] mb-5 transition-all duration-700 delay-100 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-        style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(52px, 7vw, 88px)", lineHeight: "1.05", letterSpacing: "-0.03em", color: "#F5F5F5" }}
+        style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(52px, 7vw, 88px)", lineHeight: "1.05", letterSpacing: "-0.03em", color: "#111111" }}
       >
         Turn tattoo inquiries into paid bookings.
       </h1>
@@ -227,7 +227,7 @@ export default function HeroSection() {
       {/* Core promise */}
       <p
         className={`mb-5 transition-all duration-500 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
-        style={{ transitionDelay: "140ms", fontFamily: "var(--font-serif)", fontSize: "clamp(22px, 3vw, 30px)", color: "#E0D8C8", fontWeight: 400, letterSpacing: "-0.015em" }}
+        style={{ transitionDelay: "140ms", fontFamily: "var(--font-serif)", fontSize: "clamp(22px, 3vw, 30px)", color: "#111111", fontWeight: 400, letterSpacing: "-0.015em" }}
       >
         AI handles clients. Artists focus on tattooing.
       </p>
@@ -245,7 +245,7 @@ export default function HeroSection() {
         <Link href="#" className="btn-primary" style={{ fontFamily: "var(--font-sans)", fontSize: "14px", fontWeight: 500, padding: "13px 28px", borderRadius: "8px", textDecoration: "none", display: "inline-block" }}>
           Book a Demo
         </Link>
-        <Link href="#workflow" className="btn-secondary" style={{ fontFamily: "var(--font-sans)", fontSize: "14px", color: "#909090", border: "1px solid #222222", padding: "13px 28px", borderRadius: "8px", textDecoration: "none", display: "inline-block" }}>
+        <Link href="#workflow" className="btn-secondary" style={{ fontFamily: "var(--font-sans)", fontSize: "14px", color: "#525252", border: "1px solid #D8D8D6", padding: "13px 28px", borderRadius: "8px", textDecoration: "none", display: "inline-block" }}>
           See How It Works
         </Link>
       </div>
@@ -259,8 +259,8 @@ export default function HeroSection() {
           style={{
             display: "inline-flex",
             alignItems: "center",
-            background: "#111111",
-            border: "1px solid #282828",
+            background: "#F2F2F0",
+            border: "1px solid #E0E0DE",
             borderRadius: "10px",
             padding: "13px 28px",
             whiteSpace: "nowrap",
@@ -275,8 +275,8 @@ export default function HeroSection() {
                     fontFamily: "var(--font-mono)",
                     fontSize: "12px",
                     letterSpacing: "0.035em",
-                    color: isAI ? "#D8CEC0" : "#686868",
-                    fontWeight: isAI ? 500 : 400,
+                    color: isAI ? "#111111" : "#A8A8A6",
+                    fontWeight: isAI ? 600 : 400,
                   }}
                 >
                   {step}
@@ -286,7 +286,7 @@ export default function HeroSection() {
                     style={{
                       fontFamily: "var(--font-mono)",
                       fontSize: "12px",
-                      color: "#323232",
+                      color: "#C8C8C6",
                       margin: "0 10px",
                     }}
                   >

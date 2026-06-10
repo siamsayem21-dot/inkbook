@@ -42,7 +42,7 @@ export default function ProblemSection() {
   return (
     <section
       ref={sectionRef}
-      style={{ padding: "128px 0", background: "#0A0A0A" }}
+      style={{ padding: "128px 0", background: "#FAFAF9", borderTop: "1px solid #EEECEA" }}
     >
       <div className="mx-auto" style={{ maxWidth: "1120px", padding: "0 40px" }}>
 
@@ -51,10 +51,10 @@ export default function ProblemSection() {
           <p style={{ fontFamily: "var(--font-mono)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#525252", marginBottom: "20px" }}>
             The real cost
           </p>
-          <h2 style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(36px, 5vw, 64px)", color: "#F5F5F5", lineHeight: "1.05", letterSpacing: "-0.02em", maxWidth: "680px", marginBottom: "24px" }}>
+          <h2 style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(36px, 5vw, 64px)", color: "#111111", lineHeight: "1.05", letterSpacing: "-0.02em", maxWidth: "680px", marginBottom: "24px" }}>
             That no-show wasn&apos;t bad luck. It was a system failure.
           </h2>
-          <p style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#707070", lineHeight: "1.65", maxWidth: "520px" }}>
+          <p style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#525252", lineHeight: "1.65", maxWidth: "520px" }}>
             No deposit collected. DM never answered. Lead went cold while you were tattooing. Without the right system, these losses repeat every week.
           </p>
         </div>
@@ -64,8 +64,8 @@ export default function ProblemSection() {
           className="reveal stagger-2"
           style={{
             padding: "28px 36px",
-            background: "rgba(232,224,208,0.04)",
-            border: "1px solid rgba(232,224,208,0.10)",
+            background: "rgba(0,0,0,0.025)",
+            border: "1px solid rgba(0,0,0,0.07)",
             borderRadius: "12px",
             marginBottom: "56px",
           }}
@@ -77,13 +77,13 @@ export default function ProblemSection() {
             style={{
               fontFamily: "var(--font-serif)",
               fontSize: "clamp(22px, 3.2vw, 34px)",
-              color: "#808080",
+              color: "#888888",
               lineHeight: "1.3",
               letterSpacing: "-0.01em",
             }}
           >
             Most software manages appointments.{" "}
-            <span style={{ color: "#E8E0D0" }}>
+            <span style={{ color: "#111111" }}>
               InkBook manages the entire tattoo client journey.
             </span>
           </p>
@@ -134,7 +134,7 @@ export default function ProblemSection() {
 
           {/* Right — Tool chaos */}
           <div className="reveal stagger-3">
-            <p style={{ fontFamily: "var(--font-sans)", fontSize: "15px", color: "#606060", lineHeight: "1.7", marginBottom: "28px" }}>
+            <p style={{ fontFamily: "var(--font-sans)", fontSize: "15px", color: "#525252", lineHeight: "1.7", marginBottom: "28px" }}>
               The average tattoo studio manages client relationships across six different tools — none of which talk to each other. A client who DMs on Instagram, books through Calendly, pays via Venmo, and signs a paper form exists in four separate systems. Or none.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
@@ -172,8 +172,8 @@ export default function ProblemSection() {
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: "20px", padding: "14px 16px", background: "#0D0D0D", border: "1px solid #1A1A1A", borderRadius: "8px" }}>
-              <span style={{ fontFamily: "var(--font-sans)", fontSize: "13px", color: "#505050", lineHeight: "1.5" }}>
+            <div style={{ marginTop: "20px", padding: "14px 16px", background: "#F2F2F0", border: "1px solid #E0E0DE", borderRadius: "8px" }}>
+              <span style={{ fontFamily: "var(--font-sans)", fontSize: "13px", color: "#686868", lineHeight: "1.5" }}>
                 None of these tools were built for tattoo studios. They were built for everyone — which means they were built for no one in particular.
               </span>
             </div>

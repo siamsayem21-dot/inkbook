@@ -12,7 +12,7 @@ import CTASection from "@/components/landing/sections/CTASection";
 
 export default function HomePage() {
   return (
-    <div style={{ minHeight: "100vh", background: "#0A0A0A", isolation: "isolate" }}>
+    <div style={{ minHeight: "100vh", background: "#FFFFFF", isolation: "isolate" }}>
       <Navbar />
       <main>
         {/* 1 — Hero: Turn tattoo inquiries into paid bookings */}

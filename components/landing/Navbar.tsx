@@ -30,10 +30,10 @@ export default function Navbar() {
         right: 0,
         height: "64px",
         zIndex: 100,
-        background: "rgba(10,10,10,0.88)",
+        background: "rgba(255,255,255,0.94)",
         backdropFilter: "blur(20px) saturate(180%)",
         WebkitBackdropFilter: "blur(20px) saturate(180%)",
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        borderBottom: "1px solid rgba(0,0,0,0.07)",
       }}
     >
       <div
@@ -46,7 +46,7 @@ export default function Navbar() {
           style={{
             fontFamily: "var(--font-serif)",
             fontSize: "20px",
-            color: "#F5F5F5",
+            color: "#111111",
             letterSpacing: "-0.02em",
             textDecoration: "none",
           }}
@@ -60,11 +60,11 @@ export default function Navbar() {
             <Link
               key={label}
               href={href}
-              className="hover:text-[#F5F5F5] transition-colors duration-150"
+              className="hover:text-[#111111] transition-colors duration-150"
               style={{
                 fontFamily: "var(--font-sans)",
                 fontSize: "14px",
-                color: "#A0A0A0",
+                color: "#525252",
                 textDecoration: "none",
               }}
             >
@@ -76,12 +76,12 @@ export default function Navbar() {
         {/* Desktop CTA */}
         <Link
           href="#"
-          className="hidden md:flex items-center hover:bg-[#1A1A1A] transition-colors duration-150"
+          className="hidden md:flex items-center hover:bg-[#F0F0EE] transition-colors duration-150"
           style={{
             fontFamily: "var(--font-sans)",
             fontSize: "14px",
-            color: "#F5F5F5",
-            border: "1px solid #363636",
+            color: "#111111",
+            border: "1px solid #D8D8D6",
             padding: "10px 20px",
             borderRadius: "8px",
             textDecoration: "none",
@@ -97,8 +97,8 @@ export default function Navbar() {
             style={{
               fontFamily: "var(--font-sans)",
               fontSize: "13px",
-              color: "#F5F5F5",
-              border: "1px solid #363636",
+              color: "#111111",
+              border: "1px solid #D8D8D6",
               padding: "8px 16px",
               borderRadius: "8px",
               textDecoration: "none",
@@ -108,7 +108,7 @@ export default function Navbar() {
           </Link>
           <button
             onClick={() => setOpen(!open)}
-            style={{ color: "#A0A0A0", background: "none", border: "none", cursor: "pointer", padding: "4px", fontSize: "13px" }}
+            style={{ color: "#525252", background: "none", border: "none", cursor: "pointer", padding: "4px", fontSize: "13px" }}
             aria-label={open ? "Close menu" : "Open menu"}
           >
             {open ? "✕" : "☰"}
@@ -121,9 +121,9 @@ export default function Navbar() {
         <div
           className="md:hidden"
           style={{
-            background: "rgba(10,10,10,0.97)",
+            background: "rgba(255,255,255,0.98)",
             backdropFilter: "blur(20px)",
-            borderTop: "1px solid rgba(255,255,255,0.06)",
+            borderTop: "1px solid rgba(0,0,0,0.07)",
             padding: "32px 24px",
           }}
         >
@@ -136,7 +136,7 @@ export default function Navbar() {
                 style={{
                   fontFamily: "var(--font-sans)",
                   fontSize: "18px",
-                  color: "#A0A0A0",
+                  color: "#525252",
                   textDecoration: "none",
                 }}
               >
