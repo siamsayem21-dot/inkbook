@@ -698,7 +698,7 @@ export default function WorkflowSection() {
               marginBottom: "20px",
             }}
           >
-            How It Works
+            Tattoo Business Operating System
           </p>
           <h2
             className="reveal stagger-2"
@@ -724,7 +724,7 @@ export default function WorkflowSection() {
               maxWidth: "500px",
             }}
           >
-            From first inquiry to aftercare, InkBook handles every step. Artists approve quotes and pricing. AI handles everything else.
+            Eight steps. Zero manual effort. AI moves every client through the entire journey — artists only approve quotes and show up to tattoo.
           </p>
         </div>
 

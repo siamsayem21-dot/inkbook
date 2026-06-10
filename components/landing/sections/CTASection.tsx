@@ -44,7 +44,7 @@ export default function CTASection() {
           <div>
             <p
               className="reveal stagger-1"
-              style={{ fontFamily: "var(--font-mono)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#484848", marginBottom: "24px" }}
+              style={{ fontFamily: "var(--font-mono)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#686868", marginBottom: "24px" }}
             >
               Tattoo Business Operating System
             </p>
@@ -58,7 +58,7 @@ export default function CTASection() {
               className="reveal stagger-3"
               style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#707070", lineHeight: "1.65", maxWidth: "440px" }}
             >
-              Studios on InkBook spend more time tattooing and less time on admin. Fewer no-shows. More deposits collected. More leads recovered. The first studios in lock founding pricing permanently.
+              InkBook is the Tattoo Business Operating System. AI handles clients — from first inquiry to aftercare. Artists focus on tattooing. The studios that join now lock founding pricing permanently.
             </p>
           </div>
 

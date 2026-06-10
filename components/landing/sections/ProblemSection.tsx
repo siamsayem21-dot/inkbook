@@ -63,19 +63,22 @@ export default function ProblemSection() {
         <div
           className="reveal stagger-2"
           style={{
-            padding: "24px 32px",
+            padding: "28px 36px",
             background: "rgba(232,224,208,0.04)",
             border: "1px solid rgba(232,224,208,0.10)",
             borderRadius: "12px",
             marginBottom: "56px",
           }}
         >
+          <p style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#525252", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "16px" }}>
+            Tattoo Business Operating System
+          </p>
           <p
             style={{
               fontFamily: "var(--font-serif)",
-              fontSize: "clamp(20px, 3vw, 28px)",
+              fontSize: "clamp(22px, 3.2vw, 34px)",
               color: "#808080",
-              lineHeight: "1.35",
+              lineHeight: "1.3",
               letterSpacing: "-0.01em",
             }}
           >

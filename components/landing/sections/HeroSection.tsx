@@ -227,7 +227,7 @@ export default function HeroSection() {
       {/* Core promise */}
       <p
         className={`mb-5 transition-all duration-500 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
-        style={{ transitionDelay: "140ms", fontFamily: "var(--font-sans)", fontSize: "clamp(18px, 2.5vw, 22px)", color: "#D0C8B8", fontWeight: 500, letterSpacing: "-0.01em" }}
+        style={{ transitionDelay: "140ms", fontFamily: "var(--font-serif)", fontSize: "clamp(22px, 3vw, 30px)", color: "#E0D8C8", fontWeight: 400, letterSpacing: "-0.015em" }}
       >
         AI handles clients. Artists focus on tattooing.
       </p>
