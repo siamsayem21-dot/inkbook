@@ -41,9 +41,9 @@ export default function WhiteLabelSection() {
       ref={sectionRef}
       style={{
         padding: "128px 0",
-        background: "linear-gradient(180deg, rgba(255,255,255,0.018) 0px, rgba(255,255,255,0) 60px), #111111",
-        borderTop: "1px solid rgba(255,255,255,0.07)",
-        borderBottom: "1px solid rgba(255,255,255,0.04)",
+        background: "#F8F8F6",
+        borderTop: "1px solid #E4E2DC",
+        borderBottom: "1px solid #E4E2DC",
       }}
     >
       <div className="mx-auto" style={{ maxWidth: "1120px", padding: "0 40px" }}>
@@ -124,19 +124,19 @@ export default function WhiteLabelSection() {
           <div>
             <p
               className="reveal stagger-1"
-              style={{ fontFamily: "var(--font-mono)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#525252", marginBottom: "24px" }}
+              style={{ fontFamily: "var(--font-mono)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#787878", marginBottom: "24px" }}
             >
               Your Brand. Your Experience.
             </p>
             <h2
               className="reveal stagger-2"
-              style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(32px, 4vw, 52px)", color: "#F5F5F5", lineHeight: "1.1", letterSpacing: "-0.02em", marginBottom: "24px" }}
+              style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(32px, 4vw, 52px)", color: "#0F0F0F", lineHeight: "1.1", letterSpacing: "-0.02em", marginBottom: "24px" }}
             >
               Clients experience your studio. Not a software company.
             </h2>
             <p
               className="reveal stagger-3"
-              style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#A0A0A0", lineHeight: "1.65", marginBottom: "36px", maxWidth: "420px" }}
+              style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#525252", lineHeight: "1.65", marginBottom: "36px", maxWidth: "420px" }}
             >
               Your reputation took years to build. Clients don&apos;t book InkBook — they book you. Every page, every message, every aftercare follow-up carries your studio&apos;s name and brand. InkBook powers everything invisibly. Your clients never know we exist.
             </p>
@@ -146,8 +146,8 @@ export default function WhiteLabelSection() {
             >
               {POINTS.map((point) => (
                 <li key={point} style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
-                  <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#E8E0D0", flexShrink: 0, marginTop: "7px" }} />
-                  <span style={{ fontFamily: "var(--font-sans)", fontSize: "14px", color: "#A0A0A0", lineHeight: "1.5" }}>{point}</span>
+                  <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#909090", flexShrink: 0, marginTop: "7px" }} />
+                  <span style={{ fontFamily: "var(--font-sans)", fontSize: "14px", color: "#525252", lineHeight: "1.5" }}>{point}</span>
                 </li>
               ))}
             </ul>

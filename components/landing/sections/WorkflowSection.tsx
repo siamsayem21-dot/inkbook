@@ -679,8 +679,8 @@ export default function WorkflowSection() {
       ref={sectionRef}
       style={{
         padding: "128px 0",
-        background: "#0A0A0A",
-        borderTop: "1px solid rgba(255,255,255,0.04)",
+        background: "#F8F8F6",
+        borderTop: "1px solid #E4E2DC",
       }}
     >
       <div className="mx-auto" style={{ maxWidth: "1120px", padding: "0 40px" }}>
@@ -694,7 +694,7 @@ export default function WorkflowSection() {
               fontSize: "11px",
               textTransform: "uppercase",
               letterSpacing: "0.08em",
-              color: "#525252",
+              color: "#787878",
               marginBottom: "20px",
             }}
           >
@@ -705,7 +705,7 @@ export default function WorkflowSection() {
             style={{
               fontFamily: "var(--font-serif)",
               fontSize: "clamp(36px, 5vw, 64px)",
-              color: "#F5F5F5",
+              color: "#0F0F0F",
               lineHeight: "1.05",
               letterSpacing: "-0.02em",
               maxWidth: "640px",
@@ -719,7 +719,7 @@ export default function WorkflowSection() {
             style={{
               fontFamily: "var(--font-sans)",
               fontSize: "17px",
-              color: "#707070",
+              color: "#525252",
               lineHeight: "1.65",
               maxWidth: "500px",
             }}
@@ -736,10 +736,10 @@ export default function WorkflowSection() {
           {/* Step list */}
           <div
             style={{
-              border: "1px solid #1E1E1E",
+              border: "1px solid #D8D6D0",
               borderRadius: "12px",
               overflow: "hidden",
-              background: "#0D0D0D",
+              background: "#EEECEA",
             }}
           >
             {STEPS.map((step, i) => (
@@ -751,14 +751,14 @@ export default function WorkflowSection() {
                   width: "100%",
                   textAlign: "left",
                   padding: "14px 20px",
-                  background: active === i ? "rgba(232,224,208,0.04)" : "transparent",
-                  borderLeft: `2px solid ${active === i ? "rgba(232,224,208,0.45)" : "transparent"}`,
-                  borderBottom: i < STEPS.length - 1 ? "1px solid #161616" : "none",
+                  background: active === i ? "rgba(0,0,0,0.06)" : "transparent",
+                  borderLeft: `2px solid ${active === i ? "rgba(0,0,0,0.22)" : "transparent"}`,
+                  borderBottom: i < STEPS.length - 1 ? "1px solid #DDDBD5" : "none",
                   cursor: "pointer",
                   transition: "background 150ms, border-color 150ms",
                 }}
                 onMouseEnter={(e) => {
-                  if (active !== i) e.currentTarget.style.background = "rgba(255,255,255,0.02)";
+                  if (active !== i) e.currentTarget.style.background = "rgba(0,0,0,0.03)";
                 }}
                 onMouseLeave={(e) => {
                   if (active !== i) e.currentTarget.style.background = "transparent";
@@ -776,7 +776,7 @@ export default function WorkflowSection() {
                     style={{
                       fontFamily: "var(--font-mono)",
                       fontSize: "10px",
-                      color: active === i ? "#6A6A6A" : "#383838",
+                      color: active === i ? "#686868" : "#B8B5AF",
                       letterSpacing: "0.04em",
                       flexShrink: 0,
                     }}
@@ -787,7 +787,7 @@ export default function WorkflowSection() {
                     style={{
                       fontFamily: "var(--font-sans)",
                       fontSize: "14px",
-                      color: active === i ? "#E8E0D0" : "#6A6A6A",
+                      color: active === i ? "#0F0F0F" : "#888888",
                       fontWeight: active === i ? 500 : 400,
                       transition: "color 150ms",
                     }}
@@ -801,7 +801,7 @@ export default function WorkflowSection() {
                       style={{
                         fontFamily: "var(--font-mono)",
                         fontSize: "10px",
-                        color: "#4A4A4A",
+                        color: "#787878",
                         textTransform: "uppercase",
                         letterSpacing: "0.04em",
                       }}
@@ -820,7 +820,7 @@ export default function WorkflowSection() {
               style={{
                 fontFamily: "var(--font-sans)",
                 fontSize: "15px",
-                color: "#606060",
+                color: "#525252",
                 lineHeight: "1.7",
                 marginBottom: "24px",
               }}
@@ -837,7 +837,7 @@ export default function WorkflowSection() {
           style={{
             display: "flex",
             flexDirection: "column",
-            border: "1px solid #1E1E1E",
+            border: "1px solid #D8D6D0",
             borderRadius: "12px",
             overflow: "hidden",
           }}
@@ -848,7 +848,7 @@ export default function WorkflowSection() {
             return (
               <div
                 key={step.n}
-                style={{ borderBottom: i < STEPS.length - 1 ? "1px solid #161616" : "none" }}
+                style={{ borderBottom: i < STEPS.length - 1 ? "1px solid #DDDBD5" : "none" }}
               >
                 <button
                   onClick={() => setActive(isActive ? -1 : i)}
@@ -859,13 +859,13 @@ export default function WorkflowSection() {
                     width: "100%",
                     textAlign: "left",
                     padding: "16px 20px",
-                    background: isActive ? "rgba(232,224,208,0.04)" : "transparent",
-                    borderLeft: `2px solid ${isActive ? "rgba(232,224,208,0.45)" : "transparent"}`,
+                    background: isActive ? "rgba(0,0,0,0.06)" : "transparent",
+                    borderLeft: `2px solid ${isActive ? "rgba(0,0,0,0.22)" : "transparent"}`,
                     cursor: "pointer",
                   }}
                 >
                   <span
-                    style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#404040" }}
+                    style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#B8B5AF" }}
                   >
                     {step.n}
                   </span>
@@ -873,7 +873,7 @@ export default function WorkflowSection() {
                     style={{
                       fontFamily: "var(--font-sans)",
                       fontSize: "14px",
-                      color: isActive ? "#E8E0D0" : "#707070",
+                      color: isActive ? "#0F0F0F" : "#888888",
                       flex: 1,
                     }}
                   >
@@ -883,7 +883,7 @@ export default function WorkflowSection() {
                     style={{
                       fontFamily: "var(--font-mono)",
                       fontSize: "14px",
-                      color: "#404040",
+                      color: "#AAAAAA",
                       transform: isActive ? "rotate(180deg)" : "none",
                       transition: "transform 200ms",
                       display: "inline-block",
@@ -898,7 +898,7 @@ export default function WorkflowSection() {
                       style={{
                         fontFamily: "var(--font-sans)",
                         fontSize: "14px",
-                        color: "#606060",
+                        color: "#525252",
                         lineHeight: "1.65",
                         marginBottom: "16px",
                       }}

@@ -26,7 +26,7 @@ export default function Footer() {
               style={{
                 fontFamily: "var(--font-mono)",
                 fontSize: "10px",
-                color: "#2E2E2E",
+                color: "#484848",
                 letterSpacing: "0.05em",
                 display: "block",
                 marginTop: "3px",
