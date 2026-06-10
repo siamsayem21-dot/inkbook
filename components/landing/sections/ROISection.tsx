@@ -83,7 +83,7 @@ export default function ROISection() {
             className="reveal stagger-3"
             style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#707070", lineHeight: "1.65", maxWidth: "520px" }}
           >
-            A missed booking isn&apos;t just one lost session. It&apos;s a deposit that wasn&apos;t collected, a lead that went to a competitor, and a time slot you can&apos;t recover. InkBook starts at $49/mo. Most tattoo sessions earn more than that — which means a single recovered booking covers your entire month.
+            A missed booking is a deposit not collected, a lead that went to a competitor, and a time slot you can&apos;t recover. InkBook starts at $49/mo. A single recovered booking covers your entire month.
           </p>
         </div>
 

@@ -758,10 +758,9 @@ export default function ProductShowcaseSection() {
       ref={sectionRef}
       style={{
         padding: "128px 0",
-        background:
-          "linear-gradient(180deg, rgba(255,255,255,0.018) 0px, rgba(255,255,255,0) 60px), #111111",
-        borderTop: "1px solid rgba(255,255,255,0.07)",
-        borderBottom: "1px solid rgba(255,255,255,0.04)",
+        background: "#F8F8F6",
+        borderTop: "1px solid #E4E2DC",
+        borderBottom: "1px solid #E4E2DC",
       }}
     >
       <div className="mx-auto" style={{ maxWidth: "1120px", padding: "0 40px" }}>
@@ -775,7 +774,7 @@ export default function ProductShowcaseSection() {
               fontSize: "11px",
               textTransform: "uppercase",
               letterSpacing: "0.08em",
-              color: "#525252",
+              color: "#787878",
               marginBottom: "20px",
             }}
           >
@@ -786,26 +785,26 @@ export default function ProductShowcaseSection() {
             style={{
               fontFamily: "var(--font-serif)",
               fontSize: "clamp(36px, 5vw, 62px)",
-              color: "#F5F5F5",
+              color: "#0F0F0F",
               lineHeight: "1.05",
               letterSpacing: "-0.02em",
               maxWidth: "640px",
               marginBottom: "20px",
             }}
           >
-            Your complete business, visible at a glance.
+            Every inquiry, quote, deposit, and booking. In one place.
           </h2>
           <p
             className="reveal stagger-3"
             style={{
               fontFamily: "var(--font-sans)",
               fontSize: "17px",
-              color: "#707070",
+              color: "#525252",
               lineHeight: "1.65",
               maxWidth: "480px",
             }}
           >
-            Revenue, AI activity, artist performance, and live bookings — all in one dashboard. No exports. No spreadsheets. No guesswork.
+            Know exactly where every client stands. Revenue, AI activity, artist performance — all live. No exports, no spreadsheets.
           </p>
         </div>
 
@@ -814,8 +813,8 @@ export default function ProductShowcaseSection() {
           <div
             style={{
               display: "inline-flex",
-              background: "#141414",
-              border: "1px solid #2A2A2A",
+              background: "#EBEBEA",
+              border: "1px solid #D4D2CC",
               borderRadius: "10px",
               padding: "4px",
               gap: "2px",
@@ -837,8 +836,8 @@ export default function ProductShowcaseSection() {
                   borderRadius: "7px",
                   cursor: "pointer",
                   transition: "all 150ms",
-                  background: active === tab ? "#F5F5F5" : "transparent",
-                  color: active === tab ? "#0A0A0A" : "#606060",
+                  background: active === tab ? "#1A1A1A" : "transparent",
+                  color: active === tab ? "#F5F5F5" : "#707070",
                   fontWeight: active === tab ? 500 : 400,
                   border: "none",
                 }}

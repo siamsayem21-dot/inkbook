@@ -148,7 +148,7 @@ export default function AudienceSection() {
                 marginBottom: "28px",
               }}
             >
-              Designed for independent artists, private studios, and guest artists ready to stop losing time and revenue to admin.
+              For independent artists and private studios ready to stop losing time and revenue to admin work.
             </p>
 
             <ul style={{ display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}>
@@ -225,7 +225,7 @@ export default function AudienceSection() {
                 marginBottom: "28px",
               }}
             >
-              Designed for studio owners managing multiple artists, growing booking volume, and demanding operational visibility.
+              For studio owners managing multiple artists who need revenue visibility, routing, and full operational control.
             </p>
 
             <ul style={{ display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}>

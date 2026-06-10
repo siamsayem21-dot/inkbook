@@ -55,7 +55,34 @@ export default function ProblemSection() {
             That no-show wasn&apos;t bad luck. It was a system failure.
           </h2>
           <p style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#707070", lineHeight: "1.65", maxWidth: "520px" }}>
-            The deposit never collected. The DM never answered. The lead that went cold because you were tattooing. Every week without the right system, these losses repeat. Studios that actually track the numbers are shocked by what adds up.
+            No deposit collected. DM never answered. Lead went cold while you were tattooing. Without the right system, these losses repeat every week.
+          </p>
+        </div>
+
+        {/* Category statement */}
+        <div
+          className="reveal stagger-2"
+          style={{
+            padding: "24px 32px",
+            background: "rgba(232,224,208,0.04)",
+            border: "1px solid rgba(232,224,208,0.10)",
+            borderRadius: "12px",
+            marginBottom: "56px",
+          }}
+        >
+          <p
+            style={{
+              fontFamily: "var(--font-serif)",
+              fontSize: "clamp(20px, 3vw, 28px)",
+              color: "#808080",
+              lineHeight: "1.35",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            Most software manages appointments.{" "}
+            <span style={{ color: "#E8E0D0" }}>
+              InkBook manages the entire tattoo client journey.
+            </span>
           </p>
         </div>
 

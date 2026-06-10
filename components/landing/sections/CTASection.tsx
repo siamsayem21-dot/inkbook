@@ -52,13 +52,13 @@ export default function CTASection() {
               className="reveal stagger-2"
               style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(40px, 5vw, 68px)", color: "#F5F5F5", letterSpacing: "-0.03em", lineHeight: "1.05", marginBottom: "20px" }}
             >
-              The studios that move first will be hardest to displace.
+              Stop managing inquiries. Start tattooing.
             </h2>
             <p
               className="reveal stagger-3"
               style={{ fontFamily: "var(--font-sans)", fontSize: "17px", color: "#707070", lineHeight: "1.65", maxWidth: "440px" }}
             >
-              Studios on InkBook spend more time tattooing and less time on admin. Fewer no-shows, fewer unanswered inquiries, fewer lost deposits. The first studios in will shape the product, receive white-glove onboarding, and lock founding pricing permanently.
+              Studios on InkBook spend more time tattooing and less time on admin. Fewer no-shows. More deposits collected. More leads recovered. The first studios in lock founding pricing permanently.
             </p>
           </div>
 

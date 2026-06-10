@@ -208,9 +208,9 @@ export default function HeroSection() {
       <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", width: "100%", textAlign: "center" }}>
 
       {/* Eyebrow */}
-      <div className={`mb-8 transition-all duration-500 ${mounted ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}>
+      <div className={`mb-6 transition-all duration-500 ${mounted ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}>
         <span
-          style={{ fontFamily: "var(--font-mono)", fontSize: "11px", letterSpacing: "0.1em", color: "#525252", border: "1px solid #2A2A2A", background: "#161616", padding: "6px 14px", borderRadius: "100px", display: "inline-block", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)", textTransform: "uppercase" }}
+          style={{ fontFamily: "var(--font-mono)", fontSize: "11px", letterSpacing: "0.1em", color: "#909090", border: "1px solid #303030", background: "#161616", padding: "6px 14px", borderRadius: "100px", display: "inline-block", textTransform: "uppercase" }}
         >
           Tattoo Business Operating System
         </span>
@@ -218,74 +218,85 @@ export default function HeroSection() {
 
       {/* Headline */}
       <h1
-        className={`text-center max-w-[720px] mb-6 transition-all duration-700 delay-100 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+        className={`text-center max-w-[720px] mb-5 transition-all duration-700 delay-100 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
         style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(52px, 7vw, 88px)", lineHeight: "1.05", letterSpacing: "-0.03em", color: "#F5F5F5" }}
       >
         Turn tattoo inquiries into paid bookings.
       </h1>
 
-      {/* Workflow rail */}
-      <div
-        className={`mb-8 transition-all duration-500 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
-        style={{ transitionDelay: "160ms", overflowX: "auto", display: "flex", justifyContent: "center" }}
+      {/* Core promise */}
+      <p
+        className={`mb-5 transition-all duration-500 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
+        style={{ transitionDelay: "140ms", fontFamily: "var(--font-sans)", fontSize: "clamp(18px, 2.5vw, 22px)", color: "#D0C8B8", fontWeight: 500, letterSpacing: "-0.01em" }}
       >
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            background: "#131313",
-            border: "1px solid #212121",
-            borderRadius: "10px",
-            padding: "11px 22px",
-            whiteSpace: "nowrap",
-            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
-          }}
-        >
-          {(["Inquiry", "AI Consultation", "AI Follow-Up", "Quote", "Deposit", "Booking", "Aftercare", "CRM"] as const).map((step, i, arr) => (
-            <span key={step} style={{ display: "inline-flex", alignItems: "center" }}>
-              <span
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "11px",
-                  letterSpacing: "0.04em",
-                  color: step === "AI Consultation" || step === "AI Follow-Up" ? "#787878" : "#505050",
-                }}
-              >
-                {step}
-              </span>
-              {i < arr.length - 1 && (
-                <span
-                  style={{
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "11px",
-                    color: "#242424",
-                    margin: "0 10px",
-                  }}
-                >
-                  →
-                </span>
-              )}
-            </span>
-          ))}
-        </div>
-      </div>
+        AI handles clients. Artists focus on tattooing.
+      </p>
 
       {/* Sub */}
       <p
-        className={`max-w-[480px] mb-10 transition-all duration-500 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
-        style={{ transitionDelay: "220ms", fontFamily: "var(--font-sans)", fontSize: "17px", lineHeight: "1.7", color: "#606060" }}
+        className={`max-w-[460px] mb-9 transition-all duration-500 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
+        style={{ transitionDelay: "200ms", fontFamily: "var(--font-sans)", fontSize: "16px", lineHeight: "1.7", color: "#606060" }}
       >
-        AI handles client communication at every step — from first inquiry to aftercare. Artists spend less time managing leads and more time tattooing.
+        AI Consultation, Follow-Up, Quotes, Deposits, Booking, Aftercare, and CRM — one connected system for your entire client journey.
       </p>
 
       {/* CTAs */}
-      <div className={`flex flex-col sm:flex-row items-center gap-3 mb-12 transition-all duration-500 delay-300 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}>
+      <div className={`flex flex-col sm:flex-row items-center gap-3 mb-10 transition-all duration-500 delay-300 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}>
         <Link href="#" className="btn-primary" style={{ fontFamily: "var(--font-sans)", fontSize: "14px", fontWeight: 500, padding: "13px 28px", borderRadius: "8px", textDecoration: "none", display: "inline-block" }}>
           Book a Demo
         </Link>
         <Link href="#workflow" className="btn-secondary" style={{ fontFamily: "var(--font-sans)", fontSize: "14px", color: "#909090", border: "1px solid #222222", padding: "13px 28px", borderRadius: "8px", textDecoration: "none", display: "inline-block" }}>
           See How It Works
         </Link>
+      </div>
+
+      {/* Workflow rail — pipeline overview above dashboard */}
+      <div
+        className={`mb-12 transition-all duration-500 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
+        style={{ transitionDelay: "420ms", overflowX: "auto", display: "flex", justifyContent: "center", width: "100%" }}
+      >
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            background: "#111111",
+            border: "1px solid #282828",
+            borderRadius: "10px",
+            padding: "13px 28px",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {(["Inquiry", "AI Consultation", "AI Follow-Up", "Quote", "Deposit", "Booking", "Aftercare", "CRM"] as const).map((step, i, arr) => {
+            const isAI = step === "AI Consultation" || step === "AI Follow-Up";
+            return (
+              <span key={step} style={{ display: "inline-flex", alignItems: "center" }}>
+                <span
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "12px",
+                    letterSpacing: "0.035em",
+                    color: isAI ? "#D8CEC0" : "#686868",
+                    fontWeight: isAI ? 500 : 400,
+                  }}
+                >
+                  {step}
+                </span>
+                {i < arr.length - 1 && (
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "12px",
+                      color: "#323232",
+                      margin: "0 10px",
+                    }}
+                  >
+                    →
+                  </span>
+                )}
+              </span>
+            );
+          })}
+        </div>
       </div>
 
       {/* Dashboard shell */}
