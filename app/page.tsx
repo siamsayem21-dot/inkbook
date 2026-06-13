@@ -287,24 +287,32 @@ export default function HomePage() {
             {/* Right: dashboard mockup */}
             <div className="relative">
               <div
-                className="rounded-2xl overflow-hidden"
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: "radial-gradient(ellipse at center, rgba(212,168,83,0.08) 0%, transparent 70%)",
+                  transform: "scale(1.1)",
+                  filter: "blur(24px)",
+                }}
+              />
+              <div
+                className="rounded-2xl overflow-hidden shadow-2xl"
                 style={{
                   background: "#0F0F0F",
                   border: "1px solid #1F1F1F",
-                  boxShadow: "0 32px 80px rgba(0,0,0,0.16), 0 8px 24px rgba(0,0,0,0.08)",
+                  boxShadow: "0 32px 80px rgba(0,0,0,0.20), 0 8px 24px rgba(0,0,0,0.10)",
                 }}
               >
                 <div
                   className="flex items-center gap-2 px-4 py-3"
                   style={{ borderBottom: "1px solid #1F1F1F" }}
                 >
-                  <span className="w-3 h-3 rounded-full" style={{ background: "#FF5F57" }} />
-                  <span className="w-3 h-3 rounded-full" style={{ background: "#FEBC2E" }} />
-                  <span className="w-3 h-3 rounded-full" style={{ background: "#28C840" }} />
+                  <span className="w-3.5 h-3.5 rounded-full" style={{ background: "#FF5F57" }} />
+                  <span className="w-3.5 h-3.5 rounded-full" style={{ background: "#FEBC2E" }} />
+                  <span className="w-3.5 h-3.5 rounded-full" style={{ background: "#28C840" }} />
                   <span className="ml-3 text-xs font-medium" style={{ color: "#4B5563" }}>InkBook — Dashboard</span>
                 </div>
 
-                <div className="p-6">
+                <div className="p-8">
                   {/* Animated stat row */}
                   <div className="grid grid-cols-3 gap-3 mb-5">
                     {heroStats.map((s) => (
@@ -314,7 +322,7 @@ export default function HomePage() {
                         style={{ background: "#1A1A1A", border: "1px solid #282828" }}
                       >
                         <p className="text-xs mb-1.5" style={{ color: "#6B7280" }}>{s.label}</p>
-                        <p className="text-3xl font-semibold" style={{ color: "#F5F5F5" }}>{s.value}</p>
+                        <p className="text-4xl font-semibold" style={{ color: "#F5F5F5" }}>{s.value}</p>
                       </div>
                     ))}
                   </div>
@@ -406,7 +414,7 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════
           CATEGORY STATEMENT
       ══════════════════════════════════════════ */}
-      <section className="py-28 px-6" style={{ background: "#FFFFFF", borderTop: "1px solid #E5E7EB", borderBottom: "1px solid #E5E7EB" }}>
+      <section className="py-32 px-6" style={{ background: "#FFFFFF", borderTop: "1px solid #F3F4F6", borderBottom: "1px solid #F3F4F6" }}>
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-16 items-start">
 
@@ -417,10 +425,10 @@ export default function HomePage() {
               >
                 Why InkBook Exists
               </span>
-              <p className="text-4xl lg:text-5xl font-light leading-tight" style={{ color: "#9CA3AF" }}>
+              <p className="text-5xl lg:text-6xl font-light leading-tight" style={{ color: "#9CA3AF" }}>
                 Most software manages appointments.
               </p>
-              <p className="text-4xl lg:text-5xl font-bold leading-tight mt-4" style={{ color: "#0A0A0A" }}>
+              <p className="text-5xl lg:text-6xl font-bold leading-tight mt-4" style={{ color: "#0A0A0A" }}>
                 InkBook manages the entire tattoo client journey.
               </p>
             </div>
@@ -1000,12 +1008,12 @@ export default function HomePage() {
             className="text-4xl lg:text-5xl font-semibold tracking-tight mb-4 text-balance"
             style={{ color: "#F5F5F5" }}
           >
-            AI handles clients.
+            Stop chasing inquiries.<br />Start tattooing.
           </h2>
-          <p className="text-2xl font-semibold mb-4" style={{ color: "#F5F5F5" }}>
-            Artists focus on tattooing.
+          <p className="text-base mb-3" style={{ color: "#D4A853" }}>
+            AI handles clients. Artists focus on tattooing.
           </p>
-          <p className="text-xs font-semibold tracking-widest uppercase mb-8" style={{ color: "#D4A853" }}>
+          <p className="text-xs font-semibold tracking-widest uppercase mb-10" style={{ color: "#4B5563" }}>
             The Tattoo Business Operating System.
           </p>
           <p className="text-base mb-10" style={{ color: "#6B7280" }}>
