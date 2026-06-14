@@ -36,10 +36,10 @@ const IconClose = () => (
 
 /* ─── Data ─── */
 const PAIN_CARDS = [
-  { icon: <IconMsg />, title: "Inquiries go unanswered for days", desc: "DMs pile up while you're tattooing. By the time you reply, the client has booked elsewhere." },
-  { icon: <IconAlert />, title: "No system to follow up lost leads", desc: "Interested clients disappear after a quote. There's no way to track who's still considering." },
-  { icon: <IconDollar />, title: "Deposits never collected upfront", desc: "Artists feel awkward asking for money. New clients ghost when the deposit conversation comes up." },
-  { icon: <IconShield />, title: "No-shows with no protection", desc: "A blocked day costs $300–$800. Without a deposit policy in place, there is no recourse." },
+  { icon: <IconMsg />, title: "Inquiries go unanswered for days", desc: "DMs pile up. Clients book elsewhere." },
+  { icon: <IconAlert />, title: "No system to follow up lost leads", desc: "Interested clients vanish after the quote." },
+  { icon: <IconDollar />, title: "Deposits never collected upfront", desc: "Artists feel awkward. New clients ghost." },
+  { icon: <IconShield />, title: "No-shows with no protection", desc: "A blocked day costs $300–$800 minimum." },
 ];
 
 const WORKFLOW_STEPS = [
@@ -67,13 +67,6 @@ const AI_ACTIVITY = [
   "Following up with Maria S. — Sent consultation reminder",
   "Sent quote to Jake T. — $650 for neo-trad sleeve",
   "Deposit collected — Alex R. paid $300",
-];
-
-const QUOTE_LINES = [
-  { item: "Consultation",              price: "$0"   },
-  { item: "Session 1 — Outline (4hr)", price: "$400" },
-  { item: "Session 2 — Shading (3hr)", price: "$300" },
-  { item: "Touch-up (included)",       price: "$0"   },
 ];
 
 type PipelineCard = {
@@ -132,31 +125,89 @@ const PIPELINE_COLS: {
   },
 ];
 
+type ArtistNavItem = { label: string; active?: true; badge?: string };
+const ARTIST_NAV_ITEMS: ArtistNavItem[] = [
+  { label: "AI Inbox", active: true, badge: "3" },
+  { label: "Consultations" },
+  { label: "Quotes" },
+  { label: "Calendar" },
+  { label: "Portfolio" },
+  { label: "Earnings" },
+];
+
+const ARTIST_INBOX = [
+  {
+    bg: "bg-[#FFFDF5]",
+    border: "border border-[#D4A853]/30",
+    badgeClass: "bg-[#D4A853]/10 text-[#D4A853]",
+    badge: "New Consultation",
+    time: "2m ago",
+    name: "Maria S.",
+    detail: "Floral sleeve · Black & Grey · Budget $800",
+    btnClass: "bg-[#111111] text-white",
+    btn: "Review & Quote",
+  },
+  {
+    bg: "bg-white",
+    border: "border border-[#E5E5E3]",
+    badgeClass: "bg-yellow-50 text-yellow-600",
+    badge: "Quote Awaiting Approval",
+    time: "1h ago",
+    name: "Jake T.",
+    detail: "Neo-trad arm · $650",
+    btnClass: "bg-[#111111] text-white",
+    btn: "Approve & Send",
+  },
+  {
+    bg: "bg-white",
+    border: "border border-[#E5E5E3]",
+    badgeClass: "bg-blue-50 text-blue-600",
+    badge: "Follow-Up Required",
+    time: "3d ago",
+    name: "Chris M.",
+    detail: "Cover-up · No response 3 days",
+    btnClass: "bg-[#D4A853] text-black",
+    btn: "Send Follow-Up",
+  },
+] as const;
+
+const CRM_STATS = [
+  { value: "4",      label: "Sessions"     },
+  { value: "$2,840", label: "Total spent"  },
+  { value: "3",      label: "Referrals"    },
+  { value: "100%",   label: "Deposit rate" },
+] as const;
+
+const CRM_TIMELINE = [
+  { date: "Mar 2023", event: "First consultation",  detail: "Floral sleeve inquiry via Instagram",             gold: true  },
+  { date: "Apr 2023", event: "Deposit paid · $150", detail: "Session 1 confirmed",                            gold: true  },
+  { date: "Apr 2023", event: "Session 1 complete",  detail: "Outline — 4 hours",                              gold: true  },
+  { date: "Jun 2023", event: "Session 2 complete",  detail: "Shading — 3 hours",                              gold: true  },
+  { date: "Aug 2023", event: "5-star review",       detail: "“Alex is incredible. Best tattoo experience ever.”", gold: true  },
+  { date: "Jun 2024", event: "Touch-up booked",     detail: "Upcoming · June 20",                             gold: false },
+] as const;
+
 export default function HomePage() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [revenue, setRevenue] = useState(0);
   const [bookings, setBookings] = useState(0);
   const [deposits, setDeposits] = useState(0);
 
-  // Quote count-up state
   const [quoteSession1, setQuoteSession1] = useState(0);
   const [quoteSession2, setQuoteSession2] = useState(0);
   const [quoteTotal, setQuoteTotal] = useState(0);
   const [quoteDeposit, setQuoteDeposit] = useState(0);
 
-  // Chat reveal state
   const [visibleMessages, setVisibleMessages] = useState(0);
 
-  // Refs for scroll-triggered animations
-  const chatCardRef = useRef<HTMLDivElement>(null);
+  const chatCardRef    = useRef<HTMLDivElement>(null);
   const workflowRowRef = useRef<HTMLDivElement>(null);
-  const pipelineRef = useRef<HTMLDivElement>(null);
-  const quoteCardRef = useRef<HTMLDivElement>(null);
+  const pipelineRef    = useRef<HTMLDivElement>(null);
+  const quoteCardRef   = useRef<HTMLDivElement>(null);
 
-  // Refs for tilt cards
-  const heroDashRef = useRef<HTMLDivElement>(null);
-  const quoteTiltRef = useRef<HTMLDivElement>(null);
-  const aiChatTiltRef = useRef<HTMLDivElement>(null);
+  const heroDashRef      = useRef<HTMLDivElement>(null);
+  const quoteTiltRef     = useRef<HTMLDivElement>(null);
+  const aiChatTiltRef    = useRef<HTMLDivElement>(null);
   const whiteLabelTiltRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -198,7 +249,6 @@ export default function HomePage() {
     return () => io.disconnect();
   }, []);
 
-  // ── Chat message reveal with loop ──
   useEffect(() => {
     const card = chatCardRef.current;
     if (!card) return;
@@ -218,7 +268,6 @@ export default function HomePage() {
     return () => { io.disconnect(); clearTimeout(loopTimer); };
   }, []);
 
-  // ── Workflow cards left-to-right reveal ──
   useEffect(() => {
     const row = workflowRowRef.current;
     if (!row) return;
@@ -240,7 +289,6 @@ export default function HomePage() {
     return () => io.disconnect();
   }, []);
 
-  // ── Pipeline cards drop-in by column ──
   useEffect(() => {
     const container = pipelineRef.current;
     if (!container) return;
@@ -268,7 +316,6 @@ export default function HomePage() {
     return () => io.disconnect();
   }, []);
 
-  // ── Quote Builder price count-up ──
   useEffect(() => {
     const card = quoteCardRef.current;
     if (!card) return;
@@ -307,7 +354,6 @@ export default function HomePage() {
     return () => io.disconnect();
   }, []);
 
-  // ── Tilt effect handler ──
   const handleTilt = useCallback((ref: React.RefObject<HTMLDivElement>) => ({
     onMouseMove: (e: React.MouseEvent<HTMLDivElement>) => {
       const el = ref.current;
@@ -325,9 +371,9 @@ export default function HomePage() {
     },
   }), []);
 
-  const heroTilt = handleTilt(heroDashRef);
-  const quoteTilt = handleTilt(quoteTiltRef);
-  const aiChatTilt = handleTilt(aiChatTiltRef);
+  const heroTilt       = handleTilt(heroDashRef);
+  const quoteTilt      = handleTilt(quoteTiltRef);
+  const aiChatTilt     = handleTilt(aiChatTiltRef);
   const whiteLabelTilt = handleTilt(whiteLabelTiltRef);
 
   const heroStats = [
@@ -412,18 +458,15 @@ export default function HomePage() {
 
             {/* Right — MOCKUP 1: rich dashboard */}
             <div className="relative">
-              {/* Gold glow */}
               <div className="absolute inset-0 pointer-events-none" style={{
                 background: "radial-gradient(ellipse at center, rgba(212,168,83,0.07) 0%, transparent 70%)",
                 filter: "blur(24px)", transform: "scale(1.1)",
               }} />
 
-              {/* Dashboard card */}
               <div ref={heroDashRef} className="tilt-card relative rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-                style={{ background: "#0F0F0F", border: "1px solid #1F1F1F", minHeight: "520px" }}
+                style={{ background: "#0F0F0F", border: "1px solid #1F1F1F", minHeight: "580px" }}
                 onMouseMove={heroTilt.onMouseMove} onMouseLeave={heroTilt.onMouseLeave}>
 
-                {/* Top bar */}
                 <div className="flex-shrink-0 flex items-center gap-2 px-4 py-3 bg-[#1A1A1A]"
                   style={{ borderBottom: "1px solid #1F1F1F" }}>
                   <span className="w-3 h-3 rounded-full bg-red-400" />
@@ -432,10 +475,8 @@ export default function HomePage() {
                   <span className="flex-1 text-center text-sm text-gray-500">InkBook — Dashboard</span>
                 </div>
 
-                {/* Body: sidebar + main */}
                 <div className="flex flex-1">
 
-                  {/* Sidebar */}
                   <div className="flex-shrink-0 w-52 bg-[#111111] p-4" style={{ borderRight: "1px solid #1F1F1F" }}>
                     <p className="text-base font-bold text-white mb-6">InkBook</p>
                     <nav className="space-y-1">
@@ -451,10 +492,8 @@ export default function HomePage() {
                     </nav>
                   </div>
 
-                  {/* Main */}
                   <div className="flex-1 p-4 bg-[#0F0F0F] overflow-auto pb-14">
 
-                    {/* Stats */}
                     <div className="grid grid-cols-3 gap-3">
                       {heroStats.map((s) => (
                         <div key={s.label} className="bg-[#1A1A1A] rounded-xl p-4">
@@ -464,7 +503,6 @@ export default function HomePage() {
                       ))}
                     </div>
 
-                    {/* Recent Bookings */}
                     <div className="mt-4">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-gray-500 uppercase tracking-wider">Recent Bookings</span>
@@ -489,7 +527,6 @@ export default function HomePage() {
                       </div>
                     </div>
 
-                    {/* AI Activity */}
                     <div className="mt-4">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-gray-500 uppercase tracking-wider">AI Activity</span>
@@ -508,7 +545,6 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Floating badge */}
                 <div className="absolute bottom-4 left-[220px] flex items-center gap-2 rounded-full px-3 py-1.5"
                   style={{ background: "#1A1A1A", border: "1px solid #2A2A2A" }}>
                   <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse-dot" />
@@ -537,32 +573,22 @@ export default function HomePage() {
               ))}
             </p>
           </div>
-          <div className="mt-16 grid grid-cols-2 max-w-2xl mx-auto gap-8 text-left">
-            <div>
-              <p className="text-sm font-semibold text-gray-400 mb-4">Other booking tools</p>
-              <ul className="space-y-3">
-                {["Manages calendar", "Tracks appointments", "Sends reminders"].map((item) => (
-                  <li key={item} className="text-sm text-gray-400">{item}</li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-[#111111] mb-4">InkBook</p>
-              <ul className="space-y-3">
-                {[
-                  "Manages the full client journey",
-                  "Handles AI consultation",
-                  "Follows up automatically",
-                  "Collects deposits",
-                  "Tracks every project",
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-2 text-sm text-[#111111]">
-                    <span className="text-[#D4A853] font-bold flex-shrink-0 mt-px">✓</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <div className="mt-16 max-w-xs mx-auto text-left">
+            <p className="text-sm font-semibold text-[#111111] mb-4">InkBook</p>
+            <ul className="space-y-3">
+              {[
+                "Manages the full client journey",
+                "Handles AI consultation",
+                "Follows up automatically",
+                "Collects deposits",
+                "Tracks every project",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2 text-sm text-[#111111]">
+                  <span className="text-[#D4A853] font-bold flex-shrink-0 mt-px">✓</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
@@ -575,9 +601,6 @@ export default function HomePage() {
             <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
               Most bookings aren&apos;t lost to competitors.
             </h2>
-            <p className="text-base text-gray-500 mt-4 max-w-md mx-auto">
-              They&apos;re lost to slow responses, forgotten follow-ups, and broken workflows.
-            </p>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-16 max-w-4xl mx-auto">
             {PAIN_CARDS.map((card, i) => (
@@ -603,7 +626,6 @@ export default function HomePage() {
             </h2>
           </div>
 
-          {/* Full-width horizontal step cards */}
           <div className="mt-12 -mx-6 px-6 overflow-x-auto">
             <div ref={workflowRowRef} className="flex items-start pb-4" style={{ minWidth: "max-content" }}>
               {WORKFLOW_STEPS.map((s, i) => (
@@ -621,7 +643,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Pipeline bar */}
           <div className="mt-8 rounded-xl p-5"
             style={{ background: "rgba(212,168,83,0.05)", border: "1px solid rgba(212,168,83,0.2)" }}
             data-animate="fade-up">
@@ -633,10 +654,10 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* AI Consultation chat — centered, large */}
-          <div className="max-w-2xl mx-auto mt-12" ref={aiChatTiltRef}
+          {/* AI Consultation chat */}
+          <div className="max-w-3xl mx-auto mt-12" ref={aiChatTiltRef}
             onMouseMove={aiChatTilt.onMouseMove} onMouseLeave={aiChatTilt.onMouseLeave}>
-            <div ref={chatCardRef} className="tilt-card bg-white rounded-2xl shadow-xl border border-[#E5E5E3] overflow-hidden min-h-80">
+            <div ref={chatCardRef} className="tilt-card bg-white rounded-2xl shadow-xl border border-[#E5E5E3] overflow-hidden min-h-[360px]">
 
               <div className="bg-[#F8F8F6] px-5 py-4 border-b border-[#E5E5E3] flex items-center justify-between">
                 <span className="text-sm font-semibold text-[#111111]">AI Consultation</span>
@@ -683,39 +704,32 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
 
-            {/* Left — copy */}
             <div>
               <h2 className="text-3xl lg:text-4xl font-bold text-white leading-tight">
                 Artist did nothing except approve the quote and show up to tattoo.
               </h2>
-              <p className="mt-6 text-base text-gray-400 max-w-sm">
-                AI handled the inquiry, consultation, follow-up, quote, deposit, consent, and aftercare. Automatically.
-              </p>
               <p className="mt-8 text-white font-semibold">
                 That is what InkBook does. Every single booking.
               </p>
             </div>
 
-            {/* Right — MOCKUP 3: Quote Builder */}
+            {/* MOCKUP 3: Quote Builder */}
             <div className="flex justify-center lg:justify-end">
-              <div ref={quoteTiltRef} className="tilt-card w-full max-w-md"
+              <div ref={quoteTiltRef} className="tilt-card w-full max-w-lg"
                 onMouseMove={quoteTilt.onMouseMove} onMouseLeave={quoteTilt.onMouseLeave}>
                 <div ref={quoteCardRef} className="bg-white rounded-2xl overflow-hidden"
                   style={{ boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 24px 64px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.4)" }}>
 
-                  {/* Header */}
                   <div className="px-5 py-4 bg-[#F8F8F6] border-b border-[#E5E5E3] flex items-center justify-between">
                     <span className="text-base font-semibold text-[#111111]">Quote Builder</span>
                     <span className="bg-[#D4A853] text-black text-xs px-2.5 py-1 rounded-full font-medium">AI Draft Ready</span>
                   </div>
 
-                  {/* Client info */}
                   <div className="px-5 py-4 border-b border-[#E5E5E3]">
                     <p className="text-base font-semibold text-[#111111]">Sarah M.</p>
                     <p className="text-sm text-gray-500 mt-0.5">Floral sleeve · Left arm · Full</p>
                   </div>
 
-                  {/* Line items */}
                   <div className="px-5 py-4 space-y-3 border-b border-[#E5E5E3]">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Consultation</span>
@@ -735,7 +749,6 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  {/* Total */}
                   <div className="px-5 py-4 border-b border-[#E5E5E3]">
                     <div className="flex justify-between">
                       <span className="text-base font-semibold text-[#111111]">Total Project</span>
@@ -747,7 +760,6 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  {/* Actions */}
                   <div className="px-5 py-4 flex gap-2 bg-[#F8F8F6] border-b border-[#E5E5E3]">
                     <button className="border border-gray-300 rounded-lg px-4 py-2 text-sm text-[#111111] hover:bg-gray-100 transition-colors">
                       Edit
@@ -757,14 +769,12 @@ export default function HomePage() {
                     </button>
                   </div>
 
-                  {/* Note */}
                   <div className="px-5 py-3">
                     <p className="text-xs text-gray-400">AI generated draft · Artist approval required before sending</p>
                   </div>
 
                 </div>
 
-                {/* Deposit success card */}
                 <div className="mt-3 bg-green-50 border border-green-200 rounded-xl p-4">
                   <div className="flex items-center gap-2">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -783,6 +793,84 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ══ ARTIST DASHBOARD ══ */}
+      <section className="py-24 px-6" style={{ background: "#F8F8F6" }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center">
+            <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Artist Dashboard</span>
+            <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
+              Everything an artist needs. Nothing they don&apos;t.
+            </h2>
+          </div>
+
+          <div className="max-w-4xl mx-auto mt-12">
+            <div className="bg-white rounded-2xl shadow-xl border border-[#E5E5E3] overflow-hidden">
+
+              {/* Top bar */}
+              <div className="bg-[#F8F8F6] px-6 py-4 border-b border-[#E5E5E3] flex items-center gap-3">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+                <span className="text-sm font-semibold text-[#111111]">Artist Dashboard — Alex R.</span>
+                <div className="ml-auto flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-green-400" />
+                  <span className="text-xs text-gray-500">Online</span>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="grid h-[400px]" style={{ gridTemplateColumns: "240px 1fr" }}>
+
+                {/* Sidebar */}
+                <div className="bg-[#F8F8F6] border-r border-[#E5E5E3] p-4 flex flex-col">
+                  <div className="flex flex-col items-center pt-2">
+                    <div className="w-12 h-12 bg-[#D4A853] rounded-full flex items-center justify-center text-white font-bold">AR</div>
+                    <p className="text-sm font-semibold mt-2 text-[#111111]">Alex R.</p>
+                    <p className="text-xs text-gray-500">Neo-Traditional</p>
+                  </div>
+                  <nav className="mt-6 space-y-1">
+                    {ARTIST_NAV_ITEMS.map((item) => (
+                      <div key={item.label} className={`flex items-center justify-between text-xs rounded-lg px-3 py-2 ${
+                        item.active ? "bg-[#D4A853] text-black font-medium" : "text-gray-500"
+                      }`}>
+                        {item.label}
+                        {item.badge && (
+                          <span className="bg-[#111111] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-medium">
+                            {item.badge}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </nav>
+                </div>
+
+                {/* Main */}
+                <div className="p-6 overflow-auto">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-[#111111]">AI Inbox</span>
+                    <span className="text-xs text-[#D4A853]">3 items need attention</span>
+                  </div>
+                  <div className="space-y-3 mt-4">
+                    {ARTIST_INBOX.map((card) => (
+                      <div key={card.name} className={`${card.bg} ${card.border} rounded-xl p-4`}>
+                        <div className="flex items-center justify-between">
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${card.badgeClass}`}>{card.badge}</span>
+                          <span className="text-xs text-gray-400">{card.time}</span>
+                        </div>
+                        <p className="text-sm font-semibold mt-2 text-[#111111]">{card.name}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{card.detail}</p>
+                        <button className={`mt-3 text-xs rounded-lg px-3 py-1.5 ${card.btnClass}`}>{card.btn}</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ══ WHITE LABEL ══ */}
       <section className="py-24 px-6" style={{ background: "#F8F8F6" }}>
         <div className="max-w-6xl mx-auto">
@@ -793,9 +881,6 @@ export default function HomePage() {
               <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
                 Your studio. Your brand. Your clients.
               </h2>
-              <p className="text-base text-gray-500 mt-4 max-w-md">
-                Clients never see InkBook. They book your studio, experience your brand, and trust your business. Not a software company.
-              </p>
               <ul className="mt-8 space-y-3">
                 {[
                   "Clients think they're booking directly with you",
@@ -812,7 +897,7 @@ export default function HomePage() {
             </div>
 
             {/* Booking page mockup */}
-            <div ref={whiteLabelTiltRef} className="tilt-card bg-white rounded-2xl shadow-xl p-6"
+            <div ref={whiteLabelTiltRef} className="tilt-card bg-white rounded-2xl shadow-2xl p-6"
               onMouseMove={whiteLabelTilt.onMouseMove} onMouseLeave={whiteLabelTilt.onMouseLeave}>
               <div className="flex items-center justify-between pb-4" style={{ borderBottom: "1px solid #F3F4F6" }}>
                 <div className="flex items-center gap-3">
@@ -859,13 +944,11 @@ export default function HomePage() {
           {/* MOCKUP 4: Lead Pipeline Kanban */}
           <div className="mt-16 bg-white rounded-2xl shadow-sm border border-[#E5E5E3] overflow-hidden" data-animate="fade-up">
 
-            {/* Header */}
             <div className="px-6 py-4 border-b border-[#E5E5E3] flex items-center justify-between">
               <span className="text-sm font-semibold text-[#111111]">Lead Pipeline</span>
               <span className="text-xs text-gray-500">12 active leads</span>
             </div>
 
-            {/* Kanban columns */}
             <div ref={pipelineRef} className="flex gap-4 p-4 overflow-x-auto">
               {PIPELINE_COLS.map((col) => (
                 <div key={col.title} className="pipeline-col w-56 flex-shrink-0 min-h-48">
@@ -902,6 +985,84 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ══ CLIENT CRM ══ */}
+      <section className="py-24 px-6" style={{ background: "#FFFFFF" }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center">
+            <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Client CRM</span>
+            <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
+              Every client. Their entire journey.
+            </h2>
+          </div>
+
+          <div className="max-w-4xl mx-auto mt-12">
+            <div className="bg-white rounded-2xl shadow-xl border border-[#E5E5E3] overflow-hidden">
+
+              {/* Top bar */}
+              <div className="px-6 py-4 bg-[#F8F8F6] border-b border-[#E5E5E3] flex items-center justify-between">
+                <span className="text-sm font-semibold text-[#111111]">Sarah M. — Client Profile</span>
+                <div className="flex items-center gap-2">
+                  {["Floral", "Black & Grey", "VIP"].map((tag) => (
+                    <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-white border border-[#E5E5E3] text-gray-600">{tag}</span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="grid" style={{ gridTemplateColumns: "280px 1fr" }}>
+
+                {/* Left: client summary */}
+                <div className="p-6 border-r border-[#E5E5E3]">
+                  <div className="flex flex-col items-center">
+                    <div className="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold"
+                      style={{ background: "linear-gradient(135deg, #D4A853 0%, #B8923E 100%)" }}>
+                      SM
+                    </div>
+                    <p className="text-lg font-bold mt-3 text-[#111111]">Sarah M.</p>
+                    <p className="text-xs text-gray-500">Client since March 2023</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mt-4">
+                    {CRM_STATS.map((s) => (
+                      <div key={s.label} className="bg-[#F8F8F6] rounded-xl p-3 text-center">
+                        <p className="text-lg font-bold text-[#111111]">{s.value}</p>
+                        <p className="text-xs text-gray-500">{s.label}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 bg-[#F8F8F6] rounded-xl p-3">
+                    <p className="text-xs text-gray-500">Next Session</p>
+                    <p className="text-sm font-semibold text-[#111111] mt-0.5">June 20 · 2:00 PM · Shading</p>
+                  </div>
+                </div>
+
+                {/* Right: timeline */}
+                <div className="p-6">
+                  <p className="text-sm font-semibold text-[#111111]">Client Timeline</p>
+                  <div className="mt-4 space-y-4 relative">
+                    <div className="absolute left-[5px] top-2 bottom-2 w-[2px] bg-[#E5E5E3]" />
+                    {CRM_TIMELINE.map((item, i) => (
+                      <div key={i} className="flex gap-4 items-start relative">
+                        <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 z-10 ${
+                          item.gold ? "bg-[#D4A853]" : "bg-white border-2 border-[#D4A853]"
+                        }`} />
+                        <div>
+                          <p className="text-xs text-gray-400">{item.date}</p>
+                          <p className="text-sm font-medium text-[#111111]">{item.event}</p>
+                          <p className="text-xs text-gray-500">{item.detail}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ══ ROI ══ */}
       <section className="py-20 px-6" style={{ background: "#FFFFFF" }}>
         <div className="max-w-6xl mx-auto">
@@ -924,9 +1085,6 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-          <p className="mt-10 text-sm text-gray-500 text-center max-w-2xl mx-auto">
-            InkBook does not guarantee bookings. But it makes sure no inquiry is forgotten, no follow-up is missed, and no deposit slips through the cracks.
-          </p>
         </div>
       </section>
 
