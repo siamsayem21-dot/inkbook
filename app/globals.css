@@ -263,6 +263,86 @@ body {
 }
 
 /* ─────────────────────────────────────────────────────
+   AI CHAT MESSAGE REVEAL
+───────────────────────────────────────────────────── */
+
+.msg-hidden {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}
+.msg-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─────────────────────────────────────────────────────
+   WORKFLOW CARD REVEAL
+───────────────────────────────────────────────────── */
+
+.workflow-card-hidden {
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+.workflow-card-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ─────────────────────────────────────────────────────
+   PIPELINE CARD DROP-IN
+───────────────────────────────────────────────────── */
+
+.pipeline-card-hidden {
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+.pipeline-card-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─────────────────────────────────────────────────────
+   SCALE REVEAL (pricing, ROI)
+───────────────────────────────────────────────────── */
+
+.scale-reveal {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+.scale-reveal.in-view {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ─────────────────────────────────────────────────────
+   WORD-BY-WORD REVEAL (category statement)
+───────────────────────────────────────────────────── */
+
+.word-reveal {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}
+.word-reveal.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─────────────────────────────────────────────────────
+   TILT CARD
+───────────────────────────────────────────────────── */
+
+.tilt-card {
+  transition: transform 0.1s ease-out;
+  transform-style: preserve-3d;
+}
+
+/* ─────────────────────────────────────────────────────
    REDUCED MOTION OVERRIDES
 ───────────────────────────────────────────────────── */
 
@@ -289,4 +369,11 @@ body {
   .pricing-card:hover,
   .pricing-card-featured:hover { transform: none !important; }
   .workflow-row:hover { padding-left: 0 !important; }
+  .msg-hidden, .workflow-card-hidden, .pipeline-card-hidden,
+  .scale-reveal, .word-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .tilt-card { transform: none !important; }
 }

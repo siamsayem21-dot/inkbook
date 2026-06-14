@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 /* ─── Icons ─── */
 const IconMsg = () => (
@@ -138,6 +138,27 @@ export default function HomePage() {
   const [bookings, setBookings] = useState(0);
   const [deposits, setDeposits] = useState(0);
 
+  // Quote count-up state
+  const [quoteSession1, setQuoteSession1] = useState(0);
+  const [quoteSession2, setQuoteSession2] = useState(0);
+  const [quoteTotal, setQuoteTotal] = useState(0);
+  const [quoteDeposit, setQuoteDeposit] = useState(0);
+
+  // Chat reveal state
+  const [visibleMessages, setVisibleMessages] = useState(0);
+
+  // Refs for scroll-triggered animations
+  const chatCardRef = useRef<HTMLDivElement>(null);
+  const workflowRowRef = useRef<HTMLDivElement>(null);
+  const pipelineRef = useRef<HTMLDivElement>(null);
+  const quoteCardRef = useRef<HTMLDivElement>(null);
+
+  // Refs for tilt cards
+  const heroDashRef = useRef<HTMLDivElement>(null);
+  const quoteTiltRef = useRef<HTMLDivElement>(null);
+  const aiChatTiltRef = useRef<HTMLDivElement>(null);
+  const whiteLabelTiltRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const countUp = (
       setter: React.Dispatch<React.SetStateAction<number>>,
@@ -159,7 +180,7 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    const els = document.querySelectorAll<HTMLElement>("[data-animate], .reveal, .reveal-up, .reveal-scale");
+    const els = document.querySelectorAll<HTMLElement>("[data-animate], .reveal, .reveal-up, .reveal-scale, .scale-reveal, .word-reveal");
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -176,6 +197,138 @@ export default function HomePage() {
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
   }, []);
+
+  // ── Chat message reveal with loop ──
+  useEffect(() => {
+    const card = chatCardRef.current;
+    if (!card) return;
+    let loopTimer: ReturnType<typeof setTimeout>;
+    const runSequence = () => {
+      setVisibleMessages(0);
+      setTimeout(() => setVisibleMessages(1), 0);
+      setTimeout(() => setVisibleMessages(2), 800);
+      setTimeout(() => setVisibleMessages(3), 1600);
+      loopTimer = setTimeout(runSequence, 5600);
+    };
+    const io = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { runSequence(); io.disconnect(); } },
+      { threshold: 0.3 }
+    );
+    io.observe(card);
+    return () => { io.disconnect(); clearTimeout(loopTimer); };
+  }, []);
+
+  // ── Workflow cards left-to-right reveal ──
+  useEffect(() => {
+    const row = workflowRowRef.current;
+    if (!row) return;
+    const cards = Array.from(row.querySelectorAll<HTMLElement>(".wf-item"));
+    let triggered = false;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !triggered) {
+          triggered = true;
+          cards.forEach((card, i) => {
+            setTimeout(() => card.classList.replace("workflow-card-hidden", "workflow-card-visible"), i * 80);
+          });
+          io.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    io.observe(row);
+    return () => io.disconnect();
+  }, []);
+
+  // ── Pipeline cards drop-in by column ──
+  useEffect(() => {
+    const container = pipelineRef.current;
+    if (!container) return;
+    const cols = Array.from(container.querySelectorAll<HTMLElement>(".pipeline-col"));
+    let triggered = false;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !triggered) {
+          triggered = true;
+          cols.forEach((col, colIdx) => {
+            const cards = Array.from(col.querySelectorAll<HTMLElement>(".pipeline-item"));
+            cards.forEach((card, cardIdx) => {
+              setTimeout(
+                () => card.classList.replace("pipeline-card-hidden", "pipeline-card-visible"),
+                colIdx * 200 + cardIdx * 100
+              );
+            });
+          });
+          io.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    io.observe(container);
+    return () => io.disconnect();
+  }, []);
+
+  // ── Quote Builder price count-up ──
+  useEffect(() => {
+    const card = quoteCardRef.current;
+    if (!card) return;
+    let triggered = false;
+    const countUp = (
+      setter: React.Dispatch<React.SetStateAction<number>>,
+      target: number,
+      duration: number,
+      delayMs: number
+    ) => {
+      setTimeout(() => {
+        const start = performance.now();
+        const tick = (now: number) => {
+          const p = Math.min((now - start) / duration, 1);
+          const eased = 1 - Math.pow(1 - p, 3);
+          setter(Math.round(eased * target));
+          if (p < 1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }, delayMs);
+    };
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !triggered) {
+          triggered = true;
+          countUp(setQuoteSession1, 400, 800, 0);
+          countUp(setQuoteSession2, 300, 600, 200);
+          countUp(setQuoteTotal, 700, 1000, 0);
+          countUp(setQuoteDeposit, 150, 500, 0);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
+    io.observe(card);
+    return () => io.disconnect();
+  }, []);
+
+  // ── Tilt effect handler ──
+  const handleTilt = useCallback((ref: React.RefObject<HTMLDivElement>) => ({
+    onMouseMove: (e: React.MouseEvent<HTMLDivElement>) => {
+      const el = ref.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      const rx = -(y / rect.height) * 6;
+      const ry = (x / rect.width) * 6;
+      el.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+    },
+    onMouseLeave: () => {
+      const el = ref.current;
+      if (el) el.style.transform = "perspective(1000px) rotateX(0deg) rotateY(0deg)";
+    },
+  }), []);
+
+  const heroTilt = handleTilt(heroDashRef);
+  const quoteTilt = handleTilt(quoteTiltRef);
+  const aiChatTilt = handleTilt(aiChatTiltRef);
+  const whiteLabelTilt = handleTilt(whiteLabelTiltRef);
 
   const heroStats = [
     { label: "Revenue",  value: `$${revenue.toLocaleString()}` },
@@ -266,8 +419,9 @@ export default function HomePage() {
               }} />
 
               {/* Dashboard card */}
-              <div className="relative rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-                style={{ background: "#0F0F0F", border: "1px solid #1F1F1F", minHeight: "520px" }}>
+              <div ref={heroDashRef} className="tilt-card relative rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+                style={{ background: "#0F0F0F", border: "1px solid #1F1F1F", minHeight: "520px" }}
+                onMouseMove={heroTilt.onMouseMove} onMouseLeave={heroTilt.onMouseLeave}>
 
                 {/* Top bar */}
                 <div className="flex-shrink-0 flex items-center gap-2 px-4 py-3 bg-[#1A1A1A]"
@@ -369,14 +523,18 @@ export default function HomePage() {
 
       {/* ══ CATEGORY STATEMENT ══ */}
       <section className="py-28 px-6" style={{ background: "#FFFFFF" }}>
-        <div className="max-w-5xl mx-auto text-center" data-animate="fade-up">
-          <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Why InkBook Exists</span>
+        <div className="max-w-5xl mx-auto text-center">
+          <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold" data-animate="fade-up">Why InkBook Exists</span>
           <div className="mt-8">
             <p className="text-5xl lg:text-6xl font-light text-gray-300 leading-tight">
-              Most software manages appointments.
+              {"Most software manages appointments.".split(" ").map((word, i) => (
+                <span key={i} className="word-reveal" data-animate="word" data-delay={String(i * 50)}>{word}{" "}</span>
+              ))}
             </p>
             <p className="text-5xl lg:text-6xl font-bold text-[#111111] leading-tight mt-2">
-              InkBook manages the entire tattoo client journey.
+              {"InkBook manages the entire tattoo client journey.".split(" ").map((word, i) => (
+                <span key={i} className="word-reveal" data-animate="word" data-delay={String(300 + i * 50)}>{word}{" "}</span>
+              ))}
             </p>
           </div>
           <div className="mt-16 grid grid-cols-2 max-w-2xl mx-auto gap-8 text-left">
@@ -447,9 +605,9 @@ export default function HomePage() {
 
           {/* Full-width horizontal step cards */}
           <div className="mt-12 -mx-6 px-6 overflow-x-auto">
-            <div className="flex items-start pb-4" style={{ minWidth: "max-content" }}>
+            <div ref={workflowRowRef} className="flex items-start pb-4" style={{ minWidth: "max-content" }}>
               {WORKFLOW_STEPS.map((s, i) => (
-                <div key={i} className="flex items-center flex-shrink-0">
+                <div key={i} className="wf-item workflow-card-hidden flex items-center flex-shrink-0">
                   <div className="min-w-[160px] p-5 rounded-2xl bg-white border border-[#E5E5E3] shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 text-center">
                     <div className="w-4 h-4 rounded-full mx-auto" style={{ background: s.ai ? "#D4A853" : "#D1D5DB" }} />
                     <p className="text-sm font-bold text-[#111111] mt-3">{s.label}</p>
@@ -476,27 +634,28 @@ export default function HomePage() {
           </div>
 
           {/* AI Consultation chat — centered, large */}
-          <div className="max-w-2xl mx-auto mt-12">
-            <div className="bg-white rounded-2xl shadow-xl border border-[#E5E5E3] overflow-hidden min-h-80">
+          <div className="max-w-2xl mx-auto mt-12" ref={aiChatTiltRef}
+            onMouseMove={aiChatTilt.onMouseMove} onMouseLeave={aiChatTilt.onMouseLeave}>
+            <div ref={chatCardRef} className="tilt-card bg-white rounded-2xl shadow-xl border border-[#E5E5E3] overflow-hidden min-h-80">
 
               <div className="bg-[#F8F8F6] px-5 py-4 border-b border-[#E5E5E3] flex items-center justify-between">
                 <span className="text-sm font-semibold text-[#111111]">AI Consultation</span>
                 <span className="text-xs text-gray-400">Powered by InkBook</span>
               </div>
 
-              <div className="p-5 space-y-4">
-                <div className="flex gap-3">
+              <div className="p-5 space-y-4 min-h-[160px]">
+                <div className={`flex gap-3 ${visibleMessages >= 1 ? "msg-visible" : "msg-hidden"}`}>
                   <div className="w-8 h-8 rounded-full bg-[#D4A853] flex items-center justify-center text-xs text-black font-bold flex-shrink-0">AI</div>
                   <div className="bg-[#F8F8F6] rounded-xl rounded-tl-none px-4 py-3 text-sm text-[#111111] max-w-sm">
                     Hi! I&apos;m InkBook AI. Tell me about the tattoo you&apos;re looking for 🎨
                   </div>
                 </div>
-                <div className="flex gap-3 justify-end">
+                <div className={`flex gap-3 justify-end ${visibleMessages >= 2 ? "msg-visible" : "msg-hidden"}`}>
                   <div className="bg-[#111111] rounded-xl rounded-tr-none px-4 py-3 text-sm text-white max-w-xs">
                     I want a floral sleeve on my left arm, black and grey
                   </div>
                 </div>
-                <div className="flex gap-3">
+                <div className={`flex gap-3 ${visibleMessages >= 3 ? "msg-visible" : "msg-hidden"}`}>
                   <div className="w-8 h-8 rounded-full bg-[#D4A853] flex items-center justify-center text-xs text-black font-bold flex-shrink-0">AI</div>
                   <div className="bg-[#F8F8F6] rounded-xl rounded-tl-none px-4 py-3 text-sm text-[#111111] max-w-sm">
                     Great choice! I&apos;ve detected: Floral / Botanical style, Black &amp; Grey. What size are you thinking — half sleeve or full?
@@ -504,7 +663,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="px-5 py-4 bg-[#F8F8F6] border-t border-[#E5E5E3]">
+              <div className={`px-5 py-4 bg-[#F8F8F6] border-t border-[#E5E5E3] ${visibleMessages >= 3 ? "msg-visible" : "msg-hidden"}`}>
                 <p className="text-sm text-[#D4A853]">Style detected: Floral · Black &amp; Grey</p>
                 <div className="flex gap-1.5 mt-3">
                   {Array.from({ length: 9 }, (_, i) => (
@@ -539,8 +698,9 @@ export default function HomePage() {
 
             {/* Right — MOCKUP 3: Quote Builder */}
             <div className="flex justify-center lg:justify-end">
-              <div className="w-full max-w-md">
-                <div className="bg-white rounded-2xl overflow-hidden"
+              <div ref={quoteTiltRef} className="tilt-card w-full max-w-md"
+                onMouseMove={quoteTilt.onMouseMove} onMouseLeave={quoteTilt.onMouseLeave}>
+                <div ref={quoteCardRef} className="bg-white rounded-2xl overflow-hidden"
                   style={{ boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 24px 64px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.4)" }}>
 
                   {/* Header */}
@@ -557,23 +717,33 @@ export default function HomePage() {
 
                   {/* Line items */}
                   <div className="px-5 py-4 space-y-3 border-b border-[#E5E5E3]">
-                    {QUOTE_LINES.map(({ item, price }) => (
-                      <div key={item} className="flex justify-between text-sm">
-                        <span className="text-gray-600">{item}</span>
-                        <span className="text-[#111111] font-medium">{price}</span>
-                      </div>
-                    ))}
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Consultation</span>
+                      <span className="text-[#111111] font-medium">$0</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Session 1 — Outline (4hr)</span>
+                      <span className="text-[#111111] font-medium">${quoteSession1}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Session 2 — Shading (3hr)</span>
+                      <span className="text-[#111111] font-medium">${quoteSession2}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Touch-up (included)</span>
+                      <span className="text-[#111111] font-medium">$0</span>
+                    </div>
                   </div>
 
                   {/* Total */}
                   <div className="px-5 py-4 border-b border-[#E5E5E3]">
                     <div className="flex justify-between">
                       <span className="text-base font-semibold text-[#111111]">Total Project</span>
-                      <span className="text-base font-bold text-[#111111]">$700</span>
+                      <span className="text-base font-bold text-[#111111]">${quoteTotal}</span>
                     </div>
                     <div className="flex justify-between mt-2">
                       <span className="text-sm text-gray-500">Deposit Required</span>
-                      <span className="text-sm text-[#D4A853] font-medium">$150 (21%)</span>
+                      <span className="text-sm text-[#D4A853] font-medium">${quoteDeposit} (21%)</span>
                     </div>
                   </div>
 
@@ -642,7 +812,8 @@ export default function HomePage() {
             </div>
 
             {/* Booking page mockup */}
-            <div className="bg-white rounded-2xl shadow-xl p-6">
+            <div ref={whiteLabelTiltRef} className="tilt-card bg-white rounded-2xl shadow-xl p-6"
+              onMouseMove={whiteLabelTilt.onMouseMove} onMouseLeave={whiteLabelTilt.onMouseLeave}>
               <div className="flex items-center justify-between pb-4" style={{ borderBottom: "1px solid #F3F4F6" }}>
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-lg bg-[#1A1A1A] flex items-center justify-center text-xs font-bold text-white flex-shrink-0">AI</div>
@@ -695,9 +866,9 @@ export default function HomePage() {
             </div>
 
             {/* Kanban columns */}
-            <div className="flex gap-4 p-4 overflow-x-auto">
+            <div ref={pipelineRef} className="flex gap-4 p-4 overflow-x-auto">
               {PIPELINE_COLS.map((col) => (
-                <div key={col.title} className="w-56 flex-shrink-0 min-h-48">
+                <div key={col.title} className="pipeline-col w-56 flex-shrink-0 min-h-48">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-1.5">
                       <span className={`text-sm font-semibold uppercase ${col.titleClass}`}>{col.title}</span>
@@ -707,7 +878,7 @@ export default function HomePage() {
                   </div>
                   <div className="space-y-2 min-h-48">
                     {col.cards.map((card) => (
-                      <div key={card.name} className={`bg-[#F8F8F6] rounded-lg p-3 ${card.border}`}>
+                      <div key={card.name} className={`pipeline-item pipeline-card-hidden bg-[#F8F8F6] rounded-lg p-3 ${card.border}`}>
                         <p className="text-sm font-medium text-[#111111]">{card.name}</p>
                         <span className="inline-block mt-1 text-xs px-1.5 py-0.5 rounded"
                           style={{ background: col.ai ? "rgba(212,168,83,0.1)" : "#F3F4F6", color: col.ai ? "#D4A853" : "#6B7280" }}>
@@ -746,8 +917,8 @@ export default function HomePage() {
               { value: "3–5x", label: "Inquiries lost per week without follow-up" },
               { value: "1 booking", label: "Often enough to cover a month of InkBook" },
             ].map((stat, i) => (
-              <div key={i} className="bg-[#F8F8F6] rounded-2xl p-8 text-center hover:shadow-md transition-all duration-200"
-                data-animate="fade-up" data-delay={String(i * 100)}>
+              <div key={i} className="scale-reveal bg-[#F8F8F6] rounded-2xl p-8 text-center hover:shadow-md transition-all duration-200"
+                data-delay={String(i * 150)}>
                 <p className="text-4xl font-bold text-[#111111]">{stat.value}</p>
                 <p className="text-sm text-gray-500 mt-2">{stat.label}</p>
               </div>
@@ -769,7 +940,7 @@ export default function HomePage() {
           </div>
 
           <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-            <div className="bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3]" data-animate="fade-up" data-delay="0">
+            <div className="scale-reveal bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3]" data-delay="0">
               <p className="text-sm font-semibold text-gray-500">Solo Artist</p>
               <div className="flex items-end gap-1 mt-3 mb-1">
                 <span className="text-5xl font-bold text-[#111111]">$49</span>
@@ -781,7 +952,7 @@ export default function HomePage() {
               </a>
             </div>
 
-            <div className="bg-white rounded-2xl p-8 shadow-xl border-2 border-[#D4A853] scale-[1.05] relative" data-animate="fade-up" data-delay="100">
+            <div className="bg-white rounded-2xl p-8 shadow-xl border-2 border-[#D4A853] scale-[1.05] relative" data-animate="fade-up" data-delay="200">
               <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#D4A853] text-black text-xs font-semibold px-4 py-1 rounded-full whitespace-nowrap">
                 MOST POPULAR
               </span>
@@ -796,7 +967,7 @@ export default function HomePage() {
               </a>
             </div>
 
-            <div className="bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3]" data-animate="fade-up" data-delay="200">
+            <div className="scale-reveal bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3]" data-delay="400">
               <p className="text-sm font-semibold text-gray-500">Studio Pro</p>
               <div className="flex items-end gap-1 mt-3 mb-1">
                 <span className="text-5xl font-bold text-[#111111]">$169</span>
