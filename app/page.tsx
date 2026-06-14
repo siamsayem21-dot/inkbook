@@ -127,6 +127,7 @@ const PIPELINE_COLS: {
     countClass: "bg-green-100 text-green-600",
     cards: [
       { name: "Jordan H.", tag: "Traditional panther", sub: "Ready to book", subClass: "text-green-600 font-medium", border: "border border-green-200", readyBadge: true },
+      { name: "Priya S.",  tag: "Script lettering",  sub: "Booked: Friday", subClass: "text-green-600 font-medium", border: "border border-green-200", readyBadge: true },
     ],
   },
 ];
@@ -232,7 +233,7 @@ export default function HomePage() {
       {/* ══ HERO ══ */}
       <section className="py-24 lg:py-32 px-6" style={{ background: "#F8F8F6" }}>
         <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div className="grid lg:grid-cols-[45%_55%] gap-16 items-center">
 
             {/* Left — copy */}
             <div>
@@ -266,7 +267,7 @@ export default function HomePage() {
 
               {/* Dashboard card */}
               <div className="relative rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-                style={{ background: "#0F0F0F", border: "1px solid #1F1F1F", minHeight: "480px" }}>
+                style={{ background: "#0F0F0F", border: "1px solid #1F1F1F", minHeight: "520px" }}>
 
                 {/* Top bar */}
                 <div className="flex-shrink-0 flex items-center gap-2 px-4 py-3 bg-[#1A1A1A]"
@@ -274,18 +275,18 @@ export default function HomePage() {
                   <span className="w-3 h-3 rounded-full bg-red-400" />
                   <span className="w-3 h-3 rounded-full bg-yellow-400" />
                   <span className="w-3 h-3 rounded-full bg-green-400" />
-                  <span className="flex-1 text-center text-xs text-gray-500">InkBook — Dashboard</span>
+                  <span className="flex-1 text-center text-sm text-gray-500">InkBook — Dashboard</span>
                 </div>
 
                 {/* Body: sidebar + main */}
                 <div className="flex flex-1">
 
                   {/* Sidebar */}
-                  <div className="flex-shrink-0 w-40 bg-[#111111] p-4" style={{ borderRight: "1px solid #1F1F1F" }}>
-                    <p className="text-sm font-bold text-white mb-6">InkBook</p>
+                  <div className="flex-shrink-0 w-52 bg-[#111111] p-4" style={{ borderRight: "1px solid #1F1F1F" }}>
+                    <p className="text-base font-bold text-white mb-6">InkBook</p>
                     <nav className="space-y-1">
                       {SIDEBAR_NAV.map((item) => (
-                        <div key={item} className={`px-3 py-2 rounded-lg text-xs cursor-default ${
+                        <div key={item} className={`px-3 py-2 rounded-lg text-sm cursor-default ${
                           item === "Dashboard"
                             ? "bg-[#D4A853] text-black font-medium"
                             : "text-gray-500 hover:text-gray-300"
@@ -304,7 +305,7 @@ export default function HomePage() {
                       {heroStats.map((s) => (
                         <div key={s.label} className="bg-[#1A1A1A] rounded-xl p-4">
                           <p className="text-xs text-gray-500">{s.label}</p>
-                          <p className="text-3xl font-bold text-white mt-1">{s.value}</p>
+                          <p className="text-4xl font-bold text-white mt-1">{s.value}</p>
                         </div>
                       ))}
                     </div>
@@ -312,7 +313,7 @@ export default function HomePage() {
                     {/* Recent Bookings */}
                     <div className="mt-4">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs text-gray-500 uppercase tracking-wider">Recent Bookings</span>
+                        <span className="text-sm text-gray-500 uppercase tracking-wider">Recent Bookings</span>
                         <span className="text-xs text-green-400 flex items-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse-dot inline-block" />
                           Live
@@ -322,12 +323,12 @@ export default function HomePage() {
                         {BOOKING_ROWS.map((row) => (
                           <div key={row.name} className="bg-[#1A1A1A] rounded-lg px-3 py-2 flex items-center justify-between">
                             <div>
-                              <p className="text-xs text-white font-medium">{row.name}</p>
-                              <p className="text-[10px] text-gray-500 mt-0.5">{row.service}</p>
+                              <p className="text-sm text-white font-medium">{row.name}</p>
+                              <p className="text-xs text-gray-500 mt-0.5">{row.service}</p>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-[#D4A853] font-medium">{row.amount}</span>
-                              <span className={`text-[10px] rounded-full px-2 py-0.5 ${row.badgeClass}`}>{row.badge}</span>
+                              <span className="text-sm text-[#D4A853] font-medium">{row.amount}</span>
+                              <span className={`text-xs rounded-full px-2 py-0.5 ${row.badgeClass}`}>{row.badge}</span>
                             </div>
                           </div>
                         ))}
@@ -337,14 +338,14 @@ export default function HomePage() {
                     {/* AI Activity */}
                     <div className="mt-4">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs text-gray-500 uppercase tracking-wider">AI Activity</span>
-                        <span className="text-[10px] text-[#D4A853]">🤖 AI</span>
+                        <span className="text-sm text-gray-500 uppercase tracking-wider">AI Activity</span>
+                        <span className="text-xs text-[#D4A853]">🤖 AI</span>
                       </div>
                       <div className="space-y-2">
                         {AI_ACTIVITY.map((item) => (
                           <div key={item} className="flex items-start gap-2">
                             <span className="w-1.5 h-1.5 rounded-full bg-[#D4A853] mt-1.5 flex-shrink-0" />
-                            <p className="text-[10px] text-gray-400">{item}</p>
+                            <p className="text-xs text-gray-400">{item}</p>
                           </div>
                         ))}
                       </div>
@@ -354,10 +355,10 @@ export default function HomePage() {
                 </div>
 
                 {/* Floating badge */}
-                <div className="absolute bottom-4 left-[168px] flex items-center gap-2 rounded-full px-3 py-1.5"
+                <div className="absolute bottom-4 left-[220px] flex items-center gap-2 rounded-full px-3 py-1.5"
                   style={{ background: "#1A1A1A", border: "1px solid #2A2A2A" }}>
                   <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse-dot" />
-                  <span className="text-[10px] text-white">3 new bookings today</span>
+                  <span className="text-xs text-white">3 new bookings today</span>
                 </div>
               </div>
             </div>
@@ -444,95 +445,76 @@ export default function HomePage() {
             </h2>
           </div>
 
-          {/* MOCKUP 2: split layout — left: steps+pipeline / right: AI chat */}
-          <div className="mt-16 lg:grid lg:grid-cols-2 lg:gap-12 lg:items-start">
-
-            {/* Left: workflow cards + pipeline */}
-            <div>
-              {/* Desktop horizontal scroll cards */}
-              <div className="hidden md:flex flex-row overflow-x-auto gap-3 pb-4">
-                {WORKFLOW_STEPS.map((s, i) => (
-                  <div key={i} className="flex items-center flex-shrink-0">
-                    <div className="bg-white border border-[#E5E5E3] rounded-xl p-4 min-w-[120px] flex-shrink-0 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 text-center">
-                      <div className="w-3 h-3 rounded-full mx-auto mb-2" style={{ background: s.ai ? "#D4A853" : "#D1D5DB" }} />
-                      <p className="text-xs text-gray-400">{s.num}</p>
-                      <p className="text-xs font-bold text-[#111111] mt-1">{s.label}</p>
-                      <p className="text-[10px] text-gray-400 mt-1">{s.desc}</p>
-                    </div>
-                    {i < WORKFLOW_STEPS.length - 1 && (
-                      <span className="text-[#D4A853] text-sm mx-1 flex-shrink-0 self-center">→</span>
-                    )}
+          {/* Full-width horizontal step cards */}
+          <div className="mt-12 -mx-6 px-6 overflow-x-auto">
+            <div className="flex items-start pb-4" style={{ minWidth: "max-content" }}>
+              {WORKFLOW_STEPS.map((s, i) => (
+                <div key={i} className="flex items-center flex-shrink-0">
+                  <div className="min-w-[160px] p-5 rounded-2xl bg-white border border-[#E5E5E3] shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 text-center">
+                    <div className="w-4 h-4 rounded-full mx-auto" style={{ background: s.ai ? "#D4A853" : "#D1D5DB" }} />
+                    <p className="text-sm font-bold text-[#111111] mt-3">{s.label}</p>
+                    <p className="text-xs text-gray-500 mt-1">{s.desc}</p>
                   </div>
-                ))}
-              </div>
-
-              {/* Pipeline — always visible */}
-              <div className="mt-4 rounded-xl p-5"
-                style={{ background: "rgba(212,168,83,0.05)", border: "1px solid rgba(212,168,83,0.2)" }}
-                data-animate="fade-up">
-                <p className="text-xs uppercase tracking-widest text-[#D4A853] text-center mb-3 font-semibold">
-                  The Complete Workflow
-                </p>
-                <p className="text-sm text-[#D4A853] text-center leading-relaxed">
-                  Instagram Inquiry → AI Consultation → AI Follow-Up → Quote → Deposit → Booking → Consent → Aftercare → Review → CRM
-                </p>
-              </div>
+                  {i < WORKFLOW_STEPS.length - 1 && (
+                    <span className="text-[#D4A853] text-xl mx-2 flex-shrink-0 self-center">→</span>
+                  )}
+                </div>
+              ))}
             </div>
+          </div>
 
-            {/* Right: MOCKUP 2 — AI Consultation chat card */}
-            <div className="hidden lg:flex lg:justify-end mt-0">
-              <div className="bg-white rounded-2xl shadow-xl border border-[#E5E5E3] overflow-hidden w-full max-w-sm">
+          {/* Pipeline bar */}
+          <div className="mt-8 rounded-xl p-5"
+            style={{ background: "rgba(212,168,83,0.05)", border: "1px solid rgba(212,168,83,0.2)" }}
+            data-animate="fade-up">
+            <p className="text-xs uppercase tracking-widest text-[#D4A853] text-center mb-3 font-semibold">
+              The Complete Workflow
+            </p>
+            <p className="text-sm text-[#D4A853] text-center leading-relaxed">
+              Instagram Inquiry → AI Consultation → AI Follow-Up → Quote → Deposit → Booking → Consent → Aftercare → Review → CRM
+            </p>
+          </div>
 
-                {/* Card header */}
-                <div className="bg-[#F8F8F6] px-4 py-3 border-b border-[#E5E5E3] flex items-center justify-between">
-                  <span className="text-sm font-semibold text-[#111111]">AI Consultation</span>
-                  <span className="text-xs text-gray-400">Powered by InkBook</span>
-                </div>
+          {/* AI Consultation chat — centered, large */}
+          <div className="max-w-2xl mx-auto mt-12">
+            <div className="bg-white rounded-2xl shadow-xl border border-[#E5E5E3] overflow-hidden min-h-80">
 
-                {/* Chat messages */}
-                <div className="p-4 space-y-3">
-                  {/* AI message 1 */}
-                  <div className="flex gap-2">
-                    <div className="w-6 h-6 rounded-full bg-[#D4A853] flex items-center justify-center text-[10px] text-black font-bold flex-shrink-0">
-                      AI
-                    </div>
-                    <div className="bg-[#F8F8F6] rounded-xl rounded-tl-none px-3 py-2 text-xs text-[#111111] max-w-[200px]">
-                      Hi! I&apos;m InkBook AI. Tell me about the tattoo you&apos;re looking for 🎨
-                    </div>
-                  </div>
-
-                  {/* Client message */}
-                  <div className="flex gap-2 justify-end">
-                    <div className="bg-[#111111] rounded-xl rounded-tr-none px-3 py-2 text-xs text-white max-w-[180px]">
-                      I want a floral sleeve on my left arm, black and grey
-                    </div>
-                  </div>
-
-                  {/* AI message 2 */}
-                  <div className="flex gap-2">
-                    <div className="w-6 h-6 rounded-full bg-[#D4A853] flex items-center justify-center text-[10px] text-black font-bold flex-shrink-0">
-                      AI
-                    </div>
-                    <div className="bg-[#F8F8F6] rounded-xl rounded-tl-none px-3 py-2 text-xs text-[#111111] max-w-[200px]">
-                      Great choice! I&apos;ve detected: Floral / Botanical style, Black &amp; Grey. What size are you thinking — half sleeve or full?
-                    </div>
-                  </div>
-                </div>
-
-                {/* Status bar */}
-                <div className="px-4 py-3 bg-[#F8F8F6] border-t border-[#E5E5E3]">
-                  <p className="text-xs text-[#D4A853]">Style detected: Floral · Black &amp; Grey</p>
-                  <div className="flex gap-1 mt-2">
-                    {Array.from({ length: 9 }, (_, i) => (
-                      <div key={i} className={`h-1.5 flex-1 rounded-full ${i < 3 ? "bg-[#D4A853]" : "bg-gray-200"}`} />
-                    ))}
-                  </div>
-                  <p className="text-[10px] text-gray-400 mt-1">Step 3 of 9</p>
-                </div>
-
+              <div className="bg-[#F8F8F6] px-5 py-4 border-b border-[#E5E5E3] flex items-center justify-between">
+                <span className="text-sm font-semibold text-[#111111]">AI Consultation</span>
+                <span className="text-xs text-gray-400">Powered by InkBook</span>
               </div>
-            </div>
 
+              <div className="p-5 space-y-4">
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#D4A853] flex items-center justify-center text-xs text-black font-bold flex-shrink-0">AI</div>
+                  <div className="bg-[#F8F8F6] rounded-xl rounded-tl-none px-4 py-3 text-sm text-[#111111] max-w-sm">
+                    Hi! I&apos;m InkBook AI. Tell me about the tattoo you&apos;re looking for 🎨
+                  </div>
+                </div>
+                <div className="flex gap-3 justify-end">
+                  <div className="bg-[#111111] rounded-xl rounded-tr-none px-4 py-3 text-sm text-white max-w-xs">
+                    I want a floral sleeve on my left arm, black and grey
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#D4A853] flex items-center justify-center text-xs text-black font-bold flex-shrink-0">AI</div>
+                  <div className="bg-[#F8F8F6] rounded-xl rounded-tl-none px-4 py-3 text-sm text-[#111111] max-w-sm">
+                    Great choice! I&apos;ve detected: Floral / Botanical style, Black &amp; Grey. What size are you thinking — half sleeve or full?
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-5 py-4 bg-[#F8F8F6] border-t border-[#E5E5E3]">
+                <p className="text-sm text-[#D4A853]">Style detected: Floral · Black &amp; Grey</p>
+                <div className="flex gap-1.5 mt-3">
+                  {Array.from({ length: 9 }, (_, i) => (
+                    <div key={i} className={`h-2 flex-1 rounded-full ${i < 3 ? "bg-[#D4A853]" : "bg-gray-200"}`} />
+                  ))}
+                </div>
+                <p className="text-xs text-gray-400 mt-2">Currently at step 3 of 9</p>
+              </div>
+
+            </div>
           </div>
         </div>
       </section>
@@ -557,56 +539,71 @@ export default function HomePage() {
 
             {/* Right — MOCKUP 3: Quote Builder */}
             <div className="flex justify-center lg:justify-end">
-              <div className="bg-white rounded-2xl overflow-hidden w-full max-w-sm"
-                style={{ boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 24px 64px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.4)" }}>
+              <div className="w-full max-w-md">
+                <div className="bg-white rounded-2xl overflow-hidden"
+                  style={{ boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 24px 64px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.4)" }}>
 
-                {/* Header */}
-                <div className="px-4 py-3 bg-[#F8F8F6] border-b border-[#E5E5E3] flex items-center justify-between">
-                  <span className="text-sm font-semibold text-[#111111]">Quote Builder</span>
-                  <span className="bg-[#D4A853] text-black text-[10px] px-2 py-0.5 rounded-full font-medium">AI Draft Ready</span>
-                </div>
+                  {/* Header */}
+                  <div className="px-5 py-4 bg-[#F8F8F6] border-b border-[#E5E5E3] flex items-center justify-between">
+                    <span className="text-base font-semibold text-[#111111]">Quote Builder</span>
+                    <span className="bg-[#D4A853] text-black text-xs px-2.5 py-1 rounded-full font-medium">AI Draft Ready</span>
+                  </div>
 
-                {/* Client info */}
-                <div className="px-4 py-3 border-b border-[#E5E5E3]">
-                  <p className="text-sm font-semibold text-[#111111]">Sarah M.</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Floral sleeve · Left arm · Full</p>
-                </div>
+                  {/* Client info */}
+                  <div className="px-5 py-4 border-b border-[#E5E5E3]">
+                    <p className="text-base font-semibold text-[#111111]">Sarah M.</p>
+                    <p className="text-sm text-gray-500 mt-0.5">Floral sleeve · Left arm · Full</p>
+                  </div>
 
-                {/* Line items */}
-                <div className="px-4 py-3 space-y-2 border-b border-[#E5E5E3]">
-                  {QUOTE_LINES.map(({ item, price }) => (
-                    <div key={item} className="flex justify-between text-xs">
-                      <span className="text-gray-600">{item}</span>
-                      <span className="text-[#111111] font-medium">{price}</span>
+                  {/* Line items */}
+                  <div className="px-5 py-4 space-y-3 border-b border-[#E5E5E3]">
+                    {QUOTE_LINES.map(({ item, price }) => (
+                      <div key={item} className="flex justify-between text-sm">
+                        <span className="text-gray-600">{item}</span>
+                        <span className="text-[#111111] font-medium">{price}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Total */}
+                  <div className="px-5 py-4 border-b border-[#E5E5E3]">
+                    <div className="flex justify-between">
+                      <span className="text-base font-semibold text-[#111111]">Total Project</span>
+                      <span className="text-base font-bold text-[#111111]">$700</span>
                     </div>
-                  ))}
-                </div>
-
-                {/* Total */}
-                <div className="px-4 py-3 border-b border-[#E5E5E3]">
-                  <div className="flex justify-between">
-                    <span className="text-sm font-semibold text-[#111111]">Total Project</span>
-                    <span className="text-sm font-bold text-[#111111]">$700</span>
+                    <div className="flex justify-between mt-2">
+                      <span className="text-sm text-gray-500">Deposit Required</span>
+                      <span className="text-sm text-[#D4A853] font-medium">$150 (21%)</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between mt-1.5">
-                    <span className="text-xs text-gray-500">Deposit Required</span>
-                    <span className="text-xs text-[#D4A853] font-medium">$150 (21%)</span>
+
+                  {/* Actions */}
+                  <div className="px-5 py-4 flex gap-2 bg-[#F8F8F6] border-b border-[#E5E5E3]">
+                    <button className="border border-gray-300 rounded-lg px-4 py-2 text-sm text-[#111111] hover:bg-gray-100 transition-colors">
+                      Edit
+                    </button>
+                    <button className="flex-1 bg-[#111111] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#2A2A2A] transition-colors">
+                      Approve &amp; Send
+                    </button>
                   </div>
+
+                  {/* Note */}
+                  <div className="px-5 py-3">
+                    <p className="text-xs text-gray-400">AI generated draft · Artist approval required before sending</p>
+                  </div>
+
                 </div>
 
-                {/* Actions */}
-                <div className="px-4 py-3 flex gap-2 bg-[#F8F8F6] border-b border-[#E5E5E3]">
-                  <button className="border border-gray-300 rounded-lg px-3 py-1.5 text-xs text-[#111111] hover:bg-gray-100 transition-colors">
-                    Edit
-                  </button>
-                  <button className="flex-1 bg-[#111111] text-white rounded-lg px-3 py-1.5 text-xs font-medium hover:bg-[#2A2A2A] transition-colors">
-                    Approve &amp; Send
-                  </button>
-                </div>
-
-                {/* Note */}
-                <div className="px-4 py-3">
-                  <p className="text-[10px] text-gray-400">AI generated draft · Artist approval required before sending</p>
+                {/* Deposit success card */}
+                <div className="mt-3 bg-green-50 border border-green-200 rounded-xl p-4">
+                  <div className="flex items-center gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                      <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                    <span className="text-sm font-semibold text-green-800">Deposit Request Sent ✓</span>
+                  </div>
+                  <p className="text-sm text-green-700 mt-1.5">Sarah M. · $150 deposit · Paid via Stripe</p>
                 </div>
 
               </div>
@@ -700,25 +697,25 @@ export default function HomePage() {
             {/* Kanban columns */}
             <div className="flex gap-4 p-4 overflow-x-auto">
               {PIPELINE_COLS.map((col) => (
-                <div key={col.title} className="w-48 flex-shrink-0">
+                <div key={col.title} className="w-56 flex-shrink-0 min-h-48">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-1.5">
-                      <span className={`text-xs font-semibold uppercase ${col.titleClass}`}>{col.title}</span>
+                      <span className={`text-sm font-semibold uppercase ${col.titleClass}`}>{col.title}</span>
                       {col.ai && <span className="w-1.5 h-1.5 rounded-full bg-[#D4A853] animate-pulse-dot" />}
                     </div>
-                    <span className={`rounded-full px-2 text-[10px] font-medium ${col.countClass}`}>{col.cards.length}</span>
+                    <span className={`rounded-full px-2 text-xs font-medium ${col.countClass}`}>{col.cards.length}</span>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 min-h-48">
                     {col.cards.map((card) => (
                       <div key={card.name} className={`bg-[#F8F8F6] rounded-lg p-3 ${card.border}`}>
-                        <p className="text-xs font-medium text-[#111111]">{card.name}</p>
-                        <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded"
+                        <p className="text-sm font-medium text-[#111111]">{card.name}</p>
+                        <span className="inline-block mt-1 text-xs px-1.5 py-0.5 rounded"
                           style={{ background: col.ai ? "rgba(212,168,83,0.1)" : "#F3F4F6", color: col.ai ? "#D4A853" : "#6B7280" }}>
                           {card.tag}
                         </span>
-                        <p className={`text-[10px] mt-1.5 ${card.subClass}`}>{card.sub}</p>
+                        <p className={`text-xs mt-1.5 ${card.subClass}`}>{card.sub}</p>
                         {card.readyBadge && (
-                          <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700">
+                          <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700">
                             Ready to book
                           </span>
                         )}
