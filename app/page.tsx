@@ -58,8 +58,8 @@ const WORKFLOW_STEPS = [
 const SIDEBAR_NAV = ["Dashboard", "Consultations", "Quotes", "Bookings", "Clients", "Pipeline", "Earnings"] as const;
 
 const BOOKING_ROWS = [
-  { name: "Sarah M.", service: "Tattoo sleeve · 4h", amount: "$150 deposit", badge: "Deposit paid",  badgeClass: "bg-green-900 text-green-400" },
-  { name: "Jake T.",  service: "Neo-trad arm · 3h", amount: "$200",          badge: "Confirmed",     badgeClass: "bg-yellow-900 text-yellow-400" },
+  { name: "Sarah M.", service: "Tattoo sleeve · 4h", amount: "$150 deposit", badge: "Deposit paid",   badgeClass: "bg-green-900 text-green-400" },
+  { name: "Jake T.",  service: "Neo-trad arm · 3h", amount: "$200",          badge: "Confirmed",      badgeClass: "bg-yellow-900 text-yellow-400" },
   { name: "Alex R.",  service: "Cover-up · 2h",     amount: "$300",          badge: "Consent signed", badgeClass: "bg-blue-900 text-blue-400" },
 ];
 
@@ -120,7 +120,7 @@ const PIPELINE_COLS: {
     countClass: "bg-green-100 text-green-600",
     cards: [
       { name: "Jordan H.", tag: "Traditional panther", sub: "Ready to book", subClass: "text-green-600 font-medium", border: "border border-green-200", readyBadge: true },
-      { name: "Priya S.",  tag: "Script lettering",  sub: "Booked: Friday", subClass: "text-green-600 font-medium", border: "border border-green-200", readyBadge: true },
+      { name: "Priya S.",  tag: "Script lettering",   sub: "Booked: Friday", subClass: "text-green-600 font-medium", border: "border border-green-200", readyBadge: true },
     ],
   },
 ];
@@ -179,42 +179,69 @@ const CRM_STATS = [
 ] as const;
 
 const CRM_TIMELINE = [
-  { date: "Mar 2023", event: "First consultation",  detail: "Floral sleeve inquiry via Instagram",             gold: true  },
-  { date: "Apr 2023", event: "Deposit paid · $150", detail: "Session 1 confirmed",                            gold: true  },
-  { date: "Apr 2023", event: "Session 1 complete",  detail: "Outline — 4 hours",                              gold: true  },
-  { date: "Jun 2023", event: "Session 2 complete",  detail: "Shading — 3 hours",                              gold: true  },
+  { date: "Mar 2023", event: "First consultation",  detail: "Floral sleeve inquiry via Instagram",              gold: true  },
+  { date: "Apr 2023", event: "Deposit paid · $150", detail: "Session 1 confirmed",                             gold: true  },
+  { date: "Apr 2023", event: "Session 1 complete",  detail: "Outline — 4 hours",                               gold: true  },
+  { date: "Jun 2023", event: "Session 2 complete",  detail: "Shading — 3 hours",                               gold: true  },
   { date: "Aug 2023", event: "5-star review",       detail: "“Alex is incredible. Best tattoo experience ever.”", gold: true  },
-  { date: "Jun 2024", event: "Touch-up booked",     detail: "Upcoming · June 20",                             gold: false },
+  { date: "Jun 2024", event: "Touch-up booked",     detail: "Upcoming · June 20",                              gold: false },
 ] as const;
 
 export default function HomePage() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [revenue, setRevenue] = useState(0);
-  const [bookings, setBookings] = useState(0);
-  const [deposits, setDeposits] = useState(0);
+  const [revenue,   setRevenue]   = useState(0);
+  const [bookings,  setBookings]  = useState(0);
+  const [deposits,  setDeposits]  = useState(0);
 
   const [quoteSession1, setQuoteSession1] = useState(0);
   const [quoteSession2, setQuoteSession2] = useState(0);
-  const [quoteTotal, setQuoteTotal] = useState(0);
-  const [quoteDeposit, setQuoteDeposit] = useState(0);
+  const [quoteTotal,    setQuoteTotal]    = useState(0);
+  const [quoteDeposit,  setQuoteDeposit]  = useState(0);
 
   const [visibleMessages, setVisibleMessages] = useState(0);
 
-  const chatCardRef    = useRef<HTMLDivElement>(null);
-  const workflowRowRef = useRef<HTMLDivElement>(null);
-  const pipelineRef    = useRef<HTMLDivElement>(null);
-  const quoteCardRef   = useRef<HTMLDivElement>(null);
+  /* ── Hero entrance: start invisible unless reduced-motion preferred ── */
+  const [heroVisible, setHeroVisible] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  });
 
+  /* ── Existing refs ── */
+  const chatCardRef      = useRef<HTMLDivElement>(null);
+  const workflowRowRef   = useRef<HTMLDivElement>(null);
+  const pipelineRef      = useRef<HTMLDivElement>(null);
+  const quoteCardRef     = useRef<HTMLDivElement>(null);
   const heroDashRef      = useRef<HTMLDivElement>(null);
   const quoteTiltRef     = useRef<HTMLDivElement>(null);
   const aiChatTiltRef    = useRef<HTMLDivElement>(null);
   const whiteLabelTiltRef = useRef<HTMLDivElement>(null);
 
+  /* ── New refs ── */
+  const revenueStatRef  = useRef<HTMLParagraphElement>(null);
+  const bookingsStatRef = useRef<HTMLParagraphElement>(null);
+  const depositsStatRef = useRef<HTMLParagraphElement>(null);
+  const crmTimelineRef  = useRef<HTMLDivElement>(null);
+
+  /* ── Hero item inline-style helper ── */
+  const heroItemStyle = (delayMs: number, initTransform = "translateY(20px)"): React.CSSProperties => ({
+    opacity:    heroVisible ? 1 : 0,
+    transform:  heroVisible ? "none" : initTransform,
+    transition: `opacity 0.5s ease-out ${delayMs}ms, transform 0.5s ease-out ${delayMs}ms`,
+  });
+
+  /* ── Hero count-up + stat flash ── */
   useEffect(() => {
+    const flashStat = (ref: React.RefObject<HTMLParagraphElement>) => {
+      const el = ref.current;
+      if (!el) return;
+      el.classList.add("stat-flash");
+      setTimeout(() => el.classList.remove("stat-flash"), 700);
+    };
     const countUp = (
       setter: React.Dispatch<React.SetStateAction<number>>,
       target: number,
-      duration: number
+      duration: number,
+      onDone?: () => void
     ) => {
       const start = performance.now();
       const tick = (now: number) => {
@@ -222,16 +249,26 @@ export default function HomePage() {
         const eased = 1 - Math.pow(1 - p, 3);
         setter(Math.round(eased * target));
         if (p < 1) requestAnimationFrame(tick);
+        else if (onDone) onDone();
       };
       requestAnimationFrame(tick);
     };
-    countUp(setRevenue, 12480, 1500);
-    countUp(setBookings, 47, 1200);
-    countUp(setDeposits, 100, 1000);
+    countUp(setRevenue,  12480, 1500, () => flashStat(revenueStatRef));
+    countUp(setBookings,    47, 1200, () => flashStat(bookingsStatRef));
+    countUp(setDeposits,   100, 1000, () => flashStat(depositsStatRef));
   }, []);
 
+  /* ── Hero entrance trigger ── */
   useEffect(() => {
-    const els = document.querySelectorAll<HTMLElement>("[data-animate], .reveal, .reveal-up, .reveal-scale, .scale-reveal, .word-reveal");
+    const t = setTimeout(() => setHeroVisible(true), 50);
+    return () => clearTimeout(t);
+  }, []);
+
+  /* ── Scroll-triggered data-animate / reveal / word-reveal ── */
+  useEffect(() => {
+    const els = document.querySelectorAll<HTMLElement>(
+      "[data-animate], .reveal, .reveal-up, .reveal-scale, .scale-reveal, .word-reveal"
+    );
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -249,6 +286,48 @@ export default function HomePage() {
     return () => io.disconnect();
   }, []);
 
+  /* ── Section slide-up ── */
+  useEffect(() => {
+    const els = document.querySelectorAll<HTMLElement>(".section-slide");
+    if (!els.length) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("in-view");
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+
+  /* ── CRM timeline sequential reveal ── */
+  useEffect(() => {
+    const container = crmTimelineRef.current;
+    if (!container) return;
+    let triggered = false;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !triggered) {
+          triggered = true;
+          const items = Array.from(container.querySelectorAll<HTMLElement>(".timeline-item"));
+          items.forEach((item, i) => {
+            setTimeout(() => item.classList.add("revealed"), i * 150);
+          });
+          io.disconnect();
+        }
+      },
+      { threshold: 0.2 }
+    );
+    io.observe(container);
+    return () => io.disconnect();
+  }, []);
+
+  /* ── AI chat message loop ── */
   useEffect(() => {
     const card = chatCardRef.current;
     if (!card) return;
@@ -268,6 +347,7 @@ export default function HomePage() {
     return () => { io.disconnect(); clearTimeout(loopTimer); };
   }, []);
 
+  /* ── Workflow cards left-to-right reveal ── */
   useEffect(() => {
     const row = workflowRowRef.current;
     if (!row) return;
@@ -289,6 +369,7 @@ export default function HomePage() {
     return () => io.disconnect();
   }, []);
 
+  /* ── Pipeline cards drop-in by column ── */
   useEffect(() => {
     const container = pipelineRef.current;
     if (!container) return;
@@ -316,6 +397,7 @@ export default function HomePage() {
     return () => io.disconnect();
   }, []);
 
+  /* ── Quote Builder price count-up ── */
   useEffect(() => {
     const card = quoteCardRef.current;
     if (!card) return;
@@ -343,8 +425,8 @@ export default function HomePage() {
           triggered = true;
           countUp(setQuoteSession1, 400, 800, 0);
           countUp(setQuoteSession2, 300, 600, 200);
-          countUp(setQuoteTotal, 700, 1000, 0);
-          countUp(setQuoteDeposit, 150, 500, 0);
+          countUp(setQuoteTotal,    700, 1000, 0);
+          countUp(setQuoteDeposit,  150, 500, 0);
           io.disconnect();
         }
       },
@@ -354,6 +436,7 @@ export default function HomePage() {
     return () => io.disconnect();
   }, []);
 
+  /* ── Tilt effect ── */
   const handleTilt = useCallback((ref: React.RefObject<HTMLDivElement>) => ({
     onMouseMove: (e: React.MouseEvent<HTMLDivElement>) => {
       const el = ref.current;
@@ -362,7 +445,7 @@ export default function HomePage() {
       const x = e.clientX - rect.left - rect.width / 2;
       const y = e.clientY - rect.top - rect.height / 2;
       const rx = -(y / rect.height) * 6;
-      const ry = (x / rect.width) * 6;
+      const ry =  (x / rect.width)  * 6;
       el.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg)`;
     },
     onMouseLeave: () => {
@@ -376,10 +459,37 @@ export default function HomePage() {
   const aiChatTilt     = handleTilt(aiChatTiltRef);
   const whiteLabelTilt = handleTilt(whiteLabelTiltRef);
 
+  /* ── Pain card magnetic hover ── */
+  const handlePainMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const rect = el.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width  - 0.5) * 12;
+    const y = ((e.clientY - rect.top)  / rect.height - 0.5) * 12;
+    el.style.transition = "transform 100ms ease-out";
+    el.style.transform  = `translateX(${x}px) translateY(${y}px)`;
+  };
+  const handlePainLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    el.style.transition = "transform 400ms ease-out";
+    el.style.transform  = "";
+  };
+
+  /* ── Pricing card spotlight ── */
+  const handlePricingMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const rect = el.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width  * 100).toFixed(1);
+    const y = ((e.clientY - rect.top)  / rect.height * 100).toFixed(1);
+    el.style.backgroundImage = `radial-gradient(circle at ${x}% ${y}%, rgba(212,168,83,0.08) 0%, transparent 60%)`;
+  };
+  const handlePricingLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.currentTarget.style.backgroundImage = "";
+  };
+
   const heroStats = [
-    { label: "Revenue",  value: `$${revenue.toLocaleString()}` },
-    { label: "Bookings", value: String(bookings) },
-    { label: "Deposits", value: `${deposits}%` },
+    { label: "Revenue",  value: `$${revenue.toLocaleString()}`, ref: revenueStatRef  },
+    { label: "Bookings", value: String(bookings),               ref: bookingsStatRef },
+    { label: "Deposits", value: `${deposits}%`,                 ref: depositsStatRef },
   ];
 
   return (
@@ -436,16 +546,41 @@ export default function HomePage() {
 
             {/* Left — copy */}
             <div>
-              <span className="text-xs font-semibold tracking-widest uppercase text-[#D4A853]">
+              {/* FIX 2 + ANIM 1: label */}
+              <span
+                className="hero-item text-xs font-semibold tracking-widest uppercase text-[#D4A853]"
+                style={heroItemStyle(0, "translateY(-10px)")}
+              >
                 Tattoo Business Operating System
               </span>
-              <h1 className="text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.1] mt-4 text-[#111111]">
-                Stop chasing inquiries.<br />Start tattooing.
+
+              {/* FIX 2: H1 split into two sized lines */}
+              <h1 className="font-bold leading-[1.1] mt-4 text-[#111111]">
+                <span
+                  className="hero-item block text-5xl lg:text-6xl xl:text-7xl"
+                  style={heroItemStyle(150, "translateY(20px)")}
+                >
+                  Stop chasing inquiries.
+                </span>
+                <span
+                  className="hero-item block text-4xl lg:text-5xl xl:text-6xl"
+                  style={heroItemStyle(300, "translateY(20px)")}
+                >
+                  Start tattooing.
+                </span>
               </h1>
-              <p className="text-lg text-gray-500 mt-6 max-w-md">
+
+              <p
+                className="hero-item text-lg text-gray-500 mt-6 max-w-md"
+                style={heroItemStyle(450)}
+              >
                 AI handles consultations, follow-ups, quotes, deposits, bookings, and aftercare — so you can focus on tattooing.
               </p>
-              <div className="mt-10 flex flex-wrap gap-4">
+
+              <div
+                className="hero-item mt-10 flex flex-wrap gap-4"
+                style={heroItemStyle(600, "translateY(10px)")}
+              >
                 <a href="#trial" className="bg-black text-white rounded-full px-8 py-4 text-base font-medium hover:bg-[#2A2A2A] transition-colors">
                   Start Free Trial
                 </a>
@@ -457,7 +592,11 @@ export default function HomePage() {
             </div>
 
             {/* Right — MOCKUP 1: rich dashboard */}
-            <div className="relative">
+            {/* ANIM 1: outer wrapper gets hero-item with translateX+scale start */}
+            <div
+              className="hero-item relative"
+              style={heroItemStyle(200, "translateX(30px) scale(0.97)")}
+            >
               <div className="absolute inset-0 pointer-events-none" style={{
                 background: "radial-gradient(ellipse at center, rgba(212,168,83,0.07) 0%, transparent 70%)",
                 filter: "blur(24px)", transform: "scale(1.1)",
@@ -494,11 +633,12 @@ export default function HomePage() {
 
                   <div className="flex-1 p-4 bg-[#0F0F0F] overflow-auto pb-14">
 
+                    {/* FIX 1: text-4xl → text-2xl, add refs for stat flash */}
                     <div className="grid grid-cols-3 gap-3">
                       {heroStats.map((s) => (
                         <div key={s.label} className="bg-[#1A1A1A] rounded-xl p-4">
                           <p className="text-xs text-gray-500">{s.label}</p>
-                          <p className="text-4xl font-bold text-white mt-1">{s.value}</p>
+                          <p ref={s.ref} className="text-2xl font-bold text-white mt-1">{s.value}</p>
                         </div>
                       ))}
                     </div>
@@ -562,16 +702,17 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto text-center">
           <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold" data-animate="fade-up">Why InkBook Exists</span>
           <div className="mt-8">
-            <p className="text-5xl lg:text-6xl font-light text-gray-300 leading-tight">
+            {/* FIX 3: flex flex-wrap gap-x so inline-block words have visible spaces */}
+            <div className="flex flex-wrap gap-x-[0.3em] justify-center text-5xl lg:text-6xl font-light text-gray-300 leading-tight">
               {"Most software manages appointments.".split(" ").map((word, i) => (
-                <span key={i} className="word-reveal" data-animate="word" data-delay={String(i * 50)}>{word}{" "}</span>
+                <span key={i} className="word-reveal" data-animate="word" data-delay={String(i * 50)}>{word}</span>
               ))}
-            </p>
-            <p className="text-5xl lg:text-6xl font-bold text-[#111111] leading-tight mt-2">
+            </div>
+            <div className="flex flex-wrap gap-x-[0.3em] justify-center text-5xl lg:text-6xl font-bold text-[#111111] leading-tight mt-2">
               {"InkBook manages the entire tattoo client journey.".split(" ").map((word, i) => (
-                <span key={i} className="word-reveal" data-animate="word" data-delay={String(300 + i * 50)}>{word}{" "}</span>
+                <span key={i} className="word-reveal" data-animate="word" data-delay={String(300 + i * 50)}>{word}</span>
               ))}
-            </p>
+            </div>
           </div>
           <div className="mt-16 max-w-xs mx-auto text-left">
             <p className="text-sm font-semibold text-[#111111] mb-4">InkBook</p>
@@ -603,10 +744,13 @@ export default function HomePage() {
             </h2>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-16 max-w-4xl mx-auto">
+            {/* ANIM 2: magnetic hover on each pain card */}
             {PAIN_CARDS.map((card, i) => (
               <div key={i}
-                className="bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3] hover:-translate-y-1 hover:shadow-md transition-all duration-200"
-                data-animate="fade-up" data-delay={String(i * 100)}>
+                className="bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3] hover:shadow-md transition-shadow duration-200"
+                data-animate="fade-up" data-delay={String(i * 100)}
+                onMouseMove={handlePainMove}
+                onMouseLeave={handlePainLeave}>
                 <div className="text-gray-400 mb-4">{card.icon}</div>
                 <h3 className="text-base font-semibold text-[#111111]">{card.title}</h3>
                 <p className="text-sm text-gray-500 mt-2">{card.desc}</p>
@@ -793,8 +937,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══ ARTIST DASHBOARD ══ */}
-      <section className="py-24 px-6" style={{ background: "#F8F8F6" }}>
+      {/* ══ ARTIST DASHBOARD ══ — ANIM 4: section-slide */}
+      <section className="section-slide py-24 px-6" style={{ background: "#F8F8F6" }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Artist Dashboard</span>
@@ -806,7 +950,6 @@ export default function HomePage() {
           <div className="max-w-4xl mx-auto mt-12">
             <div className="bg-white rounded-2xl shadow-xl border border-[#E5E5E3] overflow-hidden">
 
-              {/* Top bar */}
               <div className="bg-[#F8F8F6] px-6 py-4 border-b border-[#E5E5E3] flex items-center gap-3">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
                   <polyline points="15 18 9 12 15 6" />
@@ -818,10 +961,8 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Body */}
               <div className="grid h-[400px]" style={{ gridTemplateColumns: "240px 1fr" }}>
 
-                {/* Sidebar */}
                 <div className="bg-[#F8F8F6] border-r border-[#E5E5E3] p-4 flex flex-col">
                   <div className="flex flex-col items-center pt-2">
                     <div className="w-12 h-12 bg-[#D4A853] rounded-full flex items-center justify-center text-white font-bold">AR</div>
@@ -844,7 +985,6 @@ export default function HomePage() {
                   </nav>
                 </div>
 
-                {/* Main */}
                 <div className="p-6 overflow-auto">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-[#111111]">AI Inbox</span>
@@ -896,7 +1036,6 @@ export default function HomePage() {
               </ul>
             </div>
 
-            {/* Booking page mockup */}
             <div ref={whiteLabelTiltRef} className="tilt-card bg-white rounded-2xl shadow-2xl p-6"
               onMouseMove={whiteLabelTilt.onMouseMove} onMouseLeave={whiteLabelTilt.onMouseLeave}>
               <div className="flex items-center justify-between pb-4" style={{ borderBottom: "1px solid #F3F4F6" }}>
@@ -985,8 +1124,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══ CLIENT CRM ══ */}
-      <section className="py-24 px-6" style={{ background: "#FFFFFF" }}>
+      {/* ══ CLIENT CRM ══ — ANIM 4: section-slide */}
+      <section className="section-slide py-24 px-6" style={{ background: "#FFFFFF" }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Client CRM</span>
@@ -998,7 +1137,6 @@ export default function HomePage() {
           <div className="max-w-4xl mx-auto mt-12">
             <div className="bg-white rounded-2xl shadow-xl border border-[#E5E5E3] overflow-hidden">
 
-              {/* Top bar */}
               <div className="px-6 py-4 bg-[#F8F8F6] border-b border-[#E5E5E3] flex items-center justify-between">
                 <span className="text-sm font-semibold text-[#111111]">Sarah M. — Client Profile</span>
                 <div className="flex items-center gap-2">
@@ -1008,10 +1146,8 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Content */}
               <div className="grid" style={{ gridTemplateColumns: "280px 1fr" }}>
 
-                {/* Left: client summary */}
                 <div className="p-6 border-r border-[#E5E5E3]">
                   <div className="flex flex-col items-center">
                     <div className="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold"
@@ -1037,13 +1173,13 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Right: timeline */}
+                {/* ANIM 5: timeline container ref + timeline-item class on rows */}
                 <div className="p-6">
                   <p className="text-sm font-semibold text-[#111111]">Client Timeline</p>
-                  <div className="mt-4 space-y-4 relative">
+                  <div ref={crmTimelineRef} className="mt-4 space-y-4 relative">
                     <div className="absolute left-[5px] top-2 bottom-2 w-[2px] bg-[#E5E5E3]" />
                     {CRM_TIMELINE.map((item, i) => (
-                      <div key={i} className="flex gap-4 items-start relative">
+                      <div key={i} className="timeline-item flex gap-4 items-start relative">
                         <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 z-10 ${
                           item.gold ? "bg-[#D4A853]" : "bg-white border-2 border-[#D4A853]"
                         }`} />
@@ -1063,8 +1199,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══ ROI ══ */}
-      <section className="py-20 px-6" style={{ background: "#FFFFFF" }}>
+      {/* ══ ROI ══ — ANIM 4: section-slide */}
+      <section className="section-slide py-20 px-6" style={{ background: "#FFFFFF" }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">The Math Is Simple</span>
@@ -1098,7 +1234,13 @@ export default function HomePage() {
           </div>
 
           <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-            <div className="scale-reveal bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3]" data-delay="0">
+            {/* ANIM 3: spotlight on each card */}
+            <div
+              className="scale-reveal bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3]"
+              data-delay="0"
+              onMouseMove={handlePricingMove}
+              onMouseLeave={handlePricingLeave}
+            >
               <p className="text-sm font-semibold text-gray-500">Solo Artist</p>
               <div className="flex items-end gap-1 mt-3 mb-1">
                 <span className="text-5xl font-bold text-[#111111]">$49</span>
@@ -1110,7 +1252,12 @@ export default function HomePage() {
               </a>
             </div>
 
-            <div className="bg-white rounded-2xl p-8 shadow-xl border-2 border-[#D4A853] scale-[1.05] relative" data-animate="fade-up" data-delay="200">
+            <div
+              className="bg-white rounded-2xl p-8 shadow-xl border-2 border-[#D4A853] scale-[1.05] relative"
+              data-animate="fade-up" data-delay="200"
+              onMouseMove={handlePricingMove}
+              onMouseLeave={handlePricingLeave}
+            >
               <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#D4A853] text-black text-xs font-semibold px-4 py-1 rounded-full whitespace-nowrap">
                 MOST POPULAR
               </span>
@@ -1125,7 +1272,12 @@ export default function HomePage() {
               </a>
             </div>
 
-            <div className="scale-reveal bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3]" data-delay="400">
+            <div
+              className="scale-reveal bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3]"
+              data-delay="400"
+              onMouseMove={handlePricingMove}
+              onMouseLeave={handlePricingLeave}
+            >
               <p className="text-sm font-semibold text-gray-500">Studio Pro</p>
               <div className="flex items-end gap-1 mt-3 mb-1">
                 <span className="text-5xl font-bold text-[#111111]">$169</span>

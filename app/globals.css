@@ -153,6 +153,13 @@ body {
   to   { opacity: 1; transform: translateX(0); }
 }
 
+/* Stat flash gold on count-up complete */
+@keyframes goldFlash {
+  0%   { color: white; }
+  50%  { color: #D4A853; }
+  100% { color: white; }
+}
+
 /* ─────────────────────────────────────────────────────
    ANIMATION CLASSES
 ───────────────────────────────────────────────────── */
@@ -171,6 +178,10 @@ body {
 
 .animate-ambient-drift {
   animation: ambient-drift 8s ease-in-out infinite;
+}
+
+.stat-flash {
+  animation: goldFlash 0.6s ease-out;
 }
 
 /* ─────────────────────────────────────────────────────
@@ -343,6 +354,44 @@ body {
 }
 
 /* ─────────────────────────────────────────────────────
+   HERO ENTRANCE — opacity managed by React state
+   Class is a hook for reduced-motion only
+───────────────────────────────────────────────────── */
+
+.hero-item {
+  will-change: opacity, transform;
+}
+
+/* ─────────────────────────────────────────────────────
+   SECTION SLIDE-UP
+───────────────────────────────────────────────────── */
+
+.section-slide {
+  opacity: 0;
+  transform: translateY(40px);
+}
+.section-slide.in-view {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ─────────────────────────────────────────────────────
+   CRM TIMELINE ITEM REVEAL
+───────────────────────────────────────────────────── */
+
+.timeline-item {
+  opacity: 0;
+  transform: translateY(15px);
+}
+.timeline-item.revealed {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}
+
+/* ─────────────────────────────────────────────────────
    REDUCED MOTION OVERRIDES
 ───────────────────────────────────────────────────── */
 
@@ -376,4 +425,21 @@ body {
     transition: none !important;
   }
   .tilt-card { transform: none !important; }
+  .hero-item {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    will-change: auto !important;
+  }
+  .section-slide {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .timeline-item {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .stat-flash { animation: none !important; }
 }
