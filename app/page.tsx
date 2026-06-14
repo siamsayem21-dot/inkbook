@@ -536,39 +536,59 @@ export default function HomePage() {
             </h2>
           </div>
 
-          {/* Desktop: horizontal steps */}
-          <div className="relative hidden lg:block">
-            <div
-              className="absolute"
-              style={{
-                top: "2rem",
-                left: "10%",
-                right: "10%",
-                height: "1px",
-                background: "linear-gradient(90deg, transparent 0%, #E5E7EB 8%, #E5E7EB 92%, transparent 100%)",
-              }}
-            />
-            <div className="grid grid-cols-5 gap-4">
-              {WORKFLOW_STEPS.map((s, i) => (
-                <div key={i} className={`flex flex-col items-center text-center px-2 reveal stagger-${i + 1}`}>
-                  <div
-                    className="relative z-10 w-16 h-16 rounded-full flex items-center justify-center mb-5 text-sm font-bold font-mono hover:scale-105 transition-all duration-200"
-                    style={{
-                      background: "#FFFFFF",
-                      border: "2px solid #E5E7EB",
-                      color: "#D4A853",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                    }}
-                  >
-                    {s.step}
-                  </div>
-                  <h3 className="text-base font-bold mb-2" style={{ color: "#0A0A0A" }}>{s.label}</h3>
-                  <p className="text-sm leading-relaxed" style={{ color: "#6B7280" }}>{s.desc}</p>
-                </div>
-              ))}
+          {/* Desktop: horizontal scrollable flow diagram */}
+          <div className="hidden lg:block">
+            <div className="overflow-x-auto -mx-6 px-6 pb-4">
+              <div className="flex items-center min-w-max py-2">
+                {(() => {
+                  const AI_IDX = new Set([1, 4]);
+                  const ICONS = [
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
+                  ];
+                  return WORKFLOW_STEPS.map((s, i) => {
+                    const isAI = AI_IDX.has(i);
+                    return (
+                      <div key={i} className="flex items-center">
+                        <div
+                          className="rounded-xl flex flex-col items-center text-center mx-1.5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+                          style={{
+                            background: "#FFFFFF",
+                            border: `1.5px solid ${isAI ? "rgba(212,168,83,0.4)" : "#E5E7EB"}`,
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                            minWidth: "144px",
+                            width: "144px",
+                            padding: "18px 14px",
+                          }}
+                        >
+                          <div
+                            className="w-10 h-10 rounded-full flex items-center justify-center mb-3"
+                            style={{
+                              background: isAI ? "rgba(212,168,83,0.12)" : "#F3F4F6",
+                              border: `1.5px solid ${isAI ? "#D4A853" : "#D1D5DB"}`,
+                              color: isAI ? "#D4A853" : "#6B7280",
+                            }}
+                          >
+                            {ICONS[i]}
+                          </div>
+                          <p className="text-[10px] font-mono font-medium mb-1.5" style={{ color: "#9CA3AF" }}>{s.step}</p>
+                          <h3 className="text-xs font-bold mb-1.5 leading-snug" style={{ color: "#0A0A0A" }}>{s.label}</h3>
+                          <p className="text-[11px] leading-snug" style={{ color: "#6B7280" }}>{s.desc}</p>
+                        </div>
+                        {i < WORKFLOW_STEPS.length - 1 && (
+                          <span className="text-lg font-bold flex-shrink-0 mx-0.5" style={{ color: "#D4A853" }}>→</span>
+                        )}
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
             </div>
 
-            <div className="mt-12">
+            <div className="mt-10">
               <div
                 className="rounded-2xl px-8 py-8 text-center"
                 style={{
@@ -592,33 +612,56 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Mobile: vertical steps */}
+          {/* Mobile: vertical stack flow diagram */}
           <div className="lg:hidden">
-            <div className="relative pl-8">
-              <div
-                className="absolute left-4 top-3 bottom-3"
-                style={{ width: "1px", background: "#E5E7EB" }}
-              />
-              {WORKFLOW_STEPS.map((s, i) => (
-                <div key={i} className="relative flex gap-5 pb-8 last:pb-0">
-                  <div
-                    className="absolute -left-4 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold font-mono flex-shrink-0"
-                    style={{
-                      background: "#FFFFFF",
-                      border: "2px solid #E5E7EB",
-                      color: "#D4A853",
-                    }}
-                  >
-                    {s.step}
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-sm font-bold mb-1" style={{ color: "#0A0A0A" }}>{s.label}</h3>
-                    <p className="text-sm leading-relaxed" style={{ color: "#6B7280" }}>{s.desc}</p>
-                  </div>
-                </div>
-              ))}
+            <div className="flex flex-col items-center">
+              {(() => {
+                const AI_IDX = new Set([1, 4]);
+                const ICONS = [
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
+                ];
+                return WORKFLOW_STEPS.map((s, i) => {
+                  const isAI = AI_IDX.has(i);
+                  return (
+                    <div key={i} className="flex flex-col items-center w-full">
+                      <div
+                        className="rounded-xl w-full flex items-start gap-4"
+                        style={{
+                          background: "#FFFFFF",
+                          border: `1.5px solid ${isAI ? "rgba(212,168,83,0.4)" : "#E5E7EB"}`,
+                          boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                          padding: "14px 16px",
+                        }}
+                      >
+                        <div
+                          className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                          style={{
+                            background: isAI ? "rgba(212,168,83,0.12)" : "#F3F4F6",
+                            border: `1.5px solid ${isAI ? "#D4A853" : "#D1D5DB"}`,
+                            color: isAI ? "#D4A853" : "#6B7280",
+                          }}
+                        >
+                          {ICONS[i]}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-mono font-medium mb-0.5" style={{ color: "#9CA3AF" }}>{s.step}</p>
+                          <h3 className="text-sm font-bold mb-1" style={{ color: "#0A0A0A" }}>{s.label}</h3>
+                          <p className="text-sm leading-snug" style={{ color: "#6B7280" }}>{s.desc}</p>
+                        </div>
+                      </div>
+                      {i < WORKFLOW_STEPS.length - 1 && (
+                        <span className="text-xl my-2" style={{ color: "#D4A853" }}>↓</span>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
             </div>
-            <div className="mt-10">
+            <div className="mt-8">
               <div
                 className="rounded-2xl px-5 py-6 text-center overflow-hidden"
                 style={{
