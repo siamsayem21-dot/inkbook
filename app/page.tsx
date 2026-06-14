@@ -33,11 +33,6 @@ const IconClose = () => (
     <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
   </svg>
 );
-const IconCheckSmall = ({ highlight }: { highlight?: boolean }) => (
-  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={highlight ? "#D4A853" : "#6B7280"} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="20 6 9 17 4 12" />
-  </svg>
-);
 
 /* ─── Data ─── */
 const PAIN_CARDS = [
@@ -60,17 +55,80 @@ const WORKFLOW_STEPS = [
   { num: "10", label: "CRM", desc: "Client stored in studio CRM.", ai: false },
 ];
 
-const TIMELINE = [
-  { label: "Inquiry received via Instagram", time: "9:14 AM", done: true },
-  { label: "AI sent consultation questions", time: "9:14 AM", done: true },
-  { label: "Client replied with style details", time: "9:31 AM", done: true },
-  { label: "Quote generated and sent", time: "9:32 AM", done: true },
-  { label: "Artist approved quote", time: "10:05 AM", done: true, highlight: true },
-  { label: "Deposit of $150 collected", time: "10:07 AM", done: true },
-  { label: "Booking confirmed + calendar blocked", time: "10:07 AM", done: true },
-  { label: "Digital consent form signed", time: "10:09 AM", done: true },
-  { label: "48hr reminder queued", time: "Scheduled", done: false },
-  { label: "Aftercare guide sends post-session", time: "Scheduled", done: false },
+const SIDEBAR_NAV = ["Dashboard", "Consultations", "Quotes", "Bookings", "Clients", "Pipeline", "Earnings"] as const;
+
+const BOOKING_ROWS = [
+  { name: "Sarah M.", service: "Tattoo sleeve · 4h", amount: "$150 deposit", badge: "Deposit paid",  badgeClass: "bg-green-900 text-green-400" },
+  { name: "Jake T.",  service: "Neo-trad arm · 3h", amount: "$200",          badge: "Confirmed",     badgeClass: "bg-yellow-900 text-yellow-400" },
+  { name: "Alex R.",  service: "Cover-up · 2h",     amount: "$300",          badge: "Consent signed", badgeClass: "bg-blue-900 text-blue-400" },
+];
+
+const AI_ACTIVITY = [
+  "Following up with Maria S. — Sent consultation reminder",
+  "Sent quote to Jake T. — $650 for neo-trad sleeve",
+  "Deposit collected — Alex R. paid $300",
+];
+
+const QUOTE_LINES = [
+  { item: "Consultation",              price: "$0"   },
+  { item: "Session 1 — Outline (4hr)", price: "$400" },
+  { item: "Session 2 — Shading (3hr)", price: "$300" },
+  { item: "Touch-up (included)",       price: "$0"   },
+];
+
+type PipelineCard = {
+  name: string;
+  tag: string;
+  sub: string;
+  subClass: string;
+  border: string;
+  readyBadge?: boolean;
+};
+
+const PIPELINE_COLS: {
+  title: string;
+  titleClass: string;
+  countClass: string;
+  ai?: boolean;
+  cards: PipelineCard[];
+}[] = [
+  {
+    title: "New Inquiry",
+    titleClass: "text-gray-500",
+    countClass: "bg-gray-100 text-gray-600",
+    cards: [
+      { name: "Maya L.",  tag: "Floral sleeve",    sub: "2m ago",  subClass: "text-gray-400", border: "" },
+      { name: "Chris P.", tag: "Geometric back",   sub: "14m ago", subClass: "text-gray-400", border: "" },
+      { name: "Jess W.",  tag: "Fine line script", sub: "1h ago",  subClass: "text-gray-400", border: "" },
+    ],
+  },
+  {
+    title: "AI Consultation",
+    titleClass: "text-[#D4A853]",
+    countClass: "bg-gray-100 text-gray-600",
+    ai: true,
+    cards: [
+      { name: "Sam K.",  tag: "Neo-trad eagle",    sub: "Qualifying…",    subClass: "text-[#D4A853]", border: "border border-[rgba(212,168,83,0.25)]" },
+      { name: "Dana T.", tag: "Blackwork mandala", sub: "Style detected", subClass: "text-[#D4A853]", border: "border border-[rgba(212,168,83,0.25)]" },
+    ],
+  },
+  {
+    title: "Quote Sent",
+    titleClass: "text-gray-500",
+    countClass: "bg-gray-100 text-gray-600",
+    cards: [
+      { name: "Riley M.", tag: "Full back piece", sub: "$850", subClass: "font-bold text-[#111111]", border: "" },
+      { name: "Alex J.",  tag: "Watercolor koi",  sub: "$450", subClass: "font-bold text-[#111111]", border: "" },
+    ],
+  },
+  {
+    title: "Deposit Paid",
+    titleClass: "text-green-600",
+    countClass: "bg-green-100 text-green-600",
+    cards: [
+      { name: "Jordan H.", tag: "Traditional panther", sub: "Ready to book", subClass: "text-green-600 font-medium", border: "border border-green-200", readyBadge: true },
+    ],
+  },
 ];
 
 export default function HomePage() {
@@ -119,7 +177,7 @@ export default function HomePage() {
   }, []);
 
   const heroStats = [
-    { label: "Revenue", value: `$${revenue.toLocaleString()}` },
+    { label: "Revenue",  value: `$${revenue.toLocaleString()}` },
     { label: "Bookings", value: String(bookings) },
     { label: "Deposits", value: `${deposits}%` },
   ];
@@ -130,42 +188,27 @@ export default function HomePage() {
       {/* ══ NAV ══ */}
       <header className="sticky top-0 z-50 bg-white border-b border-[#E5E5E3]">
         <div className="max-w-6xl mx-auto px-6 flex items-center justify-between h-16">
-          <a href="/" className="text-xl font-semibold tracking-tight text-[#111111]">
-            InkBook
-          </a>
+          <a href="/" className="text-xl font-semibold tracking-tight text-[#111111]">InkBook</a>
 
           <nav className="hidden md:flex items-center gap-8">
             {(["Features", "Book Demo"] as const).map((link) => (
-              <a
-                key={link}
-                href={`#${link.toLowerCase().replace(" ", "-")}`}
-                className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
-              >
+              <a key={link} href={`#${link.toLowerCase().replace(" ", "-")}`}
+                className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
                 {link}
               </a>
             ))}
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
-            <a
-              href="#book-demo"
-              className="border border-gray-300 rounded-full px-5 py-2 text-sm font-medium text-[#111111] hover:border-gray-400 transition-colors"
-            >
+            <a href="#book-demo" className="border border-gray-300 rounded-full px-5 py-2 text-sm font-medium text-[#111111] hover:border-gray-400 transition-colors">
               Book Demo
             </a>
-            <a
-              href="#trial"
-              className="bg-black text-white rounded-full px-5 py-2 text-sm font-medium hover:bg-[#2A2A2A] transition-colors"
-            >
+            <a href="#trial" className="bg-black text-white rounded-full px-5 py-2 text-sm font-medium hover:bg-[#2A2A2A] transition-colors">
               Start Free Trial
             </a>
           </div>
 
-          <button
-            className="md:hidden p-1.5 rounded-md text-[#111111]"
-            onClick={() => setMobileOpen((o) => !o)}
-            aria-label="Toggle menu"
-          >
+          <button className="md:hidden p-1.5 rounded-md text-[#111111]" onClick={() => setMobileOpen((o) => !o)} aria-label="Toggle menu">
             {mobileOpen ? <IconClose /> : <IconMenu />}
           </button>
         </div>
@@ -173,28 +216,14 @@ export default function HomePage() {
         {mobileOpen && (
           <div className="md:hidden px-6 pt-2 pb-6 flex flex-col gap-1 border-t border-[#F3F4F6]">
             {(["Features", "Book Demo"] as const).map((link) => (
-              <a
-                key={link}
-                href={`#${link.toLowerCase().replace(" ", "-")}`}
-                className="py-2.5 text-sm font-medium text-gray-500"
-                onClick={() => setMobileOpen(false)}
-              >
+              <a key={link} href={`#${link.toLowerCase().replace(" ", "-")}`}
+                className="py-2.5 text-sm font-medium text-gray-500" onClick={() => setMobileOpen(false)}>
                 {link}
               </a>
             ))}
             <div className="flex flex-col gap-2 pt-3">
-              <a
-                href="#book-demo"
-                className="py-2.5 text-sm font-medium rounded-full border border-gray-300 text-center text-[#111111]"
-              >
-                Book Demo
-              </a>
-              <a
-                href="#trial"
-                className="py-2.5 text-sm font-medium rounded-full bg-black text-white text-center"
-              >
-                Start Free Trial
-              </a>
+              <a href="#book-demo" className="py-2.5 text-sm font-medium rounded-full border border-gray-300 text-center text-[#111111]">Book Demo</a>
+              <a href="#trial" className="py-2.5 text-sm font-medium rounded-full bg-black text-white text-center">Start Free Trial</a>
             </div>
           </div>
         )}
@@ -205,7 +234,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
 
-            {/* Left */}
+            {/* Left — copy */}
             <div>
               <span className="text-xs font-semibold tracking-widest uppercase text-[#D4A853]">
                 Tattoo Business Operating System
@@ -217,97 +246,118 @@ export default function HomePage() {
                 AI handles consultations, follow-ups, quotes, deposits, bookings, and aftercare — so you can focus on tattooing.
               </p>
               <div className="mt-10 flex flex-wrap gap-4">
-                <a
-                  href="#trial"
-                  className="bg-black text-white rounded-full px-8 py-4 text-base font-medium hover:bg-[#2A2A2A] transition-colors"
-                >
+                <a href="#trial" className="bg-black text-white rounded-full px-8 py-4 text-base font-medium hover:bg-[#2A2A2A] transition-colors">
                   Start Free Trial
                 </a>
-                <a
-                  href="#book-demo"
-                  className="border border-gray-300 rounded-full px-8 py-4 text-base text-[#111111] hover:border-gray-400 transition-colors"
-                >
+                <a href="#book-demo" className="border border-gray-300 rounded-full px-8 py-4 text-base text-[#111111] hover:border-gray-400 transition-colors">
                   Book Demo
                 </a>
               </div>
               <p className="mt-4 text-sm text-gray-400">14-day free trial · No credit card required</p>
             </div>
 
-            {/* Right: dashboard */}
+            {/* Right — MOCKUP 1: rich dashboard */}
             <div className="relative">
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background: "radial-gradient(ellipse at center, rgba(212,168,83,0.07) 0%, transparent 70%)",
-                  filter: "blur(24px)",
-                  transform: "scale(1.1)",
-                }}
-              />
-              <div
-                className="relative rounded-2xl shadow-2xl overflow-hidden"
-                style={{ background: "#0F0F0F", border: "1px solid #1F1F1F" }}
-              >
-                {/* Browser chrome */}
-                <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: "1px solid #1F1F1F" }}>
+              {/* Gold glow */}
+              <div className="absolute inset-0 pointer-events-none" style={{
+                background: "radial-gradient(ellipse at center, rgba(212,168,83,0.07) 0%, transparent 70%)",
+                filter: "blur(24px)", transform: "scale(1.1)",
+              }} />
+
+              {/* Dashboard card */}
+              <div className="relative rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+                style={{ background: "#0F0F0F", border: "1px solid #1F1F1F", minHeight: "480px" }}>
+
+                {/* Top bar */}
+                <div className="flex-shrink-0 flex items-center gap-2 px-4 py-3 bg-[#1A1A1A]"
+                  style={{ borderBottom: "1px solid #1F1F1F" }}>
                   <span className="w-3 h-3 rounded-full bg-red-400" />
                   <span className="w-3 h-3 rounded-full bg-yellow-400" />
                   <span className="w-3 h-3 rounded-full bg-green-400" />
                   <span className="flex-1 text-center text-xs text-gray-500">InkBook — Dashboard</span>
                 </div>
 
-                <div className="p-6 pb-14">
-                  {/* Stats */}
-                  <div className="grid grid-cols-3 gap-3 mt-4">
-                    {heroStats.map((s) => (
-                      <div key={s.label} className="bg-[#1A1A1A] rounded-xl p-4">
-                        <p className="text-xs text-gray-500">{s.label}</p>
-                        <p className="text-3xl font-bold text-white mt-1">{s.value}</p>
-                      </div>
-                    ))}
+                {/* Body: sidebar + main */}
+                <div className="flex flex-1">
+
+                  {/* Sidebar */}
+                  <div className="flex-shrink-0 w-40 bg-[#111111] p-4" style={{ borderRight: "1px solid #1F1F1F" }}>
+                    <p className="text-sm font-bold text-white mb-6">InkBook</p>
+                    <nav className="space-y-1">
+                      {SIDEBAR_NAV.map((item) => (
+                        <div key={item} className={`px-3 py-2 rounded-lg text-xs cursor-default ${
+                          item === "Dashboard"
+                            ? "bg-[#D4A853] text-black font-medium"
+                            : "text-gray-500 hover:text-gray-300"
+                        }`}>
+                          {item}
+                        </div>
+                      ))}
+                    </nav>
                   </div>
 
-                  {/* Recent Bookings */}
-                  <div className="mt-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-gray-500 uppercase tracking-wider">Recent Bookings</span>
-                      <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "rgba(34,197,94,0.12)", color: "#4ADE80" }}>Live</span>
-                    </div>
-                    {[
-                      { name: "Sarah M.", status: "Deposit paid", amount: "$150" },
-                      { name: "Jake T.", status: "Confirmed", amount: "$200" },
-                      { name: "Alex R.", status: "Consent signed", amount: "$300" },
-                    ].map((row, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center justify-between py-2.5"
-                        style={{ borderBottom: i < 2 ? "1px solid #1A1A1A" : undefined }}
-                      >
-                        <p className="text-sm text-white">{row.name}</p>
-                        <p className="text-xs text-gray-500 flex-1 text-center">{row.status}</p>
-                        <p className="text-sm text-[#D4A853] font-medium">{row.amount}</p>
-                      </div>
-                    ))}
-                  </div>
+                  {/* Main */}
+                  <div className="flex-1 p-4 bg-[#0F0F0F] overflow-auto pb-14">
 
-                  {/* AI Activity */}
-                  <div className="mt-4">
-                    <span className="text-xs text-gray-500 uppercase tracking-wider">AI Activity</span>
-                    <div className="mt-2 space-y-2">
-                      {[
-                        "Following up with Maria S.",
-                        "Sent quote to Jake T.",
-                        "Deposit collected — Alex R.",
-                      ].map((item, i) => (
-                        <p key={i} className="text-xs text-gray-400">{item}</p>
+                    {/* Stats */}
+                    <div className="grid grid-cols-3 gap-3">
+                      {heroStats.map((s) => (
+                        <div key={s.label} className="bg-[#1A1A1A] rounded-xl p-4">
+                          <p className="text-xs text-gray-500">{s.label}</p>
+                          <p className="text-3xl font-bold text-white mt-1">{s.value}</p>
+                        </div>
                       ))}
                     </div>
+
+                    {/* Recent Bookings */}
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-gray-500 uppercase tracking-wider">Recent Bookings</span>
+                        <span className="text-xs text-green-400 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse-dot inline-block" />
+                          Live
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        {BOOKING_ROWS.map((row) => (
+                          <div key={row.name} className="bg-[#1A1A1A] rounded-lg px-3 py-2 flex items-center justify-between">
+                            <div>
+                              <p className="text-xs text-white font-medium">{row.name}</p>
+                              <p className="text-[10px] text-gray-500 mt-0.5">{row.service}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-[#D4A853] font-medium">{row.amount}</span>
+                              <span className={`text-[10px] rounded-full px-2 py-0.5 ${row.badgeClass}`}>{row.badge}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* AI Activity */}
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-gray-500 uppercase tracking-wider">AI Activity</span>
+                        <span className="text-[10px] text-[#D4A853]">🤖 AI</span>
+                      </div>
+                      <div className="space-y-2">
+                        {AI_ACTIVITY.map((item) => (
+                          <div key={item} className="flex items-start gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#D4A853] mt-1.5 flex-shrink-0" />
+                            <p className="text-[10px] text-gray-400">{item}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
                   </div>
                 </div>
 
                 {/* Floating badge */}
-                <div className="absolute bottom-4 left-4 flex items-center gap-2 rounded-full px-3 py-1.5" style={{ background: "#1A1A1A", border: "1px solid #2A2A2A" }}>
+                <div className="absolute bottom-4 left-[168px] flex items-center gap-2 rounded-full px-3 py-1.5"
+                  style={{ background: "#1A1A1A", border: "1px solid #2A2A2A" }}>
                   <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse-dot" />
-                  <span className="text-xs text-white">3 new bookings today</span>
+                  <span className="text-[10px] text-white">3 new bookings today</span>
                 </div>
               </div>
             </div>
@@ -372,12 +422,9 @@ export default function HomePage() {
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-16 max-w-4xl mx-auto">
             {PAIN_CARDS.map((card, i) => (
-              <div
-                key={i}
+              <div key={i}
                 className="bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3] hover:-translate-y-1 hover:shadow-md transition-all duration-200"
-                data-animate="fade-up"
-                data-delay={String(i * 100)}
-              >
+                data-animate="fade-up" data-delay={String(i * 100)}>
                 <div className="text-gray-400 mb-4">{card.icon}</div>
                 <h3 className="text-base font-semibold text-[#111111]">{card.title}</h3>
                 <p className="text-sm text-gray-500 mt-2">{card.desc}</p>
@@ -397,38 +444,95 @@ export default function HomePage() {
             </h2>
           </div>
 
-          {/* Desktop cards — horizontal scroll */}
-          <div className="hidden md:flex flex-row overflow-x-auto gap-3 pb-4 mt-16">
-            {WORKFLOW_STEPS.map((s, i) => (
-              <div key={i} className="flex items-center flex-shrink-0">
-                <div className="bg-white border border-[#E5E5E3] rounded-xl p-4 min-w-[130px] flex-shrink-0 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 text-center">
-                  <div
-                    className="w-3 h-3 rounded-full mx-auto mb-2"
-                    style={{ background: s.ai ? "#D4A853" : "#D1D5DB" }}
-                  />
-                  <p className="text-xs text-gray-400">{s.num}</p>
-                  <p className="text-xs font-bold text-[#111111] mt-1">{s.label}</p>
-                  <p className="text-[10px] text-gray-400 mt-1">{s.desc}</p>
-                </div>
-                {i < WORKFLOW_STEPS.length - 1 && (
-                  <span className="text-[#D4A853] text-sm mx-1 flex-shrink-0 self-center">→</span>
-                )}
-              </div>
-            ))}
-          </div>
+          {/* MOCKUP 2: split layout — left: steps+pipeline / right: AI chat */}
+          <div className="mt-16 lg:grid lg:grid-cols-2 lg:gap-12 lg:items-start">
 
-          {/* Pipeline — always visible */}
-          <div
-            className="mt-8 rounded-xl p-5 max-w-4xl mx-auto"
-            style={{ background: "rgba(212,168,83,0.05)", border: "1px solid rgba(212,168,83,0.2)" }}
-            data-animate="fade-up"
-          >
-            <p className="text-xs uppercase tracking-widest text-[#D4A853] text-center mb-3 font-semibold">
-              The Complete Workflow
-            </p>
-            <p className="text-sm text-[#D4A853] text-center leading-relaxed">
-              Instagram Inquiry → AI Consultation → AI Follow-Up → Quote → Deposit → Booking → Consent → Aftercare → Review → CRM
-            </p>
+            {/* Left: workflow cards + pipeline */}
+            <div>
+              {/* Desktop horizontal scroll cards */}
+              <div className="hidden md:flex flex-row overflow-x-auto gap-3 pb-4">
+                {WORKFLOW_STEPS.map((s, i) => (
+                  <div key={i} className="flex items-center flex-shrink-0">
+                    <div className="bg-white border border-[#E5E5E3] rounded-xl p-4 min-w-[120px] flex-shrink-0 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 text-center">
+                      <div className="w-3 h-3 rounded-full mx-auto mb-2" style={{ background: s.ai ? "#D4A853" : "#D1D5DB" }} />
+                      <p className="text-xs text-gray-400">{s.num}</p>
+                      <p className="text-xs font-bold text-[#111111] mt-1">{s.label}</p>
+                      <p className="text-[10px] text-gray-400 mt-1">{s.desc}</p>
+                    </div>
+                    {i < WORKFLOW_STEPS.length - 1 && (
+                      <span className="text-[#D4A853] text-sm mx-1 flex-shrink-0 self-center">→</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Pipeline — always visible */}
+              <div className="mt-4 rounded-xl p-5"
+                style={{ background: "rgba(212,168,83,0.05)", border: "1px solid rgba(212,168,83,0.2)" }}
+                data-animate="fade-up">
+                <p className="text-xs uppercase tracking-widest text-[#D4A853] text-center mb-3 font-semibold">
+                  The Complete Workflow
+                </p>
+                <p className="text-sm text-[#D4A853] text-center leading-relaxed">
+                  Instagram Inquiry → AI Consultation → AI Follow-Up → Quote → Deposit → Booking → Consent → Aftercare → Review → CRM
+                </p>
+              </div>
+            </div>
+
+            {/* Right: MOCKUP 2 — AI Consultation chat card */}
+            <div className="hidden lg:flex lg:justify-end mt-0">
+              <div className="bg-white rounded-2xl shadow-xl border border-[#E5E5E3] overflow-hidden w-full max-w-sm">
+
+                {/* Card header */}
+                <div className="bg-[#F8F8F6] px-4 py-3 border-b border-[#E5E5E3] flex items-center justify-between">
+                  <span className="text-sm font-semibold text-[#111111]">AI Consultation</span>
+                  <span className="text-xs text-gray-400">Powered by InkBook</span>
+                </div>
+
+                {/* Chat messages */}
+                <div className="p-4 space-y-3">
+                  {/* AI message 1 */}
+                  <div className="flex gap-2">
+                    <div className="w-6 h-6 rounded-full bg-[#D4A853] flex items-center justify-center text-[10px] text-black font-bold flex-shrink-0">
+                      AI
+                    </div>
+                    <div className="bg-[#F8F8F6] rounded-xl rounded-tl-none px-3 py-2 text-xs text-[#111111] max-w-[200px]">
+                      Hi! I&apos;m InkBook AI. Tell me about the tattoo you&apos;re looking for 🎨
+                    </div>
+                  </div>
+
+                  {/* Client message */}
+                  <div className="flex gap-2 justify-end">
+                    <div className="bg-[#111111] rounded-xl rounded-tr-none px-3 py-2 text-xs text-white max-w-[180px]">
+                      I want a floral sleeve on my left arm, black and grey
+                    </div>
+                  </div>
+
+                  {/* AI message 2 */}
+                  <div className="flex gap-2">
+                    <div className="w-6 h-6 rounded-full bg-[#D4A853] flex items-center justify-center text-[10px] text-black font-bold flex-shrink-0">
+                      AI
+                    </div>
+                    <div className="bg-[#F8F8F6] rounded-xl rounded-tl-none px-3 py-2 text-xs text-[#111111] max-w-[200px]">
+                      Great choice! I&apos;ve detected: Floral / Botanical style, Black &amp; Grey. What size are you thinking — half sleeve or full?
+                    </div>
+                  </div>
+                </div>
+
+                {/* Status bar */}
+                <div className="px-4 py-3 bg-[#F8F8F6] border-t border-[#E5E5E3]">
+                  <p className="text-xs text-[#D4A853]">Style detected: Floral · Black &amp; Grey</p>
+                  <div className="flex gap-1 mt-2">
+                    {Array.from({ length: 9 }, (_, i) => (
+                      <div key={i} className={`h-1.5 flex-1 rounded-full ${i < 3 ? "bg-[#D4A853]" : "bg-gray-200"}`} />
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-gray-400 mt-1">Step 3 of 9</p>
+                </div>
+
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
@@ -437,6 +541,8 @@ export default function HomePage() {
       <section className="py-24 px-6" style={{ background: "#1A1A1A", borderTop: "1px solid #2A2A2A" }}>
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
+
+            {/* Left — copy */}
             <div>
               <h2 className="text-3xl lg:text-4xl font-bold text-white leading-tight">
                 Artist did nothing except approve the quote and show up to tattoo.
@@ -449,40 +555,63 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="space-y-1">
-              {TIMELINE.map((item, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-4 px-4 py-3 rounded-xl"
-                  style={{
-                    background: item.highlight ? "#222222" : "transparent",
-                    border: item.highlight ? "1px solid #2A2A2A" : "1px solid transparent",
-                  }}
-                >
-                  <div
-                    className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
-                    style={{
-                      background: item.done ? (item.highlight ? "#D4A853" : "#2A2A2A") : "#111111",
-                      border: item.done ? "none" : "1px solid #2A2A2A",
-                    }}
-                  >
-                    {item.done && <IconCheckSmall highlight={item.highlight} />}
-                  </div>
-                  <span
-                    className="flex-1 text-sm"
-                    style={{
-                      color: item.done ? (item.highlight ? "#FFFFFF" : "#D1D5DB") : "#374151",
-                      fontWeight: item.highlight ? 500 : 400,
-                    }}
-                  >
-                    {item.label}
-                  </span>
-                  <span className="text-xs font-mono flex-shrink-0" style={{ color: item.done ? "#4B5563" : "#2A2A2A" }}>
-                    {item.time}
-                  </span>
+            {/* Right — MOCKUP 3: Quote Builder */}
+            <div className="flex justify-center lg:justify-end">
+              <div className="bg-white rounded-2xl overflow-hidden w-full max-w-sm"
+                style={{ boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 24px 64px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.4)" }}>
+
+                {/* Header */}
+                <div className="px-4 py-3 bg-[#F8F8F6] border-b border-[#E5E5E3] flex items-center justify-between">
+                  <span className="text-sm font-semibold text-[#111111]">Quote Builder</span>
+                  <span className="bg-[#D4A853] text-black text-[10px] px-2 py-0.5 rounded-full font-medium">AI Draft Ready</span>
                 </div>
-              ))}
+
+                {/* Client info */}
+                <div className="px-4 py-3 border-b border-[#E5E5E3]">
+                  <p className="text-sm font-semibold text-[#111111]">Sarah M.</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Floral sleeve · Left arm · Full</p>
+                </div>
+
+                {/* Line items */}
+                <div className="px-4 py-3 space-y-2 border-b border-[#E5E5E3]">
+                  {QUOTE_LINES.map(({ item, price }) => (
+                    <div key={item} className="flex justify-between text-xs">
+                      <span className="text-gray-600">{item}</span>
+                      <span className="text-[#111111] font-medium">{price}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Total */}
+                <div className="px-4 py-3 border-b border-[#E5E5E3]">
+                  <div className="flex justify-between">
+                    <span className="text-sm font-semibold text-[#111111]">Total Project</span>
+                    <span className="text-sm font-bold text-[#111111]">$700</span>
+                  </div>
+                  <div className="flex justify-between mt-1.5">
+                    <span className="text-xs text-gray-500">Deposit Required</span>
+                    <span className="text-xs text-[#D4A853] font-medium">$150 (21%)</span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="px-4 py-3 flex gap-2 bg-[#F8F8F6] border-b border-[#E5E5E3]">
+                  <button className="border border-gray-300 rounded-lg px-3 py-1.5 text-xs text-[#111111] hover:bg-gray-100 transition-colors">
+                    Edit
+                  </button>
+                  <button className="flex-1 bg-[#111111] text-white rounded-lg px-3 py-1.5 text-xs font-medium hover:bg-[#2A2A2A] transition-colors">
+                    Approve &amp; Send
+                  </button>
+                </div>
+
+                {/* Note */}
+                <div className="px-4 py-3">
+                  <p className="text-[10px] text-gray-400">AI generated draft · Artist approval required before sending</p>
+                </div>
+
+              </div>
             </div>
+
           </div>
         </div>
       </section>
@@ -490,6 +619,7 @@ export default function HomePage() {
       {/* ══ WHITE LABEL ══ */}
       <section className="py-24 px-6" style={{ background: "#F8F8F6" }}>
         <div className="max-w-6xl mx-auto">
+
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
               <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">White Label</span>
@@ -514,35 +644,25 @@ export default function HomePage() {
               </ul>
             </div>
 
-            {/* Booking mockup */}
+            {/* Booking page mockup */}
             <div className="bg-white rounded-2xl shadow-xl p-6">
               <div className="flex items-center justify-between pb-4" style={{ borderBottom: "1px solid #F3F4F6" }}>
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-[#1A1A1A] flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
-                    AI
-                  </div>
+                  <div className="w-9 h-9 rounded-lg bg-[#1A1A1A] flex items-center justify-center text-xs font-bold text-white flex-shrink-0">AI</div>
                   <div>
-                    <p className="text-sm font-semibold text-[#111111]">Ash & Iron Studio</p>
+                    <p className="text-sm font-semibold text-[#111111]">Ash &amp; Iron Studio</p>
                     <p className="text-xs text-gray-400">book.ashandiron.com</p>
                   </div>
                 </div>
                 <span className="text-xs px-2 py-1 rounded-full font-medium bg-green-50 text-green-600">Open</span>
               </div>
-
               <div className="mt-5">
                 <h3 className="text-base font-semibold text-[#111111]">Book Your Session</h3>
                 <p className="text-sm text-gray-500 mt-1 mb-5">Choose a style to get started</p>
                 <div className="flex flex-wrap gap-2 mb-5">
                   {["Blackwork", "Traditional", "Neo-trad", "Watercolor", "Fine line"].map((style, i) => (
-                    <span
-                      key={style}
-                      className="px-3 py-1 rounded-full text-xs font-medium border"
-                      style={{
-                        background: i === 0 ? "#111111" : "#F9FAFB",
-                        color: i === 0 ? "#FFFFFF" : "#374151",
-                        borderColor: i === 0 ? "#111111" : "#E5E7EB",
-                      }}
-                    >
+                    <span key={style} className="px-3 py-1 rounded-full text-xs font-medium border"
+                      style={{ background: i === 0 ? "#111111" : "#F9FAFB", color: i === 0 ? "#FFFFFF" : "#374151", borderColor: i === 0 ? "#111111" : "#E5E7EB" }}>
                       {style}
                     </span>
                   ))}
@@ -552,9 +672,7 @@ export default function HomePage() {
                   { initials: "JH", name: "Jordan Holt", style: "Traditional · Neo-trad", avail: "Thu" },
                 ].map((a, i) => (
                   <div key={i} className="flex items-center gap-3 p-3.5 rounded-xl mb-3 last:mb-0 bg-[#F9FAFB] border border-[#F3F4F6]">
-                    <div className="w-10 h-10 rounded-full bg-[#374151] flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
-                      {a.initials}
-                    </div>
+                    <div className="w-10 h-10 rounded-full bg-[#374151] flex items-center justify-center text-xs font-bold text-white flex-shrink-0">{a.initials}</div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-[#111111]">{a.name}</p>
                       <p className="text-xs text-gray-500">{a.style}</p>
@@ -569,6 +687,50 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+
+          {/* MOCKUP 4: Lead Pipeline Kanban */}
+          <div className="mt-16 bg-white rounded-2xl shadow-sm border border-[#E5E5E3] overflow-hidden" data-animate="fade-up">
+
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-[#E5E5E3] flex items-center justify-between">
+              <span className="text-sm font-semibold text-[#111111]">Lead Pipeline</span>
+              <span className="text-xs text-gray-500">12 active leads</span>
+            </div>
+
+            {/* Kanban columns */}
+            <div className="flex gap-4 p-4 overflow-x-auto">
+              {PIPELINE_COLS.map((col) => (
+                <div key={col.title} className="w-48 flex-shrink-0">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-xs font-semibold uppercase ${col.titleClass}`}>{col.title}</span>
+                      {col.ai && <span className="w-1.5 h-1.5 rounded-full bg-[#D4A853] animate-pulse-dot" />}
+                    </div>
+                    <span className={`rounded-full px-2 text-[10px] font-medium ${col.countClass}`}>{col.cards.length}</span>
+                  </div>
+                  <div className="space-y-2">
+                    {col.cards.map((card) => (
+                      <div key={card.name} className={`bg-[#F8F8F6] rounded-lg p-3 ${card.border}`}>
+                        <p className="text-xs font-medium text-[#111111]">{card.name}</p>
+                        <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded"
+                          style={{ background: col.ai ? "rgba(212,168,83,0.1)" : "#F3F4F6", color: col.ai ? "#D4A853" : "#6B7280" }}>
+                          {card.tag}
+                        </span>
+                        <p className={`text-[10px] mt-1.5 ${card.subClass}`}>{card.sub}</p>
+                        {card.readyBadge && (
+                          <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700">
+                            Ready to book
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+          </div>
+
         </div>
       </section>
 
@@ -587,12 +749,8 @@ export default function HomePage() {
               { value: "3–5x", label: "Inquiries lost per week without follow-up" },
               { value: "1 booking", label: "Often enough to cover a month of InkBook" },
             ].map((stat, i) => (
-              <div
-                key={i}
-                className="bg-[#F8F8F6] rounded-2xl p-8 text-center hover:shadow-md transition-all duration-200"
-                data-animate="fade-up"
-                data-delay={String(i * 100)}
-              >
+              <div key={i} className="bg-[#F8F8F6] rounded-2xl p-8 text-center hover:shadow-md transition-all duration-200"
+                data-animate="fade-up" data-delay={String(i * 100)}>
                 <p className="text-4xl font-bold text-[#111111]">{stat.value}</p>
                 <p className="text-sm text-gray-500 mt-2">{stat.label}</p>
               </div>
@@ -609,41 +767,24 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Pricing</span>
-            <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
-              Simple, transparent pricing.
-            </h2>
-            <p className="text-base text-gray-500 mt-4">
-              14-day free trial. No credit card required. No transaction fees.
-            </p>
+            <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">Simple, transparent pricing.</h2>
+            <p className="text-base text-gray-500 mt-4">14-day free trial. No credit card required. No transaction fees.</p>
           </div>
 
           <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-            {/* Solo */}
-            <div
-              className="bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3]"
-              data-animate="fade-up"
-              data-delay="0"
-            >
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3]" data-animate="fade-up" data-delay="0">
               <p className="text-sm font-semibold text-gray-500">Solo Artist</p>
               <div className="flex items-end gap-1 mt-3 mb-1">
                 <span className="text-5xl font-bold text-[#111111]">$49</span>
                 <span className="text-sm text-gray-400 mb-2">/mo</span>
               </div>
               <p className="text-sm text-gray-500 mb-8">For individual tattoo artists.</p>
-              <a
-                href="#trial"
-                className="block w-full py-3 text-center text-sm font-semibold rounded-full border border-gray-300 text-[#111111] hover:border-gray-400 transition-colors"
-              >
+              <a href="#trial" className="block w-full py-3 text-center text-sm font-semibold rounded-full border border-gray-300 text-[#111111] hover:border-gray-400 transition-colors">
                 Start Free Trial
               </a>
             </div>
 
-            {/* Studio — featured */}
-            <div
-              className="bg-white rounded-2xl p-8 shadow-xl border-2 border-[#D4A853] scale-[1.05] relative"
-              data-animate="fade-up"
-              data-delay="100"
-            >
+            <div className="bg-white rounded-2xl p-8 shadow-xl border-2 border-[#D4A853] scale-[1.05] relative" data-animate="fade-up" data-delay="100">
               <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#D4A853] text-black text-xs font-semibold px-4 py-1 rounded-full whitespace-nowrap">
                 MOST POPULAR
               </span>
@@ -653,30 +794,19 @@ export default function HomePage() {
                 <span className="text-sm text-gray-400 mb-2">/mo</span>
               </div>
               <p className="text-sm text-gray-500 mb-8">For small studios and growing teams.</p>
-              <a
-                href="#trial"
-                className="block w-full py-3 text-center text-sm font-semibold rounded-full bg-black text-white hover:bg-[#2A2A2A] transition-colors"
-              >
+              <a href="#trial" className="block w-full py-3 text-center text-sm font-semibold rounded-full bg-black text-white hover:bg-[#2A2A2A] transition-colors">
                 Start Free Trial
               </a>
             </div>
 
-            {/* Studio Pro */}
-            <div
-              className="bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3]"
-              data-animate="fade-up"
-              data-delay="200"
-            >
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3]" data-animate="fade-up" data-delay="200">
               <p className="text-sm font-semibold text-gray-500">Studio Pro</p>
               <div className="flex items-end gap-1 mt-3 mb-1">
                 <span className="text-5xl font-bold text-[#111111]">$169</span>
                 <span className="text-sm text-gray-400 mb-2">/mo</span>
               </div>
               <p className="text-sm text-gray-500 mb-8">For larger studios with advanced needs.</p>
-              <a
-                href="#trial"
-                className="block w-full py-3 text-center text-sm font-semibold rounded-full border border-gray-300 text-[#111111] hover:border-gray-400 transition-colors"
-              >
+              <a href="#trial" className="block w-full py-3 text-center text-sm font-semibold rounded-full border border-gray-300 text-[#111111] hover:border-gray-400 transition-colors">
                 Start Free Trial
               </a>
             </div>
@@ -693,16 +823,10 @@ export default function HomePage() {
           <p className="text-xs uppercase tracking-widest text-gray-500 mt-3">The Tattoo Business Operating System</p>
           <p className="text-sm text-gray-400 mt-6">Start your 14-day free trial. No credit card required.</p>
           <div className="mt-10 flex flex-wrap gap-4 justify-center">
-            <a
-              href="#signup"
-              className="bg-[#D4A853] text-black font-semibold rounded-full px-8 py-4 text-sm hover:opacity-90 transition-opacity"
-            >
+            <a href="#signup" className="bg-[#D4A853] text-black font-semibold rounded-full px-8 py-4 text-sm hover:opacity-90 transition-opacity">
               Start Free Trial
             </a>
-            <a
-              href="#book-demo"
-              className="border border-gray-600 text-white rounded-full px-8 py-4 text-sm hover:border-gray-400 transition-colors"
-            >
+            <a href="#book-demo" className="border border-gray-600 text-white rounded-full px-8 py-4 text-sm hover:border-gray-400 transition-colors">
               Book Demo
             </a>
           </div>
@@ -718,11 +842,8 @@ export default function HomePage() {
           <span className="text-white font-semibold">InkBook</span>
           <nav className="flex flex-wrap gap-6">
             {["Features", "Book Demo", "Privacy", "Terms"].map((link) => (
-              <a
-                key={link}
-                href={`#${link.toLowerCase().replace(" ", "-")}`}
-                className="text-sm text-gray-400 hover:text-white transition-colors"
-              >
+              <a key={link} href={`#${link.toLowerCase().replace(" ", "-")}`}
+                className="text-sm text-gray-400 hover:text-white transition-colors">
                 {link}
               </a>
             ))}
