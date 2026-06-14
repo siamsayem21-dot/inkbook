@@ -392,6 +392,20 @@ body {
 }
 
 /* ─────────────────────────────────────────────────────
+   JOURNEY STAGE REVEAL
+───────────────────────────────────────────────────── */
+
+.journey-stage {
+  opacity: 0;
+  transform: translateY(14px);
+}
+.journey-stage.revealed {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}
+
+/* ─────────────────────────────────────────────────────
    REDUCED MOTION OVERRIDES
 ───────────────────────────────────────────────────── */
 
@@ -437,6 +451,11 @@ body {
     transition: none !important;
   }
   .timeline-item {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .journey-stage {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;

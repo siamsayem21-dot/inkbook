@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
-/* ─── Icons ─── */
+/* ─── Base Icons ─── */
 const IconMsg = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -34,6 +34,47 @@ const IconClose = () => (
   </svg>
 );
 
+/* ─── OS Sidebar Icons (14px) ─── */
+const IcoDash = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+    <rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
+  </svg>
+);
+const IcoPipe = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="7" width="6" height="14" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="16" y="10" width="6" height="11" rx="1"/>
+  </svg>
+);
+const IcoInbox = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+  </svg>
+);
+const IcoFile = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+    <line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/>
+  </svg>
+);
+const IcoPeople = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+);
+const IcoCal = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+    <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+  </svg>
+);
+const IcoTrend = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+  </svg>
+);
+
 /* ─── Data ─── */
 const PAIN_CARDS = [
   { icon: <IconMsg />, title: "Inquiries go unanswered for days", desc: "DMs pile up. Clients book elsewhere." },
@@ -42,20 +83,16 @@ const PAIN_CARDS = [
   { icon: <IconShield />, title: "No-shows with no protection", desc: "A blocked day costs $300–$800 minimum." },
 ];
 
-const WORKFLOW_STEPS = [
-  { num: "01", label: "Instagram Inquiry", desc: "Client DMs. Captured instantly.", ai: false },
-  { num: "02", label: "AI Consultation", desc: "AI qualifies client and collects details.", ai: true },
-  { num: "03", label: "AI Follow-Up", desc: "Follows up on cold leads automatically.", ai: true },
-  { num: "04", label: "Quote", desc: "AI generates quote. Artist approves.", ai: true },
-  { num: "05", label: "Deposit", desc: "Deposit link sent and collected.", ai: false },
-  { num: "06", label: "Booking", desc: "Appointment locked in calendar.", ai: false },
-  { num: "07", label: "Consent", desc: "Digital consent form signed.", ai: false },
-  { num: "08", label: "Aftercare", desc: "Auto aftercare tips sent post-session.", ai: true },
-  { num: "09", label: "Review", desc: "Review request sent automatically.", ai: false },
-  { num: "10", label: "CRM", desc: "Client stored in studio CRM.", ai: false },
+type OsSidebarItem = { label: string; icon: JSX.Element; active?: boolean; badge?: string };
+const OS_SIDEBAR: OsSidebarItem[] = [
+  { label: "Dashboard", icon: <IcoDash />, active: true },
+  { label: "Pipeline",  icon: <IcoPipe /> },
+  { label: "AI Inbox",  icon: <IcoInbox />, badge: "3" },
+  { label: "Quotes",    icon: <IcoFile /> },
+  { label: "Clients",   icon: <IcoPeople /> },
+  { label: "Calendar",  icon: <IcoCal /> },
+  { label: "Revenue",   icon: <IcoTrend /> },
 ];
-
-const SIDEBAR_NAV = ["Dashboard", "Consultations", "Quotes", "Bookings", "Clients", "Pipeline", "Earnings"] as const;
 
 const BOOKING_ROWS = [
   { name: "Sarah M.", service: "Tattoo sleeve · 4h", amount: "$150 deposit", badge: "Deposit paid",   badgeClass: "bg-green-900 text-green-400" },
@@ -69,26 +106,64 @@ const AI_ACTIVITY = [
   "Deposit collected — Alex R. paid $300",
 ];
 
-type PipelineCard = {
-  name: string;
-  tag: string;
-  sub: string;
-  subClass: string;
-  border: string;
-  readyBadge?: boolean;
-};
+const OS_TODAY = [
+  { time: "2:00 PM", client: "Sarah M.", service: "Sleeve outline · 4hr", color: "#D4A853" },
+  { time: "6:00 PM", client: "Jake T.",  service: "Neo-trad arm · 3hr",   color: "#7C3AED" },
+];
 
-const PIPELINE_COLS: {
-  title: string;
-  titleClass: string;
-  countClass: string;
-  ai?: boolean;
-  cards: PipelineCard[];
-}[] = [
+const OS_MINI_PIPELINE = [
   {
-    title: "New Inquiry",
-    titleClass: "text-gray-500",
-    countClass: "bg-gray-100 text-gray-600",
+    col: "New", count: 3, ai: false,
+    cards: [
+      { name: "Maya L.", tag: "Floral sleeve", sub: "2m ago" },
+      { name: "Chris P.", tag: "Geometric", sub: "14m ago" },
+    ],
+  },
+  {
+    col: "AI Chat", count: 2, ai: true,
+    cards: [
+      { name: "Sam K.", tag: "Neo-trad", sub: "Qualifying…" },
+      { name: "Dana T.", tag: "Mandala", sub: "Style det." },
+    ],
+  },
+  {
+    col: "Deposit Paid", count: 2, ai: false,
+    cards: [
+      { name: "Jordan H.", tag: "Panther", sub: "Ready ✓" },
+      { name: "Priya S.",  tag: "Script",  sub: "Booked Fri" },
+    ],
+  },
+];
+
+const JOURNEY_STAGES = [
+  { num: "01", label: "New Inquiry",      sub: "Maya L. — Floral sleeve · Black & Grey",             time: "just now", ai: false, done: false },
+  { num: "02", label: "AI Consultation",  sub: "9 questions answered · Style detected · Budget OK",  time: "2 min",    ai: true,  done: true  },
+  { num: "03", label: "Quote Generated",  sub: "$700 total · $150 deposit · AI draft ready",         time: "3 min",    ai: true,  done: true  },
+  { num: "04", label: "Artist Approved",  sub: "Alex R. approved in 1 tap",                          time: "8 min",    ai: false, done: true  },
+  { num: "05", label: "Deposit Paid",     sub: "$150 via Stripe · Card ending 4242",                 time: "12 min",   ai: false, done: true  },
+  { num: "06", label: "Booking Confirmed", sub: "June 22 · 2:00 PM · Ink & Iron Studio",            time: "12 min",   ai: false, done: true  },
+  { num: "07", label: "Consent Signed",   sub: "Digital form completed · ID verified",               time: "June 21",  ai: false, done: true  },
+  { num: "08", label: "Session Complete", sub: "4 hours · Outline done · Remainder collected",       time: "June 22",  ai: false, done: true  },
+  { num: "09", label: "Aftercare Sent",   sub: "3-day SMS sequence triggered automatically",         time: "June 22",  ai: true,  done: true  },
+  { num: "10", label: "5-Star Review",    sub: '"Alex is incredible. Best tattoo experience ever."', time: "June 29",  ai: true,  done: true  },
+];
+
+const AI_MSGS = [
+  { ai: true,  text: "Hi! I'm InkBook AI. Tell me about the tattoo you're looking for 🎨" },
+  { ai: false, text: "I want a floral sleeve on my left arm, black and grey" },
+  { ai: true,  text: "Beautiful choice! Full sleeve or half sleeve?" },
+  { ai: false, text: "Full sleeve please" },
+  { ai: true,  text: "What's your budget range for the full project?" },
+  { ai: false, text: "Around $800" },
+  { ai: true,  text: "Perfect — that works for a phased approach. Any medical conditions or allergies I should note?" },
+  { ai: false, text: "No, I'm good!" },
+  { ai: true,  text: "Matched you with Alex R. — specializes in floral botanical, black & grey. Available Mon Jun 22. Ready to see your quote?" },
+];
+
+type PipelineCard = { name: string; tag: string; sub: string; subClass: string; border: string; readyBadge?: boolean };
+const PIPELINE_COLS: { title: string; titleClass: string; countClass: string; ai?: boolean; cards: PipelineCard[] }[] = [
+  {
+    title: "New Inquiry", titleClass: "text-gray-500", countClass: "bg-gray-100 text-gray-600",
     cards: [
       { name: "Maya L.",  tag: "Floral sleeve",    sub: "2m ago",  subClass: "text-gray-400", border: "" },
       { name: "Chris P.", tag: "Geometric back",   sub: "14m ago", subClass: "text-gray-400", border: "" },
@@ -96,31 +171,38 @@ const PIPELINE_COLS: {
     ],
   },
   {
-    title: "AI Consultation",
-    titleClass: "text-[#D4A853]",
-    countClass: "bg-gray-100 text-gray-600",
-    ai: true,
+    title: "AI Consultation", titleClass: "text-[#D4A853]", countClass: "bg-gray-100 text-gray-600", ai: true,
     cards: [
       { name: "Sam K.",  tag: "Neo-trad eagle",    sub: "Qualifying…",    subClass: "text-[#D4A853]", border: "border border-[rgba(212,168,83,0.25)]" },
       { name: "Dana T.", tag: "Blackwork mandala", sub: "Style detected", subClass: "text-[#D4A853]", border: "border border-[rgba(212,168,83,0.25)]" },
     ],
   },
   {
-    title: "Quote Sent",
-    titleClass: "text-gray-500",
-    countClass: "bg-gray-100 text-gray-600",
+    title: "Quote Sent", titleClass: "text-blue-600", countClass: "bg-blue-50 text-blue-600",
     cards: [
-      { name: "Riley M.", tag: "Full back piece", sub: "$850", subClass: "font-bold text-[#111111]", border: "" },
-      { name: "Alex J.",  tag: "Watercolor koi",  sub: "$450", subClass: "font-bold text-[#111111]", border: "" },
+      { name: "Riley M.", tag: "Full back piece", sub: "$850", subClass: "font-bold text-[#111111]", border: "border border-blue-100" },
+      { name: "Alex J.",  tag: "Watercolor koi",  sub: "$450", subClass: "font-bold text-[#111111]", border: "border border-blue-100" },
     ],
   },
   {
-    title: "Deposit Paid",
-    titleClass: "text-green-600",
-    countClass: "bg-green-100 text-green-600",
+    title: "Deposit Paid", titleClass: "text-green-600", countClass: "bg-green-100 text-green-600",
     cards: [
-      { name: "Jordan H.", tag: "Traditional panther", sub: "Ready to book", subClass: "text-green-600 font-medium", border: "border border-green-200", readyBadge: true },
+      { name: "Jordan H.", tag: "Traditional panther", sub: "Ready to book",  subClass: "text-green-600 font-medium", border: "border border-green-200", readyBadge: true },
       { name: "Priya S.",  tag: "Script lettering",   sub: "Booked: Friday", subClass: "text-green-600 font-medium", border: "border border-green-200", readyBadge: true },
+    ],
+  },
+  {
+    title: "Booked", titleClass: "text-purple-600", countClass: "bg-purple-50 text-purple-600",
+    cards: [
+      { name: "Sarah M.", tag: "Sleeve outline", sub: "Jun 22 · 2pm",  subClass: "text-purple-600 font-medium", border: "border border-purple-100" },
+      { name: "Jake T.",  tag: "Neo-trad arm",   sub: "Jun 23 · 11am", subClass: "text-purple-600 font-medium", border: "border border-purple-100" },
+    ],
+  },
+  {
+    title: "Completed", titleClass: "text-gray-400", countClass: "bg-gray-100 text-gray-500",
+    cards: [
+      { name: "Maya L.",  tag: "Floral sleeve", sub: "★★★★★",      subClass: "text-yellow-500 font-medium", border: "" },
+      { name: "Chris M.", tag: "Cover-up",       sub: "Review sent", subClass: "text-gray-400", border: "" },
     ],
   },
 ];
@@ -137,37 +219,22 @@ const ARTIST_NAV_ITEMS: ArtistNavItem[] = [
 
 const ARTIST_INBOX = [
   {
-    bg: "bg-[#FFFDF5]",
-    border: "border border-[#D4A853]/30",
-    badgeClass: "bg-[#D4A853]/10 text-[#D4A853]",
-    badge: "New Consultation",
-    time: "2m ago",
-    name: "Maria S.",
-    detail: "Floral sleeve · Black & Grey · Budget $800",
-    btnClass: "bg-[#111111] text-white",
-    btn: "Review & Quote",
+    bg: "bg-[#FFFDF5]", border: "border border-[#D4A853]/30",
+    badgeClass: "bg-[#D4A853]/10 text-[#D4A853]", badge: "New Consultation",
+    time: "2m ago", name: "Maria S.", detail: "Floral sleeve · Black & Grey · Budget $800",
+    btnClass: "bg-[#111111] text-white", btn: "Review & Quote",
   },
   {
-    bg: "bg-white",
-    border: "border border-[#E5E5E3]",
-    badgeClass: "bg-yellow-50 text-yellow-600",
-    badge: "Quote Awaiting Approval",
-    time: "1h ago",
-    name: "Jake T.",
-    detail: "Neo-trad arm · $650",
-    btnClass: "bg-[#111111] text-white",
-    btn: "Approve & Send",
+    bg: "bg-white", border: "border border-[#E5E5E3]",
+    badgeClass: "bg-yellow-50 text-yellow-600", badge: "Quote Awaiting Approval",
+    time: "1h ago", name: "Jake T.", detail: "Neo-trad arm · $650",
+    btnClass: "bg-[#111111] text-white", btn: "Approve & Send",
   },
   {
-    bg: "bg-white",
-    border: "border border-[#E5E5E3]",
-    badgeClass: "bg-blue-50 text-blue-600",
-    badge: "Follow-Up Required",
-    time: "3d ago",
-    name: "Chris M.",
-    detail: "Cover-up · No response 3 days",
-    btnClass: "bg-[#D4A853] text-black",
-    btn: "Send Follow-Up",
+    bg: "bg-white", border: "border border-[#E5E5E3]",
+    badgeClass: "bg-blue-50 text-blue-600", badge: "Follow-Up Required",
+    time: "3d ago", name: "Chris M.", detail: "Cover-up · No response 3 days",
+    btnClass: "bg-[#D4A853] text-black", btn: "Send Follow-Up",
   },
 ] as const;
 
@@ -183,44 +250,74 @@ const CRM_TIMELINE = [
   { date: "Apr 2023", event: "Deposit paid · $150", detail: "Session 1 confirmed",                             gold: true  },
   { date: "Apr 2023", event: "Session 1 complete",  detail: "Outline — 4 hours",                               gold: true  },
   { date: "Jun 2023", event: "Session 2 complete",  detail: "Shading — 3 hours",                               gold: true  },
-  { date: "Aug 2023", event: "5-star review",       detail: "“Alex is incredible. Best tattoo experience ever.”", gold: true  },
+  { date: "Aug 2023", event: "5-star review",        detail: "“Alex is incredible. Best tattoo experience ever.”", gold: true  },
   { date: "Jun 2024", event: "Touch-up booked",     detail: "Upcoming · June 20",                              gold: false },
 ] as const;
 
-export default function HomePage() {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [revenue,   setRevenue]   = useState(0);
-  const [bookings,  setBookings]  = useState(0);
-  const [deposits,  setDeposits]  = useState(0);
+type CalAppt = { top: number; height: number; client: string; service: string; color: string; time: string };
+type CalDay   = { day: string; date: string; appts: CalAppt[] };
+const CALENDAR_DAYS: CalDay[] = [
+  { day: "MON", date: "16", appts: [] },
+  { day: "TUE", date: "17", appts: [
+    { top: 35,  height: 105, client: "Jake T.",  service: "Neo-trad",  color: "#7C3AED", time: "11am–2pm" },
+  ]},
+  { day: "WED", date: "18", appts: [] },
+  { day: "THU", date: "19", appts: [
+    { top: 70,  height: 70,  client: "Chris M.", service: "Cover-up",  color: "#2563EB", time: "12–2pm" },
+  ]},
+  { day: "FRI", date: "20", appts: [
+    { top: 140, height: 140, client: "Sarah M.", service: "Sleeve",    color: "#D4A853", time: "2–6pm" },
+  ]},
+  { day: "SAT", date: "21", appts: [
+    { top: 0,   height: 70,  client: "Dana T.",  service: "Mandala",   color: "#059669", time: "10am–12pm" },
+    { top: 105, height: 105, client: "Riley M.", service: "Back piece", color: "#7C3AED", time: "1–4pm" },
+  ]},
+];
 
+const AFTERCARE_MSGS = [
+  { day: "Jun 22 · 4:05 PM", text: "Hey Maya! Session complete 🎨 Day 1 tips: keep covered 2 hrs, wash with unscented soap, apply thin aquaphor layer." },
+  { day: "Jun 25 · 10:00 AM", text: "Day 3 check-in! Peeling is totally normal — keep moisturizing and stay out of direct sun. Looking amazing! 🌿" },
+  { day: "Jun 29 · 10:00 AM", text: "One week down! Your ink has settled beautifully. Ready to book your next session? → Book now" },
+];
+
+const REVENUE_BARS = [
+  { month: "Jan", val: "$5.2k", pct: 42 },
+  { month: "Feb", val: "$6.1k", pct: 49 },
+  { month: "Mar", val: "$7.8k", pct: 63 },
+  { month: "Apr", val: "$9.2k", pct: 74 },
+  { month: "May", val: "$10.5k", pct: 84 },
+  { month: "Jun", val: "$12.4k", pct: 100 },
+];
+
+export default function HomePage() {
+  const [mobileOpen,    setMobileOpen]    = useState(false);
+  const [revenue,       setRevenue]       = useState(0);
+  const [bookings,      setBookings]      = useState(0);
+  const [deposits,      setDeposits]      = useState(0);
   const [quoteSession1, setQuoteSession1] = useState(0);
   const [quoteSession2, setQuoteSession2] = useState(0);
   const [quoteTotal,    setQuoteTotal]    = useState(0);
   const [quoteDeposit,  setQuoteDeposit]  = useState(0);
-
   const [visibleMessages, setVisibleMessages] = useState(0);
 
-  /* ── Hero entrance: start invisible unless reduced-motion preferred ── */
   const [heroVisible, setHeroVisible] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   });
 
-  /* ── Existing refs ── */
-  const chatCardRef      = useRef<HTMLDivElement>(null);
-  const workflowRowRef   = useRef<HTMLDivElement>(null);
-  const pipelineRef      = useRef<HTMLDivElement>(null);
-  const quoteCardRef     = useRef<HTMLDivElement>(null);
-  const heroDashRef      = useRef<HTMLDivElement>(null);
-  const quoteTiltRef     = useRef<HTMLDivElement>(null);
-  const aiChatTiltRef    = useRef<HTMLDivElement>(null);
+  /* ── Refs ── */
+  const chatCardRef       = useRef<HTMLDivElement>(null);
+  const pipelineRef       = useRef<HTMLDivElement>(null);
+  const quoteCardRef      = useRef<HTMLDivElement>(null);
+  const heroDashRef       = useRef<HTMLDivElement>(null);
+  const quoteTiltRef      = useRef<HTMLDivElement>(null);
+  const aiChatTiltRef     = useRef<HTMLDivElement>(null);
   const whiteLabelTiltRef = useRef<HTMLDivElement>(null);
-
-  /* ── New refs ── */
-  const revenueStatRef  = useRef<HTMLParagraphElement>(null);
-  const bookingsStatRef = useRef<HTMLParagraphElement>(null);
-  const depositsStatRef = useRef<HTMLParagraphElement>(null);
-  const crmTimelineRef  = useRef<HTMLDivElement>(null);
+  const revenueStatRef    = useRef<HTMLParagraphElement>(null);
+  const bookingsStatRef   = useRef<HTMLParagraphElement>(null);
+  const depositsStatRef   = useRef<HTMLParagraphElement>(null);
+  const crmTimelineRef    = useRef<HTMLDivElement>(null);
+  const journeyRef        = useRef<HTMLDivElement>(null);
 
   /* ── Hero item inline-style helper ── */
   const heroItemStyle = (delayMs: number, initTransform = "translateY(20px)"): React.CSSProperties => ({
@@ -258,13 +355,13 @@ export default function HomePage() {
     countUp(setDeposits,   100, 1000, () => flashStat(depositsStatRef));
   }, []);
 
-  /* ── Hero entrance trigger ── */
+  /* ── Hero entrance ── */
   useEffect(() => {
     const t = setTimeout(() => setHeroVisible(true), 50);
     return () => clearTimeout(t);
   }, []);
 
-  /* ── Scroll-triggered data-animate / reveal / word-reveal ── */
+  /* ── Scroll-triggered reveals ── */
   useEffect(() => {
     const els = document.querySelectorAll<HTMLElement>(
       "[data-animate], .reveal, .reveal-up, .reveal-scale, .scale-reveal, .word-reveal"
@@ -293,159 +390,127 @@ export default function HomePage() {
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("in-view");
-            io.unobserve(entry.target);
-          }
+          if (entry.isIntersecting) { entry.target.classList.add("in-view"); io.unobserve(entry.target); }
         });
       },
-      { threshold: 0.2 }
+      { threshold: 0.15 }
     );
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
   }, []);
 
-  /* ── CRM timeline sequential reveal ── */
+  /* ── CRM timeline stagger ── */
   useEffect(() => {
     const container = crmTimelineRef.current;
     if (!container) return;
     let triggered = false;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !triggered) {
-          triggered = true;
-          const items = Array.from(container.querySelectorAll<HTMLElement>(".timeline-item"));
-          items.forEach((item, i) => {
-            setTimeout(() => item.classList.add("revealed"), i * 150);
-          });
-          io.disconnect();
-        }
-      },
-      { threshold: 0.2 }
-    );
+    const io = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !triggered) {
+        triggered = true;
+        Array.from(container.querySelectorAll<HTMLElement>(".timeline-item"))
+          .forEach((item, i) => setTimeout(() => item.classList.add("revealed"), i * 150));
+        io.disconnect();
+      }
+    }, { threshold: 0.2 });
     io.observe(container);
     return () => io.disconnect();
   }, []);
 
-  /* ── AI chat message loop ── */
+  /* ── Journey stages stagger ── */
+  useEffect(() => {
+    const container = journeyRef.current;
+    if (!container) return;
+    let triggered = false;
+    const io = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !triggered) {
+        triggered = true;
+        Array.from(container.querySelectorAll<HTMLElement>(".journey-stage"))
+          .forEach((item, i) => setTimeout(() => item.classList.add("revealed"), i * 90));
+        io.disconnect();
+      }
+    }, { threshold: 0.1 });
+    io.observe(container);
+    return () => io.disconnect();
+  }, []);
+
+  /* ── AI chat loop ── */
   useEffect(() => {
     const card = chatCardRef.current;
     if (!card) return;
     let loopTimer: ReturnType<typeof setTimeout>;
     const runSequence = () => {
       setVisibleMessages(0);
-      setTimeout(() => setVisibleMessages(1), 0);
-      setTimeout(() => setVisibleMessages(2), 800);
-      setTimeout(() => setVisibleMessages(3), 1600);
-      loopTimer = setTimeout(runSequence, 5600);
+      [1,2,3,4,5,6,7,8,9].forEach((n, i) => {
+        setTimeout(() => setVisibleMessages(n), i * 700 + 200);
+      });
+      loopTimer = setTimeout(runSequence, 9 * 700 + 2400);
     };
-    const io = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { runSequence(); io.disconnect(); } },
-      { threshold: 0.3 }
-    );
+    const io = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { runSequence(); io.disconnect(); }
+    }, { threshold: 0.2 });
     io.observe(card);
     return () => { io.disconnect(); clearTimeout(loopTimer); };
   }, []);
 
-  /* ── Workflow cards left-to-right reveal ── */
-  useEffect(() => {
-    const row = workflowRowRef.current;
-    if (!row) return;
-    const cards = Array.from(row.querySelectorAll<HTMLElement>(".wf-item"));
-    let triggered = false;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !triggered) {
-          triggered = true;
-          cards.forEach((card, i) => {
-            setTimeout(() => card.classList.replace("workflow-card-hidden", "workflow-card-visible"), i * 80);
-          });
-          io.disconnect();
-        }
-      },
-      { threshold: 0.1 }
-    );
-    io.observe(row);
-    return () => io.disconnect();
-  }, []);
-
-  /* ── Pipeline cards drop-in by column ── */
+  /* ── Pipeline cards drop-in ── */
   useEffect(() => {
     const container = pipelineRef.current;
     if (!container) return;
     const cols = Array.from(container.querySelectorAll<HTMLElement>(".pipeline-col"));
     let triggered = false;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !triggered) {
-          triggered = true;
-          cols.forEach((col, colIdx) => {
-            const cards = Array.from(col.querySelectorAll<HTMLElement>(".pipeline-item"));
-            cards.forEach((card, cardIdx) => {
-              setTimeout(
-                () => card.classList.replace("pipeline-card-hidden", "pipeline-card-visible"),
-                colIdx * 200 + cardIdx * 100
-              );
-            });
+    const io = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !triggered) {
+        triggered = true;
+        cols.forEach((col, colIdx) => {
+          Array.from(col.querySelectorAll<HTMLElement>(".pipeline-item")).forEach((card, cardIdx) => {
+            setTimeout(() => card.classList.replace("pipeline-card-hidden", "pipeline-card-visible"), colIdx * 120 + cardIdx * 80);
           });
-          io.disconnect();
-        }
-      },
-      { threshold: 0.1 }
-    );
+        });
+        io.disconnect();
+      }
+    }, { threshold: 0.05 });
     io.observe(container);
     return () => io.disconnect();
   }, []);
 
-  /* ── Quote Builder price count-up ── */
+  /* ── Quote count-up ── */
   useEffect(() => {
     const card = quoteCardRef.current;
     if (!card) return;
     let triggered = false;
-    const countUp = (
-      setter: React.Dispatch<React.SetStateAction<number>>,
-      target: number,
-      duration: number,
-      delayMs: number
-    ) => {
+    const countUp = (setter: React.Dispatch<React.SetStateAction<number>>, target: number, duration: number, delayMs: number) => {
       setTimeout(() => {
         const start = performance.now();
         const tick = (now: number) => {
           const p = Math.min((now - start) / duration, 1);
-          const eased = 1 - Math.pow(1 - p, 3);
-          setter(Math.round(eased * target));
+          setter(Math.round((1 - Math.pow(1 - p, 3)) * target));
           if (p < 1) requestAnimationFrame(tick);
         };
         requestAnimationFrame(tick);
       }, delayMs);
     };
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !triggered) {
-          triggered = true;
-          countUp(setQuoteSession1, 400, 800, 0);
-          countUp(setQuoteSession2, 300, 600, 200);
-          countUp(setQuoteTotal,    700, 1000, 0);
-          countUp(setQuoteDeposit,  150, 500, 0);
-          io.disconnect();
-        }
-      },
-      { threshold: 0.3 }
-    );
+    const io = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !triggered) {
+        triggered = true;
+        countUp(setQuoteSession1, 400, 800, 0);
+        countUp(setQuoteSession2, 300, 600, 200);
+        countUp(setQuoteTotal,    700, 1000, 0);
+        countUp(setQuoteDeposit,  150, 500, 0);
+        io.disconnect();
+      }
+    }, { threshold: 0.3 });
     io.observe(card);
     return () => io.disconnect();
   }, []);
 
-  /* ── Tilt effect ── */
+  /* ── Tilt ── */
   const handleTilt = useCallback((ref: React.RefObject<HTMLDivElement>) => ({
     onMouseMove: (e: React.MouseEvent<HTMLDivElement>) => {
       const el = ref.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
-      const x = e.clientX - rect.left - rect.width / 2;
-      const y = e.clientY - rect.top - rect.height / 2;
-      const rx = -(y / rect.height) * 6;
-      const ry =  (x / rect.width)  * 6;
+      const rx = -((e.clientY - rect.top  - rect.height / 2) / rect.height) * 6;
+      const ry =  ((e.clientX - rect.left - rect.width  / 2) / rect.width)  * 6;
       el.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg)`;
     },
     onMouseLeave: () => {
@@ -459,7 +524,7 @@ export default function HomePage() {
   const aiChatTilt     = handleTilt(aiChatTiltRef);
   const whiteLabelTilt = handleTilt(whiteLabelTiltRef);
 
-  /* ── Pain card magnetic hover ── */
+  /* ── Pain magnetic hover ── */
   const handlePainMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
     const rect = el.getBoundingClientRect();
@@ -474,7 +539,7 @@ export default function HomePage() {
     el.style.transform  = "";
   };
 
-  /* ── Pricing card spotlight ── */
+  /* ── Pricing spotlight ── */
   const handlePricingMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
     const rect = el.getBoundingClientRect();
@@ -490,6 +555,7 @@ export default function HomePage() {
     { label: "Revenue",  value: `$${revenue.toLocaleString()}`, ref: revenueStatRef  },
     { label: "Bookings", value: String(bookings),               ref: bookingsStatRef },
     { label: "Deposits", value: `${deposits}%`,                 ref: depositsStatRef },
+    { label: "Leads",    value: "12",                           ref: null            },
   ];
 
   return (
@@ -499,37 +565,25 @@ export default function HomePage() {
       <header className="sticky top-0 z-50 bg-white border-b border-[#E5E5E3]">
         <div className="max-w-6xl mx-auto px-6 flex items-center justify-between h-16">
           <a href="/" className="text-xl font-semibold tracking-tight text-[#111111]">InkBook</a>
-
           <nav className="hidden md:flex items-center gap-8">
             {(["Features", "Book Demo"] as const).map((link) => (
               <a key={link} href={`#${link.toLowerCase().replace(" ", "-")}`}
-                className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
-                {link}
-              </a>
+                className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">{link}</a>
             ))}
           </nav>
-
           <div className="hidden md:flex items-center gap-3">
-            <a href="#book-demo" className="border border-gray-300 rounded-full px-5 py-2 text-sm font-medium text-[#111111] hover:border-gray-400 transition-colors">
-              Book Demo
-            </a>
-            <a href="#trial" className="bg-black text-white rounded-full px-5 py-2 text-sm font-medium hover:bg-[#2A2A2A] transition-colors">
-              Start Free Trial
-            </a>
+            <a href="#book-demo" className="border border-gray-300 rounded-full px-5 py-2 text-sm font-medium text-[#111111] hover:border-gray-400 transition-colors">Book Demo</a>
+            <a href="#trial" className="bg-black text-white rounded-full px-5 py-2 text-sm font-medium hover:bg-[#2A2A2A] transition-colors">Start Free Trial</a>
           </div>
-
           <button className="md:hidden p-1.5 rounded-md text-[#111111]" onClick={() => setMobileOpen((o) => !o)} aria-label="Toggle menu">
             {mobileOpen ? <IconClose /> : <IconMenu />}
           </button>
         </div>
-
         {mobileOpen && (
           <div className="md:hidden px-6 pt-2 pb-6 flex flex-col gap-1 border-t border-[#F3F4F6]">
             {(["Features", "Book Demo"] as const).map((link) => (
               <a key={link} href={`#${link.toLowerCase().replace(" ", "-")}`}
-                className="py-2.5 text-sm font-medium text-gray-500" onClick={() => setMobileOpen(false)}>
-                {link}
-              </a>
+                className="py-2.5 text-sm font-medium text-gray-500" onClick={() => setMobileOpen(false)}>{link}</a>
             ))}
             <div className="flex flex-col gap-2 pt-3">
               <a href="#book-demo" className="py-2.5 text-sm font-medium rounded-full border border-gray-300 text-center text-[#111111]">Book Demo</a>
@@ -542,153 +596,164 @@ export default function HomePage() {
       {/* ══ HERO ══ */}
       <section className="py-24 lg:py-32 px-6" style={{ background: "#F8F8F6" }}>
         <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-[45%_55%] gap-16 items-center">
+          <div className="grid lg:grid-cols-[42%_58%] gap-16 items-center">
 
             {/* Left — copy */}
             <div>
-              {/* FIX 2 + ANIM 1: label */}
-              <span
-                className="hero-item text-xs font-semibold tracking-widest uppercase text-[#D4A853]"
-                style={heroItemStyle(0, "translateY(-10px)")}
-              >
+              <span className="hero-item text-xs font-semibold tracking-widest uppercase text-[#D4A853]"
+                style={heroItemStyle(0, "translateY(-10px)")}>
                 Tattoo Business Operating System
               </span>
-
-              {/* FIX 2: H1 split into two sized lines */}
               <h1 className="font-bold leading-[1.1] mt-4 text-[#111111]">
-                <span
-                  className="hero-item block text-5xl lg:text-6xl xl:text-7xl"
-                  style={heroItemStyle(150, "translateY(20px)")}
-                >
+                <span className="hero-item block text-5xl lg:text-6xl xl:text-7xl" style={heroItemStyle(150, "translateY(20px)")}>
                   Stop chasing inquiries.
                 </span>
-                <span
-                  className="hero-item block text-4xl lg:text-5xl xl:text-6xl"
-                  style={heroItemStyle(300, "translateY(20px)")}
-                >
+                <span className="hero-item block text-4xl lg:text-5xl xl:text-6xl" style={heroItemStyle(300, "translateY(20px)")}>
                   Start tattooing.
                 </span>
               </h1>
-
-              <p
-                className="hero-item text-lg text-gray-500 mt-6 max-w-md"
-                style={heroItemStyle(450)}
-              >
+              <p className="hero-item text-lg text-gray-500 mt-6 max-w-md" style={heroItemStyle(450)}>
                 AI handles consultations, follow-ups, quotes, deposits, bookings, and aftercare — so you can focus on tattooing.
               </p>
-
-              <div
-                className="hero-item mt-10 flex flex-wrap gap-4"
-                style={heroItemStyle(600, "translateY(10px)")}
-              >
-                <a href="#trial" className="bg-black text-white rounded-full px-8 py-4 text-base font-medium hover:bg-[#2A2A2A] transition-colors">
-                  Start Free Trial
-                </a>
-                <a href="#book-demo" className="border border-gray-300 rounded-full px-8 py-4 text-base text-[#111111] hover:border-gray-400 transition-colors">
-                  Book Demo
-                </a>
+              <div className="hero-item mt-10 flex flex-wrap gap-4" style={heroItemStyle(600, "translateY(10px)")}>
+                <a href="#trial" className="bg-black text-white rounded-full px-8 py-4 text-base font-medium hover:bg-[#2A2A2A] transition-colors">Start Free Trial</a>
+                <a href="#book-demo" className="border border-gray-300 rounded-full px-8 py-4 text-base text-[#111111] hover:border-gray-400 transition-colors">Book Demo</a>
               </div>
               <p className="mt-4 text-sm text-gray-400">14-day free trial · No credit card required</p>
             </div>
 
-            {/* Right — MOCKUP 1: rich dashboard */}
-            {/* ANIM 1: outer wrapper gets hero-item with translateX+scale start */}
-            <div
-              className="hero-item relative"
-              style={heroItemStyle(200, "translateX(30px) scale(0.97)")}
-            >
+            {/* Right — OS Dashboard */}
+            <div className="hero-item relative" style={heroItemStyle(200, "translateX(30px) scale(0.97)")}>
               <div className="absolute inset-0 pointer-events-none" style={{
                 background: "radial-gradient(ellipse at center, rgba(212,168,83,0.07) 0%, transparent 70%)",
                 filter: "blur(24px)", transform: "scale(1.1)",
               }} />
 
               <div ref={heroDashRef} className="tilt-card relative rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-                style={{ background: "#0F0F0F", border: "1px solid #1F1F1F", minHeight: "580px" }}
+                style={{ background: "#0A0A0A", border: "1px solid #1A1A1A", minHeight: "600px" }}
                 onMouseMove={heroTilt.onMouseMove} onMouseLeave={heroTilt.onMouseLeave}>
 
-                <div className="flex-shrink-0 flex items-center gap-2 px-4 py-3 bg-[#1A1A1A]"
-                  style={{ borderBottom: "1px solid #1F1F1F" }}>
-                  <span className="w-3 h-3 rounded-full bg-red-400" />
-                  <span className="w-3 h-3 rounded-full bg-yellow-400" />
-                  <span className="w-3 h-3 rounded-full bg-green-400" />
-                  <span className="flex-1 text-center text-sm text-gray-500">InkBook — Dashboard</span>
+                {/* Title bar */}
+                <div className="flex-shrink-0 flex items-center gap-2 px-4 py-3" style={{ background: "#141414", borderBottom: "1px solid #1A1A1A" }}>
+                  <span className="w-3 h-3 rounded-full bg-red-400/80" />
+                  <span className="w-3 h-3 rounded-full bg-yellow-400/80" />
+                  <span className="w-3 h-3 rounded-full bg-green-400/80" />
+                  <span className="flex-1 text-center text-xs text-gray-600 font-medium tracking-wide">InkBook — Studio OS</span>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse-dot" />
+                    <span className="text-[10px] text-gray-500">Live</span>
+                  </div>
                 </div>
 
-                <div className="flex flex-1">
+                <div className="flex flex-1 overflow-hidden">
 
-                  <div className="flex-shrink-0 w-52 bg-[#111111] p-4" style={{ borderRight: "1px solid #1F1F1F" }}>
-                    <p className="text-base font-bold text-white mb-6">InkBook</p>
-                    <nav className="space-y-1">
-                      {SIDEBAR_NAV.map((item) => (
-                        <div key={item} className={`px-3 py-2 rounded-lg text-sm cursor-default ${
-                          item === "Dashboard"
-                            ? "bg-[#D4A853] text-black font-medium"
-                            : "text-gray-500 hover:text-gray-300"
+                  {/* Sidebar */}
+                  <div className="flex-shrink-0 w-44 bg-[#0E0E0E] p-3" style={{ borderRight: "1px solid #1A1A1A" }}>
+                    <p className="text-xs font-bold text-white mb-5 px-2 tracking-wide">InkBook</p>
+                    <nav className="space-y-0.5">
+                      {OS_SIDEBAR.map((item) => (
+                        <div key={item.label} className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs cursor-default ${
+                          item.active ? "bg-[#D4A853] text-black font-semibold" : "text-gray-500"
                         }`}>
-                          {item}
+                          <div className="flex items-center gap-2">
+                            {item.icon}
+                            {item.label}
+                          </div>
+                          {item.badge && (
+                            <span className={`text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold ${
+                              item.active ? "bg-black/20 text-black" : "bg-[#D4A853] text-black"
+                            }`}>{item.badge}</span>
+                          )}
                         </div>
                       ))}
                     </nav>
                   </div>
 
-                  <div className="flex-1 p-4 bg-[#0F0F0F] overflow-auto pb-14">
+                  {/* Main */}
+                  <div className="flex-1 p-4 bg-[#0A0A0A] overflow-auto">
 
-                    {/* FIX 1: text-4xl → text-2xl, add refs for stat flash */}
-                    <div className="grid grid-cols-3 gap-3">
+                    {/* 4 stats */}
+                    <div className="grid grid-cols-4 gap-2 mb-4">
                       {heroStats.map((s) => (
-                        <div key={s.label} className="bg-[#1A1A1A] rounded-xl p-4">
-                          <p className="text-xs text-gray-500">{s.label}</p>
-                          <p ref={s.ref} className="text-2xl font-bold text-white mt-1">{s.value}</p>
+                        <div key={s.label} className="rounded-xl p-3" style={{ background: "#141414", border: "1px solid #1E1E1E" }}>
+                          <p className="text-[10px] text-gray-600 uppercase tracking-wide">{s.label}</p>
+                          <p ref={s.ref ?? undefined} className="text-lg font-bold text-white mt-0.5">{s.value}</p>
                         </div>
                       ))}
                     </div>
 
-                    <div className="mt-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-gray-500 uppercase tracking-wider">Recent Bookings</span>
-                        <span className="text-xs text-green-400 flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse-dot inline-block" />
-                          Live
-                        </span>
-                      </div>
-                      <div className="space-y-2">
-                        {BOOKING_ROWS.map((row) => (
-                          <div key={row.name} className="bg-[#1A1A1A] rounded-lg px-3 py-2 flex items-center justify-between">
-                            <div>
-                              <p className="text-sm text-white font-medium">{row.name}</p>
-                              <p className="text-xs text-gray-500 mt-0.5">{row.service}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-[#D4A853] font-medium">{row.amount}</span>
-                              <span className={`text-xs rounded-full px-2 py-0.5 ${row.badgeClass}`}>{row.badge}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    {/* Pipeline + Today two-col */}
+                    <div className="grid grid-cols-[55%_45%] gap-3">
 
-                    <div className="mt-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-gray-500 uppercase tracking-wider">AI Activity</span>
-                        <span className="text-xs text-[#D4A853]">🤖 AI</span>
+                      {/* Mini pipeline */}
+                      <div className="rounded-xl p-3" style={{ background: "#111111", border: "1px solid #1A1A1A" }}>
+                        <div className="flex items-center justify-between mb-2.5">
+                          <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Pipeline</span>
+                          <span className="text-[10px] text-[#D4A853]">12 active</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {OS_MINI_PIPELINE.map((col) => (
+                            <div key={col.col}>
+                              <div className="flex items-center gap-1 mb-1.5">
+                                <span className={`text-[10px] font-semibold ${col.ai ? "text-[#D4A853]" : "text-gray-500"}`}>{col.col}</span>
+                                {col.ai && <span className="w-1 h-1 rounded-full bg-[#D4A853] animate-pulse-dot" />}
+                                <span className="text-[10px] text-gray-700 ml-auto">{col.count}</span>
+                              </div>
+                              <div className="space-y-1">
+                                {col.cards.map((card) => (
+                                  <div key={card.name} className="rounded-md p-1.5"
+                                    style={{ background: col.ai ? "rgba(212,168,83,0.06)" : "#1A1A1A", border: col.ai ? "1px solid rgba(212,168,83,0.15)" : "1px solid #222" }}>
+                                    <p className="text-[10px] font-semibold text-white truncate">{card.name}</p>
+                                    <p className="text-[9px] text-gray-600 truncate">{card.tag}</p>
+                                    <p className={`text-[9px] mt-0.5 ${col.ai ? "text-[#D4A853]" : "text-gray-600"}`}>{card.sub}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        {AI_ACTIVITY.map((item) => (
-                          <div key={item} className="flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#D4A853] mt-1.5 flex-shrink-0" />
-                            <p className="text-xs text-gray-400">{item}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
 
+                      {/* Today + AI */}
+                      <div className="flex flex-col gap-2">
+                        <div className="rounded-xl p-3" style={{ background: "#111111", border: "1px solid #1A1A1A" }}>
+                          <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-2">Today · Jun 20</p>
+                          <div className="space-y-2">
+                            {OS_TODAY.map((appt) => (
+                              <div key={appt.client} className="flex items-start gap-2">
+                                <span className="w-2 h-2 rounded-full flex-shrink-0 mt-1" style={{ background: appt.color }} />
+                                <div>
+                                  <p className="text-[10px] font-semibold text-white">{appt.client}</p>
+                                  <p className="text-[9px] text-gray-600">{appt.time} · {appt.service}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="rounded-xl p-3" style={{ background: "#111111", border: "1px solid #1A1A1A" }}>
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">AI Activity</p>
+                            <span className="text-[10px] text-[#D4A853]">🤖</span>
+                          </div>
+                          <div className="space-y-1.5">
+                            {AI_ACTIVITY.map((item) => (
+                              <div key={item} className="flex items-start gap-1.5">
+                                <span className="w-1 h-1 rounded-full bg-[#D4A853] mt-1 flex-shrink-0" />
+                                <p className="text-[9px] text-gray-500 leading-relaxed">{item}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
                   </div>
                 </div>
 
-                <div className="absolute bottom-4 left-[220px] flex items-center gap-2 rounded-full px-3 py-1.5"
+                <div className="absolute bottom-4 left-[188px] flex items-center gap-2 rounded-full px-3 py-1.5"
                   style={{ background: "#1A1A1A", border: "1px solid #2A2A2A" }}>
                   <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse-dot" />
-                  <span className="text-xs text-white">3 new bookings today</span>
+                  <span className="text-xs text-white">3 new inquiries today</span>
                 </div>
               </div>
             </div>
@@ -702,7 +767,6 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto text-center">
           <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold" data-animate="fade-up">Why InkBook Exists</span>
           <div className="mt-8">
-            {/* FIX 3: flex flex-wrap gap-x so inline-block words have visible spaces */}
             <div className="flex flex-wrap gap-x-[0.3em] justify-center text-5xl lg:text-6xl font-light text-gray-300 leading-tight">
               {"Most software manages appointments.".split(" ").map((word, i) => (
                 <span key={i} className="word-reveal" data-animate="word" data-delay={String(i * 50)}>{word}</span>
@@ -717,13 +781,7 @@ export default function HomePage() {
           <div className="mt-16 max-w-xs mx-auto text-left">
             <p className="text-sm font-semibold text-[#111111] mb-4">InkBook</p>
             <ul className="space-y-3">
-              {[
-                "Manages the full client journey",
-                "Handles AI consultation",
-                "Follows up automatically",
-                "Collects deposits",
-                "Tracks every project",
-              ].map((item) => (
+              {["Manages the full client journey","Handles AI consultation","Follows up automatically","Collects deposits","Tracks every project"].map((item) => (
                 <li key={item} className="flex items-start gap-2 text-sm text-[#111111]">
                   <span className="text-[#D4A853] font-bold flex-shrink-0 mt-px">✓</span>
                   {item}
@@ -744,13 +802,11 @@ export default function HomePage() {
             </h2>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-16 max-w-4xl mx-auto">
-            {/* ANIM 2: magnetic hover on each pain card */}
             {PAIN_CARDS.map((card, i) => (
               <div key={i}
                 className="bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3] hover:shadow-md transition-shadow duration-200"
                 data-animate="fade-up" data-delay={String(i * 100)}
-                onMouseMove={handlePainMove}
-                onMouseLeave={handlePainLeave}>
+                onMouseMove={handlePainMove} onMouseLeave={handlePainLeave}>
                 <div className="text-gray-400 mb-4">{card.icon}</div>
                 <h3 className="text-base font-semibold text-[#111111]">{card.title}</h3>
                 <p className="text-sm text-gray-500 mt-2">{card.desc}</p>
@@ -760,176 +816,274 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══ WORKFLOW ══ */}
+      {/* ══ JOURNEY ══ */}
       <section className="py-24 px-6" style={{ background: "#FFFFFF" }}>
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center">
-            <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">The Workflow</span>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">The Complete Workflow</span>
             <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
-              One system. The entire client journey.
+              One client. Ten steps. Zero manual work.
             </h2>
           </div>
 
-          <div className="mt-12 -mx-6 px-6 overflow-x-auto">
-            <div ref={workflowRowRef} className="flex items-start pb-4" style={{ minWidth: "max-content" }}>
-              {WORKFLOW_STEPS.map((s, i) => (
-                <div key={i} className="wf-item workflow-card-hidden flex items-center flex-shrink-0">
-                  <div className="min-w-[160px] p-5 rounded-2xl bg-white border border-[#E5E5E3] shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 text-center">
-                    <div className="w-4 h-4 rounded-full mx-auto" style={{ background: s.ai ? "#D4A853" : "#D1D5DB" }} />
-                    <p className="text-sm font-bold text-[#111111] mt-3">{s.label}</p>
-                    <p className="text-xs text-gray-500 mt-1">{s.desc}</p>
+          <div className="relative" ref={journeyRef}>
+            {/* Vertical line */}
+            <div className="absolute left-[22px] top-4 bottom-4 w-px bg-[#E5E5E3]" />
+
+            <div className="space-y-3">
+              {JOURNEY_STAGES.map((stage, i) => (
+                <div key={i} className="journey-stage flex items-start gap-5 relative">
+                  {/* Dot */}
+                  <div className={`relative z-10 w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${
+                    stage.done
+                      ? stage.ai ? "bg-[#D4A853] text-black" : "bg-[#111111] text-white"
+                      : "bg-white border-2 border-[#E5E5E3] text-gray-400"
+                  }`}>
+                    {stage.done ? (stage.ai ? "AI" : "✓") : stage.num}
                   </div>
-                  {i < WORKFLOW_STEPS.length - 1 && (
-                    <span className="text-[#D4A853] text-xl mx-2 flex-shrink-0 self-center">→</span>
-                  )}
+                  {/* Card */}
+                  <div className={`flex-1 rounded-xl p-4 border ${
+                    stage.ai
+                      ? "bg-[#FFFDF5] border-[#D4A853]/20"
+                      : stage.done
+                        ? "bg-[#F8F8F6] border-[#E5E5E3]"
+                        : "bg-white border-[#E5E5E3]"
+                  }`}>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-[#111111]">{stage.label}</span>
+                        {stage.ai && <span className="text-[10px] bg-[#D4A853]/10 text-[#D4A853] px-2 py-0.5 rounded-full font-semibold">AI</span>}
+                      </div>
+                      <span className="text-xs text-gray-400 flex-shrink-0">{stage.time}</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">{stage.sub}</p>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
+        </div>
+      </section>
 
-          <div className="mt-8 rounded-xl p-5"
-            style={{ background: "rgba(212,168,83,0.05)", border: "1px solid rgba(212,168,83,0.2)" }}
-            data-animate="fade-up">
-            <p className="text-xs uppercase tracking-widest text-[#D4A853] text-center mb-3 font-semibold">
-              The Complete Workflow
-            </p>
-            <p className="text-sm text-[#D4A853] text-center leading-relaxed">
-              Instagram Inquiry → AI Consultation → AI Follow-Up → Quote → Deposit → Booking → Consent → Aftercare → Review → CRM
-            </p>
+      {/* ══ AI CONSULTATION (expanded) ══ */}
+      <section className="py-24 px-6" style={{ background: "#F8F8F6" }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">AI Consultation</span>
+            <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
+              AI qualifies every client before you ever see them.
+            </h2>
           </div>
 
-          {/* AI Consultation chat */}
-          <div className="max-w-3xl mx-auto mt-12" ref={aiChatTiltRef}
-            onMouseMove={aiChatTilt.onMouseMove} onMouseLeave={aiChatTilt.onMouseLeave}>
-            <div ref={chatCardRef} className="tilt-card bg-white rounded-2xl shadow-xl border border-[#E5E5E3] overflow-hidden min-h-[360px]">
+          <div ref={aiChatTiltRef} onMouseMove={aiChatTilt.onMouseMove} onMouseLeave={aiChatTilt.onMouseLeave}>
+            <div ref={chatCardRef} className="tilt-card bg-white rounded-2xl shadow-xl border border-[#E5E5E3] overflow-hidden">
 
-              <div className="bg-[#F8F8F6] px-5 py-4 border-b border-[#E5E5E3] flex items-center justify-between">
-                <span className="text-sm font-semibold text-[#111111]">AI Consultation</span>
-                <span className="text-xs text-gray-400">Powered by InkBook</span>
-              </div>
-
-              <div className="p-5 space-y-4 min-h-[160px]">
-                <div className={`flex gap-3 ${visibleMessages >= 1 ? "msg-visible" : "msg-hidden"}`}>
-                  <div className="w-8 h-8 rounded-full bg-[#D4A853] flex items-center justify-center text-xs text-black font-bold flex-shrink-0">AI</div>
-                  <div className="bg-[#F8F8F6] rounded-xl rounded-tl-none px-4 py-3 text-sm text-[#111111] max-w-sm">
-                    Hi! I&apos;m InkBook AI. Tell me about the tattoo you&apos;re looking for 🎨
+              <div className="bg-[#F8F8F6] px-6 py-4 border-b border-[#E5E5E3] flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#D4A853] flex items-center justify-center text-xs font-bold text-black">AI</div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#111111]">InkBook AI Consultation</p>
+                    <p className="text-xs text-gray-400">Ink &amp; Iron Studio</p>
                   </div>
                 </div>
-                <div className={`flex gap-3 justify-end ${visibleMessages >= 2 ? "msg-visible" : "msg-hidden"}`}>
-                  <div className="bg-[#111111] rounded-xl rounded-tr-none px-4 py-3 text-sm text-white max-w-xs">
-                    I want a floral sleeve on my left arm, black and grey
-                  </div>
-                </div>
-                <div className={`flex gap-3 ${visibleMessages >= 3 ? "msg-visible" : "msg-hidden"}`}>
-                  <div className="w-8 h-8 rounded-full bg-[#D4A853] flex items-center justify-center text-xs text-black font-bold flex-shrink-0">AI</div>
-                  <div className="bg-[#F8F8F6] rounded-xl rounded-tl-none px-4 py-3 text-sm text-[#111111] max-w-sm">
-                    Great choice! I&apos;ve detected: Floral / Botanical style, Black &amp; Grey. What size are you thinking — half sleeve or full?
+                <div className="flex items-center gap-4">
+                  <span className="text-xs text-gray-400">Step <span className="text-[#111111] font-semibold">{Math.min(visibleMessages, 9)}</span> / 9</span>
+                  <div className="flex gap-0.5">
+                    {Array.from({ length: 9 }, (_, i) => (
+                      <div key={i} className={`h-1.5 w-5 rounded-full transition-colors duration-300 ${i < visibleMessages ? "bg-[#D4A853]" : "bg-gray-200"}`} />
+                    ))}
                   </div>
                 </div>
               </div>
 
-              <div className={`px-5 py-4 bg-[#F8F8F6] border-t border-[#E5E5E3] ${visibleMessages >= 3 ? "msg-visible" : "msg-hidden"}`}>
-                <p className="text-sm text-[#D4A853]">Style detected: Floral · Black &amp; Grey</p>
-                <div className="flex gap-1.5 mt-3">
-                  {Array.from({ length: 9 }, (_, i) => (
-                    <div key={i} className={`h-2 flex-1 rounded-full ${i < 3 ? "bg-[#D4A853]" : "bg-gray-200"}`} />
+              <div className="grid lg:grid-cols-[3fr_2fr]">
+
+                {/* Chat */}
+                <div className="p-6 space-y-3 border-r border-[#E5E5E3] min-h-[420px] max-h-[420px] overflow-y-auto">
+                  {AI_MSGS.map((msg, i) => (
+                    <div key={i} className={`flex gap-3 ${msg.ai ? "" : "justify-end"} ${visibleMessages > i ? "msg-visible" : "msg-hidden"}`}>
+                      {msg.ai && (
+                        <div className="w-7 h-7 rounded-full bg-[#D4A853] flex items-center justify-center text-[10px] font-bold text-black flex-shrink-0 mt-0.5">AI</div>
+                      )}
+                      <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm ${
+                        msg.ai
+                          ? "bg-[#F8F8F6] text-[#111111] rounded-tl-none"
+                          : "bg-[#111111] text-white rounded-tr-none"
+                      }`}>
+                        {msg.text}
+                      </div>
+                    </div>
                   ))}
                 </div>
-                <p className="text-xs text-gray-400 mt-2">Currently at step 3 of 9</p>
-              </div>
 
+                {/* Analysis panel */}
+                <div className="p-6 bg-[#F8F8F6] space-y-4">
+                  <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">AI Analysis</p>
+
+                  <div className="bg-white rounded-xl p-4 border border-[#E5E5E3]">
+                    <p className="text-xs text-gray-500 mb-2">Style detected</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {["Floral / Botanical", "Black & Grey", "Fine line"].map((tag) => (
+                        <span key={tag} className="text-xs bg-[#D4A853]/10 text-[#D4A853] px-2 py-0.5 rounded-full font-medium">{tag}</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-xl p-4 border border-[#E5E5E3]">
+                    <p className="text-xs text-gray-500 mb-2">Budget qualification</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-[#111111]">$800 budget</span>
+                      <span className="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-medium">✓ Qualified</span>
+                    </div>
+                    <div className="mt-2 h-1.5 bg-gray-100 rounded-full">
+                      <div className="h-1.5 bg-green-400 rounded-full" style={{ width: "72%" }} />
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-1">Fits phased full sleeve approach</p>
+                  </div>
+
+                  <div className="bg-white rounded-xl p-4 border border-[#E5E5E3]">
+                    <p className="text-xs text-gray-500 mb-2">Artist matched</p>
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-[#D4A853] flex items-center justify-center text-xs font-bold text-black">AR</div>
+                      <div>
+                        <p className="text-sm font-semibold text-[#111111]">Alex R.</p>
+                        <p className="text-xs text-gray-500">Floral · Black & Grey · Next: Mon</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#111111] rounded-xl p-4">
+                    <p className="text-xs text-[#D4A853] font-semibold mb-1">Ready to quote</p>
+                    <p className="text-xs text-gray-400">All 9 questions complete. AI draft generating…</p>
+                  </div>
+                </div>
+
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ══ ARTIST DID NOTHING ══ */}
+      {/* ══ QUOTE BUILDER ══ */}
       <section className="py-24 px-6" style={{ background: "#1A1A1A", borderTop: "1px solid #2A2A2A" }}>
         <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div className="text-center mb-12">
+            <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Quote Builder</span>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mt-4">
+              Artist did nothing except approve the quote and show up to tattoo.
+            </h2>
+          </div>
 
-            <div>
-              <h2 className="text-3xl lg:text-4xl font-bold text-white leading-tight">
-                Artist did nothing except approve the quote and show up to tattoo.
-              </h2>
-              <p className="mt-8 text-white font-semibold">
-                That is what InkBook does. Every single booking.
-              </p>
+          <div className="grid lg:grid-cols-3 gap-5">
+
+            {/* Panel 1: Client brief */}
+            <div className="bg-[#111111] rounded-2xl overflow-hidden border border-[#2A2A2A]">
+              <div className="px-5 py-4 border-b border-[#2A2A2A] flex items-center justify-between">
+                <span className="text-sm font-semibold text-white">Client Brief</span>
+                <span className="text-xs text-[#D4A853] bg-[#D4A853]/10 px-2 py-0.5 rounded-full">AI Generated</span>
+              </div>
+              <div className="p-5 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#D4A853] flex items-center justify-center text-sm font-bold text-black">SM</div>
+                  <div>
+                    <p className="text-sm font-semibold text-white">Sarah M.</p>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      {[1,2,3,4,5].map(n => <span key={n} className="text-[#D4A853] text-xs">★</span>)}
+                      <span className="text-xs text-gray-500 ml-1">VIP · Returning</span>
+                    </div>
+                  </div>
+                </div>
+                {[
+                  { label: "Style",     value: "Floral / Botanical" },
+                  { label: "Color",     value: "Black & Grey" },
+                  { label: "Placement", value: "Left arm · Full sleeve" },
+                  { label: "Sessions",  value: "2 sessions est." },
+                  { label: "Budget",    value: "$800 stated" },
+                ].map((row) => (
+                  <div key={row.label} className="flex justify-between items-center py-2 border-b border-[#2A2A2A]">
+                    <span className="text-xs text-gray-500">{row.label}</span>
+                    <span className="text-xs text-white font-medium">{row.value}</span>
+                  </div>
+                ))}
+                <div className="flex gap-2 mt-2">
+                  {["Reference photo 1", "Reference photo 2"].map((img) => (
+                    <div key={img} className="flex-1 h-16 rounded-lg bg-[#1A1A1A] border border-[#2A2A2A] flex items-center justify-center">
+                      <span className="text-[10px] text-gray-600">{img}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            {/* MOCKUP 3: Quote Builder */}
-            <div className="flex justify-center lg:justify-end">
-              <div ref={quoteTiltRef} className="tilt-card w-full max-w-lg"
-                onMouseMove={quoteTilt.onMouseMove} onMouseLeave={quoteTilt.onMouseLeave}>
-                <div ref={quoteCardRef} className="bg-white rounded-2xl overflow-hidden"
-                  style={{ boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 24px 64px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.4)" }}>
-
-                  <div className="px-5 py-4 bg-[#F8F8F6] border-b border-[#E5E5E3] flex items-center justify-between">
-                    <span className="text-base font-semibold text-[#111111]">Quote Builder</span>
-                    <span className="bg-[#D4A853] text-black text-xs px-2.5 py-1 rounded-full font-medium">AI Draft Ready</span>
-                  </div>
-
-                  <div className="px-5 py-4 border-b border-[#E5E5E3]">
-                    <p className="text-base font-semibold text-[#111111]">Sarah M.</p>
-                    <p className="text-sm text-gray-500 mt-0.5">Floral sleeve · Left arm · Full</p>
-                  </div>
-
-                  <div className="px-5 py-4 space-y-3 border-b border-[#E5E5E3]">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Consultation</span>
-                      <span className="text-[#111111] font-medium">$0</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Session 1 — Outline (4hr)</span>
-                      <span className="text-[#111111] font-medium">${quoteSession1}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Session 2 — Shading (3hr)</span>
-                      <span className="text-[#111111] font-medium">${quoteSession2}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Touch-up (included)</span>
-                      <span className="text-[#111111] font-medium">$0</span>
-                    </div>
-                  </div>
-
-                  <div className="px-5 py-4 border-b border-[#E5E5E3]">
-                    <div className="flex justify-between">
-                      <span className="text-base font-semibold text-[#111111]">Total Project</span>
-                      <span className="text-base font-bold text-[#111111]">${quoteTotal}</span>
-                    </div>
-                    <div className="flex justify-between mt-2">
-                      <span className="text-sm text-gray-500">Deposit Required</span>
-                      <span className="text-sm text-[#D4A853] font-medium">${quoteDeposit} (21%)</span>
-                    </div>
-                  </div>
-
-                  <div className="px-5 py-4 flex gap-2 bg-[#F8F8F6] border-b border-[#E5E5E3]">
-                    <button className="border border-gray-300 rounded-lg px-4 py-2 text-sm text-[#111111] hover:bg-gray-100 transition-colors">
-                      Edit
-                    </button>
-                    <button className="flex-1 bg-[#111111] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#2A2A2A] transition-colors">
-                      Approve &amp; Send
-                    </button>
-                  </div>
-
-                  <div className="px-5 py-3">
-                    <p className="text-xs text-gray-400">AI generated draft · Artist approval required before sending</p>
-                  </div>
-
+            {/* Panel 2: Quote */}
+            <div ref={quoteTiltRef} className="tilt-card" onMouseMove={quoteTilt.onMouseMove} onMouseLeave={quoteTilt.onMouseLeave}>
+              <div ref={quoteCardRef} className="bg-white rounded-2xl overflow-hidden h-full" style={{ boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 24px 64px rgba(0,0,0,0.6)" }}>
+                <div className="px-5 py-4 bg-[#F8F8F6] border-b border-[#E5E5E3] flex items-center justify-between">
+                  <span className="text-base font-semibold text-[#111111]">Quote Builder</span>
+                  <span className="bg-[#D4A853] text-black text-xs px-2.5 py-1 rounded-full font-medium">AI Draft Ready</span>
                 </div>
-
-                <div className="mt-3 bg-green-50 border border-green-200 rounded-xl p-4">
-                  <div className="flex items-center gap-2">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                      <polyline points="22 4 12 14.01 9 11.01" />
-                    </svg>
-                    <span className="text-sm font-semibold text-green-800">Deposit Request Sent ✓</span>
-                  </div>
-                  <p className="text-sm text-green-700 mt-1.5">Sarah M. · $150 deposit · Paid via Stripe</p>
+                <div className="px-5 py-4 space-y-3 border-b border-[#E5E5E3]">
+                  {[
+                    { label: "Consultation",             value: "$0"              },
+                    { label: "Session 1 — Outline (4hr)", value: `$${quoteSession1}` },
+                    { label: "Session 2 — Shading (3hr)", value: `$${quoteSession2}` },
+                    { label: "Touch-up (included)",       value: "$0"              },
+                  ].map((row) => (
+                    <div key={row.label} className="flex justify-between text-sm">
+                      <span className="text-gray-600">{row.label}</span>
+                      <span className="text-[#111111] font-medium">{row.value}</span>
+                    </div>
+                  ))}
                 </div>
+                <div className="px-5 py-4 border-b border-[#E5E5E3]">
+                  <div className="flex justify-between">
+                    <span className="text-base font-semibold text-[#111111]">Total Project</span>
+                    <span className="text-base font-bold text-[#111111]">${quoteTotal}</span>
+                  </div>
+                  <div className="flex justify-between mt-2">
+                    <span className="text-sm text-gray-500">Deposit Required</span>
+                    <span className="text-sm text-[#D4A853] font-medium">${quoteDeposit} (21%)</span>
+                  </div>
+                </div>
+                <div className="px-5 py-4 flex gap-2 bg-[#F8F8F6] border-b border-[#E5E5E3]">
+                  <button className="border border-gray-300 rounded-lg px-4 py-2 text-sm text-[#111111]">Edit</button>
+                  <button className="flex-1 bg-[#111111] text-white rounded-lg px-4 py-2 text-sm font-medium">Approve &amp; Send</button>
+                </div>
+                <div className="px-5 py-3">
+                  <p className="text-xs text-gray-400">AI generated draft · Artist approval required before sending</p>
+                </div>
+              </div>
+            </div>
 
+            {/* Panel 3: Status flow */}
+            <div className="bg-[#111111] rounded-2xl overflow-hidden border border-[#2A2A2A]">
+              <div className="px-5 py-4 border-b border-[#2A2A2A]">
+                <span className="text-sm font-semibold text-white">Booking Flow</span>
+              </div>
+              <div className="p-5 space-y-3">
+                {[
+                  { status: "Quote sent", detail: "Sarah M. received quote link",           done: true,  gold: false },
+                  { status: "Client viewed", detail: "Opened 2 minutes later",             done: true,  gold: false },
+                  { status: "Quote accepted", detail: "Sarah M. approved $700",            done: true,  gold: false },
+                  { status: "Deposit paid", detail: "$150 via Stripe · Card ending 4242",  done: true,  gold: true  },
+                  { status: "Booking confirmed", detail: "Jun 22 · 2:00 PM · Alex R.",     done: true,  gold: true  },
+                  { status: "SMS confirmation", detail: "Sent to +1 (555) 234-5678",       done: true,  gold: false },
+                ].map((step, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                      step.gold ? "bg-[#D4A853]" : step.done ? "bg-green-500" : "bg-[#2A2A2A]"
+                    }`}>
+                      {step.done && <span className="text-[10px] text-black font-bold">✓</span>}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-white">{step.status}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{step.detail}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mx-5 mb-5 bg-green-900/30 border border-green-800/40 rounded-xl p-3">
+                <p className="text-xs font-semibold text-green-400">That is what InkBook does. Every single booking.</p>
               </div>
             </div>
 
@@ -937,19 +1091,162 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══ ARTIST DASHBOARD ══ — ANIM 4: section-slide */}
+      {/* ══ PIPELINE ══ */}
+      <section className="py-24 px-6" style={{ background: "#FFFFFF" }}>
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Lead Pipeline</span>
+            <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
+              Every lead. Every stage. Always visible.
+            </h2>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-xl border border-[#E5E5E3] overflow-hidden" data-animate="fade-up">
+            <div className="px-6 py-4 border-b border-[#E5E5E3] flex items-center justify-between bg-[#F8F8F6]">
+              <span className="text-sm font-semibold text-[#111111]">Lead Pipeline</span>
+              <div className="flex items-center gap-3">
+                <span className="w-2 h-2 rounded-full bg-[#D4A853] animate-pulse-dot" />
+                <span className="text-xs text-gray-500">14 active leads</span>
+              </div>
+            </div>
+
+            <div ref={pipelineRef} className="flex gap-4 p-5 overflow-x-auto">
+              {PIPELINE_COLS.map((col) => (
+                <div key={col.title} className="pipeline-col w-52 flex-shrink-0">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-xs font-bold uppercase tracking-wide ${col.titleClass}`}>{col.title}</span>
+                      {col.ai && <span className="w-1.5 h-1.5 rounded-full bg-[#D4A853] animate-pulse-dot" />}
+                    </div>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${col.countClass}`}>{col.cards.length}</span>
+                  </div>
+                  <div className="space-y-2.5 min-h-[200px]">
+                    {col.cards.map((card) => (
+                      <div key={card.name} className={`pipeline-item pipeline-card-hidden bg-[#F8F8F6] rounded-xl p-3 ${card.border}`}>
+                        <p className="text-sm font-semibold text-[#111111]">{card.name}</p>
+                        <span className="inline-block mt-1 text-xs px-1.5 py-0.5 rounded-md"
+                          style={{ background: col.ai ? "rgba(212,168,83,0.1)" : "#EFEFED", color: col.ai ? "#D4A853" : "#6B7280" }}>
+                          {card.tag}
+                        </span>
+                        <p className={`text-xs mt-1.5 ${card.subClass}`}>{card.sub}</p>
+                        {card.readyBadge && (
+                          <span className="inline-block mt-1.5 text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700">Ready to book</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ CLIENT PROFILE ══ */}
       <section className="section-slide py-24 px-6" style={{ background: "#F8F8F6" }}>
         <div className="max-w-6xl mx-auto">
-          <div className="text-center">
+          <div className="text-center mb-12">
+            <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Client CRM</span>
+            <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
+              Every client. Their entire journey.
+            </h2>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-xl border border-[#E5E5E3] overflow-hidden">
+            <div className="px-6 py-4 bg-[#F8F8F6] border-b border-[#E5E5E3] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-[#D4A853] flex items-center justify-center text-sm font-bold text-black">SM</div>
+                <span className="text-sm font-semibold text-[#111111]">Sarah M. — Client Profile</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {["Floral", "Black & Grey", "VIP", "Returning"].map((tag) => (
+                  <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-white border border-[#E5E5E3] text-gray-600">{tag}</span>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid" style={{ gridTemplateColumns: "280px 1fr" }}>
+
+              <div className="p-6 border-r border-[#E5E5E3]">
+                <div className="flex flex-col items-center">
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold"
+                    style={{ background: "linear-gradient(135deg, #D4A853 0%, #B8923E 100%)" }}>SM</div>
+                  <p className="text-lg font-bold mt-3 text-[#111111]">Sarah M.</p>
+                  <p className="text-xs text-gray-500">Client since March 2023</p>
+                  <div className="flex items-center gap-0.5 mt-1">
+                    {[1,2,3,4,5].map(n => <span key={n} className="text-[#D4A853] text-sm">★</span>)}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 mt-5">
+                  {CRM_STATS.map((s) => (
+                    <div key={s.label} className="bg-[#F8F8F6] rounded-xl p-3 text-center">
+                      <p className="text-lg font-bold text-[#111111]">{s.value}</p>
+                      <p className="text-xs text-gray-500">{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 space-y-2">
+                  <div className="bg-[#F8F8F6] rounded-xl p-3 flex justify-between items-center">
+                    <span className="text-xs text-gray-500">Artist</span>
+                    <span className="text-xs font-semibold text-[#111111]">Alex R.</span>
+                  </div>
+                  <div className="bg-[#F8F8F6] rounded-xl p-3 flex justify-between items-center">
+                    <span className="text-xs text-gray-500">Risk level</span>
+                    <span className="text-xs font-semibold text-green-600">Low ✓</span>
+                  </div>
+                  <div className="bg-[#F8F8F6] rounded-xl p-3 flex justify-between items-center">
+                    <span className="text-xs text-gray-500">Next session</span>
+                    <span className="text-xs font-semibold text-[#111111]">Jun 20 · 2:00 PM</span>
+                  </div>
+                  <div className="bg-[#F8F8F6] rounded-xl p-3 flex justify-between items-center">
+                    <span className="text-xs text-gray-500">Consent signed</span>
+                    <span className="text-xs font-semibold text-green-600">✓ All forms</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-5">
+                  {["Timeline", "Quotes", "Payments", "Consent", "Notes", "Aftercare"].map((tab, i) => (
+                    <button key={tab} className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
+                      i === 0 ? "bg-[#111111] text-white" : "text-gray-500 hover:text-[#111111]"
+                    }`}>{tab}</button>
+                  ))}
+                </div>
+                <div ref={crmTimelineRef} className="relative space-y-4">
+                  <div className="absolute left-[5px] top-2 bottom-2 w-[2px] bg-[#E5E5E3]" />
+                  {CRM_TIMELINE.map((item, i) => (
+                    <div key={i} className="timeline-item flex gap-4 items-start relative">
+                      <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 z-10 ${
+                        item.gold ? "bg-[#D4A853]" : "bg-white border-2 border-[#D4A853]"
+                      }`} />
+                      <div>
+                        <p className="text-xs text-gray-400">{item.date}</p>
+                        <p className="text-sm font-medium text-[#111111]">{item.event}</p>
+                        <p className="text-xs text-gray-500">{item.detail}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ ARTIST DASHBOARD ══ */}
+      <section className="section-slide py-24 px-6" style={{ background: "#FFFFFF" }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Artist Dashboard</span>
             <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
               Everything an artist needs. Nothing they don&apos;t.
             </h2>
           </div>
 
-          <div className="max-w-4xl mx-auto mt-12">
+          <div className="max-w-4xl mx-auto">
             <div className="bg-white rounded-2xl shadow-xl border border-[#E5E5E3] overflow-hidden">
-
               <div className="bg-[#F8F8F6] px-6 py-4 border-b border-[#E5E5E3] flex items-center gap-3">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
                   <polyline points="15 18 9 12 15 6" />
@@ -962,7 +1259,6 @@ export default function HomePage() {
               </div>
 
               <div className="grid h-[400px]" style={{ gridTemplateColumns: "240px 1fr" }}>
-
                 <div className="bg-[#F8F8F6] border-r border-[#E5E5E3] p-4 flex flex-col">
                   <div className="flex flex-col items-center pt-2">
                     <div className="w-12 h-12 bg-[#D4A853] rounded-full flex items-center justify-center text-white font-bold">AR</div>
@@ -976,9 +1272,7 @@ export default function HomePage() {
                       }`}>
                         {item.label}
                         {item.badge && (
-                          <span className="bg-[#111111] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-medium">
-                            {item.badge}
-                          </span>
+                          <span className="bg-[#111111] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-medium">{item.badge}</span>
                         )}
                       </div>
                     ))}
@@ -986,11 +1280,11 @@ export default function HomePage() {
                 </div>
 
                 <div className="p-6 overflow-auto">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-4">
                     <span className="text-sm font-semibold text-[#111111]">AI Inbox</span>
                     <span className="text-xs text-[#D4A853]">3 items need attention</span>
                   </div>
-                  <div className="space-y-3 mt-4">
+                  <div className="space-y-3">
                     {ARTIST_INBOX.map((card) => (
                       <div key={card.name} className={`${card.bg} ${card.border} rounded-xl p-4`}>
                         <div className="flex items-center justify-between">
@@ -1000,6 +1294,263 @@ export default function HomePage() {
                         <p className="text-sm font-semibold mt-2 text-[#111111]">{card.name}</p>
                         <p className="text-xs text-gray-500 mt-0.5">{card.detail}</p>
                         <button className={`mt-3 text-xs rounded-lg px-3 py-1.5 ${card.btnClass}`}>{card.btn}</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ CALENDAR ══ */}
+      <section className="section-slide py-24 px-6" style={{ background: "#F8F8F6" }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Calendar</span>
+            <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
+              Every artist&apos;s schedule. No double-bookings. Ever.
+            </h2>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-xl border border-[#E5E5E3] overflow-hidden">
+            <div className="px-6 py-4 bg-[#F8F8F6] border-b border-[#E5E5E3] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-semibold text-[#111111]">Studio Calendar</span>
+                <span className="text-xs bg-[#D4A853]/10 text-[#D4A853] px-2 py-0.5 rounded-full font-medium">Week of Jun 16–21</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full" style={{ background: "#D4A853" }} />
+                  <span className="text-xs text-gray-500">Alex R.</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full" style={{ background: "#7C3AED" }} />
+                  <span className="text-xs text-gray-500">Jordan H.</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full" style={{ background: "#2563EB" }} />
+                  <span className="text-xs text-gray-500">Sam K.</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-5 overflow-x-auto">
+              {/* Day headers */}
+              <div className="grid mb-2" style={{ gridTemplateColumns: "40px repeat(6, 1fr)", gap: "8px" }}>
+                <div />
+                {CALENDAR_DAYS.map((d) => (
+                  <div key={d.day} className={`text-center rounded-lg py-1.5 ${d.date === "20" ? "bg-[#111111]" : ""}`}>
+                    <p className={`text-[10px] font-semibold uppercase tracking-wide ${d.date === "20" ? "text-[#D4A853]" : "text-gray-400"}`}>{d.day}</p>
+                    <p className={`text-sm font-bold mt-0.5 ${d.date === "20" ? "text-white" : "text-[#111111]"}`}>{d.date}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Time grid */}
+              <div className="grid" style={{ gridTemplateColumns: "40px repeat(6, 1fr)", gap: "8px" }}>
+                {/* Time labels */}
+                <div className="relative" style={{ height: "280px" }}>
+                  {["10am", "12pm", "2pm", "4pm", "6pm"].map((t, i) => (
+                    <span key={t} className="absolute text-[10px] text-gray-400 right-1" style={{ top: `${i * 70}px`, transform: "translateY(-50%)" }}>
+                      {t}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Day columns */}
+                {CALENDAR_DAYS.map((day) => (
+                  <div key={day.day} className="relative rounded-lg" style={{ height: "280px", background: day.date === "20" ? "rgba(17,17,17,0.02)" : "#F8F8F6", border: "1px solid #E5E5E3" }}>
+                    {/* Hour lines */}
+                    {[0,1,2,3,4,5,6,7].map((h) => (
+                      <div key={h} className="absolute left-0 right-0" style={{ top: `${h * 35}px`, height: "1px", background: "#F0F0EE" }} />
+                    ))}
+                    {/* Appointments */}
+                    {day.appts.map((appt, i) => (
+                      <div key={i} className="absolute left-1 right-1 rounded-lg px-2 py-1.5 overflow-hidden"
+                        style={{ top: `${appt.top}px`, height: `${appt.height}px`, background: appt.color, opacity: 0.9 }}>
+                        <p className="text-[10px] font-bold text-white leading-tight truncate">{appt.client}</p>
+                        <p className="text-[9px] text-white/80 truncate">{appt.service}</p>
+                        <p className="text-[9px] text-white/70">{appt.time}</p>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+
+              {/* Legend row */}
+              <div className="mt-4 flex items-center gap-6">
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <span className="w-3 h-3 rounded" style={{ background: "#D4A853" }} />
+                  Sarah M. · Sleeve outline · Jun 20 · 2–6pm
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <span className="w-3 h-3 rounded" style={{ background: "#7C3AED" }} />
+                  Jake T. · Neo-trad arm · Jun 17 · 11am–2pm
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <span className="w-3 h-3 rounded" style={{ background: "#2563EB" }} />
+                  Chris M. · Cover-up · Jun 19 · 12–2pm
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ AFTERCARE + REVIEWS ══ */}
+      <section className="py-24 px-6" style={{ background: "#111111", borderTop: "1px solid #1A1A1A" }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Aftercare &amp; Reviews</span>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mt-4">
+              The session ends. InkBook keeps working.
+            </h2>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-8">
+
+            {/* SMS thread */}
+            <div className="bg-[#1A1A1A] rounded-2xl overflow-hidden border border-[#2A2A2A]">
+              <div className="px-5 py-4 border-b border-[#2A2A2A] flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-green-400" />
+                  <span className="text-sm font-semibold text-white">Automated Aftercare — Maya L.</span>
+                </div>
+                <span className="text-xs text-[#D4A853] bg-[#D4A853]/10 px-2 py-0.5 rounded-full font-medium">AI</span>
+              </div>
+              <div className="p-5 space-y-4">
+                {AFTERCARE_MSGS.map((msg, i) => (
+                  <div key={i} className="flex gap-3">
+                    <div className="w-8 h-8 rounded-full bg-[#D4A853] flex items-center justify-center text-[10px] font-bold text-black flex-shrink-0 mt-0.5">IB</div>
+                    <div className="flex-1">
+                      <div className="bg-[#252525] rounded-2xl rounded-tl-none px-4 py-3">
+                        <p className="text-xs text-white leading-relaxed">{msg.text}</p>
+                      </div>
+                      <p className="text-[10px] text-gray-600 mt-1.5 ml-1">{msg.day}</p>
+                    </div>
+                  </div>
+                ))}
+                <div className="rounded-xl p-3 mt-2" style={{ background: "rgba(212,168,83,0.06)", border: "1px solid rgba(212,168,83,0.15)" }}>
+                  <p className="text-xs text-[#D4A853]">3-message sequence sent automatically · No manual action needed</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Review flow */}
+            <div className="flex flex-col gap-4">
+              <div className="bg-[#1A1A1A] rounded-2xl p-5 border border-[#2A2A2A]">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-semibold text-white">Review Request</span>
+                  <span className="text-xs text-[#D4A853]">Sent Jun 29</span>
+                </div>
+                <div className="bg-[#252525] rounded-xl p-4 border border-[#2A2A2A]">
+                  <p className="text-xs text-gray-400 mb-1">Message to Maya L.</p>
+                  <p className="text-sm text-white">&ldquo;How was your experience at Ink &amp; Iron? Tap to leave a quick review — it means the world to us! ⭐&rdquo;</p>
+                  <div className="mt-3 flex items-center gap-2">
+                    <span className="text-xs text-gray-500">Sent via SMS</span>
+                    <span className="text-xs text-green-400 ml-auto">Delivered ✓</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-[#1A1A1A] rounded-2xl p-5 border border-[#2A2A2A] flex-1">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-semibold text-white">Review Received</span>
+                  <span className="text-xs text-green-400">Jun 29 · 7 days after</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#D4A853] flex items-center justify-center text-sm font-bold text-black flex-shrink-0">ML</div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-1 mb-1">
+                      {[1,2,3,4,5].map(n => <span key={n} className="text-[#D4A853]">★</span>)}
+                    </div>
+                    <p className="text-sm text-white">&ldquo;Alex is incredible. Best tattoo experience ever. The whole process was so smooth and professional.&rdquo;</p>
+                    <p className="text-xs text-gray-500 mt-2">— Maya L. · Google Review</p>
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center gap-2">
+                  <span className="text-xs px-2 py-1 rounded-full bg-green-900/40 text-green-400 font-medium">Posted to Google ✓</span>
+                  <span className="text-xs px-2 py-1 rounded-full bg-blue-900/40 text-blue-400 font-medium">Added to Portfolio ✓</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ══ REVENUE DASHBOARD ══ */}
+      <section className="section-slide py-24 px-6" style={{ background: "#FFFFFF" }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Revenue</span>
+            <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
+              Track everything. Miss nothing.
+            </h2>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-xl border border-[#E5E5E3] overflow-hidden">
+            <div className="px-6 py-4 bg-[#F8F8F6] border-b border-[#E5E5E3] flex items-center justify-between">
+              <span className="text-sm font-semibold text-[#111111]">Revenue Dashboard</span>
+              <span className="text-xs text-gray-500">Ink &amp; Iron Studio · Jun 2025</span>
+            </div>
+
+            <div className="p-6">
+              {/* Stat cards */}
+              <div className="grid grid-cols-4 gap-4 mb-8">
+                {[
+                  { label: "Monthly Revenue", value: "$12,480", sub: "+18% vs last month", green: true },
+                  { label: "MRR Growth",       value: "$8,240",  sub: "Recurring subscriptions", green: false },
+                  { label: "YTD Total",        value: "$82,400", sub: "Through Jun 2025", green: false },
+                  { label: "Avg Session",      value: "$465",    sub: "Per booking", green: false },
+                ].map((stat) => (
+                  <div key={stat.label} className="bg-[#F8F8F6] rounded-xl p-4 border border-[#E5E5E3]">
+                    <p className="text-xs text-gray-500">{stat.label}</p>
+                    <p className="text-2xl font-bold text-[#111111] mt-1">{stat.value}</p>
+                    <p className={`text-xs mt-1 ${stat.green ? "text-green-600" : "text-gray-400"}`}>{stat.sub}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid lg:grid-cols-[2fr_1fr] gap-6">
+
+                {/* Bar chart */}
+                <div>
+                  <p className="text-sm font-semibold text-[#111111] mb-4">Monthly Revenue</p>
+                  <div className="flex items-end gap-3" style={{ height: "160px" }}>
+                    {REVENUE_BARS.map((bar) => (
+                      <div key={bar.month} className="flex-1 flex flex-col items-center">
+                        <span className="text-xs text-gray-400 mb-2">{bar.val}</span>
+                        <div className="w-full rounded-t-lg" style={{
+                          height: `${bar.pct * 1.2}px`,
+                          background: bar.pct === 100 ? "#D4A853" : `rgba(212,168,83,${0.2 + bar.pct / 150})`,
+                        }} />
+                        <span className="text-xs text-gray-400 mt-2">{bar.month}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Top services */}
+                <div>
+                  <p className="text-sm font-semibold text-[#111111] mb-4">Top Services</p>
+                  <div className="space-y-3">
+                    {[
+                      { name: "Full sleeve",   avg: "$1,800", pct: 100 },
+                      { name: "Half sleeve",   avg: "$900",   pct: 50  },
+                      { name: "Arm piece",     avg: "$450",   pct: 25  },
+                      { name: "Consultation",  avg: "$0",     pct: 0   },
+                    ].map((svc) => (
+                      <div key={svc.name}>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-[#111111] font-medium">{svc.name}</span>
+                          <span className="text-gray-500">{svc.avg} avg</span>
+                        </div>
+                        <div className="h-1.5 bg-gray-100 rounded-full">
+                          <div className="h-1.5 bg-[#D4A853] rounded-full" style={{ width: `${svc.pct}%` }} />
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1014,7 +1565,6 @@ export default function HomePage() {
       {/* ══ WHITE LABEL ══ */}
       <section className="py-24 px-6" style={{ background: "#F8F8F6" }}>
         <div className="max-w-6xl mx-auto">
-
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
               <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">White Label</span>
@@ -1061,7 +1611,7 @@ export default function HomePage() {
                 </div>
                 {[
                   { initials: "AR", name: "Alex Reeves", style: "Blackwork · Geometric", avail: "Mon" },
-                  { initials: "JH", name: "Jordan Holt", style: "Traditional · Neo-trad", avail: "Thu" },
+                  { initials: "JH", name: "Jordan Holt",  style: "Traditional · Neo-trad", avail: "Thu" },
                 ].map((a, i) => (
                   <div key={i} className="flex items-center gap-3 p-3.5 rounded-xl mb-3 last:mb-0 bg-[#F9FAFB] border border-[#F3F4F6]">
                     <div className="w-10 h-10 rounded-full bg-[#374151] flex items-center justify-center text-xs font-bold text-white flex-shrink-0">{a.initials}</div>
@@ -1079,127 +1629,10 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-
-          {/* MOCKUP 4: Lead Pipeline Kanban */}
-          <div className="mt-16 bg-white rounded-2xl shadow-sm border border-[#E5E5E3] overflow-hidden" data-animate="fade-up">
-
-            <div className="px-6 py-4 border-b border-[#E5E5E3] flex items-center justify-between">
-              <span className="text-sm font-semibold text-[#111111]">Lead Pipeline</span>
-              <span className="text-xs text-gray-500">12 active leads</span>
-            </div>
-
-            <div ref={pipelineRef} className="flex gap-4 p-4 overflow-x-auto">
-              {PIPELINE_COLS.map((col) => (
-                <div key={col.title} className="pipeline-col w-56 flex-shrink-0 min-h-48">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-1.5">
-                      <span className={`text-sm font-semibold uppercase ${col.titleClass}`}>{col.title}</span>
-                      {col.ai && <span className="w-1.5 h-1.5 rounded-full bg-[#D4A853] animate-pulse-dot" />}
-                    </div>
-                    <span className={`rounded-full px-2 text-xs font-medium ${col.countClass}`}>{col.cards.length}</span>
-                  </div>
-                  <div className="space-y-2 min-h-48">
-                    {col.cards.map((card) => (
-                      <div key={card.name} className={`pipeline-item pipeline-card-hidden bg-[#F8F8F6] rounded-lg p-3 ${card.border}`}>
-                        <p className="text-sm font-medium text-[#111111]">{card.name}</p>
-                        <span className="inline-block mt-1 text-xs px-1.5 py-0.5 rounded"
-                          style={{ background: col.ai ? "rgba(212,168,83,0.1)" : "#F3F4F6", color: col.ai ? "#D4A853" : "#6B7280" }}>
-                          {card.tag}
-                        </span>
-                        <p className={`text-xs mt-1.5 ${card.subClass}`}>{card.sub}</p>
-                        {card.readyBadge && (
-                          <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700">
-                            Ready to book
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-          </div>
-
         </div>
       </section>
 
-      {/* ══ CLIENT CRM ══ — ANIM 4: section-slide */}
-      <section className="section-slide py-24 px-6" style={{ background: "#FFFFFF" }}>
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center">
-            <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Client CRM</span>
-            <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
-              Every client. Their entire journey.
-            </h2>
-          </div>
-
-          <div className="max-w-4xl mx-auto mt-12">
-            <div className="bg-white rounded-2xl shadow-xl border border-[#E5E5E3] overflow-hidden">
-
-              <div className="px-6 py-4 bg-[#F8F8F6] border-b border-[#E5E5E3] flex items-center justify-between">
-                <span className="text-sm font-semibold text-[#111111]">Sarah M. — Client Profile</span>
-                <div className="flex items-center gap-2">
-                  {["Floral", "Black & Grey", "VIP"].map((tag) => (
-                    <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-white border border-[#E5E5E3] text-gray-600">{tag}</span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid" style={{ gridTemplateColumns: "280px 1fr" }}>
-
-                <div className="p-6 border-r border-[#E5E5E3]">
-                  <div className="flex flex-col items-center">
-                    <div className="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold"
-                      style={{ background: "linear-gradient(135deg, #D4A853 0%, #B8923E 100%)" }}>
-                      SM
-                    </div>
-                    <p className="text-lg font-bold mt-3 text-[#111111]">Sarah M.</p>
-                    <p className="text-xs text-gray-500">Client since March 2023</p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 mt-4">
-                    {CRM_STATS.map((s) => (
-                      <div key={s.label} className="bg-[#F8F8F6] rounded-xl p-3 text-center">
-                        <p className="text-lg font-bold text-[#111111]">{s.value}</p>
-                        <p className="text-xs text-gray-500">{s.label}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-4 bg-[#F8F8F6] rounded-xl p-3">
-                    <p className="text-xs text-gray-500">Next Session</p>
-                    <p className="text-sm font-semibold text-[#111111] mt-0.5">June 20 · 2:00 PM · Shading</p>
-                  </div>
-                </div>
-
-                {/* ANIM 5: timeline container ref + timeline-item class on rows */}
-                <div className="p-6">
-                  <p className="text-sm font-semibold text-[#111111]">Client Timeline</p>
-                  <div ref={crmTimelineRef} className="mt-4 space-y-4 relative">
-                    <div className="absolute left-[5px] top-2 bottom-2 w-[2px] bg-[#E5E5E3]" />
-                    {CRM_TIMELINE.map((item, i) => (
-                      <div key={i} className="timeline-item flex gap-4 items-start relative">
-                        <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 z-10 ${
-                          item.gold ? "bg-[#D4A853]" : "bg-white border-2 border-[#D4A853]"
-                        }`} />
-                        <div>
-                          <p className="text-xs text-gray-400">{item.date}</p>
-                          <p className="text-sm font-medium text-[#111111]">{item.event}</p>
-                          <p className="text-xs text-gray-500">{item.detail}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══ ROI ══ — ANIM 4: section-slide */}
+      {/* ══ ROI ══ */}
       <section className="section-slide py-20 px-6" style={{ background: "#FFFFFF" }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center">
@@ -1211,7 +1644,7 @@ export default function HomePage() {
           <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
             {[
               { value: "$200–$800", label: "Average tattoo session value" },
-              { value: "3–5x", label: "Inquiries lost per week without follow-up" },
+              { value: "3–5x",     label: "Inquiries lost per week without follow-up" },
               { value: "1 booking", label: "Often enough to cover a month of InkBook" },
             ].map((stat, i) => (
               <div key={i} className="scale-reveal bg-[#F8F8F6] rounded-2xl p-8 text-center hover:shadow-md transition-all duration-200"
@@ -1234,13 +1667,8 @@ export default function HomePage() {
           </div>
 
           <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-            {/* ANIM 3: spotlight on each card */}
-            <div
-              className="scale-reveal bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3]"
-              data-delay="0"
-              onMouseMove={handlePricingMove}
-              onMouseLeave={handlePricingLeave}
-            >
+            <div className="scale-reveal bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3]" data-delay="0"
+              onMouseMove={handlePricingMove} onMouseLeave={handlePricingLeave}>
               <p className="text-sm font-semibold text-gray-500">Solo Artist</p>
               <div className="flex items-end gap-1 mt-3 mb-1">
                 <span className="text-5xl font-bold text-[#111111]">$49</span>
@@ -1252,12 +1680,9 @@ export default function HomePage() {
               </a>
             </div>
 
-            <div
-              className="bg-white rounded-2xl p-8 shadow-xl border-2 border-[#D4A853] scale-[1.05] relative"
+            <div className="bg-white rounded-2xl p-8 shadow-xl border-2 border-[#D4A853] scale-[1.05] relative"
               data-animate="fade-up" data-delay="200"
-              onMouseMove={handlePricingMove}
-              onMouseLeave={handlePricingLeave}
-            >
+              onMouseMove={handlePricingMove} onMouseLeave={handlePricingLeave}>
               <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#D4A853] text-black text-xs font-semibold px-4 py-1 rounded-full whitespace-nowrap">
                 MOST POPULAR
               </span>
@@ -1272,12 +1697,8 @@ export default function HomePage() {
               </a>
             </div>
 
-            <div
-              className="scale-reveal bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3]"
-              data-delay="400"
-              onMouseMove={handlePricingMove}
-              onMouseLeave={handlePricingLeave}
-            >
+            <div className="scale-reveal bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3]" data-delay="400"
+              onMouseMove={handlePricingMove} onMouseLeave={handlePricingLeave}>
               <p className="text-sm font-semibold text-gray-500">Studio Pro</p>
               <div className="flex items-end gap-1 mt-3 mb-1">
                 <span className="text-5xl font-bold text-[#111111]">$169</span>
@@ -1301,16 +1722,10 @@ export default function HomePage() {
           <p className="text-xs uppercase tracking-widest text-gray-500 mt-3">The Tattoo Business Operating System</p>
           <p className="text-sm text-gray-400 mt-6">Start your 14-day free trial. No credit card required.</p>
           <div className="mt-10 flex flex-wrap gap-4 justify-center">
-            <a href="#signup" className="bg-[#D4A853] text-black font-semibold rounded-full px-8 py-4 text-sm hover:opacity-90 transition-opacity">
-              Start Free Trial
-            </a>
-            <a href="#book-demo" className="border border-gray-600 text-white rounded-full px-8 py-4 text-sm hover:border-gray-400 transition-colors">
-              Book Demo
-            </a>
+            <a href="#signup" className="bg-[#D4A853] text-black font-semibold rounded-full px-8 py-4 text-sm hover:opacity-90 transition-opacity">Start Free Trial</a>
+            <a href="#book-demo" className="border border-gray-600 text-white rounded-full px-8 py-4 text-sm hover:border-gray-400 transition-colors">Book Demo</a>
           </div>
-          <p className="text-xs text-gray-500 mt-8">
-            Join tattoo artists and studios already automating their client journey.
-          </p>
+          <p className="text-xs text-gray-500 mt-8">Join tattoo artists and studios already automating their client journey.</p>
         </div>
       </section>
 
@@ -1321,9 +1736,7 @@ export default function HomePage() {
           <nav className="flex flex-wrap gap-6">
             {["Features", "Book Demo", "Privacy", "Terms"].map((link) => (
               <a key={link} href={`#${link.toLowerCase().replace(" ", "-")}`}
-                className="text-sm text-gray-400 hover:text-white transition-colors">
-                {link}
-              </a>
+                className="text-sm text-gray-400 hover:text-white transition-colors">{link}</a>
             ))}
           </nav>
           <p className="text-sm text-gray-500">© 2025 InkBook. All rights reserved.</p>
