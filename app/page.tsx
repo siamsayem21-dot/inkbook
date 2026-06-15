@@ -94,11 +94,6 @@ const OS_SIDEBAR: OsSidebarItem[] = [
   { label: "Revenue",   icon: <IcoTrend /> },
 ];
 
-const BOOKING_ROWS = [
-  { name: "Maria Santos",  service: "Sleeve in progress · 4h",   amount: "$200 deposit", badge: "Deposit paid",   badgeClass: "bg-green-900 text-green-400" },
-  { name: "Jake Thompson", service: "Cover-up booked · 3h",       amount: "$150",         badge: "Confirmed",      badgeClass: "bg-yellow-900 text-yellow-400" },
-  { name: "Alex Rivera",   service: "Consultation complete",       amount: "$300",         badge: "Consent signed", badgeClass: "bg-blue-900 text-blue-400" },
-];
 
 const AI_ACTIVITY = [
   "Maria Santos replied — \"I want a full sleeve, black and grey roses\"",
@@ -298,6 +293,7 @@ export default function HomePage() {
   const [deposits,      setDeposits]      = useState(0);
   const [quoteSession1, setQuoteSession1] = useState(0);
   const [quoteSession2, setQuoteSession2] = useState(0);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [quoteSession3, setQuoteSession3] = useState(0);
   const [quoteTotal,    setQuoteTotal]    = useState(0);
   const [quoteDeposit,  setQuoteDeposit]  = useState(0);
