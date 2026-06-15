@@ -680,11 +680,13 @@ export default function HomePage() {
               <p className="hero-item text-lg text-gray-500 mt-6 max-w-md" style={heroItemStyle(450)}>
                 AI handles consultations, follow-ups, quotes, deposits, bookings, and aftercare — so you can focus on tattooing.
               </p>
-              <div className="hero-item mt-10 flex flex-wrap gap-4" style={heroItemStyle(600, "translateY(10px)")}>
-                <a href="#trial" className="bg-black text-white rounded-full px-8 py-4 text-base font-medium hover:bg-[#2A2A2A] transition-colors">Start Free Trial</a>
-                <a href="#book-demo" className="border border-gray-300 rounded-full px-8 py-4 text-base text-[#111111] hover:border-gray-400 transition-colors">Book Demo</a>
+              <div className="hero-item mt-10 inline-flex flex-col items-center" style={heroItemStyle(600, "translateY(10px)")}>
+                <div className="flex flex-wrap gap-4">
+                  <a href="#trial" className="bg-black text-white rounded-full px-8 py-4 text-base font-medium hover:bg-[#2A2A2A] transition-colors">Start Free Trial</a>
+                  <a href="#book-demo" className="border border-gray-300 rounded-full px-8 py-4 text-base text-[#111111] hover:border-gray-400 transition-colors">Book Demo</a>
+                </div>
+                <p className="mt-4 text-sm text-gray-400">14-day free trial · No credit card required</p>
               </div>
-              <p className="mt-4 text-sm text-gray-400">14-day free trial · No credit card required</p>
             </div>
 
             {/* Right — Multi-surface layered composition */}
