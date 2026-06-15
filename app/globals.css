@@ -406,6 +406,99 @@ body {
 }
 
 /* ─────────────────────────────────────────────────────
+   FLOATING / BREATHING ELEMENTS
+───────────────────────────────────────────────────── */
+
+@keyframes floatUp {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes floatDown {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(8px); }
+}
+@keyframes gentlePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+.float-up    { animation: floatUp    3s   ease-in-out infinite; }
+.float-down  { animation: floatDown  3.5s ease-in-out infinite; }
+.float-badge { animation: floatUp    2.5s ease-in-out infinite; }
+.gentle-pulse { animation: gentlePulse 4s ease-in-out infinite; }
+
+/* ─────────────────────────────────────────────────────
+   TYPING INDICATOR
+───────────────────────────────────────────────────── */
+
+@keyframes typingDot {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+.typing-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #D4A853;
+  animation: typingDot 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* ─────────────────────────────────────────────────────
+   BLINK
+───────────────────────────────────────────────────── */
+
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.blink { animation: blink 1.5s ease-in-out infinite; }
+
+/* ─────────────────────────────────────────────────────
+   MOVING GRADIENT BACKGROUNDS
+───────────────────────────────────────────────────── */
+
+@keyframes heroGradient {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}
+.hero-bg {
+  background: linear-gradient(135deg, #F8F8F6 0%, #FEFEFE 40%, #F5F3EF 70%, #F8F8F6 100%);
+  background-size: 300% 300%;
+  animation: heroGradient 12s ease infinite;
+}
+
+@keyframes ctaGradient {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}
+.cta-bg {
+  background: linear-gradient(135deg, #111111 0%, #1a1a1a 50%, #0f0f0f 100%);
+  background-size: 200% 200%;
+  animation: ctaGradient 8s ease infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.05); }
+}
+.glow-pulse { animation: glowPulse 4s ease-in-out infinite; }
+
+/* ─────────────────────────────────────────────────────
+   SLIDE LEFT REVEAL
+───────────────────────────────────────────────────── */
+
+.slide-left {
+  opacity: 0;
+  transform: translateX(-30px);
+  transition: opacity 0.6s var(--ease-out), transform 0.6s var(--ease-out);
+}
+.slide-left.in-view {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ─────────────────────────────────────────────────────
    REDUCED MOTION OVERRIDES
 ───────────────────────────────────────────────────── */
 
@@ -427,6 +520,15 @@ body {
   .animate-ambient-drift,
   .animate-pulse-dot {
     animation: none !important;
+  }
+  .float-up, .float-down, .float-badge, .gentle-pulse,
+  .hero-bg, .cta-bg, .glow-pulse, .blink, .typing-dot {
+    animation: none !important;
+  }
+  .slide-left {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
   }
   .btn-primary::after { display: none; }
   .pricing-card:hover,

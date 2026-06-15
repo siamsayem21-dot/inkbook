@@ -302,6 +302,13 @@ export default function HomePage() {
   const [quoteTotal,    setQuoteTotal]    = useState(0);
   const [quoteDeposit,  setQuoteDeposit]  = useState(0);
   const [visibleMessages, setVisibleMessages] = useState(0);
+  const [scrollY, setScrollY] = useState(0);
+  const [aiActivityIdx, setAiActivityIdx] = useState(0);
+  const [aiActivityOpacity, setAiActivityOpacity] = useState(1);
+  const [bookingsFlash, setBookingsFlash] = useState(false);
+  const [twIdx, setTwIdx] = useState(-1);
+  const [twChar, setTwChar] = useState(0);
+  const [showTypingIndicator, setShowTypingIndicator] = useState(false);
 
   const [heroVisible, setHeroVisible] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
@@ -367,7 +374,7 @@ export default function HomePage() {
   /* ── Scroll-triggered reveals ── */
   useEffect(() => {
     const els = document.querySelectorAll<HTMLElement>(
-      "[data-animate], .reveal, .reveal-up, .reveal-scale, .scale-reveal, .word-reveal"
+      "[data-animate], .reveal, .reveal-up, .reveal-scale, .scale-reveal, .word-reveal, .slide-left"
     );
     const io = new IntersectionObserver(
       (entries) => {
@@ -507,6 +514,55 @@ export default function HomePage() {
     return () => io.disconnect();
   }, []);
 
+  /* ── Scroll parallax ── */
+  useEffect(() => {
+    let rafId: number;
+    const onScroll = () => { rafId = requestAnimationFrame(() => setScrollY(window.scrollY)); };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => { window.removeEventListener("scroll", onScroll); cancelAnimationFrame(rafId); };
+  }, []);
+
+  /* ── AI Activity rotation ── */
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setAiActivityOpacity(0);
+      setTimeout(() => { setAiActivityIdx((i) => (i + 1) % AI_ACTIVITY.length); setAiActivityOpacity(1); }, 300);
+    }, 3000);
+    return () => clearInterval(iv);
+  }, []);
+
+  /* ── Live bookings flash ── */
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setBookingsFlash(true);
+      setTimeout(() => setBookingsFlash(false), 700);
+    }, 8000);
+    return () => clearInterval(iv);
+  }, []);
+
+  /* ── Typewriter: trigger on each new visible AI message ── */
+  useEffect(() => {
+    if (visibleMessages <= 0) { setTwIdx(-1); setTwChar(0); setShowTypingIndicator(false); return; }
+    const msgIdx = visibleMessages - 1;
+    if (!AI_MSGS[msgIdx]) return;
+    if (AI_MSGS[msgIdx].ai) {
+      setShowTypingIndicator(true);
+      const t = setTimeout(() => { setShowTypingIndicator(false); setTwIdx(msgIdx); setTwChar(0); }, 400);
+      return () => clearTimeout(t);
+    } else {
+      setShowTypingIndicator(false);
+    }
+  }, [visibleMessages]);
+
+  /* ── Typewriter: advance characters ── */
+  useEffect(() => {
+    if (twIdx < 0) return;
+    const target = AI_MSGS[twIdx].text.length;
+    if (twChar >= target) return;
+    const t = setTimeout(() => setTwChar((c) => c + 1), 28);
+    return () => clearTimeout(t);
+  }, [twIdx, twChar]);
+
   /* ── Tilt ── */
   const handleTilt = useCallback((ref: React.RefObject<HTMLDivElement>) => ({
     onMouseMove: (e: React.MouseEvent<HTMLDivElement>) => {
@@ -555,11 +611,11 @@ export default function HomePage() {
     e.currentTarget.style.backgroundImage = "";
   };
 
-  const heroStats = [
-    { label: "Revenue",  value: `$${revenue.toLocaleString()}`, ref: revenueStatRef  },
-    { label: "Bookings", value: String(bookings),               ref: bookingsStatRef },
-    { label: "Deposits", value: `${deposits}%`,                 ref: depositsStatRef },
-    { label: "Leads",    value: "12",                           ref: null            },
+  const heroStats: { label: string; value: string; ref: React.RefObject<HTMLParagraphElement> | null; flash?: boolean }[] = [
+    { label: "Revenue",  value: `$${revenue.toLocaleString()}`,                      ref: revenueStatRef  },
+    { label: "Bookings", value: String(bookingsFlash ? bookings + 1 : bookings),     ref: bookingsStatRef, flash: bookingsFlash },
+    { label: "Deposits", value: `${deposits}%`,                                      ref: depositsStatRef },
+    { label: "Leads",    value: "12",                                                ref: null            },
   ];
 
   return (
@@ -598,7 +654,7 @@ export default function HomePage() {
       </header>
 
       {/* ══ HERO ══ */}
-      <section className="py-24 lg:py-32 px-6" style={{ background: "#F8F8F6" }}>
+      <section className="hero-bg py-24 lg:py-32 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-[42%_58%] gap-16 items-center">
 
@@ -631,13 +687,13 @@ export default function HomePage() {
               <div className="relative" style={{ minHeight: "580px" }}>
 
                 {/* Layer 5 — Gold glow (behind everything) */}
-                <div className="absolute pointer-events-none" style={{
+                <div className="absolute pointer-events-none glow-pulse" style={{
                   inset: "-20px", zIndex: 0,
                   background: "radial-gradient(ellipse at 65% 40%, rgba(212,168,83,0.07) 0%, transparent 65%)",
                 }} />
 
                 {/* Layer 1 — Main dashboard */}
-                <div className="relative" style={{ zIndex: 1 }}>
+                <div className="relative" style={{ zIndex: 1, transform: `translateY(${Math.max(-30, -(scrollY * 0.1))}px)`, willChange: "transform" }}>
                   <div ref={heroDashRef} className="tilt-card rounded-2xl shadow-2xl overflow-hidden flex flex-col w-full"
                     style={{ background: "#0A0A0A", border: "1px solid #1A1A1A", minHeight: "580px" }}
                     onMouseMove={heroTilt.onMouseMove} onMouseLeave={heroTilt.onMouseLeave}>
@@ -686,7 +742,7 @@ export default function HomePage() {
                           {heroStats.map((s) => (
                             <div key={s.label} className="rounded-xl p-3" style={{ background: "#141414", border: "1px solid #1E1E1E" }}>
                               <p className="text-[10px] text-gray-600 uppercase tracking-wide">{s.label}</p>
-                              <p ref={s.ref ?? undefined} className="text-lg font-bold text-white mt-0.5">{s.value}</p>
+                              <p ref={s.ref ?? undefined} className={`text-lg font-bold text-white mt-0.5${s.flash ? " stat-flash" : ""}`}>{s.value}</p>
                             </div>
                           ))}
                         </div>
@@ -743,10 +799,11 @@ export default function HomePage() {
                               <div className="flex items-center gap-1.5 mb-2">
                                 <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">AI Activity</p>
                                 <span className="text-[10px] text-[#D4A853]">🤖</span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-400 blink ml-auto flex-shrink-0" />
                               </div>
-                              <div className="space-y-1.5">
-                                {AI_ACTIVITY.map((item) => (
-                                  <div key={item} className="flex items-start gap-1.5">
+                              <div className="space-y-1.5" style={{ opacity: aiActivityOpacity, transition: "opacity 0.3s ease" }}>
+                                {AI_ACTIVITY.map((item, idx) => (
+                                  <div key={item} className="flex items-start gap-1.5" style={{ opacity: idx === aiActivityIdx ? 1 : 0.4, transition: "opacity 0.3s ease" }}>
                                     <span className="w-1 h-1 rounded-full bg-[#D4A853] mt-1 flex-shrink-0" />
                                     <p className="text-[9px] text-gray-500 leading-relaxed">{item}</p>
                                   </div>
@@ -772,7 +829,7 @@ export default function HomePage() {
                   top: "-16px", right: "-24px", zIndex: 20, width: "256px",
                   ...heroItemStyle(800, "translateY(-10px)"),
                 }}>
-                  <div className="bg-white rounded-2xl shadow-2xl border border-[#E5E5E3] p-4 overflow-hidden">
+                  <div className="float-up bg-white rounded-2xl shadow-2xl border border-[#E5E5E3] p-4 overflow-hidden">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-xs font-semibold text-[#111111]">AI Consultation</span>
                       <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full font-medium">Live</span>
@@ -801,7 +858,7 @@ export default function HomePage() {
                   bottom: "-12px", left: "-16px", zIndex: 20, width: "224px",
                   ...heroItemStyle(1200, "translateY(10px)"),
                 }}>
-                  <div className="bg-white rounded-2xl shadow-2xl border border-[#E5E5E3] p-4">
+                  <div className="float-down bg-white rounded-2xl shadow-2xl border border-[#E5E5E3] p-4">
                     <span className="bg-[#D4A853] text-black text-[9px] font-bold px-2 py-0.5 rounded-full">Quote Ready</span>
                     <p className="text-sm font-semibold mt-2 text-[#111111]">Maria Santos</p>
                     <p className="text-[10px] text-gray-500">Full sleeve · Black &amp; Grey</p>
@@ -826,7 +883,7 @@ export default function HomePage() {
                   opacity: heroVisible ? 1 : 0,
                   transition: "opacity 0.5s ease-out 1000ms",
                 }}>
-                  <div className="bg-white rounded-full shadow-lg border border-[#E5E5E3] px-3 py-2 flex items-center gap-2">
+                  <div className="float-badge bg-white rounded-full shadow-lg border border-[#E5E5E3] px-3 py-2 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse-dot" />
                     <span className="text-[10px] font-medium text-[#111111] whitespace-nowrap">12 active leads</span>
                   </div>
@@ -1015,10 +1072,20 @@ export default function HomePage() {
                           ? "bg-[#F8F8F6] text-[#111111] rounded-tl-none"
                           : "bg-[#111111] text-white rounded-tr-none"
                       }`}>
-                        {msg.text}
+                        {msg.ai && i === twIdx ? AI_MSGS[twIdx].text.slice(0, twChar) : msg.text}
                       </div>
                     </div>
                   ))}
+                  {showTypingIndicator && (
+                    <div className="flex gap-3 msg-visible">
+                      <div className="w-7 h-7 rounded-full bg-[#D4A853] flex items-center justify-center text-[10px] font-bold text-black flex-shrink-0 mt-0.5">AI</div>
+                      <div className="bg-[#F8F8F6] rounded-2xl rounded-tl-none px-4 py-3 flex items-center gap-1.5">
+                        <span className="typing-dot" />
+                        <span className="typing-dot" />
+                        <span className="typing-dot" />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Analysis panel */}
@@ -1074,7 +1141,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Quote Builder</span>
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mt-4">
+            <h2 className="slide-left text-3xl lg:text-4xl font-bold text-white mt-4">
               Artist did nothing except approve the quote and show up to tattoo.
             </h2>
           </div>
@@ -1274,7 +1341,7 @@ export default function HomePage() {
 
               <div className="p-6 border-r border-[#E5E5E3]">
                 <div className="flex flex-col items-center">
-                  <div className="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold"
+                  <div className="gentle-pulse w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold"
                     style={{ background: "linear-gradient(135deg, #D4A853 0%, #B8923E 100%)" }}>SM</div>
                   <p className="text-lg font-bold mt-3 text-[#111111]">Sarah M.</p>
                   <p className="text-xs text-gray-500">Client since March 2023</p>
@@ -1819,7 +1886,7 @@ export default function HomePage() {
       </section>
 
       {/* ══ FINAL CTA ══ */}
-      <section id="trial" className="py-28 px-6" style={{ background: "#111111", borderTop: "1px solid #222" }}>
+      <section id="trial" className="cta-bg py-28 px-6" style={{ borderTop: "1px solid #222" }}>
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-4xl lg:text-5xl font-bold text-white">Stop chasing inquiries.</h2>
           <h2 className="text-4xl lg:text-5xl font-bold text-white">Start tattooing.</h2>
