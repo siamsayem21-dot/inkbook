@@ -499,6 +499,42 @@ body {
 }
 
 /* ─────────────────────────────────────────────────────
+   JOURNEY SIGNATURE SECTION
+───────────────────────────────────────────────────── */
+
+/* Gold line draws left-to-right on scroll trigger */
+.journey-line {
+  height: 100%;
+  background: linear-gradient(to right, #D4A853, rgba(212,168,83,0.5));
+  width: 0;
+  transition: width 2.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.journey-line.drawn {
+  width: 100%;
+}
+
+/* AI node gold radial pulse */
+@keyframes journeyNodeGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212,168,83,0); }
+  50%       { box-shadow: 0 0 0 14px rgba(212,168,83,0.18), 0 0 28px rgba(212,168,83,0.06); }
+}
+.journey-node-ai {
+  animation: journeyNodeGlow 2.5s ease-in-out infinite;
+}
+
+/* 12-minute result reveal — delayed to sync with line completion */
+.journey-result {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.journey-result.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─────────────────────────────────────────────────────
    REDUCED MOTION OVERRIDES
 ───────────────────────────────────────────────────── */
 
@@ -558,6 +594,13 @@ body {
     transition: none !important;
   }
   .journey-stage {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .journey-line { width: 100% !important; transition: none !important; }
+  .journey-node-ai { animation: none !important; }
+  .journey-result {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;

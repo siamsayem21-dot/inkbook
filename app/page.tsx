@@ -324,6 +324,8 @@ export default function HomePage() {
   const depositsStatRef   = useRef<HTMLParagraphElement>(null);
   const crmTimelineRef    = useRef<HTMLDivElement>(null);
   const journeyRef        = useRef<HTMLDivElement>(null);
+  const journeyLineRef    = useRef<HTMLDivElement>(null);
+  const journeyResultRef  = useRef<HTMLDivElement>(null);
 
   /* ── Hero item inline-style helper ── */
   const heroItemStyle = (delayMs: number, initTransform = "translateY(20px)"): React.CSSProperties => ({
@@ -422,7 +424,7 @@ export default function HomePage() {
     return () => io.disconnect();
   }, []);
 
-  /* ── Journey stages stagger ── */
+  /* ── Journey signature section: line draw + stage stagger + result reveal ── */
   useEffect(() => {
     const container = journeyRef.current;
     if (!container) return;
@@ -430,8 +432,15 @@ export default function HomePage() {
     const io = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting && !triggered) {
         triggered = true;
+        // Draw the gold connecting line
+        const line = journeyLineRef.current;
+        if (line) setTimeout(() => line.classList.add("drawn"), 100);
+        // Stagger stage reveals (offset to sync with line start)
         Array.from(container.querySelectorAll<HTMLElement>(".journey-stage"))
-          .forEach((item, i) => setTimeout(() => item.classList.add("revealed"), i * 90));
+          .forEach((item, i) => setTimeout(() => item.classList.add("revealed"), 200 + i * 100));
+        // Reveal the 12-minute result after line finishes drawing
+        const result = journeyResultRef.current;
+        if (result) setTimeout(() => result.classList.add("revealed"), 2700);
         io.disconnect();
       }
     }, { threshold: 0.1 });
@@ -650,7 +659,7 @@ export default function HomePage() {
       </header>
 
       {/* ══ HERO ══ */}
-      <section className="hero-bg py-28 lg:py-40 px-6">
+      <section className="hero-bg py-20 lg:py-28 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-[38%_62%] gap-10 items-start">
 
@@ -686,6 +695,11 @@ export default function HomePage() {
                 <div className="absolute pointer-events-none glow-pulse" style={{
                   inset: "-20px", zIndex: 0,
                   background: "radial-gradient(ellipse at 65% 40%, rgba(212,168,83,0.07) 0%, transparent 65%)",
+                }} />
+                {/* Dark depth — grounds the dashboard in the light page background */}
+                <div className="absolute pointer-events-none" style={{
+                  inset: "-60px", zIndex: 0,
+                  background: "radial-gradient(ellipse at 55% 50%, rgba(0,0,0,0.16) 0%, transparent 58%)",
                 }} />
 
                 {/* Layer 1 — Main dashboard */}
@@ -825,7 +839,8 @@ export default function HomePage() {
                   top: "-20px", left: "-40px", zIndex: 20, width: "224px",
                   ...heroItemStyle(600, "translateX(-10px)"),
                 }}>
-                  <div className="float-up bg-white rounded-2xl shadow-xl border border-[#E5E5E3] p-3 flex items-center gap-3">
+                  <div className="relative float-up bg-white rounded-2xl shadow-xl border border-[#E5E5E3] p-3 flex items-center gap-3">
+                    <div className="absolute -top-2 -left-2 w-5 h-5 rounded-full bg-[#D4A853] flex items-center justify-center text-[9px] font-bold text-black z-10 shadow-sm">1</div>
                     <div className="w-8 h-8 rounded-full bg-[#ECFDF5] flex items-center justify-center text-green-600 text-sm flex-shrink-0">✉</div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[9px] text-gray-400 uppercase tracking-wide font-semibold">New Inquiry</p>
@@ -841,7 +856,8 @@ export default function HomePage() {
                   top: "-16px", right: "-32px", zIndex: 20, width: "260px",
                   ...heroItemStyle(800, "translateY(-10px)"),
                 }}>
-                  <div className="float-up bg-white rounded-2xl shadow-2xl border border-[#E5E5E3] p-4 overflow-hidden" style={{ animationDelay: "0.8s" }}>
+                  <div className="relative float-up bg-white rounded-2xl shadow-2xl border border-[#E5E5E3] p-4 overflow-hidden" style={{ animationDelay: "0.8s" }}>
+                    <div className="absolute -top-2 -left-2 w-5 h-5 rounded-full bg-[#D4A853] flex items-center justify-center text-[9px] font-bold text-black z-10 shadow-sm">2</div>
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-xs font-semibold text-[#111111]">AI Consultation</span>
                       <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full font-medium">Live</span>
@@ -870,7 +886,8 @@ export default function HomePage() {
                   top: "22%", right: "-44px", zIndex: 20, width: "192px",
                   ...heroItemStyle(1000, "translateX(10px)"),
                 }}>
-                  <div className="float-badge bg-white rounded-2xl shadow-xl border border-[#E5E5E3] p-3.5" style={{ animationDelay: "0.6s" }}>
+                  <div className="relative float-badge bg-white rounded-2xl shadow-xl border border-[#E5E5E3] p-3.5" style={{ animationDelay: "0.6s" }}>
+                    <div className="absolute -top-2 -left-2 w-5 h-5 rounded-full bg-[#D4A853] flex items-center justify-center text-[9px] font-bold text-black z-10 shadow-sm">3</div>
                     <div className="flex items-center gap-1.5 mb-2">
                       <span className="text-[9px] bg-[#D4A853] text-black px-2 py-0.5 rounded-full font-bold">AI Draft</span>
                       <span className="text-[9px] text-gray-400 ml-auto">3 min</span>
@@ -903,7 +920,8 @@ export default function HomePage() {
                   bottom: "-16px", right: "-32px", zIndex: 20, width: "224px",
                   ...heroItemStyle(1400, "translateY(10px)"),
                 }}>
-                  <div className="float-down bg-white rounded-2xl shadow-xl border border-[#E5E5E3] p-3.5" style={{ animationDelay: "0.4s" }}>
+                  <div className="relative float-down bg-white rounded-2xl shadow-xl border border-[#E5E5E3] p-3.5" style={{ animationDelay: "0.4s" }}>
+                    <div className="absolute -top-2 -left-2 w-5 h-5 rounded-full bg-[#D4A853] flex items-center justify-center text-[9px] font-bold text-black z-10 shadow-sm">5</div>
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
                         <span className="text-white text-[9px] font-bold">✓</span>
@@ -928,7 +946,7 @@ export default function HomePage() {
       </section>
 
       {/* ══ CATEGORY STATEMENT ══ */}
-      <section className="py-20 px-6" style={{ background: "#FFFFFF" }}>
+      <section className="py-16 px-6" style={{ background: "#FFFFFF" }}>
         <div className="max-w-5xl mx-auto">
 
           {/* Label */}
@@ -986,7 +1004,7 @@ export default function HomePage() {
       </section>
 
       {/* ══ PAIN ══ */}
-      <section id="features" className="py-20 px-6" style={{ background: "#F8F8F6" }}>
+      <section id="features" className="py-14 px-6" style={{ background: "#F8F8F6" }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">The Problem</span>
@@ -994,7 +1012,7 @@ export default function HomePage() {
               Most bookings aren&apos;t lost to competitors.
             </h2>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-16 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-12 max-w-4xl mx-auto">
             {PAIN_CARDS.map((card, i) => (
               <div key={i}
                 className="bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3] hover:shadow-md transition-shadow duration-200"
@@ -1009,82 +1027,100 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══ JOURNEY ══ */}
-      <section className="py-24 px-6" style={{ background: "#FFFFFF" }}>
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">The Complete Workflow</span>
-            <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
-              One client. Ten steps. Zero manual work.
-            </h2>
+      {/* ══ JOURNEY — SIGNATURE MOMENT ══ */}
+      <section className="relative py-28 px-6 overflow-hidden" style={{ background: "#0A0A0A" }}>
+        {/* Ambient top glow */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: "radial-gradient(ellipse at 50% 0%, rgba(212,168,83,0.06) 0%, transparent 55%)"
+        }} />
+
+        <div className="max-w-6xl mx-auto relative" ref={journeyRef}>
+
+          {/* Header */}
+          <div className="text-center mb-20">
+            <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">The Complete Journey</span>
+            <div className="mt-5">
+              <span className="block text-5xl lg:text-7xl font-bold text-white leading-[1.05]">Inquiry to booked.</span>
+              <span className="block text-5xl lg:text-7xl font-bold text-[#D4A853] leading-[1.05]">12 minutes.</span>
+            </div>
+            <p className="text-lg text-gray-600 mt-5">AI handled every single step.</p>
           </div>
 
-          <div className="relative" ref={journeyRef}>
-
-            {/* Row 1: Steps 01–05 */}
-            <div className="relative mb-16">
-              {/* Track line */}
-              <div className="absolute top-5 left-[10%] right-[10%] h-px bg-[#E5E5E3]" />
-              {/* Right side vertical connector going down */}
-              <div className="absolute right-[10%] top-5" style={{ height: "80px", width: "1px", background: "#E5E5E3", top: "20px" }} />
-
-              <div className="grid grid-cols-5 gap-2">
-                {JOURNEY_STAGES.slice(0, 5).map((stage, i) => (
-                  <div key={i} className="journey-stage flex flex-col items-center text-center px-2">
-                    {/* Dot */}
-                    <div className="relative z-10 mb-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold ${
-                        stage.done
-                          ? stage.ai ? "bg-[#D4A853] text-black" : "bg-[#111111] text-white"
-                          : "bg-white border-2 border-[#D4A853] text-[#D4A853]"
-                      }`}>
-                        {stage.done ? (stage.ai ? "AI" : "✓") : stage.num}
-                      </div>
-                      {!stage.done && (
-                        <div className="absolute -inset-2 rounded-full border border-[#D4A853]/30 animate-pulse" />
-                      )}
-                    </div>
-                    {/* Label */}
-                    <div className="flex items-center justify-center gap-1 mb-0.5 flex-wrap">
-                      <p className="text-xs font-semibold text-[#111111] leading-tight">{stage.label}</p>
-                      {stage.ai && <span className="text-[8px] bg-[#D4A853]/10 text-[#D4A853] px-1.5 py-0.5 rounded font-bold">AI</span>}
-                    </div>
-                    <p className="text-[9px] text-gray-400 mb-1">{stage.time}</p>
-                    <p className="text-[9px] text-gray-500 leading-relaxed">{stage.sub}</p>
-                  </div>
-                ))}
-              </div>
+          {/* ── BOOKING LOOP: stages 01–05 ── */}
+          <div className="relative mb-20">
+            {/* Track background */}
+            <div className="absolute" style={{ top: "31px", left: "10%", right: "10%", height: "2px", background: "#1A1A1A" }} />
+            {/* Animated gold fill */}
+            <div className="absolute" style={{ top: "31px", left: "10%", right: "10%", height: "2px", overflow: "hidden" }}>
+              <div ref={journeyLineRef} className="journey-line" />
             </div>
 
-            {/* Row 2: Steps 06–10 */}
-            <div className="relative">
-              {/* Track line */}
-              <div className="absolute top-5 left-[10%] right-[10%] h-px bg-[#E5E5E3]" />
-
-              <div className="grid grid-cols-5 gap-2">
-                {JOURNEY_STAGES.slice(5).map((stage, i) => (
-                  <div key={i} className="journey-stage flex flex-col items-center text-center px-2">
-                    <div className="relative z-10 mb-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold ${
-                        stage.done
-                          ? stage.ai ? "bg-[#D4A853] text-black" : "bg-[#111111] text-white"
-                          : "bg-white border-2 border-[#E5E5E3] text-gray-400"
-                      }`}>
-                        {stage.done ? (stage.ai ? "AI" : "✓") : stage.num}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-center gap-1 mb-0.5 flex-wrap">
-                      <p className="text-xs font-semibold text-[#111111] leading-tight">{stage.label}</p>
-                      {stage.ai && <span className="text-[8px] bg-[#D4A853]/10 text-[#D4A853] px-1.5 py-0.5 rounded font-bold">AI</span>}
-                    </div>
-                    <p className="text-[9px] text-gray-400 mb-1">{stage.time}</p>
-                    <p className="text-[9px] text-gray-500 leading-relaxed">{stage.sub}</p>
+            <div className="grid grid-cols-5 gap-2">
+              {JOURNEY_STAGES.slice(0, 5).map((stage, i) => (
+                <div key={i} className="journey-stage flex flex-col items-center text-center px-1">
+                  <div className={`relative z-10 w-16 h-16 rounded-full flex items-center justify-center font-bold mb-4 flex-shrink-0 ${
+                    stage.ai
+                      ? "bg-[#D4A853] text-black text-sm journey-node-ai"
+                      : "bg-[#1A1A1A] border-2 border-[#2E2E2E] text-white text-xs"
+                  }`}>
+                    {stage.ai ? "AI" : stage.done ? "✓" : stage.num}
                   </div>
-                ))}
-              </div>
+                  <p className="text-xs font-semibold text-white leading-tight mb-1">{stage.label}</p>
+                  {stage.ai && (
+                    <span className="text-[8px] bg-[#D4A853]/12 text-[#D4A853] px-1.5 py-0.5 rounded font-bold mb-1">Automated</span>
+                  )}
+                  <p className="text-[10px] font-mono text-[#D4A853] font-medium">{stage.time}</p>
+                  <p className="text-[10px] text-gray-600 mt-1 leading-relaxed">{stage.sub}</p>
+                </div>
+              ))}
             </div>
-
           </div>
+
+          {/* ── 12-MINUTE MOMENT ── */}
+          <div ref={journeyResultRef} className="journey-result text-center py-14 mb-20"
+            style={{ borderTop: "1px solid #1A1A1A", borderBottom: "1px solid #1A1A1A" }}>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-gray-700 mb-5">Booking confirmed · Deposit collected</p>
+            <p className="text-8xl lg:text-[120px] font-bold font-mono leading-none text-[#D4A853]">0:12</p>
+            <p className="text-xl lg:text-2xl text-white font-semibold mt-6">
+              From first message to fully booked appointment.
+            </p>
+            <div className="mt-5 flex justify-center items-center gap-3 text-sm text-gray-700">
+              <span>0 emails written</span>
+              <span className="text-gray-800">·</span>
+              <span>0 follow-ups missed</span>
+              <span className="text-gray-800">·</span>
+              <span>0 deposits forgotten</span>
+            </div>
+          </div>
+
+          {/* ── DIVIDER ── */}
+          <div className="flex items-center gap-6 mb-20">
+            <div className="flex-1 h-px bg-[#1A1A1A]" />
+            <span className="text-[10px] text-gray-700 uppercase tracking-[0.2em] whitespace-nowrap">Then automatically, for weeks</span>
+            <div className="flex-1 h-px bg-[#1A1A1A]" />
+          </div>
+
+          {/* ── FOLLOW-THROUGH: stages 06–10 ── */}
+          <div className="relative">
+            <div className="absolute" style={{ top: "23px", left: "10%", right: "10%", height: "1px", background: "#1A1A1A" }} />
+            <div className="grid grid-cols-5 gap-2">
+              {JOURNEY_STAGES.slice(5).map((stage, i) => (
+                <div key={i} className="journey-stage flex flex-col items-center text-center px-1">
+                  <div className={`relative z-10 w-12 h-12 rounded-full flex items-center justify-center text-xs font-bold mb-3 flex-shrink-0 ${
+                    stage.ai
+                      ? "bg-[#D4A853]/10 text-[#D4A853] border border-[#D4A853]/25"
+                      : "bg-[#141414] border border-[#222] text-gray-700"
+                  }`}>
+                    {stage.ai ? "AI" : "✓"}
+                  </div>
+                  <p className="text-xs font-medium text-gray-500 leading-tight">{stage.label}</p>
+                  {stage.ai && <span className="text-[8px] text-[#D4A853]/60 mt-0.5">Auto</span>}
+                  <p className="text-[10px] font-mono text-gray-700 mt-1">{stage.time}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
         </div>
       </section>
 
@@ -1461,7 +1497,7 @@ export default function HomePage() {
       </section>
 
       {/* ══ CLIENT PROFILE ══ */}
-      <section className="section-slide py-24 px-6" style={{ background: "#F8F8F6" }}>
+      <section className="section-slide py-16 px-6" style={{ background: "#F8F8F6" }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Client CRM</span>
@@ -1562,7 +1598,7 @@ export default function HomePage() {
       </section>
 
       {/* ══ ARTIST DASHBOARD ══ */}
-      <section className="section-slide py-24 px-6" style={{ background: "#FFFFFF" }}>
+      <section className="section-slide py-16 px-6" style={{ background: "#FFFFFF" }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Artist Dashboard</span>
@@ -1631,7 +1667,7 @@ export default function HomePage() {
       </section>
 
       {/* ══ CALENDAR ══ */}
-      <section className="section-slide py-24 px-6" style={{ background: "#F8F8F6" }}>
+      <section className="section-slide py-16 px-6" style={{ background: "#F8F8F6" }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Calendar</span>
@@ -1808,7 +1844,7 @@ export default function HomePage() {
       </section>
 
       {/* ══ REVENUE DASHBOARD ══ */}
-      <section className="section-slide py-24 px-6" style={{ background: "#FFFFFF" }}>
+      <section className="section-slide py-16 px-6" style={{ background: "#FFFFFF" }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Revenue</span>
