@@ -689,7 +689,7 @@ export default function HomePage() {
 
             {/* Right — Multi-surface layered composition */}
             <div className="hero-item" style={heroItemStyle(200, "translateX(30px) scale(0.97)")}>
-              <div className="relative" style={{ minHeight: "720px" }}>
+              <div className="relative" style={{ minHeight: "640px" }}>
 
                 {/* Layer 5 — Primary gold glow */}
                 <div className="absolute pointer-events-none glow-pulse" style={{
@@ -710,7 +710,7 @@ export default function HomePage() {
                 {/* Layer 1 — Main dashboard */}
                 <div className="relative" style={{ zIndex: 1, transform: `translateY(${Math.max(-30, -(scrollY * 0.1))}px)`, willChange: "transform" }}>
                   <div ref={heroDashRef} className="tilt-card surface-premium-dark rounded-2xl overflow-hidden flex flex-col w-full"
-                    style={{ background: "#080808", border: "1px solid rgba(255,255,255,0.07)", minHeight: "800px" }}
+                    style={{ background: "#080808", border: "1px solid rgba(255,255,255,0.07)", minHeight: "800px", zoom: 0.87 }}
                     onMouseMove={heroTilt.onMouseMove} onMouseLeave={heroTilt.onMouseLeave}>
 
                     {/* Title bar */}
