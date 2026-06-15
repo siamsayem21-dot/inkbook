@@ -710,7 +710,7 @@ export default function HomePage() {
                 {/* Layer 1 — Main dashboard */}
                 <div className="relative" style={{ zIndex: 1, transform: `translateY(${Math.max(-30, -(scrollY * 0.1))}px)`, willChange: "transform" }}>
                   <div ref={heroDashRef} className="tilt-card surface-premium-dark rounded-2xl overflow-hidden flex flex-col w-full"
-                    style={{ background: "#080808", border: "1px solid rgba(255,255,255,0.07)", minHeight: "800px", zoom: 0.82 }}
+                    style={{ background: "#080808", border: "1px solid rgba(255,255,255,0.07)", minHeight: "800px", zoom: 0.78 }}
                     onMouseMove={heroTilt.onMouseMove} onMouseLeave={heroTilt.onMouseLeave}>
 
                     {/* Title bar */}
