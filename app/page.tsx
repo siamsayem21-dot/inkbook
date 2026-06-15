@@ -661,7 +661,7 @@ export default function HomePage() {
       {/* ══ HERO ══ */}
       <section className="hero-bg py-10 lg:py-16 px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-[38%_62%] gap-10 items-start">
+          <div className="grid lg:grid-cols-[30%_70%] gap-8 items-start">
 
             {/* Left — copy */}
             <div>
@@ -691,21 +691,26 @@ export default function HomePage() {
             <div className="hero-item" style={heroItemStyle(200, "translateX(30px) scale(0.97)")}>
               <div className="relative" style={{ minHeight: "720px" }}>
 
-                {/* Layer 5 — Gold glow (behind everything) */}
+                {/* Layer 5 — Primary gold glow */}
                 <div className="absolute pointer-events-none glow-pulse" style={{
-                  inset: "-20px", zIndex: 0,
-                  background: "radial-gradient(ellipse at 65% 40%, rgba(212,168,83,0.07) 0%, transparent 65%)",
+                  inset: "-40px", zIndex: 0,
+                  background: "radial-gradient(ellipse at 60% 38%, rgba(212,168,83,0.14) 0%, transparent 58%)",
                 }} />
-                {/* Dark depth — grounds the dashboard in the light page background */}
+                {/* Secondary gold ring, upper-right */}
                 <div className="absolute pointer-events-none" style={{
-                  inset: "-60px", zIndex: 0,
-                  background: "radial-gradient(ellipse at 55% 50%, rgba(0,0,0,0.16) 0%, transparent 58%)",
+                  top: "-80px", right: "-80px", bottom: "0", left: "10%", zIndex: 0,
+                  background: "radial-gradient(ellipse at 80% 20%, rgba(212,168,83,0.06) 0%, transparent 48%)",
+                }} />
+                {/* Dark depth — grounds the dashboard */}
+                <div className="absolute pointer-events-none" style={{
+                  inset: "-80px", zIndex: 0,
+                  background: "radial-gradient(ellipse at 55% 55%, rgba(0,0,0,0.28) 0%, transparent 52%)",
                 }} />
 
                 {/* Layer 1 — Main dashboard */}
                 <div className="relative" style={{ zIndex: 1, transform: `translateY(${Math.max(-30, -(scrollY * 0.1))}px)`, willChange: "transform" }}>
-                  <div ref={heroDashRef} className="tilt-card rounded-2xl shadow-2xl overflow-hidden flex flex-col w-full"
-                    style={{ background: "#0A0A0A", border: "1px solid #1A1A1A", minHeight: "720px" }}
+                  <div ref={heroDashRef} className="tilt-card surface-premium-dark rounded-2xl overflow-hidden flex flex-col w-full"
+                    style={{ background: "#080808", border: "1px solid rgba(255,255,255,0.07)", minHeight: "800px" }}
                     onMouseMove={heroTilt.onMouseMove} onMouseLeave={heroTilt.onMouseLeave}>
 
                     {/* Title bar */}
@@ -826,8 +831,7 @@ export default function HomePage() {
                       </div>
                     </div>
 
-                    <div className="absolute bottom-4 left-[188px] flex items-center gap-2 rounded-full px-3 py-1.5"
-                      style={{ background: "#1A1A1A", border: "1px solid #2A2A2A" }}>
+                    <div className="absolute bottom-4 left-[188px] flex items-center gap-2 rounded-full px-3 py-1.5 glass-dark">
                       <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse-dot" />
                       <span className="text-xs text-white">3 new inquiries today</span>
                     </div>
@@ -839,7 +843,7 @@ export default function HomePage() {
                   top: "-20px", left: "-40px", zIndex: 20, width: "224px",
                   ...heroItemStyle(600, "translateX(-10px)"),
                 }}>
-                  <div className="relative float-up bg-white rounded-2xl shadow-xl border border-[#E5E5E3] p-3 flex items-center gap-3">
+                  <div className="relative float-up glass-light rounded-2xl p-3 flex items-center gap-3">
                     <div className="absolute -top-2 -left-2 w-5 h-5 rounded-full bg-[#D4A853] flex items-center justify-center text-[9px] font-bold text-black z-10 shadow-sm">1</div>
                     <div className="w-8 h-8 rounded-full bg-[#ECFDF5] flex items-center justify-center text-green-600 text-sm flex-shrink-0">✉</div>
                     <div className="flex-1 min-w-0">
@@ -856,7 +860,7 @@ export default function HomePage() {
                   top: "-16px", right: "-32px", zIndex: 20, width: "260px",
                   ...heroItemStyle(800, "translateY(-10px)"),
                 }}>
-                  <div className="relative float-up bg-white rounded-2xl shadow-2xl border border-[#E5E5E3] p-4 overflow-hidden" style={{ animationDelay: "0.8s" }}>
+                  <div className="relative float-up glass-light rounded-2xl p-4 overflow-hidden" style={{ animationDelay: "0.8s" }}>
                     <div className="absolute -top-2 -left-2 w-5 h-5 rounded-full bg-[#D4A853] flex items-center justify-center text-[9px] font-bold text-black z-10 shadow-sm">2</div>
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-xs font-semibold text-[#111111]">AI Consultation</span>
@@ -886,7 +890,7 @@ export default function HomePage() {
                   top: "22%", right: "-44px", zIndex: 20, width: "192px",
                   ...heroItemStyle(1000, "translateX(10px)"),
                 }}>
-                  <div className="relative float-badge bg-white rounded-2xl shadow-xl border border-[#E5E5E3] p-3.5" style={{ animationDelay: "0.6s" }}>
+                  <div className="relative float-badge glass-light rounded-2xl p-3.5" style={{ animationDelay: "0.6s" }}>
                     <div className="absolute -top-2 -left-2 w-5 h-5 rounded-full bg-[#D4A853] flex items-center justify-center text-[9px] font-bold text-black z-10 shadow-sm">3</div>
                     <div className="flex items-center gap-1.5 mb-2">
                       <span className="text-[9px] bg-[#D4A853] text-black px-2 py-0.5 rounded-full font-bold">AI Draft</span>
@@ -907,7 +911,7 @@ export default function HomePage() {
                   opacity: heroVisible ? 1 : 0,
                   transition: "opacity 0.5s ease-out 1200ms",
                 }}>
-                  <div className="float-up bg-white rounded-full shadow-lg border border-[#E5E5E3] px-4 py-2.5 flex items-center gap-2.5" style={{ animationDelay: "1s" }}>
+                  <div className="float-up glass-light rounded-full px-4 py-2.5 flex items-center gap-2.5" style={{ animationDelay: "1s" }}>
                     <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
                       <span className="text-white text-[9px] font-bold">✓</span>
                     </div>
@@ -920,7 +924,7 @@ export default function HomePage() {
                   bottom: "-16px", right: "-32px", zIndex: 20, width: "224px",
                   ...heroItemStyle(1400, "translateY(10px)"),
                 }}>
-                  <div className="relative float-down bg-white rounded-2xl shadow-xl border border-[#E5E5E3] p-3.5" style={{ animationDelay: "0.4s" }}>
+                  <div className="relative float-down glass-light rounded-2xl p-3.5" style={{ animationDelay: "0.4s" }}>
                     <div className="absolute -top-2 -left-2 w-5 h-5 rounded-full bg-[#D4A853] flex items-center justify-center text-[9px] font-bold text-black z-10 shadow-sm">5</div>
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
@@ -993,8 +997,9 @@ export default function HomePage() {
       </section>
 
       {/* ══ PAIN ══ */}
-      <section id="features" className="py-8 px-6" style={{ background: "#111111" }}>
-        <div className="max-w-6xl mx-auto">
+      <section id="features" className="relative py-8 px-6 overflow-hidden" style={{ background: "#111111" }}>
+        <div className="ambient-top" />
+        <div className="max-w-6xl mx-auto relative" style={{ zIndex: 1 }}>
           <div className="text-center">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">The Problem</span>
             <h2 className="text-3xl lg:text-4xl font-bold text-white mt-4">
@@ -1020,7 +1025,11 @@ export default function HomePage() {
       <section className="relative py-16 px-6 overflow-hidden" style={{ background: "#0A0A0A" }}>
         {/* Ambient top glow */}
         <div className="absolute inset-0 pointer-events-none" style={{
-          background: "radial-gradient(ellipse at 50% 0%, rgba(212,168,83,0.06) 0%, transparent 55%)"
+          background: "radial-gradient(ellipse at 50% 0%, rgba(212,168,83,0.1) 0%, transparent 50%)"
+        }} />
+        {/* Mid ambient glow — surrounds the 0:12 moment */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: "radial-gradient(ellipse at 50% 58%, rgba(212,168,83,0.05) 0%, transparent 40%)"
         }} />
 
         <div className="max-w-6xl mx-auto relative" ref={journeyRef}>
@@ -1030,7 +1039,7 @@ export default function HomePage() {
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">The Complete Journey</span>
             <div className="mt-4">
               <span className="block text-5xl lg:text-7xl font-bold text-white leading-[1.05]">Inquiry to booked.</span>
-              <span className="block text-5xl lg:text-7xl font-bold text-[#D4A853] leading-[1.05]">12 minutes.</span>
+              <span className="block text-5xl lg:text-7xl font-bold text-gradient-gold leading-[1.05]">12 minutes.</span>
             </div>
             <p className="text-lg text-gray-600 mt-3">AI handled every single step.</p>
           </div>
@@ -1047,11 +1056,11 @@ export default function HomePage() {
             <div className="grid grid-cols-5 gap-2">
               {JOURNEY_STAGES.slice(0, 5).map((stage, i) => (
                 <div key={i} className="journey-stage flex flex-col items-center text-center px-1">
-                  <div className={`relative z-10 w-16 h-16 rounded-full flex items-center justify-center font-bold mb-4 flex-shrink-0 ${
+                  <div className={`relative z-10 w-20 h-20 rounded-full flex items-center justify-center font-bold mb-4 flex-shrink-0 ${
                     stage.ai
                       ? "bg-[#D4A853] text-black text-sm journey-node-ai"
-                      : "bg-[#1A1A1A] border-2 border-[#2E2E2E] text-white text-xs"
-                  }`}>
+                      : "text-white text-xs"
+                  }`} style={stage.ai ? {} : { background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.08)" }}>
                     {stage.ai ? "AI" : stage.done ? "✓" : stage.num}
                   </div>
                   <p className="text-xs font-semibold text-white leading-tight mb-1">{stage.label}</p>
@@ -1069,7 +1078,7 @@ export default function HomePage() {
           <div ref={journeyResultRef} className="journey-result text-center py-8 mb-10"
             style={{ borderTop: "1px solid #1A1A1A", borderBottom: "1px solid #1A1A1A" }}>
             <p className="text-[10px] uppercase tracking-[0.2em] text-gray-700 mb-5">Booking confirmed · Deposit collected</p>
-            <p className="text-8xl lg:text-[120px] font-bold font-mono leading-none text-[#D4A853]">0:12</p>
+            <p className="text-8xl lg:text-[128px] font-bold font-mono leading-none text-gradient-gold">0:12</p>
             <p className="text-xl lg:text-2xl text-white font-semibold mt-6">
               From first message to fully booked appointment.
             </p>
@@ -1114,8 +1123,11 @@ export default function HomePage() {
       </section>
 
       {/* ══ AI CONSULTATION (expanded) ══ */}
-      <section className="py-10 px-6" style={{ background: "#F8F8F6" }}>
-        <div className="max-w-6xl mx-auto">
+      <section className="relative py-10 px-6 overflow-hidden" style={{ background: "#F8F8F6" }}>
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: "radial-gradient(ellipse at 50% 0%, rgba(212,168,83,0.07) 0%, transparent 60%)"
+        }} />
+        <div className="max-w-6xl mx-auto relative" style={{ zIndex: 1 }}>
           <div className="text-center mb-5">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">AI Consultation</span>
             <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
@@ -1223,8 +1235,9 @@ export default function HomePage() {
       </section>
 
       {/* ══ QUOTE BUILDER ══ */}
-      <section className="py-10 px-6" style={{ background: "#1A1A1A", borderTop: "1px solid #2A2A2A" }}>
-        <div className="max-w-6xl mx-auto">
+      <section className="relative py-10 px-6 overflow-hidden" style={{ background: "#1A1A1A", borderTop: "1px solid #2A2A2A" }}>
+        <div className="ambient-top" />
+        <div className="max-w-6xl mx-auto relative" style={{ zIndex: 1 }}>
           <div className="text-center mb-5">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Quote Builder</span>
             <h2 className="slide-left text-3xl lg:text-4xl font-bold text-white mt-4">
@@ -1486,8 +1499,9 @@ export default function HomePage() {
       </section>
 
       {/* ══ CLIENT PROFILE ══ */}
-      <section className="section-slide py-8 px-6" style={{ background: "#0A0A0A" }}>
-        <div className="max-w-6xl mx-auto">
+      <section className="relative section-slide py-8 px-6 overflow-hidden" style={{ background: "#0A0A0A" }}>
+        <div className="ambient-top" />
+        <div className="max-w-6xl mx-auto relative" style={{ zIndex: 1 }}>
           <div className="text-center mb-5">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Client CRM</span>
             <h2 className="text-3xl lg:text-4xl font-bold text-white mt-4">
@@ -1495,7 +1509,7 @@ export default function HomePage() {
             </h2>
           </div>
 
-          <div className="rounded-2xl overflow-hidden" style={{ background: "#111111", border: "1px solid #1A1A1A" }}>
+          <div className="rounded-2xl overflow-hidden surface-premium-dark" style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.06)" }}>
             <div className="px-6 py-4 border-b border-[#1A1A1A] flex items-center justify-between" style={{ background: "#141414" }}>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-[#D4A853] flex items-center justify-center text-sm font-bold text-black">SM</div>
@@ -1829,8 +1843,9 @@ export default function HomePage() {
       </section>
 
       {/* ══ REVENUE DASHBOARD ══ */}
-      <section className="py-8 px-6" style={{ background: "#0A0A0A" }}>
-        <div className="max-w-7xl mx-auto">
+      <section className="relative py-8 px-6 overflow-hidden" style={{ background: "#0A0A0A" }}>
+        <div className="ambient-top" />
+        <div className="max-w-7xl mx-auto relative" style={{ zIndex: 1 }}>
           <div className="text-center mb-5">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Revenue &amp; Analytics</span>
             <h2 className="text-3xl lg:text-4xl font-bold text-white mt-4">
@@ -1838,7 +1853,7 @@ export default function HomePage() {
             </h2>
           </div>
 
-          <div className="rounded-2xl overflow-hidden" style={{ background: "#111111", border: "1px solid #1A1A1A" }}>
+          <div className="rounded-2xl overflow-hidden surface-premium-dark" style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.06)" }}>
             <div className="px-6 py-4 border-b border-[#1A1A1A] flex items-center justify-between" style={{ background: "#141414" }}>
               <span className="text-sm font-semibold text-white">Revenue Dashboard</span>
               <span className="text-xs text-gray-500">Ink &amp; Iron Studio · Jun 2025</span>
@@ -1855,7 +1870,7 @@ export default function HomePage() {
                 ].map((stat) => (
                   <div key={stat.label} className="rounded-xl p-5" style={{ background: "#141414", border: "1px solid #1A1A1A" }}>
                     <p className="text-xs text-gray-500">{stat.label}</p>
-                    <p className="text-3xl font-bold text-white mt-1">{stat.value}</p>
+                    <p className="text-4xl lg:text-5xl font-bold text-white mt-1">{stat.value}</p>
                     <p className={`text-xs mt-1 ${stat.green ? "text-green-400" : "text-gray-600"}`}>{stat.sub}</p>
                   </div>
                 ))}
@@ -1980,8 +1995,9 @@ export default function HomePage() {
       </section>
 
       {/* ══ PRICING ══ */}
-      <section id="pricing" className="py-12 px-6" style={{ background: "#111111" }}>
-        <div className="max-w-5xl mx-auto">
+      <section id="pricing" className="relative py-12 px-6 overflow-hidden" style={{ background: "#111111" }}>
+        <div className="ambient-top" />
+        <div className="max-w-5xl mx-auto relative" style={{ zIndex: 1 }}>
           <div className="text-center">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Pricing</span>
             <h2 className="text-3xl lg:text-4xl font-bold text-white mt-4">Simple, transparent pricing.</h2>
@@ -2045,8 +2061,11 @@ export default function HomePage() {
       </section>
 
       {/* ══ FINAL CTA ══ */}
-      <section id="trial" className="cta-bg py-14 px-6" style={{ borderTop: "1px solid #222" }}>
-        <div className="max-w-2xl mx-auto text-center">
+      <section id="trial" className="relative cta-bg py-14 px-6 overflow-hidden" style={{ borderTop: "1px solid #222" }}>
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: "radial-gradient(ellipse at 50% 100%, rgba(212,168,83,0.1) 0%, transparent 55%)"
+        }} />
+        <div className="max-w-2xl mx-auto text-center relative" style={{ zIndex: 1 }}>
           <h2 className="text-4xl lg:text-5xl font-bold text-white">Stop chasing inquiries.</h2>
           <h2 className="text-4xl lg:text-5xl font-bold text-white">Start tattooing.</h2>
           <p className="text-base text-[#D4A853] mt-5">AI handles clients. Artists focus on tattooing.</p>

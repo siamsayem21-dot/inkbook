@@ -462,9 +462,9 @@ body {
   100% { background-position: 0%   50%; }
 }
 .hero-bg {
-  background: linear-gradient(135deg, #F8F8F6 0%, #FEFEFE 40%, #F5F3EF 70%, #F8F8F6 100%);
+  background: linear-gradient(135deg, #F5F4F0 0%, #FEFEFE 35%, #F2F0EC 65%, #F8F7F4 100%);
   background-size: 300% 300%;
-  animation: heroGradient 12s ease infinite;
+  animation: heroGradient 14s ease infinite;
 }
 
 @keyframes ctaGradient {
@@ -532,6 +532,98 @@ body {
 .journey-result.revealed {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* ─────────────────────────────────────────────────────
+   PREMIUM SURFACE DEPTH
+───────────────────────────────────────────────────── */
+
+/* Deep multi-layer shadow for product surfaces on dark backgrounds */
+.surface-premium-dark {
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.07),
+    0 2px 4px rgba(0,0,0,0.6),
+    0 8px 20px rgba(0,0,0,0.7),
+    0 24px 48px rgba(0,0,0,0.65),
+    0 56px 100px rgba(0,0,0,0.4);
+}
+
+/* Premium card on light background — real elevation */
+.surface-premium-light {
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.04),
+    0 2px 4px rgba(0,0,0,0.04),
+    0 8px 24px rgba(0,0,0,0.07),
+    0 24px 48px rgba(0,0,0,0.05);
+}
+
+/* ─────────────────────────────────────────────────────
+   GRADIENT GOLD TEXT
+───────────────────────────────────────────────────── */
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, #C49A3C 0%, #F0CE7A 40%, #E8B84B 65%, #C49A3C 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─────────────────────────────────────────────────────
+   GLASS MORPHISM — floating cards
+───────────────────────────────────────────────────── */
+
+.glass-light {
+  background: rgba(255,255,255,0.93);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.9);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,1) inset,
+    0 2px 8px rgba(0,0,0,0.07),
+    0 8px 24px rgba(0,0,0,0.06),
+    0 20px 48px rgba(0,0,0,0.05);
+}
+
+.glass-dark {
+  background: rgba(12,12,12,0.88);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.06) inset,
+    0 4px 16px rgba(0,0,0,0.5),
+    0 16px 40px rgba(0,0,0,0.4);
+}
+
+/* ─────────────────────────────────────────────────────
+   GOLD LINE DIVIDER
+───────────────────────────────────────────────────── */
+
+.gold-line {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(212,168,83,0.3) 20%,
+    rgba(212,168,83,0.45) 50%,
+    rgba(212,168,83,0.3) 80%,
+    transparent 100%
+  );
+}
+
+/* ─────────────────────────────────────────────────────
+   AMBIENT SECTION GLOW (dark sections)
+───────────────────────────────────────────────────── */
+
+/* Use on dark section's first child div */
+.ambient-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 320px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(212,168,83,0.08) 0%, transparent 65%);
+  pointer-events: none;
 }
 
 /* ─────────────────────────────────────────────────────
@@ -606,4 +698,13 @@ body {
     transition: none !important;
   }
   .stat-flash { animation: none !important; }
+  .text-gradient-gold {
+    background: none !important;
+    -webkit-text-fill-color: #D4A853 !important;
+    color: #D4A853 !important;
+  }
+  .glass-light, .glass-dark {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
 }
