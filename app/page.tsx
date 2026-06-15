@@ -844,7 +844,7 @@ export default function HomePage() {
                   ...heroItemStyle(600, "translateX(-10px)"),
                 }}>
                   {/* Badge lives on the outer wrapper — never clipped */}
-                  <div className="absolute w-7 h-7 rounded-full bg-[#D4A853] flex items-center justify-center text-xs font-bold text-black" style={{ top: "-8px", left: "-8px", zIndex: 10, boxShadow: "0 0 0 2.5px #fff, 0 4px 14px rgba(0,0,0,0.4)" }}>1</div>
+                  <div className="absolute w-7 h-7 rounded-full bg-[#D4A853] flex items-center justify-center text-xs font-bold text-black" style={{ top: "4px", left: "4px", zIndex: 10, boxShadow: "0 0 0 2.5px #fff, 0 4px 14px rgba(0,0,0,0.4)" }}>1</div>
                   <div className="relative float-up glass-light rounded-2xl p-3 flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-[#ECFDF5] flex items-center justify-center text-green-600 text-sm flex-shrink-0">✉</div>
                     <div className="flex-1 min-w-0">
@@ -862,7 +862,7 @@ export default function HomePage() {
                   ...heroItemStyle(800, "translateY(-10px)"),
                 }}>
                   {/* Badge lives on the outer wrapper — never clipped by overflow-hidden on card */}
-                  <div className="absolute w-7 h-7 rounded-full bg-[#D4A853] flex items-center justify-center text-xs font-bold text-black" style={{ top: "-8px", left: "-8px", zIndex: 10, boxShadow: "0 0 0 2.5px #fff, 0 4px 14px rgba(0,0,0,0.4)" }}>2</div>
+                  <div className="absolute w-7 h-7 rounded-full bg-[#D4A853] flex items-center justify-center text-xs font-bold text-black" style={{ top: "4px", left: "4px", zIndex: 10, boxShadow: "0 0 0 2.5px #fff, 0 4px 14px rgba(0,0,0,0.4)" }}>2</div>
                   <div className="relative float-up glass-light rounded-2xl p-4 overflow-hidden" style={{ animationDelay: "0.8s" }}>
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-xs font-semibold text-[#111111]">AI Consultation</span>
@@ -892,7 +892,7 @@ export default function HomePage() {
                   top: "22%", right: "-44px", zIndex: 20, width: "192px",
                   ...heroItemStyle(1000, "translateX(10px)"),
                 }}>
-                  <div className="absolute w-7 h-7 rounded-full bg-[#D4A853] flex items-center justify-center text-xs font-bold text-black" style={{ top: "-8px", left: "-8px", zIndex: 10, boxShadow: "0 0 0 2.5px #fff, 0 4px 14px rgba(0,0,0,0.4)" }}>3</div>
+                  <div className="absolute w-7 h-7 rounded-full bg-[#D4A853] flex items-center justify-center text-xs font-bold text-black" style={{ top: "4px", left: "4px", zIndex: 10, boxShadow: "0 0 0 2.5px #fff, 0 4px 14px rgba(0,0,0,0.4)" }}>3</div>
                   <div className="relative float-badge glass-light rounded-2xl p-3.5" style={{ animationDelay: "0.6s" }}>
                     <div className="flex items-center gap-1.5 mb-2">
                       <span className="text-[9px] bg-[#D4A853] text-black px-2 py-0.5 rounded-full font-bold">AI Draft</span>
@@ -913,7 +913,7 @@ export default function HomePage() {
                   opacity: heroVisible ? 1 : 0,
                   transition: "opacity 0.5s ease-out 1200ms",
                 }}>
-                  <div className="absolute w-7 h-7 rounded-full bg-[#D4A853] flex items-center justify-center text-xs font-bold text-black" style={{ top: "-8px", left: "-8px", zIndex: 10, boxShadow: "0 0 0 2.5px #fff, 0 4px 14px rgba(0,0,0,0.4)" }}>4</div>
+                  <div className="absolute w-7 h-7 rounded-full bg-[#D4A853] flex items-center justify-center text-xs font-bold text-black" style={{ top: "4px", left: "4px", zIndex: 10, boxShadow: "0 0 0 2.5px #fff, 0 4px 14px rgba(0,0,0,0.4)" }}>4</div>
                   <div className="relative float-up glass-light rounded-full px-4 py-2.5 flex items-center gap-2.5" style={{ animationDelay: "1s" }}>
                     <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
                       <span className="text-white text-[9px] font-bold">✓</span>
@@ -927,7 +927,7 @@ export default function HomePage() {
                   bottom: "-16px", right: "-32px", zIndex: 20, width: "224px",
                   ...heroItemStyle(1400, "translateY(10px)"),
                 }}>
-                  <div className="absolute w-7 h-7 rounded-full bg-[#D4A853] flex items-center justify-center text-xs font-bold text-black" style={{ top: "-8px", left: "-8px", zIndex: 10, boxShadow: "0 0 0 2.5px #fff, 0 4px 14px rgba(0,0,0,0.4)" }}>5</div>
+                  <div className="absolute w-7 h-7 rounded-full bg-[#D4A853] flex items-center justify-center text-xs font-bold text-black" style={{ top: "4px", left: "4px", zIndex: 10, boxShadow: "0 0 0 2.5px #fff, 0 4px 14px rgba(0,0,0,0.4)" }}>5</div>
                   <div className="relative float-down glass-light rounded-2xl p-3.5" style={{ animationDelay: "0.4s" }}>
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
