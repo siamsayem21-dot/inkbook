@@ -654,9 +654,9 @@ export default function HomePage() {
       </header>
 
       {/* ══ HERO ══ */}
-      <section className="hero-bg py-24 lg:py-32 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-[42%_58%] gap-16 items-center">
+      <section className="hero-bg py-28 lg:py-40 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-[38%_62%] gap-10 items-start">
 
             {/* Left — copy */}
             <div>
@@ -684,7 +684,7 @@ export default function HomePage() {
 
             {/* Right — Multi-surface layered composition */}
             <div className="hero-item" style={heroItemStyle(200, "translateX(30px) scale(0.97)")}>
-              <div className="relative" style={{ minHeight: "580px" }}>
+              <div className="relative" style={{ minHeight: "720px" }}>
 
                 {/* Layer 5 — Gold glow (behind everything) */}
                 <div className="absolute pointer-events-none glow-pulse" style={{
@@ -695,7 +695,7 @@ export default function HomePage() {
                 {/* Layer 1 — Main dashboard */}
                 <div className="relative" style={{ zIndex: 1, transform: `translateY(${Math.max(-30, -(scrollY * 0.1))}px)`, willChange: "transform" }}>
                   <div ref={heroDashRef} className="tilt-card rounded-2xl shadow-2xl overflow-hidden flex flex-col w-full"
-                    style={{ background: "#0A0A0A", border: "1px solid #1A1A1A", minHeight: "580px" }}
+                    style={{ background: "#0A0A0A", border: "1px solid #1A1A1A", minHeight: "720px" }}
                     onMouseMove={heroTilt.onMouseMove} onMouseLeave={heroTilt.onMouseLeave}>
 
                     {/* Title bar */}
@@ -824,12 +824,28 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Layer 2 — AI Consultation card (floating, top-right) */}
+                {/* Card A — New Inquiry (top-left, outside dashboard) */}
                 <div className="hero-item absolute" style={{
-                  top: "-16px", right: "-24px", zIndex: 20, width: "256px",
+                  top: "-20px", left: "-40px", zIndex: 20, width: "224px",
+                  ...heroItemStyle(600, "translateX(-10px)"),
+                }}>
+                  <div className="float-up bg-white rounded-2xl shadow-xl border border-[#E5E5E3] p-3 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-[#ECFDF5] flex items-center justify-center text-green-600 text-sm flex-shrink-0">✉</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[9px] text-gray-400 uppercase tracking-wide font-semibold">New Inquiry</p>
+                      <p className="text-xs font-semibold text-[#111111] truncate">Maya L. — Floral sleeve</p>
+                      <p className="text-[9px] text-gray-400">Just now</p>
+                    </div>
+                    <span className="w-2 h-2 rounded-full bg-green-400 blink flex-shrink-0" />
+                  </div>
+                </div>
+
+                {/* Card B — AI Consultation (top-right) */}
+                <div className="hero-item absolute" style={{
+                  top: "-16px", right: "-32px", zIndex: 20, width: "260px",
                   ...heroItemStyle(800, "translateY(-10px)"),
                 }}>
-                  <div className="float-up bg-white rounded-2xl shadow-2xl border border-[#E5E5E3] p-4 overflow-hidden">
+                  <div className="float-up bg-white rounded-2xl shadow-2xl border border-[#E5E5E3] p-4 overflow-hidden" style={{ animationDelay: "0.8s" }}>
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-xs font-semibold text-[#111111]">AI Consultation</span>
                       <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full font-medium">Live</span>
@@ -853,39 +869,58 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Layer 3 — Quote Ready card (floating, bottom-left) */}
+                {/* Card C — Quote Generated (right side, 22% from top) */}
                 <div className="hero-item absolute" style={{
-                  bottom: "-12px", left: "-16px", zIndex: 20, width: "224px",
-                  ...heroItemStyle(1200, "translateY(10px)"),
+                  top: "22%", right: "-44px", zIndex: 20, width: "192px",
+                  ...heroItemStyle(1000, "translateX(10px)"),
                 }}>
-                  <div className="float-down bg-white rounded-2xl shadow-2xl border border-[#E5E5E3] p-4">
-                    <span className="bg-[#D4A853] text-black text-[9px] font-bold px-2 py-0.5 rounded-full">Quote Ready</span>
-                    <p className="text-sm font-semibold mt-2 text-[#111111]">Maria Santos</p>
-                    <p className="text-[10px] text-gray-500">Full sleeve · Black &amp; Grey</p>
-                    <div className="border-t border-[#E5E5E3] my-2" />
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500">Total</span>
-                      <span className="text-sm font-bold text-[#111111]">$1,200</span>
+                  <div className="float-badge bg-white rounded-2xl shadow-xl border border-[#E5E5E3] p-3.5" style={{ animationDelay: "0.6s" }}>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <span className="text-[9px] bg-[#D4A853] text-black px-2 py-0.5 rounded-full font-bold">AI Draft</span>
+                      <span className="text-[9px] text-gray-400 ml-auto">3 min</span>
                     </div>
-                    <div className="flex justify-between items-center mt-1">
-                      <span className="text-[10px] text-gray-400">Deposit (20%)</span>
-                      <span className="text-[10px] text-[#D4A853] font-semibold">$240</span>
-                    </div>
-                    <div className="mt-3 bg-[#111111] text-white text-[10px] rounded-lg px-3 py-1.5 w-full text-center cursor-default font-medium">
-                      Approve &amp; Send
+                    <p className="text-base font-bold text-[#111111]">$1,200</p>
+                    <p className="text-[9px] text-gray-400">Full sleeve · 3 sessions</p>
+                    <div className="mt-2 pt-2 border-t border-[#F0F0EE] flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#D4A853]" />
+                      <span className="text-[9px] text-gray-500">Quote ready to send</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Layer 4 — Pipeline status badge (floating, middle-right) */}
-                <div className="hero-item absolute" style={{
-                  top: "45%", right: "-32px", zIndex: 20,
+                {/* Card D — Deposit Paid (right side, 50% from top) */}
+                <div className="absolute" style={{
+                  top: "50%", right: "-44px", zIndex: 20,
                   opacity: heroVisible ? 1 : 0,
-                  transition: "opacity 0.5s ease-out 1000ms",
+                  transition: "opacity 0.5s ease-out 1200ms",
                 }}>
-                  <div className="float-badge bg-white rounded-full shadow-lg border border-[#E5E5E3] px-3 py-2 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse-dot" />
-                    <span className="text-[10px] font-medium text-[#111111] whitespace-nowrap">12 active leads</span>
+                  <div className="float-up bg-white rounded-full shadow-lg border border-[#E5E5E3] px-4 py-2.5 flex items-center gap-2.5" style={{ animationDelay: "1s" }}>
+                    <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                      <span className="text-white text-[9px] font-bold">✓</span>
+                    </div>
+                    <span className="text-[10px] font-semibold text-[#111111] whitespace-nowrap">$240 deposit paid</span>
+                  </div>
+                </div>
+
+                {/* Card E — Booking Confirmed (bottom-right) */}
+                <div className="hero-item absolute" style={{
+                  bottom: "-16px", right: "-32px", zIndex: 20, width: "224px",
+                  ...heroItemStyle(1400, "translateY(10px)"),
+                }}>
+                  <div className="float-down bg-white rounded-2xl shadow-xl border border-[#E5E5E3] p-3.5" style={{ animationDelay: "0.4s" }}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                        <span className="text-white text-[9px] font-bold">✓</span>
+                      </div>
+                      <span className="text-xs font-semibold text-[#111111]">Booking Confirmed</span>
+                    </div>
+                    <div className="flex items-center gap-2 bg-[#F8F8F6] rounded-lg px-2.5 py-2">
+                      <div className="w-6 h-6 rounded-full bg-[#D4A853] flex items-center justify-center text-[9px] font-bold text-black flex-shrink-0">AR</div>
+                      <div>
+                        <p className="text-[9px] font-semibold text-[#111111]">Jun 22 · 2:00 PM</p>
+                        <p className="text-[9px] text-gray-400">Alex R. · Ink &amp; Iron Studio</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -989,40 +1024,70 @@ export default function HomePage() {
           </div>
 
           <div className="relative" ref={journeyRef}>
-            {/* Vertical line */}
-            <div className="absolute left-[22px] top-4 bottom-4 w-px bg-[#E5E5E3]" />
 
-            <div className="space-y-3">
-              {JOURNEY_STAGES.map((stage, i) => (
-                <div key={i} className="journey-stage flex items-start gap-5 relative">
-                  {/* Dot */}
-                  <div className={`relative z-10 w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${
-                    stage.done
-                      ? stage.ai ? "bg-[#D4A853] text-black" : "bg-[#111111] text-white"
-                      : "bg-white border-2 border-[#E5E5E3] text-gray-400"
-                  }`}>
-                    {stage.done ? (stage.ai ? "AI" : "✓") : stage.num}
-                  </div>
-                  {/* Card */}
-                  <div className={`flex-1 rounded-xl p-4 border ${
-                    stage.ai
-                      ? "bg-[#FFFDF5] border-[#D4A853]/20"
-                      : stage.done
-                        ? "bg-[#F8F8F6] border-[#E5E5E3]"
-                        : "bg-white border-[#E5E5E3]"
-                  }`}>
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-[#111111]">{stage.label}</span>
-                        {stage.ai && <span className="text-[10px] bg-[#D4A853]/10 text-[#D4A853] px-2 py-0.5 rounded-full font-semibold">AI</span>}
+            {/* Row 1: Steps 01–05 */}
+            <div className="relative mb-16">
+              {/* Track line */}
+              <div className="absolute top-5 left-[10%] right-[10%] h-px bg-[#E5E5E3]" />
+              {/* Right side vertical connector going down */}
+              <div className="absolute right-[10%] top-5" style={{ height: "80px", width: "1px", background: "#E5E5E3", top: "20px" }} />
+
+              <div className="grid grid-cols-5 gap-2">
+                {JOURNEY_STAGES.slice(0, 5).map((stage, i) => (
+                  <div key={i} className="journey-stage flex flex-col items-center text-center px-2">
+                    {/* Dot */}
+                    <div className="relative z-10 mb-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold ${
+                        stage.done
+                          ? stage.ai ? "bg-[#D4A853] text-black" : "bg-[#111111] text-white"
+                          : "bg-white border-2 border-[#D4A853] text-[#D4A853]"
+                      }`}>
+                        {stage.done ? (stage.ai ? "AI" : "✓") : stage.num}
                       </div>
-                      <span className="text-xs text-gray-400 flex-shrink-0">{stage.time}</span>
+                      {!stage.done && (
+                        <div className="absolute -inset-2 rounded-full border border-[#D4A853]/30 animate-pulse" />
+                      )}
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">{stage.sub}</p>
+                    {/* Label */}
+                    <div className="flex items-center justify-center gap-1 mb-0.5 flex-wrap">
+                      <p className="text-xs font-semibold text-[#111111] leading-tight">{stage.label}</p>
+                      {stage.ai && <span className="text-[8px] bg-[#D4A853]/10 text-[#D4A853] px-1.5 py-0.5 rounded font-bold">AI</span>}
+                    </div>
+                    <p className="text-[9px] text-gray-400 mb-1">{stage.time}</p>
+                    <p className="text-[9px] text-gray-500 leading-relaxed">{stage.sub}</p>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
+
+            {/* Row 2: Steps 06–10 */}
+            <div className="relative">
+              {/* Track line */}
+              <div className="absolute top-5 left-[10%] right-[10%] h-px bg-[#E5E5E3]" />
+
+              <div className="grid grid-cols-5 gap-2">
+                {JOURNEY_STAGES.slice(5).map((stage, i) => (
+                  <div key={i} className="journey-stage flex flex-col items-center text-center px-2">
+                    <div className="relative z-10 mb-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold ${
+                        stage.done
+                          ? stage.ai ? "bg-[#D4A853] text-black" : "bg-[#111111] text-white"
+                          : "bg-white border-2 border-[#E5E5E3] text-gray-400"
+                      }`}>
+                        {stage.done ? (stage.ai ? "AI" : "✓") : stage.num}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center gap-1 mb-0.5 flex-wrap">
+                      <p className="text-xs font-semibold text-[#111111] leading-tight">{stage.label}</p>
+                      {stage.ai && <span className="text-[8px] bg-[#D4A853]/10 text-[#D4A853] px-1.5 py-0.5 rounded font-bold">AI</span>}
+                    </div>
+                    <p className="text-[9px] text-gray-400 mb-1">{stage.time}</p>
+                    <p className="text-[9px] text-gray-500 leading-relaxed">{stage.sub}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
@@ -1310,6 +1375,91 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
+
+            {/* Multi-surface product panel */}
+            <div className="border-t border-[#E5E5E3] grid grid-cols-3 divide-x divide-[#E5E5E3]">
+
+              {/* Surface 1: Selected lead profile */}
+              <div className="p-5">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold mb-3">Selected Lead</p>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-full bg-[#D4A853] flex items-center justify-center text-sm font-bold text-black flex-shrink-0">SK</div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#111111]">Sam K.</p>
+                    <p className="text-xs text-gray-500">Neo-trad eagle · $650 est.</p>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  {[
+                    { k: "Style", v: "Neo-Traditional" },
+                    { k: "Placement", v: "Upper arm" },
+                    { k: "Budget", v: "$650 confirmed" },
+                    { k: "Artist match", v: "Alex R. (94%)" },
+                  ].map((r) => (
+                    <div key={r.k} className="flex justify-between items-center">
+                      <span className="text-[10px] text-gray-400">{r.k}</span>
+                      <span className="text-[10px] font-medium text-[#111111]">{r.v}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 text-[10px] text-[#D4A853] font-medium flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#D4A853] animate-pulse-dot" />
+                  AI consultation in progress
+                </div>
+              </div>
+
+              {/* Surface 2: Next appointment */}
+              <div className="p-5">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold mb-3">Next Appointment</p>
+                <div className="bg-[#F8F8F6] rounded-xl p-3 mb-3 border border-[#E5E5E3]">
+                  <div className="flex items-start gap-2">
+                    <div className="w-2 h-2 rounded-full bg-[#D4A853] flex-shrink-0 mt-1" />
+                    <div>
+                      <p className="text-xs font-semibold text-[#111111]">Sarah M. — Sleeve outline</p>
+                      <p className="text-[10px] text-gray-500">Today · Jun 20 · 2:00–6:00 PM</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">Alex R. · Room 2 · 4 hours</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-[#F8F8F6] rounded-xl p-3 border border-[#E5E5E3]">
+                  <div className="flex items-start gap-2">
+                    <div className="w-2 h-2 rounded-full bg-[#7C3AED] flex-shrink-0 mt-1" />
+                    <div>
+                      <p className="text-xs font-semibold text-[#111111]">Jake T. — Neo-trad arm</p>
+                      <p className="text-[10px] text-gray-500">Tomorrow · Jun 21 · 11:00 AM</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">Jordan H. · Room 1 · 3 hours</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Surface 3: AI activity summary */}
+              <div className="p-5">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold mb-3">AI Working Now</p>
+                <div className="space-y-2.5">
+                  {[
+                    { name: "Sam K.", action: "Completing consultation · Q7/9", gold: true },
+                    { name: "Dana T.", action: "Style analysis complete · Blackwork", gold: true },
+                    { name: "Maya L.", action: "Follow-up sent · Day 3", gold: false },
+                    { name: "Chris P.", action: "Quote draft generating…", gold: true },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <div className={`w-1.5 h-1.5 rounded-full mt-1 flex-shrink-0 ${item.gold ? "bg-[#D4A853]" : "bg-gray-300"}`} />
+                      <div>
+                        <p className="text-[10px] font-semibold text-[#111111]">{item.name}</p>
+                        <p className="text-[9px] text-gray-400">{item.action}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 pt-3 border-t border-[#E5E5E3] flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 blink" />
+                  <span className="text-[10px] text-gray-500">4 active AI threads</span>
+                </div>
+              </div>
+
+            </div>
+
           </div>
         </div>
       </section>
@@ -1385,17 +1535,25 @@ export default function HomePage() {
                     }`}>{tab}</button>
                   ))}
                 </div>
-                <div ref={crmTimelineRef} className="relative space-y-4">
-                  <div className="absolute left-[5px] top-2 bottom-2 w-[2px] bg-[#E5E5E3]" />
+                <div ref={crmTimelineRef} className="relative space-y-2">
+                  <div className="absolute left-[14px] top-4 bottom-4 w-[2px] bg-[#E5E5E3]" />
                   {CRM_TIMELINE.map((item, i) => (
-                    <div key={i} className="timeline-item flex gap-4 items-start relative">
-                      <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 z-10 ${
-                        item.gold ? "bg-[#D4A853]" : "bg-white border-2 border-[#D4A853]"
-                      }`} />
-                      <div>
-                        <p className="text-xs text-gray-400">{item.date}</p>
-                        <p className="text-sm font-medium text-[#111111]">{item.event}</p>
-                        <p className="text-xs text-gray-500">{item.detail}</p>
+                    <div key={i} className={`timeline-item flex gap-4 items-start relative`}>
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 z-10 text-[10px] font-bold ${
+                        item.gold
+                          ? "bg-[#D4A853] text-black"
+                          : "bg-white border-2 border-[#D4A853] text-[#D4A853]"
+                      }`}>
+                        {item.gold ? "✓" : "○"}
+                      </div>
+                      <div className={`flex-1 rounded-xl p-3 border ${
+                        item.gold ? "bg-[#FFFDF5] border-[#D4A853]/20" : "bg-[#F8F8F6] border-[#E5E5E3]"
+                      }`}>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-semibold text-[#111111]">{item.event}</p>
+                          <p className="text-[10px] text-gray-400 flex-shrink-0">{item.date}</p>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5">{item.detail}</p>
                       </div>
                     </div>
                   ))}
