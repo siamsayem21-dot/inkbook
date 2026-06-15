@@ -840,31 +840,59 @@ export default function HomePage() {
       </section>
 
       {/* ══ CATEGORY STATEMENT ══ */}
-      <section className="py-28 px-6" style={{ background: "#FFFFFF" }}>
-        <div className="max-w-5xl mx-auto text-center">
-          <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold" data-animate="fade-up">Why InkBook Exists</span>
-          <div className="mt-8">
-            <div className="flex flex-wrap gap-x-[0.3em] justify-center text-5xl lg:text-6xl font-light text-gray-300 leading-tight">
-              {"Most software manages appointments.".split(" ").map((word, i) => (
-                <span key={i} className="word-reveal" data-animate="word" data-delay={String(i * 50)}>{word}</span>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-x-[0.3em] justify-center text-5xl lg:text-6xl font-bold text-[#111111] leading-tight mt-2">
-              {"InkBook manages the entire tattoo client journey.".split(" ").map((word, i) => (
-                <span key={i} className="word-reveal" data-animate="word" data-delay={String(300 + i * 50)}>{word}</span>
-              ))}
-            </div>
+      <section className="py-20 px-6" style={{ background: "#FFFFFF" }}>
+        <div className="max-w-5xl mx-auto">
+
+          {/* Label */}
+          <p className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold text-center">Why InkBook Exists</p>
+
+          {/* Headline */}
+          <div className="mt-6 text-center">
+            <p className="text-3xl lg:text-4xl font-light text-gray-400">Other tools manage appointments.</p>
+            <p className="text-3xl lg:text-4xl font-bold text-[#111111] mt-2">InkBook manages the entire client journey.</p>
           </div>
-          <div className="mt-16 max-w-xs mx-auto text-left">
-            <p className="text-sm font-semibold text-[#111111] mb-4">InkBook</p>
-            <ul className="space-y-3">
-              {["Manages the full client journey","Handles AI consultation","Follows up automatically","Collects deposits","Tracks every project"].map((item) => (
-                <li key={item} className="flex items-start gap-2 text-sm text-[#111111]">
-                  <span className="text-[#D4A853] font-bold flex-shrink-0 mt-px">✓</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
+
+          {/* Comparison grid */}
+          <div className="mt-12 grid grid-cols-2 gap-6 max-w-3xl mx-auto">
+
+            {/* Left — Other tools */}
+            <div className="bg-[#F8F8F6] rounded-2xl p-8 border border-[#E5E5E3]">
+              <p className="text-sm font-semibold text-gray-400 mb-6">Other Booking Tools</p>
+              <div className="space-y-3">
+                {["Calendar management", "Appointment tracking", "Basic reminders"].map((item) => (
+                  <div key={item} className="flex items-center gap-3">
+                    <div className="w-5 h-5 rounded-full bg-red-100 text-red-400 flex items-center justify-center text-xs flex-shrink-0">✗</div>
+                    <span className="text-sm text-gray-400">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right — InkBook */}
+            <div className="bg-[#111111] rounded-2xl p-8 border border-[#111111]">
+              <p className="text-sm font-semibold text-white mb-6">
+                InkBook
+                <span className="inline-block w-2 h-2 bg-[#D4A853] rounded-full ml-2 align-middle" />
+              </p>
+              <div className="space-y-3">
+                {[
+                  "AI Consultation",
+                  "Automated Follow-Up",
+                  "Quote Builder",
+                  "Deposit Collection",
+                  "Booking & Consent",
+                  "Aftercare Automation",
+                  "Review Collection",
+                  "Full CRM",
+                ].map((item) => (
+                  <div key={item} className="flex items-center gap-3">
+                    <div className="w-5 h-5 rounded-full bg-[#D4A853]/20 text-[#D4A853] flex items-center justify-center text-xs flex-shrink-0">✓</div>
+                    <span className="text-sm text-white">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
