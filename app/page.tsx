@@ -95,15 +95,15 @@ const OS_SIDEBAR: OsSidebarItem[] = [
 ];
 
 const BOOKING_ROWS = [
-  { name: "Sarah M.", service: "Tattoo sleeve · 4h", amount: "$150 deposit", badge: "Deposit paid",   badgeClass: "bg-green-900 text-green-400" },
-  { name: "Jake T.",  service: "Neo-trad arm · 3h", amount: "$200",          badge: "Confirmed",      badgeClass: "bg-yellow-900 text-yellow-400" },
-  { name: "Alex R.",  service: "Cover-up · 2h",     amount: "$300",          badge: "Consent signed", badgeClass: "bg-blue-900 text-blue-400" },
+  { name: "Maria Santos",  service: "Sleeve in progress · 4h",   amount: "$200 deposit", badge: "Deposit paid",   badgeClass: "bg-green-900 text-green-400" },
+  { name: "Jake Thompson", service: "Cover-up booked · 3h",       amount: "$150",         badge: "Confirmed",      badgeClass: "bg-yellow-900 text-yellow-400" },
+  { name: "Alex Rivera",   service: "Consultation complete",       amount: "$300",         badge: "Consent signed", badgeClass: "bg-blue-900 text-blue-400" },
 ];
 
 const AI_ACTIVITY = [
-  "Following up with Maria S. — Sent consultation reminder",
-  "Sent quote to Jake T. — $650 for neo-trad sleeve",
-  "Deposit collected — Alex R. paid $300",
+  "Maria Santos replied — \"I want a full sleeve, black and grey roses\"",
+  "Jake Thompson deposit $200 collected",
+  "Alex Rivera consultation complete — matched to @inkmaster_alex",
 ];
 
 const OS_TODAY = [
@@ -150,14 +150,14 @@ const JOURNEY_STAGES = [
 
 const AI_MSGS = [
   { ai: true,  text: "Hi! I'm InkBook AI. Tell me about the tattoo you're looking for 🎨" },
-  { ai: false, text: "I want a floral sleeve on my left arm, black and grey" },
-  { ai: true,  text: "Beautiful choice! Full sleeve or half sleeve?" },
-  { ai: false, text: "Full sleeve please" },
-  { ai: true,  text: "What's your budget range for the full project?" },
-  { ai: false, text: "Around $800" },
-  { ai: true,  text: "Perfect — that works for a phased approach. Any medical conditions or allergies I should note?" },
-  { ai: false, text: "No, I'm good!" },
-  { ai: true,  text: "Matched you with Alex R. — specializes in floral botanical, black & grey. Available Mon Jun 22. Ready to see your quote?" },
+  { ai: false, text: "I want a full black and grey floral sleeve on my left arm. I'm thinking roses and peonies." },
+  { ai: true,  text: "Beautiful choice. I've detected: Floral Botanical · Black & Grey. Our artist Alex R. specializes in exactly this style. What's your timeline and budget?" },
+  { ai: false, text: "I'd like to start within the next month. Budget around $800." },
+  { ai: true,  text: "Perfect — that works well for a phased approach. 3 sessions would cover a full sleeve. Have you been tattooed before?" },
+  { ai: false, text: "Yes, I have a small piece on my ribs." },
+  { ai: true,  text: "Great. Any medical conditions or allergies I should note for your consent form?" },
+  { ai: false, text: "No, I'm all good!" },
+  { ai: true,  text: "Style: Floral Botanical · Artist Match: Alex R. (98%) · Available Mon Jun 22. Generating quote now…" },
 ];
 
 type PipelineCard = { name: string; tag: string; sub: string; subClass: string; border: string; readyBadge?: boolean };
@@ -180,8 +180,8 @@ const PIPELINE_COLS: { title: string; titleClass: string; countClass: string; ai
   {
     title: "Quote Sent", titleClass: "text-blue-600", countClass: "bg-blue-50 text-blue-600",
     cards: [
-      { name: "Riley M.", tag: "Full back piece", sub: "$850", subClass: "font-bold text-[#111111]", border: "border border-blue-100" },
-      { name: "Alex J.",  tag: "Watercolor koi",  sub: "$450", subClass: "font-bold text-[#111111]", border: "border border-blue-100" },
+      { name: "Maria S.", tag: "Full sleeve",  sub: "$1,200", subClass: "font-bold text-[#111111]", border: "border border-blue-100" },
+      { name: "Sam W.",   tag: "Back piece",   sub: "$850",   subClass: "font-bold text-[#111111]", border: "border border-blue-100" },
     ],
   },
   {
@@ -239,19 +239,21 @@ const ARTIST_INBOX = [
 ] as const;
 
 const CRM_STATS = [
-  { value: "4",      label: "Sessions"     },
-  { value: "$2,840", label: "Total spent"  },
+  { value: "3",      label: "Sessions"     },
+  { value: "$1,200", label: "Total spent"  },
   { value: "3",      label: "Referrals"    },
   { value: "100%",   label: "Deposit rate" },
 ] as const;
 
 const CRM_TIMELINE = [
-  { date: "Mar 2023", event: "First consultation",  detail: "Floral sleeve inquiry via Instagram",              gold: true  },
-  { date: "Apr 2023", event: "Deposit paid · $150", detail: "Session 1 confirmed",                             gold: true  },
-  { date: "Apr 2023", event: "Session 1 complete",  detail: "Outline — 4 hours",                               gold: true  },
-  { date: "Jun 2023", event: "Session 2 complete",  detail: "Shading — 3 hours",                               gold: true  },
-  { date: "Aug 2023", event: "5-star review",        detail: "“Alex is incredible. Best tattoo experience ever.”", gold: true  },
-  { date: "Jun 2024", event: "Touch-up booked",     detail: "Upcoming · June 20",                              gold: false },
+  { date: "Feb 14 2023", event: "Instagram inquiry",       detail: "Maria S. — Full sleeve, black & grey roses",          gold: false },
+  { date: "Feb 16 2023", event: "AI consultation",         detail: "9 questions completed · Alex R. matched (98%)",       gold: true  },
+  { date: "Feb 18 2023", event: "Deposit paid · $240",     detail: "Session 1 of 3 confirmed — Jun 2",                    gold: true  },
+  { date: "Jun 2 2023",  event: "Session 1 complete",      detail: "Outline — 5 hours · Remainder collected",             gold: true  },
+  { date: "Aug 10 2023", event: "Session 2 complete",      detail: "Shading — 4 hours · Client loves it",                 gold: true  },
+  { date: "Oct 5 2023",  event: "Session 3 complete",      detail: "Detail & finishing — 3 hours",                        gold: true  },
+  { date: "Oct 12 2023", event: "5-star review ★★★★★", detail: "“Alex is incredible. Best tattoo experience ever.”", gold: true },
+  { date: "May 2024",    event: "Touch-up booked",         detail: "Upcoming · June 20 · 2:00 PM",                        gold: false },
 ] as const;
 
 type CalAppt = { top: number; height: number; client: string; service: string; color: string; time: string };
@@ -296,6 +298,7 @@ export default function HomePage() {
   const [deposits,      setDeposits]      = useState(0);
   const [quoteSession1, setQuoteSession1] = useState(0);
   const [quoteSession2, setQuoteSession2] = useState(0);
+  const [quoteSession3, setQuoteSession3] = useState(0);
   const [quoteTotal,    setQuoteTotal]    = useState(0);
   const [quoteDeposit,  setQuoteDeposit]  = useState(0);
   const [visibleMessages, setVisibleMessages] = useState(0);
@@ -492,10 +495,11 @@ export default function HomePage() {
     const io = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting && !triggered) {
         triggered = true;
-        countUp(setQuoteSession1, 400, 800, 0);
-        countUp(setQuoteSession2, 300, 600, 200);
-        countUp(setQuoteTotal,    700, 1000, 0);
-        countUp(setQuoteDeposit,  150, 500, 0);
+        countUp(setQuoteSession1, 500, 800, 0);
+        countUp(setQuoteSession2, 400, 700, 150);
+        countUp(setQuoteSession3, 300, 600, 300);
+        countUp(setQuoteTotal,    1200, 1000, 0);
+        countUp(setQuoteDeposit,  240, 500, 0);
         io.disconnect();
       }
     }, { threshold: 0.3 });
@@ -622,139 +626,212 @@ export default function HomePage() {
               <p className="mt-4 text-sm text-gray-400">14-day free trial · No credit card required</p>
             </div>
 
-            {/* Right — OS Dashboard */}
-            <div className="hero-item relative" style={heroItemStyle(200, "translateX(30px) scale(0.97)")}>
-              <div className="absolute inset-0 pointer-events-none" style={{
-                background: "radial-gradient(ellipse at center, rgba(212,168,83,0.07) 0%, transparent 70%)",
-                filter: "blur(24px)", transform: "scale(1.1)",
-              }} />
+            {/* Right — Multi-surface layered composition */}
+            <div className="hero-item" style={heroItemStyle(200, "translateX(30px) scale(0.97)")}>
+              <div className="relative" style={{ minHeight: "580px" }}>
 
-              <div ref={heroDashRef} className="tilt-card relative rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-                style={{ background: "#0A0A0A", border: "1px solid #1A1A1A", minHeight: "600px" }}
-                onMouseMove={heroTilt.onMouseMove} onMouseLeave={heroTilt.onMouseLeave}>
+                {/* Layer 5 — Gold glow (behind everything) */}
+                <div className="absolute pointer-events-none" style={{
+                  inset: "-20px", zIndex: 0,
+                  background: "radial-gradient(ellipse at 65% 40%, rgba(212,168,83,0.07) 0%, transparent 65%)",
+                }} />
 
-                {/* Title bar */}
-                <div className="flex-shrink-0 flex items-center gap-2 px-4 py-3" style={{ background: "#141414", borderBottom: "1px solid #1A1A1A" }}>
-                  <span className="w-3 h-3 rounded-full bg-red-400/80" />
-                  <span className="w-3 h-3 rounded-full bg-yellow-400/80" />
-                  <span className="w-3 h-3 rounded-full bg-green-400/80" />
-                  <span className="flex-1 text-center text-xs text-gray-600 font-medium tracking-wide">InkBook — Studio OS</span>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse-dot" />
-                    <span className="text-[10px] text-gray-500">Live</span>
-                  </div>
-                </div>
+                {/* Layer 1 — Main dashboard */}
+                <div className="relative" style={{ zIndex: 1 }}>
+                  <div ref={heroDashRef} className="tilt-card rounded-2xl shadow-2xl overflow-hidden flex flex-col w-full"
+                    style={{ background: "#0A0A0A", border: "1px solid #1A1A1A", minHeight: "580px" }}
+                    onMouseMove={heroTilt.onMouseMove} onMouseLeave={heroTilt.onMouseLeave}>
 
-                <div className="flex flex-1 overflow-hidden">
-
-                  {/* Sidebar */}
-                  <div className="flex-shrink-0 w-44 bg-[#0E0E0E] p-3" style={{ borderRight: "1px solid #1A1A1A" }}>
-                    <p className="text-xs font-bold text-white mb-5 px-2 tracking-wide">InkBook</p>
-                    <nav className="space-y-0.5">
-                      {OS_SIDEBAR.map((item) => (
-                        <div key={item.label} className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs cursor-default ${
-                          item.active ? "bg-[#D4A853] text-black font-semibold" : "text-gray-500"
-                        }`}>
-                          <div className="flex items-center gap-2">
-                            {item.icon}
-                            {item.label}
-                          </div>
-                          {item.badge && (
-                            <span className={`text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold ${
-                              item.active ? "bg-black/20 text-black" : "bg-[#D4A853] text-black"
-                            }`}>{item.badge}</span>
-                          )}
-                        </div>
-                      ))}
-                    </nav>
-                  </div>
-
-                  {/* Main */}
-                  <div className="flex-1 p-4 bg-[#0A0A0A] overflow-auto">
-
-                    {/* 4 stats */}
-                    <div className="grid grid-cols-4 gap-2 mb-4">
-                      {heroStats.map((s) => (
-                        <div key={s.label} className="rounded-xl p-3" style={{ background: "#141414", border: "1px solid #1E1E1E" }}>
-                          <p className="text-[10px] text-gray-600 uppercase tracking-wide">{s.label}</p>
-                          <p ref={s.ref ?? undefined} className="text-lg font-bold text-white mt-0.5">{s.value}</p>
-                        </div>
-                      ))}
+                    {/* Title bar */}
+                    <div className="flex-shrink-0 flex items-center gap-2 px-4 py-3" style={{ background: "#141414", borderBottom: "1px solid #1A1A1A" }}>
+                      <span className="w-3 h-3 rounded-full bg-red-400/80" />
+                      <span className="w-3 h-3 rounded-full bg-yellow-400/80" />
+                      <span className="w-3 h-3 rounded-full bg-green-400/80" />
+                      <span className="flex-1 text-center text-xs text-gray-600 font-medium tracking-wide">InkBook — Studio OS</span>
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse-dot" />
+                        <span className="text-[10px] text-gray-500">Live</span>
+                      </div>
                     </div>
 
-                    {/* Pipeline + Today two-col */}
-                    <div className="grid grid-cols-[55%_45%] gap-3">
+                    <div className="flex flex-1 overflow-hidden">
 
-                      {/* Mini pipeline */}
-                      <div className="rounded-xl p-3" style={{ background: "#111111", border: "1px solid #1A1A1A" }}>
-                        <div className="flex items-center justify-between mb-2.5">
-                          <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Pipeline</span>
-                          <span className="text-[10px] text-[#D4A853]">12 active</span>
-                        </div>
-                        <div className="grid grid-cols-3 gap-1.5">
-                          {OS_MINI_PIPELINE.map((col) => (
-                            <div key={col.col}>
-                              <div className="flex items-center gap-1 mb-1.5">
-                                <span className={`text-[10px] font-semibold ${col.ai ? "text-[#D4A853]" : "text-gray-500"}`}>{col.col}</span>
-                                {col.ai && <span className="w-1 h-1 rounded-full bg-[#D4A853] animate-pulse-dot" />}
-                                <span className="text-[10px] text-gray-700 ml-auto">{col.count}</span>
+                      {/* Sidebar */}
+                      <div className="flex-shrink-0 w-44 bg-[#0E0E0E] p-3" style={{ borderRight: "1px solid #1A1A1A" }}>
+                        <p className="text-xs font-bold text-white mb-5 px-2 tracking-wide">InkBook</p>
+                        <nav className="space-y-0.5">
+                          {OS_SIDEBAR.map((item) => (
+                            <div key={item.label} className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs cursor-default ${
+                              item.active ? "bg-[#D4A853] text-black font-semibold" : "text-gray-500"
+                            }`}>
+                              <div className="flex items-center gap-2">
+                                {item.icon}
+                                {item.label}
                               </div>
-                              <div className="space-y-1">
-                                {col.cards.map((card) => (
-                                  <div key={card.name} className="rounded-md p-1.5"
-                                    style={{ background: col.ai ? "rgba(212,168,83,0.06)" : "#1A1A1A", border: col.ai ? "1px solid rgba(212,168,83,0.15)" : "1px solid #222" }}>
-                                    <p className="text-[10px] font-semibold text-white truncate">{card.name}</p>
-                                    <p className="text-[9px] text-gray-600 truncate">{card.tag}</p>
-                                    <p className={`text-[9px] mt-0.5 ${col.ai ? "text-[#D4A853]" : "text-gray-600"}`}>{card.sub}</p>
+                              {item.badge && (
+                                <span className={`text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold ${
+                                  item.active ? "bg-black/20 text-black" : "bg-[#D4A853] text-black"
+                                }`}>{item.badge}</span>
+                              )}
+                            </div>
+                          ))}
+                        </nav>
+                      </div>
+
+                      {/* Main */}
+                      <div className="flex-1 p-4 bg-[#0A0A0A] overflow-auto">
+
+                        {/* 4 stats */}
+                        <div className="grid grid-cols-4 gap-2 mb-4">
+                          {heroStats.map((s) => (
+                            <div key={s.label} className="rounded-xl p-3" style={{ background: "#141414", border: "1px solid #1E1E1E" }}>
+                              <p className="text-[10px] text-gray-600 uppercase tracking-wide">{s.label}</p>
+                              <p ref={s.ref ?? undefined} className="text-lg font-bold text-white mt-0.5">{s.value}</p>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Pipeline + Today two-col */}
+                        <div className="grid grid-cols-[55%_45%] gap-3">
+
+                          {/* Mini pipeline */}
+                          <div className="rounded-xl p-3" style={{ background: "#111111", border: "1px solid #1A1A1A" }}>
+                            <div className="flex items-center justify-between mb-2.5">
+                              <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Pipeline</span>
+                              <span className="text-[10px] text-[#D4A853]">12 active</span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-1.5">
+                              {OS_MINI_PIPELINE.map((col) => (
+                                <div key={col.col}>
+                                  <div className="flex items-center gap-1 mb-1.5">
+                                    <span className={`text-[10px] font-semibold ${col.ai ? "text-[#D4A853]" : "text-gray-500"}`}>{col.col}</span>
+                                    {col.ai && <span className="w-1 h-1 rounded-full bg-[#D4A853] animate-pulse-dot" />}
+                                    <span className="text-[10px] text-gray-700 ml-auto">{col.count}</span>
+                                  </div>
+                                  <div className="space-y-1">
+                                    {col.cards.map((card) => (
+                                      <div key={card.name} className="rounded-md p-1.5"
+                                        style={{ background: col.ai ? "rgba(212,168,83,0.06)" : "#1A1A1A", border: col.ai ? "1px solid rgba(212,168,83,0.15)" : "1px solid #222" }}>
+                                        <p className="text-[10px] font-semibold text-white truncate">{card.name}</p>
+                                        <p className="text-[9px] text-gray-600 truncate">{card.tag}</p>
+                                        <p className={`text-[9px] mt-0.5 ${col.ai ? "text-[#D4A853]" : "text-gray-600"}`}>{card.sub}</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Today + AI */}
+                          <div className="flex flex-col gap-2">
+                            <div className="rounded-xl p-3" style={{ background: "#111111", border: "1px solid #1A1A1A" }}>
+                              <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-2">Today · Jun 20</p>
+                              <div className="space-y-2">
+                                {OS_TODAY.map((appt) => (
+                                  <div key={appt.client} className="flex items-start gap-2">
+                                    <span className="w-2 h-2 rounded-full flex-shrink-0 mt-1" style={{ background: appt.color }} />
+                                    <div>
+                                      <p className="text-[10px] font-semibold text-white">{appt.client}</p>
+                                      <p className="text-[9px] text-gray-600">{appt.time} · {appt.service}</p>
+                                    </div>
                                   </div>
                                 ))}
                               </div>
                             </div>
-                          ))}
+                            <div className="rounded-xl p-3" style={{ background: "#111111", border: "1px solid #1A1A1A" }}>
+                              <div className="flex items-center gap-1.5 mb-2">
+                                <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">AI Activity</p>
+                                <span className="text-[10px] text-[#D4A853]">🤖</span>
+                              </div>
+                              <div className="space-y-1.5">
+                                {AI_ACTIVITY.map((item) => (
+                                  <div key={item} className="flex items-start gap-1.5">
+                                    <span className="w-1 h-1 rounded-full bg-[#D4A853] mt-1 flex-shrink-0" />
+                                    <p className="text-[9px] text-gray-500 leading-relaxed">{item}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
                         </div>
                       </div>
+                    </div>
 
-                      {/* Today + AI */}
-                      <div className="flex flex-col gap-2">
-                        <div className="rounded-xl p-3" style={{ background: "#111111", border: "1px solid #1A1A1A" }}>
-                          <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-2">Today · Jun 20</p>
-                          <div className="space-y-2">
-                            {OS_TODAY.map((appt) => (
-                              <div key={appt.client} className="flex items-start gap-2">
-                                <span className="w-2 h-2 rounded-full flex-shrink-0 mt-1" style={{ background: appt.color }} />
-                                <div>
-                                  <p className="text-[10px] font-semibold text-white">{appt.client}</p>
-                                  <p className="text-[9px] text-gray-600">{appt.time} · {appt.service}</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="rounded-xl p-3" style={{ background: "#111111", border: "1px solid #1A1A1A" }}>
-                          <div className="flex items-center gap-1.5 mb-2">
-                            <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">AI Activity</p>
-                            <span className="text-[10px] text-[#D4A853]">🤖</span>
-                          </div>
-                          <div className="space-y-1.5">
-                            {AI_ACTIVITY.map((item) => (
-                              <div key={item} className="flex items-start gap-1.5">
-                                <span className="w-1 h-1 rounded-full bg-[#D4A853] mt-1 flex-shrink-0" />
-                                <p className="text-[9px] text-gray-500 leading-relaxed">{item}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
+                    <div className="absolute bottom-4 left-[188px] flex items-center gap-2 rounded-full px-3 py-1.5"
+                      style={{ background: "#1A1A1A", border: "1px solid #2A2A2A" }}>
+                      <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse-dot" />
+                      <span className="text-xs text-white">3 new inquiries today</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="absolute bottom-4 left-[188px] flex items-center gap-2 rounded-full px-3 py-1.5"
-                  style={{ background: "#1A1A1A", border: "1px solid #2A2A2A" }}>
-                  <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse-dot" />
-                  <span className="text-xs text-white">3 new inquiries today</span>
+                {/* Layer 2 — AI Consultation card (floating, top-right) */}
+                <div className="hero-item absolute" style={{
+                  top: "-16px", right: "-24px", zIndex: 20, width: "256px",
+                  ...heroItemStyle(800, "translateY(-10px)"),
+                }}>
+                  <div className="bg-white rounded-2xl shadow-2xl border border-[#E5E5E3] p-4 overflow-hidden">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-semibold text-[#111111]">AI Consultation</span>
+                      <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full font-medium">Live</span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-end">
+                        <div className="bg-[#111111] text-white text-[10px] rounded-xl rounded-tr-none px-3 py-2 max-w-[160px] leading-relaxed">
+                          I want a full black &amp; grey floral sleeve
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="w-5 h-5 bg-[#D4A853] rounded-full flex items-center justify-center text-[8px] text-black font-bold flex-shrink-0 mt-0.5">AI</div>
+                        <div className="bg-[#F8F8F6] text-[10px] text-[#111111] rounded-xl rounded-tl-none px-3 py-2 max-w-[160px] leading-relaxed">
+                          Style detected: Floral · Black &amp; Grey. Matching artist now...
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-[#FFFDF5] border-t border-[#E5E5E3] -mx-4 -mb-4 mt-3 px-3 py-2 text-[9px] text-[#D4A853] font-medium">
+                      ✓ Style detected · ✓ Artist matched (98%)
+                    </div>
+                  </div>
                 </div>
+
+                {/* Layer 3 — Quote Ready card (floating, bottom-left) */}
+                <div className="hero-item absolute" style={{
+                  bottom: "-12px", left: "-16px", zIndex: 20, width: "224px",
+                  ...heroItemStyle(1200, "translateY(10px)"),
+                }}>
+                  <div className="bg-white rounded-2xl shadow-2xl border border-[#E5E5E3] p-4">
+                    <span className="bg-[#D4A853] text-black text-[9px] font-bold px-2 py-0.5 rounded-full">Quote Ready</span>
+                    <p className="text-sm font-semibold mt-2 text-[#111111]">Maria Santos</p>
+                    <p className="text-[10px] text-gray-500">Full sleeve · Black &amp; Grey</p>
+                    <div className="border-t border-[#E5E5E3] my-2" />
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-500">Total</span>
+                      <span className="text-sm font-bold text-[#111111]">$1,200</span>
+                    </div>
+                    <div className="flex justify-between items-center mt-1">
+                      <span className="text-[10px] text-gray-400">Deposit (20%)</span>
+                      <span className="text-[10px] text-[#D4A853] font-semibold">$240</span>
+                    </div>
+                    <div className="mt-3 bg-[#111111] text-white text-[10px] rounded-lg px-3 py-1.5 w-full text-center cursor-default font-medium">
+                      Approve &amp; Send
+                    </div>
+                  </div>
+                </div>
+
+                {/* Layer 4 — Pipeline status badge (floating, middle-right) */}
+                <div className="hero-item absolute" style={{
+                  top: "45%", right: "-32px", zIndex: 20,
+                  opacity: heroVisible ? 1 : 0,
+                  transition: "opacity 0.5s ease-out 1000ms",
+                }}>
+                  <div className="bg-white rounded-full shadow-lg border border-[#E5E5E3] px-3 py-2 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse-dot" />
+                    <span className="text-[10px] font-medium text-[#111111] whitespace-nowrap">12 active leads</span>
+                  </div>
+                </div>
+
               </div>
             </div>
 
