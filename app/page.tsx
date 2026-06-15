@@ -659,7 +659,7 @@ export default function HomePage() {
       </header>
 
       {/* ══ HERO ══ */}
-      <section className="hero-bg py-20 lg:py-28 px-6">
+      <section className="hero-bg py-10 lg:py-16 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-[38%_62%] gap-10 items-start">
 
@@ -946,25 +946,17 @@ export default function HomePage() {
       </section>
 
       {/* ══ CATEGORY STATEMENT ══ */}
-      <section className="py-16 px-6" style={{ background: "#FFFFFF" }}>
+      <section className="py-5 px-6" style={{ background: "#FFFFFF" }}>
         <div className="max-w-5xl mx-auto">
-
-          {/* Label */}
           <p className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold text-center">Why InkBook Exists</p>
-
-          {/* Headline */}
-          <div className="mt-6 text-center">
+          <div className="mt-3 text-center">
             <p className="text-3xl lg:text-4xl font-light text-gray-400">Other tools manage appointments.</p>
-            <p className="text-3xl lg:text-4xl font-bold text-[#111111] mt-2">InkBook manages the entire client journey.</p>
+            <p className="text-3xl lg:text-4xl font-bold text-[#111111] mt-1">InkBook manages the entire client journey.</p>
           </div>
-
-          {/* Comparison grid */}
-          <div className="mt-12 grid grid-cols-2 gap-6 max-w-3xl mx-auto">
-
-            {/* Left — Other tools */}
-            <div className="bg-[#F8F8F6] rounded-2xl p-8 border border-[#E5E5E3]">
-              <p className="text-sm font-semibold text-gray-400 mb-6">Other Booking Tools</p>
-              <div className="space-y-3">
+          <div className="mt-5 grid grid-cols-2 gap-4 max-w-3xl mx-auto">
+            <div className="bg-[#F8F8F6] rounded-2xl p-5 border border-[#E5E5E3]">
+              <p className="text-sm font-semibold text-gray-400 mb-4">Other Booking Tools</p>
+              <div className="space-y-2">
                 {["Calendar management", "Appointment tracking", "Basic reminders"].map((item) => (
                   <div key={item} className="flex items-center gap-3">
                     <div className="w-5 h-5 rounded-full bg-red-100 text-red-400 flex items-center justify-center text-xs flex-shrink-0">✗</div>
@@ -973,14 +965,12 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
-
-            {/* Right — InkBook */}
-            <div className="bg-[#111111] rounded-2xl p-8 border border-[#111111]">
-              <p className="text-sm font-semibold text-white mb-6">
+            <div className="bg-[#111111] rounded-2xl p-5 border border-[#111111]">
+              <p className="text-sm font-semibold text-white mb-4">
                 InkBook
                 <span className="inline-block w-2 h-2 bg-[#D4A853] rounded-full ml-2 align-middle" />
               </p>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {[
                   "AI Consultation",
                   "Automated Follow-Up",
@@ -998,29 +988,28 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
-
           </div>
         </div>
       </section>
 
       {/* ══ PAIN ══ */}
-      <section id="features" className="py-14 px-6" style={{ background: "#F8F8F6" }}>
+      <section id="features" className="py-8 px-6" style={{ background: "#111111" }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">The Problem</span>
-            <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mt-4">
               Most bookings aren&apos;t lost to competitors.
             </h2>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-12 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6 max-w-4xl mx-auto">
             {PAIN_CARDS.map((card, i) => (
               <div key={i}
-                className="bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3] hover:shadow-md transition-shadow duration-200"
+                className="bg-[#1A1A1A] rounded-2xl p-6 border border-[#2A2A2A] hover:border-[#3A3A3A] transition-all duration-200"
                 data-animate="fade-up" data-delay={String(i * 100)}
                 onMouseMove={handlePainMove} onMouseLeave={handlePainLeave}>
-                <div className="text-gray-400 mb-4">{card.icon}</div>
-                <h3 className="text-base font-semibold text-[#111111]">{card.title}</h3>
-                <p className="text-sm text-gray-500 mt-2">{card.desc}</p>
+                <div className="text-[#D4A853] mb-3">{card.icon}</div>
+                <h3 className="text-base font-semibold text-white">{card.title}</h3>
+                <p className="text-sm text-gray-400 mt-1.5">{card.desc}</p>
               </div>
             ))}
           </div>
@@ -1028,7 +1017,7 @@ export default function HomePage() {
       </section>
 
       {/* ══ JOURNEY — SIGNATURE MOMENT ══ */}
-      <section className="relative py-28 px-6 overflow-hidden" style={{ background: "#0A0A0A" }}>
+      <section className="relative py-16 px-6 overflow-hidden" style={{ background: "#0A0A0A" }}>
         {/* Ambient top glow */}
         <div className="absolute inset-0 pointer-events-none" style={{
           background: "radial-gradient(ellipse at 50% 0%, rgba(212,168,83,0.06) 0%, transparent 55%)"
@@ -1037,17 +1026,17 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto relative" ref={journeyRef}>
 
           {/* Header */}
-          <div className="text-center mb-20">
+          <div className="text-center mb-10">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">The Complete Journey</span>
-            <div className="mt-5">
+            <div className="mt-4">
               <span className="block text-5xl lg:text-7xl font-bold text-white leading-[1.05]">Inquiry to booked.</span>
               <span className="block text-5xl lg:text-7xl font-bold text-[#D4A853] leading-[1.05]">12 minutes.</span>
             </div>
-            <p className="text-lg text-gray-600 mt-5">AI handled every single step.</p>
+            <p className="text-lg text-gray-600 mt-3">AI handled every single step.</p>
           </div>
 
           {/* ── BOOKING LOOP: stages 01–05 ── */}
-          <div className="relative mb-20">
+          <div className="relative mb-10">
             {/* Track background */}
             <div className="absolute" style={{ top: "31px", left: "10%", right: "10%", height: "2px", background: "#1A1A1A" }} />
             {/* Animated gold fill */}
@@ -1077,7 +1066,7 @@ export default function HomePage() {
           </div>
 
           {/* ── 12-MINUTE MOMENT ── */}
-          <div ref={journeyResultRef} className="journey-result text-center py-14 mb-20"
+          <div ref={journeyResultRef} className="journey-result text-center py-8 mb-10"
             style={{ borderTop: "1px solid #1A1A1A", borderBottom: "1px solid #1A1A1A" }}>
             <p className="text-[10px] uppercase tracking-[0.2em] text-gray-700 mb-5">Booking confirmed · Deposit collected</p>
             <p className="text-8xl lg:text-[120px] font-bold font-mono leading-none text-[#D4A853]">0:12</p>
@@ -1094,7 +1083,7 @@ export default function HomePage() {
           </div>
 
           {/* ── DIVIDER ── */}
-          <div className="flex items-center gap-6 mb-20">
+          <div className="flex items-center gap-6 mb-10">
             <div className="flex-1 h-px bg-[#1A1A1A]" />
             <span className="text-[10px] text-gray-700 uppercase tracking-[0.2em] whitespace-nowrap">Then automatically, for weeks</span>
             <div className="flex-1 h-px bg-[#1A1A1A]" />
@@ -1125,9 +1114,9 @@ export default function HomePage() {
       </section>
 
       {/* ══ AI CONSULTATION (expanded) ══ */}
-      <section className="py-24 px-6" style={{ background: "#F8F8F6" }}>
+      <section className="py-10 px-6" style={{ background: "#F8F8F6" }}>
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
+          <div className="text-center mb-5">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">AI Consultation</span>
             <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
               AI qualifies every client before you ever see them.
@@ -1158,7 +1147,7 @@ export default function HomePage() {
               <div className="grid lg:grid-cols-[3fr_2fr]">
 
                 {/* Chat */}
-                <div className="p-6 space-y-3 border-r border-[#E5E5E3] min-h-[420px] max-h-[420px] overflow-y-auto">
+                <div className="p-6 space-y-3 border-r border-[#E5E5E3] min-h-[340px] max-h-[340px] overflow-y-auto">
                   {AI_MSGS.map((msg, i) => (
                     <div key={i} className={`flex gap-3 ${msg.ai ? "" : "justify-end"} ${visibleMessages > i ? "msg-visible" : "msg-hidden"}`}>
                       {msg.ai && (
@@ -1234,9 +1223,9 @@ export default function HomePage() {
       </section>
 
       {/* ══ QUOTE BUILDER ══ */}
-      <section className="py-24 px-6" style={{ background: "#1A1A1A", borderTop: "1px solid #2A2A2A" }}>
+      <section className="py-10 px-6" style={{ background: "#1A1A1A", borderTop: "1px solid #2A2A2A" }}>
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
+          <div className="text-center mb-5">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Quote Builder</span>
             <h2 className="slide-left text-3xl lg:text-4xl font-bold text-white mt-4">
               Artist did nothing except approve the quote and show up to tattoo.
@@ -1361,9 +1350,9 @@ export default function HomePage() {
       </section>
 
       {/* ══ PIPELINE ══ */}
-      <section className="py-24 px-6" style={{ background: "#FFFFFF" }}>
+      <section className="py-10 px-6" style={{ background: "#FFFFFF" }}>
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
+          <div className="text-center mb-5">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Lead Pipeline</span>
             <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
               Every lead. Every stage. Always visible.
@@ -1497,35 +1486,35 @@ export default function HomePage() {
       </section>
 
       {/* ══ CLIENT PROFILE ══ */}
-      <section className="section-slide py-16 px-6" style={{ background: "#F8F8F6" }}>
+      <section className="section-slide py-8 px-6" style={{ background: "#0A0A0A" }}>
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
+          <div className="text-center mb-5">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Client CRM</span>
-            <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mt-4">
               Every client. Their entire journey.
             </h2>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-xl border border-[#E5E5E3] overflow-hidden">
-            <div className="px-6 py-4 bg-[#F8F8F6] border-b border-[#E5E5E3] flex items-center justify-between">
+          <div className="rounded-2xl overflow-hidden" style={{ background: "#111111", border: "1px solid #1A1A1A" }}>
+            <div className="px-6 py-4 border-b border-[#1A1A1A] flex items-center justify-between" style={{ background: "#141414" }}>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-[#D4A853] flex items-center justify-center text-sm font-bold text-black">SM</div>
-                <span className="text-sm font-semibold text-[#111111]">Sarah M. — Client Profile</span>
+                <span className="text-sm font-semibold text-white">Sarah M. — Client Profile</span>
               </div>
               <div className="flex items-center gap-2">
                 {["Floral", "Black & Grey", "VIP", "Returning"].map((tag) => (
-                  <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-white border border-[#E5E5E3] text-gray-600">{tag}</span>
+                  <span key={tag} className="text-xs px-2 py-0.5 rounded-full text-gray-400" style={{ background: "#1A1A1A", border: "1px solid #2A2A2A" }}>{tag}</span>
                 ))}
               </div>
             </div>
 
             <div className="grid" style={{ gridTemplateColumns: "280px 1fr" }}>
 
-              <div className="p-6 border-r border-[#E5E5E3]">
+              <div className="p-6 border-r border-[#1A1A1A]">
                 <div className="flex flex-col items-center">
                   <div className="gentle-pulse w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold"
                     style={{ background: "linear-gradient(135deg, #D4A853 0%, #B8923E 100%)" }}>SM</div>
-                  <p className="text-lg font-bold mt-3 text-[#111111]">Sarah M.</p>
+                  <p className="text-lg font-bold mt-3 text-white">Sarah M.</p>
                   <p className="text-xs text-gray-500">Client since March 2023</p>
                   <div className="flex items-center gap-0.5 mt-1">
                     {[1,2,3,4,5].map(n => <span key={n} className="text-[#D4A853] text-sm">★</span>)}
@@ -1533,29 +1522,24 @@ export default function HomePage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3 mt-5">
                   {CRM_STATS.map((s) => (
-                    <div key={s.label} className="bg-[#F8F8F6] rounded-xl p-3 text-center">
-                      <p className="text-lg font-bold text-[#111111]">{s.value}</p>
+                    <div key={s.label} className="rounded-xl p-3 text-center" style={{ background: "#1A1A1A" }}>
+                      <p className="text-lg font-bold text-white">{s.value}</p>
                       <p className="text-xs text-gray-500">{s.label}</p>
                     </div>
                   ))}
                 </div>
                 <div className="mt-4 space-y-2">
-                  <div className="bg-[#F8F8F6] rounded-xl p-3 flex justify-between items-center">
-                    <span className="text-xs text-gray-500">Artist</span>
-                    <span className="text-xs font-semibold text-[#111111]">Alex R.</span>
-                  </div>
-                  <div className="bg-[#F8F8F6] rounded-xl p-3 flex justify-between items-center">
-                    <span className="text-xs text-gray-500">Risk level</span>
-                    <span className="text-xs font-semibold text-green-600">Low ✓</span>
-                  </div>
-                  <div className="bg-[#F8F8F6] rounded-xl p-3 flex justify-between items-center">
-                    <span className="text-xs text-gray-500">Next session</span>
-                    <span className="text-xs font-semibold text-[#111111]">Jun 20 · 2:00 PM</span>
-                  </div>
-                  <div className="bg-[#F8F8F6] rounded-xl p-3 flex justify-between items-center">
-                    <span className="text-xs text-gray-500">Consent signed</span>
-                    <span className="text-xs font-semibold text-green-600">✓ All forms</span>
-                  </div>
+                  {[
+                    { k: "Artist", v: "Alex R.", vClass: "text-white" },
+                    { k: "Risk level", v: "Low ✓", vClass: "text-green-400" },
+                    { k: "Next session", v: "Jun 20 · 2:00 PM", vClass: "text-white" },
+                    { k: "Consent signed", v: "✓ All forms", vClass: "text-green-400" },
+                  ].map((r) => (
+                    <div key={r.k} className="rounded-xl p-3 flex justify-between items-center" style={{ background: "#1A1A1A" }}>
+                      <span className="text-xs text-gray-500">{r.k}</span>
+                      <span className={`text-xs font-semibold ${r.vClass}`}>{r.v}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -1563,29 +1547,30 @@ export default function HomePage() {
                 <div className="flex items-center gap-3 mb-5">
                   {["Timeline", "Quotes", "Payments", "Consent", "Notes", "Aftercare"].map((tab, i) => (
                     <button key={tab} className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
-                      i === 0 ? "bg-[#111111] text-white" : "text-gray-500 hover:text-[#111111]"
+                      i === 0 ? "bg-[#D4A853] text-black" : "text-gray-600 hover:text-gray-300"
                     }`}>{tab}</button>
                   ))}
                 </div>
                 <div ref={crmTimelineRef} className="relative space-y-2">
-                  <div className="absolute left-[14px] top-4 bottom-4 w-[2px] bg-[#E5E5E3]" />
+                  <div className="absolute left-[14px] top-4 bottom-4 w-[2px]" style={{ background: "#2A2A2A" }} />
                   {CRM_TIMELINE.map((item, i) => (
-                    <div key={i} className={`timeline-item flex gap-4 items-start relative`}>
+                    <div key={i} className="timeline-item flex gap-4 items-start relative">
                       <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 z-10 text-[10px] font-bold ${
                         item.gold
                           ? "bg-[#D4A853] text-black"
-                          : "bg-white border-2 border-[#D4A853] text-[#D4A853]"
-                      }`}>
+                          : "border-2 border-[#D4A853] text-[#D4A853]"
+                      }`} style={item.gold ? {} : { background: "#111111" }}>
                         {item.gold ? "✓" : "○"}
                       </div>
-                      <div className={`flex-1 rounded-xl p-3 border ${
-                        item.gold ? "bg-[#FFFDF5] border-[#D4A853]/20" : "bg-[#F8F8F6] border-[#E5E5E3]"
-                      }`}>
+                      <div className="flex-1 rounded-xl p-3" style={{
+                        background: item.gold ? "#1A1A1A" : "#141414",
+                        border: `1px solid ${item.gold ? "rgba(212,168,83,0.2)" : "#2A2A2A"}`,
+                      }}>
                         <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-semibold text-[#111111]">{item.event}</p>
-                          <p className="text-[10px] text-gray-400 flex-shrink-0">{item.date}</p>
+                          <p className="text-sm font-semibold text-white">{item.event}</p>
+                          <p className="text-[10px] text-gray-500 flex-shrink-0">{item.date}</p>
                         </div>
-                        <p className="text-xs text-gray-500 mt-0.5">{item.detail}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{item.detail}</p>
                       </div>
                     </div>
                   ))}
@@ -1598,9 +1583,9 @@ export default function HomePage() {
       </section>
 
       {/* ══ ARTIST DASHBOARD ══ */}
-      <section className="section-slide py-16 px-6" style={{ background: "#FFFFFF" }}>
+      <section className="section-slide py-8 px-6" style={{ background: "#F8F8F6" }}>
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
+          <div className="text-center mb-5">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Artist Dashboard</span>
             <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
               Everything an artist needs. Nothing they don&apos;t.
@@ -1667,9 +1652,9 @@ export default function HomePage() {
       </section>
 
       {/* ══ CALENDAR ══ */}
-      <section className="section-slide py-16 px-6" style={{ background: "#F8F8F6" }}>
+      <section className="section-slide py-8 px-6" style={{ background: "#FFFFFF" }}>
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
+          <div className="text-center mb-5">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Calendar</span>
             <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
               Every artist&apos;s schedule. No double-bookings. Ever.
@@ -1762,9 +1747,9 @@ export default function HomePage() {
       </section>
 
       {/* ══ AFTERCARE + REVIEWS ══ */}
-      <section className="py-24 px-6" style={{ background: "#111111", borderTop: "1px solid #1A1A1A" }}>
+      <section className="py-10 px-6" style={{ background: "#111111", borderTop: "1px solid #1A1A1A" }}>
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
+          <div className="text-center mb-5">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Aftercare &amp; Reviews</span>
             <h2 className="text-3xl lg:text-4xl font-bold text-white mt-4">
               The session ends. InkBook keeps working.
@@ -1844,18 +1829,18 @@ export default function HomePage() {
       </section>
 
       {/* ══ REVENUE DASHBOARD ══ */}
-      <section className="section-slide py-16 px-6" style={{ background: "#FFFFFF" }}>
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Revenue</span>
-            <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
-              Track everything. Miss nothing.
+      <section className="py-8 px-6" style={{ background: "#0A0A0A" }}>
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-5">
+            <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Revenue &amp; Analytics</span>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mt-4">
+              Run your business from here.
             </h2>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-xl border border-[#E5E5E3] overflow-hidden">
-            <div className="px-6 py-4 bg-[#F8F8F6] border-b border-[#E5E5E3] flex items-center justify-between">
-              <span className="text-sm font-semibold text-[#111111]">Revenue Dashboard</span>
+          <div className="rounded-2xl overflow-hidden" style={{ background: "#111111", border: "1px solid #1A1A1A" }}>
+            <div className="px-6 py-4 border-b border-[#1A1A1A] flex items-center justify-between" style={{ background: "#141414" }}>
+              <span className="text-sm font-semibold text-white">Revenue Dashboard</span>
               <span className="text-xs text-gray-500">Ink &amp; Iron Studio · Jun 2025</span>
             </div>
 
@@ -1868,10 +1853,10 @@ export default function HomePage() {
                   { label: "YTD Total",        value: "$82,400", sub: "Through Jun 2025", green: false },
                   { label: "Avg Session",      value: "$465",    sub: "Per booking", green: false },
                 ].map((stat) => (
-                  <div key={stat.label} className="bg-[#F8F8F6] rounded-xl p-4 border border-[#E5E5E3]">
+                  <div key={stat.label} className="rounded-xl p-5" style={{ background: "#141414", border: "1px solid #1A1A1A" }}>
                     <p className="text-xs text-gray-500">{stat.label}</p>
-                    <p className="text-2xl font-bold text-[#111111] mt-1">{stat.value}</p>
-                    <p className={`text-xs mt-1 ${stat.green ? "text-green-600" : "text-gray-400"}`}>{stat.sub}</p>
+                    <p className="text-3xl font-bold text-white mt-1">{stat.value}</p>
+                    <p className={`text-xs mt-1 ${stat.green ? "text-green-400" : "text-gray-600"}`}>{stat.sub}</p>
                   </div>
                 ))}
               </div>
@@ -1880,16 +1865,16 @@ export default function HomePage() {
 
                 {/* Bar chart */}
                 <div>
-                  <p className="text-sm font-semibold text-[#111111] mb-4">Monthly Revenue</p>
-                  <div className="flex items-end gap-3" style={{ height: "160px" }}>
+                  <p className="text-sm font-semibold text-white mb-4">Monthly Revenue</p>
+                  <div className="flex items-end gap-3" style={{ height: "180px" }}>
                     {REVENUE_BARS.map((bar) => (
                       <div key={bar.month} className="flex-1 flex flex-col items-center">
-                        <span className="text-xs text-gray-400 mb-2">{bar.val}</span>
+                        <span className="text-xs text-gray-500 mb-2">{bar.val}</span>
                         <div className="w-full rounded-t-lg" style={{
-                          height: `${bar.pct * 1.2}px`,
-                          background: bar.pct === 100 ? "#D4A853" : `rgba(212,168,83,${0.2 + bar.pct / 150})`,
+                          height: `${bar.pct * 1.4}px`,
+                          background: bar.pct === 100 ? "#D4A853" : `rgba(212,168,83,${0.15 + bar.pct / 150})`,
                         }} />
-                        <span className="text-xs text-gray-400 mt-2">{bar.month}</span>
+                        <span className="text-xs text-gray-500 mt-2">{bar.month}</span>
                       </div>
                     ))}
                   </div>
@@ -1897,7 +1882,7 @@ export default function HomePage() {
 
                 {/* Top services */}
                 <div>
-                  <p className="text-sm font-semibold text-[#111111] mb-4">Top Services</p>
+                  <p className="text-sm font-semibold text-white mb-4">Top Services</p>
                   <div className="space-y-3">
                     {[
                       { name: "Full sleeve",   avg: "$1,800", pct: 100 },
@@ -1907,10 +1892,10 @@ export default function HomePage() {
                     ].map((svc) => (
                       <div key={svc.name}>
                         <div className="flex justify-between text-xs mb-1">
-                          <span className="text-[#111111] font-medium">{svc.name}</span>
+                          <span className="text-white font-medium">{svc.name}</span>
                           <span className="text-gray-500">{svc.avg} avg</span>
                         </div>
-                        <div className="h-1.5 bg-gray-100 rounded-full">
+                        <div className="h-1.5 rounded-full" style={{ background: "#2A2A2A" }}>
                           <div className="h-1.5 bg-[#D4A853] rounded-full" style={{ width: `${svc.pct}%` }} />
                         </div>
                       </div>
@@ -1925,15 +1910,15 @@ export default function HomePage() {
       </section>
 
       {/* ══ WHITE LABEL ══ */}
-      <section className="py-24 px-6" style={{ background: "#F8F8F6" }}>
+      <section className="py-10 px-6" style={{ background: "#F8F8F6" }}>
         <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div className="grid lg:grid-cols-2 gap-10 items-center">
             <div>
               <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">White Label</span>
               <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
                 Your studio. Your brand. Your clients.
               </h2>
-              <ul className="mt-8 space-y-3">
+              <ul className="mt-5 space-y-2">
                 {[
                   "Clients think they're booking directly with you",
                   "Your logo, your colors, your domain",
@@ -1994,80 +1979,64 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══ ROI ══ */}
-      <section className="section-slide py-20 px-6" style={{ background: "#FFFFFF" }}>
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center">
-            <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">The Math Is Simple</span>
-            <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">
-              What is one missed booking worth?
-            </h2>
-          </div>
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
-            {[
-              { value: "$200–$800", label: "Average tattoo session value" },
-              { value: "3–5x",     label: "Inquiries lost per week without follow-up" },
-              { value: "1 booking", label: "Often enough to cover a month of InkBook" },
-            ].map((stat, i) => (
-              <div key={i} className="scale-reveal bg-[#F8F8F6] rounded-2xl p-8 text-center hover:shadow-md transition-all duration-200"
-                data-delay={String(i * 150)}>
-                <p className="text-4xl font-bold text-[#111111]">{stat.value}</p>
-                <p className="text-sm text-gray-500 mt-2">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ══ PRICING ══ */}
-      <section id="pricing" className="py-24 px-6" style={{ background: "#F8F8F6" }}>
+      <section id="pricing" className="py-12 px-6" style={{ background: "#111111" }}>
         <div className="max-w-5xl mx-auto">
           <div className="text-center">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Pricing</span>
-            <h2 className="text-3xl lg:text-4xl font-bold text-[#111111] mt-4">Simple, transparent pricing.</h2>
-            <p className="text-base text-gray-500 mt-4">14-day free trial. No credit card required. No transaction fees.</p>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mt-4">Simple, transparent pricing.</h2>
+            <p className="text-base text-gray-400 mt-3">14-day free trial. No credit card required. No transaction fees.</p>
           </div>
 
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-            <div className="scale-reveal bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3]" data-delay="0"
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+            <div className="scale-reveal rounded-2xl p-8" data-delay="0"
+              style={{ background: "#1A1A1A", border: "1px solid #2A2A2A" }}
               onMouseMove={handlePricingMove} onMouseLeave={handlePricingLeave}>
-              <p className="text-sm font-semibold text-gray-500">Solo Artist</p>
+              <p className="text-sm font-semibold text-gray-400">Solo Artist</p>
               <div className="flex items-end gap-1 mt-3 mb-1">
-                <span className="text-5xl font-bold text-[#111111]">$49</span>
-                <span className="text-sm text-gray-400 mb-2">/mo</span>
+                <span className="text-5xl font-bold text-white">$49</span>
+                <span className="text-sm text-gray-500 mb-2">/mo</span>
               </div>
               <p className="text-sm text-gray-500 mb-8">For individual tattoo artists.</p>
-              <a href="#trial" className="block w-full py-3 text-center text-sm font-semibold rounded-full border border-gray-300 text-[#111111] hover:border-gray-400 transition-colors">
+              <a href="#trial" className="block w-full py-3 text-center text-sm font-semibold rounded-full text-white transition-colors"
+                style={{ border: "1px solid #333" }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = "#555")}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = "#333")}>
                 Start Free Trial
               </a>
             </div>
 
-            <div className="bg-white rounded-2xl p-8 shadow-xl border-2 border-[#D4A853] scale-[1.05] relative"
+            <div className="rounded-2xl p-8 relative scale-[1.05]"
               data-animate="fade-up" data-delay="200"
+              style={{ background: "#1A1A1A", border: "2px solid #D4A853" }}
               onMouseMove={handlePricingMove} onMouseLeave={handlePricingLeave}>
               <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#D4A853] text-black text-xs font-semibold px-4 py-1 rounded-full whitespace-nowrap">
                 MOST POPULAR
               </span>
-              <p className="text-sm font-semibold text-gray-500">Studio</p>
+              <p className="text-sm font-semibold text-gray-400">Studio</p>
               <div className="flex items-end gap-1 mt-3 mb-1">
-                <span className="text-5xl font-bold text-[#111111]">$79</span>
-                <span className="text-sm text-gray-400 mb-2">/mo</span>
+                <span className="text-5xl font-bold text-white">$79</span>
+                <span className="text-sm text-gray-500 mb-2">/mo</span>
               </div>
               <p className="text-sm text-gray-500 mb-8">For small studios and growing teams.</p>
-              <a href="#trial" className="block w-full py-3 text-center text-sm font-semibold rounded-full bg-black text-white hover:bg-[#2A2A2A] transition-colors">
+              <a href="#trial" className="block w-full py-3 text-center text-sm font-semibold rounded-full bg-[#D4A853] text-black hover:opacity-90 transition-opacity">
                 Start Free Trial
               </a>
             </div>
 
-            <div className="scale-reveal bg-white rounded-2xl p-8 shadow-sm border border-[#E5E5E3]" data-delay="400"
+            <div className="scale-reveal rounded-2xl p-8" data-delay="400"
+              style={{ background: "#1A1A1A", border: "1px solid #2A2A2A" }}
               onMouseMove={handlePricingMove} onMouseLeave={handlePricingLeave}>
-              <p className="text-sm font-semibold text-gray-500">Studio Pro</p>
+              <p className="text-sm font-semibold text-gray-400">Studio Pro</p>
               <div className="flex items-end gap-1 mt-3 mb-1">
-                <span className="text-5xl font-bold text-[#111111]">$169</span>
-                <span className="text-sm text-gray-400 mb-2">/mo</span>
+                <span className="text-5xl font-bold text-white">$169</span>
+                <span className="text-sm text-gray-500 mb-2">/mo</span>
               </div>
               <p className="text-sm text-gray-500 mb-8">For larger studios with advanced needs.</p>
-              <a href="#trial" className="block w-full py-3 text-center text-sm font-semibold rounded-full border border-gray-300 text-[#111111] hover:border-gray-400 transition-colors">
+              <a href="#trial" className="block w-full py-3 text-center text-sm font-semibold rounded-full text-white transition-colors"
+                style={{ border: "1px solid #333" }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = "#555")}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = "#333")}>
                 Start Free Trial
               </a>
             </div>
@@ -2076,14 +2045,14 @@ export default function HomePage() {
       </section>
 
       {/* ══ FINAL CTA ══ */}
-      <section id="trial" className="cta-bg py-28 px-6" style={{ borderTop: "1px solid #222" }}>
+      <section id="trial" className="cta-bg py-14 px-6" style={{ borderTop: "1px solid #222" }}>
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-4xl lg:text-5xl font-bold text-white">Stop chasing inquiries.</h2>
           <h2 className="text-4xl lg:text-5xl font-bold text-white">Start tattooing.</h2>
-          <p className="text-base text-[#D4A853] mt-8">AI handles clients. Artists focus on tattooing.</p>
-          <p className="text-xs uppercase tracking-widest text-gray-500 mt-3">The Tattoo Business Operating System</p>
-          <p className="text-sm text-gray-400 mt-6">Start your 14-day free trial. No credit card required.</p>
-          <div className="mt-10 flex flex-wrap gap-4 justify-center">
+          <p className="text-base text-[#D4A853] mt-5">AI handles clients. Artists focus on tattooing.</p>
+          <p className="text-xs uppercase tracking-widest text-gray-500 mt-2">The Tattoo Business Operating System</p>
+          <p className="text-sm text-gray-400 mt-4">Start your 14-day free trial. No credit card required.</p>
+          <div className="mt-8 flex flex-wrap gap-4 justify-center">
             <a href="#signup" className="bg-[#D4A853] text-black font-semibold rounded-full px-8 py-4 text-sm hover:opacity-90 transition-opacity">Start Free Trial</a>
             <a href="#book-demo" className="border border-gray-600 text-white rounded-full px-8 py-4 text-sm hover:border-gray-400 transition-colors">Book Demo</a>
           </div>
