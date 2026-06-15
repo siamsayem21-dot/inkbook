@@ -542,10 +542,10 @@ body {
 .surface-premium-dark {
   box-shadow:
     0 0 0 1px rgba(255,255,255,0.07),
-    0 2px 4px rgba(0,0,0,0.44),
-    0 8px 20px rgba(0,0,0,0.51),
-    0 24px 48px rgba(0,0,0,0.48),
-    0 56px 100px rgba(0,0,0,0.29);
+    0 2px 4px rgba(0,0,0,0.40),
+    0 8px 20px rgba(0,0,0,0.46),
+    0 24px 48px rgba(0,0,0,0.43),
+    0 56px 100px rgba(0,0,0,0.26);
 }
 
 /* Premium card on light background — real elevation */
