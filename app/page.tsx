@@ -969,7 +969,18 @@ export default function HomePage() {
             <div className="bg-[#F8F8F6] rounded-2xl p-5 border border-[#E5E5E3]">
               <p className="text-sm font-semibold text-gray-400 mb-4">Other Booking Tools</p>
               <div className="space-y-2">
-                {["Calendar management", "Appointment tracking", "Basic reminders"].map((item) => (
+                {[
+                  "Calendar management",
+                  "Appointment tracking",
+                  "Basic reminders",
+                  "Manual quote creation",
+                  "Manual follow-up",
+                  "No deposit automation",
+                  "No consent workflow",
+                  "No aftercare automation",
+                  "No review collection",
+                  "No client CRM",
+                ].map((item) => (
                   <div key={item} className="flex items-center gap-3">
                     <div className="w-5 h-5 rounded-full bg-red-100 text-red-400 flex items-center justify-center text-xs flex-shrink-0">✗</div>
                     <span className="text-sm text-gray-400">{item}</span>

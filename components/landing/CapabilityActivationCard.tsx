@@ -2,41 +2,71 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const WORKFLOW: { label: string; running: string; done: string | string[] }[] = [
+const WORKFLOW: { label: string; running: string; done: string | string[]; success: string }[] = [
   {
     label: "AI Consultation",
     running: "Analyzing sleeve style, matching artist",
     done: ["Sleeve style analyzed", "Artist matched: Alex R."],
+    success: "Artist matched",
   },
-  { label: "Automated Follow-Up", running: "Sending 24h nudge", done: "Follow-up sent" },
+  {
+    label: "Automated Follow-Up",
+    running: "Sending 24h nudge",
+    done: "Follow-up sent",
+    success: "Follow-up sent",
+  },
   {
     label: "Quote Builder",
     running: "Drafting itemized quote",
     done: ["$1,200 quote generated", "3 sessions estimated"],
+    success: "Quote generated",
   },
-  { label: "Deposit Collection", running: "Awaiting payment", done: "$240 deposit paid" },
+  {
+    label: "Deposit Collection",
+    running: "Awaiting payment",
+    done: "$240 deposit paid",
+    success: "Deposit collected",
+  },
   {
     label: "Booking & Consent",
     running: "Waiting for signature",
     done: ["Jun 22 booked", "Consent signed"],
+    success: "Booking confirmed",
   },
-  { label: "Aftercare Automation", running: "Sending care guide", done: "Day 1 instructions sent" },
-  { label: "Review Collection", running: "Requesting review", done: "Review request sent" },
-  { label: "Full CRM", running: "Updating client profile", done: "Client profile updated" },
+  {
+    label: "Aftercare Automation",
+    running: "Sending care guide",
+    done: "Day 1 instructions sent",
+    success: "Aftercare sent",
+  },
+  {
+    label: "Review Collection",
+    running: "Requesting review",
+    done: "Review request sent",
+    success: "Review requested",
+  },
+  {
+    label: "Full CRM",
+    running: "Updating client profile",
+    done: "Client profile updated",
+    success: "Profile updated",
+  },
 ];
 
 const STAGGER_MS = 150;
-const ACTIVE_INTERVAL_MS = 3400;
+const RUNNING_DURATION_MS = 2200;
+const SUCCESS_DURATION_MS = 500;
 
 type RowState = "queued" | "running" | "done";
+type Phase = "running" | "success";
 
 export default function CapabilityActivationCard() {
   const [revealedCount, setRevealedCount] = useState(0);
-  const [tick, setTick] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [phase, setPhase] = useState<Phase>("running");
   const cardRef = useRef<HTMLDivElement>(null);
 
   const allRevealed = revealedCount >= WORKFLOW.length;
-  const activeIndex = tick % WORKFLOW.length;
 
   useEffect(() => {
     const el = cardRef.current;
@@ -58,9 +88,30 @@ export default function CapabilityActivationCard() {
 
   useEffect(() => {
     if (!allRevealed) return;
-    const iv = setInterval(() => setTick((t) => t + 1), ACTIVE_INTERVAL_MS);
-    return () => clearInterval(iv);
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+
+    const scheduleRunning = () => {
+      setPhase("running");
+      timer = setTimeout(() => {
+        if (cancelled) return;
+        setPhase("success");
+        timer = setTimeout(() => {
+          if (cancelled) return;
+          setActiveIndex((i) => (i + 1) % WORKFLOW.length);
+          scheduleRunning();
+        }, SUCCESS_DURATION_MS);
+      }, RUNNING_DURATION_MS);
+    };
+
+    scheduleRunning();
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [allRevealed]);
+
+  const isCelebrating = allRevealed && phase === "success";
 
   return (
     <div
@@ -85,12 +136,15 @@ export default function CapabilityActivationCard() {
         {WORKFLOW.map((item, i) => {
           const isRevealed = i < revealedCount;
           const isActive = allRevealed && i === activeIndex;
+          const isRowCelebrating = isActive && isCelebrating;
           const state: RowState = !allRevealed
             ? "queued"
             : i < activeIndex
             ? "done"
             : i === activeIndex
-            ? "running"
+            ? isCelebrating
+              ? "done"
+              : "running"
             : "queued";
 
           return (
@@ -106,22 +160,26 @@ export default function CapabilityActivationCard() {
                     {state === "running" ? "Running" : state === "done" ? "Completed" : "Waiting"}
                   </span>
                 </div>
-                {state === "running" && <p className="ai-feed-detail">{item.running}</p>}
+                {state === "running" && (
+                  <>
+                    <p className="ai-feed-detail">{item.running}</p>
+                    <div className="ai-feed-progress-track">
+                      <div
+                        key={`bar-${activeIndex}`}
+                        className="ai-feed-progress-fill"
+                        style={{ animationDuration: `${RUNNING_DURATION_MS}ms` }}
+                      />
+                    </div>
+                  </>
+                )}
+                {isRowCelebrating && <p className="ai-feed-success">✓ {item.success}</p>}
                 {state === "done" &&
+                  !isRowCelebrating &&
                   (Array.isArray(item.done) ? item.done : [item.done]).map((line) => (
                     <p key={line} className="ai-feed-detail ai-feed-detail-arrow">
                       {line}
                     </p>
                   ))}
-                {isActive && (
-                  <div className="ai-feed-progress-track">
-                    <div
-                      key={`bar-${tick}`}
-                      className="ai-feed-progress-fill"
-                      style={{ animationDuration: `${ACTIVE_INTERVAL_MS}ms` }}
-                    />
-                  </div>
-                )}
               </div>
             </div>
           );
@@ -132,8 +190,12 @@ export default function CapabilityActivationCard() {
         <span className="ai-feed-footer-dot" aria-hidden />
         <div>
           <p className="ai-feed-footer-label">Now running</p>
-          <p key={`footer-${activeIndex}-${allRevealed}`} className="ai-feed-footer-value">
-            {allRevealed ? WORKFLOW[activeIndex].label : "Initializing workflow…"}
+          <p key={`footer-${activeIndex}-${phase}-${allRevealed}`} className="ai-feed-footer-value">
+            {!allRevealed
+              ? "Initializing workflow…"
+              : isCelebrating
+              ? `✓ ${WORKFLOW[activeIndex].success}`
+              : WORKFLOW[activeIndex].label}
           </p>
         </div>
       </div>
