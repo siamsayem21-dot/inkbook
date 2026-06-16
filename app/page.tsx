@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import CapabilityActivationCard from "@/components/landing/CapabilityActivationCard";
 
 /* ─── Base Icons ─── */
 const IconMsg = () => (
@@ -976,29 +977,7 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
-            <div className="bg-[#111111] rounded-2xl p-5 border border-[#111111]">
-              <p className="text-sm font-semibold text-white mb-4">
-                InkBook
-                <span className="inline-block w-2 h-2 bg-[#D4A853] rounded-full ml-2 align-middle" />
-              </p>
-              <div className="space-y-2">
-                {[
-                  "AI Consultation",
-                  "Automated Follow-Up",
-                  "Quote Builder",
-                  "Deposit Collection",
-                  "Booking & Consent",
-                  "Aftercare Automation",
-                  "Review Collection",
-                  "Full CRM",
-                ].map((item) => (
-                  <div key={item} className="flex items-center gap-3">
-                    <div className="w-5 h-5 rounded-full bg-[#D4A853]/20 text-[#D4A853] flex items-center justify-center text-xs flex-shrink-0">✓</div>
-                    <span className="text-sm text-white">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <CapabilityActivationCard />
           </div>
         </div>
       </section>
