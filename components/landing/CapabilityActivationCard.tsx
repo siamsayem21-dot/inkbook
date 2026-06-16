@@ -2,14 +2,26 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const WORKFLOW = [
-  { label: "AI Consultation", running: "Matching artist (98%)", done: "Artist matched · Alex R." },
+const WORKFLOW: { label: string; running: string; done: string | string[] }[] = [
+  {
+    label: "AI Consultation",
+    running: "Analyzing sleeve style, matching artist",
+    done: ["Sleeve style analyzed", "Artist matched: Alex R."],
+  },
   { label: "Automated Follow-Up", running: "Sending 24h nudge", done: "Follow-up sent" },
-  { label: "Quote Builder", running: "Drafting itemized quote", done: "$1,200 quote generated" },
-  { label: "Deposit Collection", running: "Awaiting payment", done: "$240 deposit collected" },
-  { label: "Booking & Consent", running: "Waiting for signature", done: "Booking confirmed · consent signed" },
-  { label: "Aftercare Automation", running: "Sending care guide", done: "Aftercare sequence sent" },
-  { label: "Review Collection", running: "Requesting review", done: "5-star review received" },
+  {
+    label: "Quote Builder",
+    running: "Drafting itemized quote",
+    done: ["$1,200 quote generated", "3 sessions estimated"],
+  },
+  { label: "Deposit Collection", running: "Awaiting payment", done: "$240 deposit paid" },
+  {
+    label: "Booking & Consent",
+    running: "Waiting for signature",
+    done: ["Jun 22 booked", "Consent signed"],
+  },
+  { label: "Aftercare Automation", running: "Sending care guide", done: "Day 1 instructions sent" },
+  { label: "Review Collection", running: "Requesting review", done: "Review request sent" },
   { label: "Full CRM", running: "Updating client profile", done: "Client profile updated" },
 ];
 
@@ -94,9 +106,13 @@ export default function CapabilityActivationCard() {
                     {state === "running" ? "Running" : state === "done" ? "Completed" : "Waiting"}
                   </span>
                 </div>
-                {state !== "queued" && (
-                  <p className="ai-feed-detail">{state === "running" ? item.running : item.done}</p>
-                )}
+                {state === "running" && <p className="ai-feed-detail">{item.running}</p>}
+                {state === "done" &&
+                  (Array.isArray(item.done) ? item.done : [item.done]).map((line) => (
+                    <p key={line} className="ai-feed-detail ai-feed-detail-arrow">
+                      {line}
+                    </p>
+                  ))}
                 {isActive && (
                   <div className="ai-feed-progress-track">
                     <div

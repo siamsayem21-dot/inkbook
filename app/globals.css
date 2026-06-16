@@ -706,7 +706,7 @@ body {
   align-items: flex-start;
   gap: 12px;
   margin: 0 -10px;
-  padding: 11px 12px 11px 10px;
+  padding: 12.5px 12px 12.5px 10px;
   border-radius: 8px;
   border-left: 3px solid transparent;
   opacity: 0;
@@ -722,9 +722,9 @@ body {
   opacity: 0.4;
 }
 .ai-feed-row.is-active {
-  background: linear-gradient(90deg, rgba(212,168,83,0.22), rgba(212,168,83,0.04));
+  background: linear-gradient(90deg, rgba(212,168,83,0.24), rgba(212,168,83,0.05));
   border-left-color: #E8B84B;
-  box-shadow: 0 10px 28px rgba(212,168,83,0.18), inset 0 0 0 1px rgba(212,168,83,0.18);
+  box-shadow: 0 12px 32px rgba(212,168,83,0.24), inset 0 0 0 1px rgba(212,168,83,0.22);
   transform: translateY(-2px) translateX(2px);
   opacity: 1;
 }
@@ -773,8 +773,8 @@ body {
 .ai-feed-row.is-active .ai-feed-label {
   color: #FFFFFF;
   font-weight: 700;
-  font-size: 14.5px;
-  text-shadow: 0 0 16px rgba(212,168,83,0.6);
+  font-size: 15.5px;
+  text-shadow: 0 0 20px rgba(212,168,83,0.75);
 }
 .ai-feed-status {
   flex-shrink: 0;
@@ -806,26 +806,33 @@ body {
 .ai-feed-detail {
   margin-top: 3px;
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.55;
   color: #7A7A7A;
+}
+.ai-feed-detail-arrow::before {
+  content: "→";
+  display: inline-block;
+  margin-right: 6px;
+  color: rgba(74,222,128,0.55);
 }
 .ai-feed-row.is-active .ai-feed-detail {
   color: #F0DDB0;
   font-weight: 500;
+  font-size: 12.5px;
 }
 .ai-feed-progress-track {
-  height: 4px;
-  margin-top: 9px;
-  border-radius: 2px;
+  height: 5px;
+  margin-top: 10px;
+  border-radius: 3px;
   background: rgba(255,255,255,0.08);
   overflow: hidden;
 }
 .ai-feed-progress-fill {
   height: 100%;
   width: 0%;
-  border-radius: 2px;
+  border-radius: 3px;
   background: linear-gradient(90deg, #F3D48C, #E8B84B);
-  box-shadow: 0 0 10px rgba(212,168,83,0.8);
+  box-shadow: 0 0 12px rgba(212,168,83,0.9);
   animation-name: aiFeedProgress;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
