@@ -160,26 +160,28 @@ export default function CapabilityActivationCard() {
                     {state === "running" ? "Running" : state === "done" ? "Completed" : "Waiting"}
                   </span>
                 </div>
-                {state === "running" && (
-                  <>
+                <div className="ai-feed-extra">
+                  <div className={`ai-feed-layer${state === "running" ? " is-visible" : ""}`}>
                     <p className="ai-feed-detail">{item.running}</p>
                     <div className="ai-feed-progress-track">
-                      <div
-                        key={`bar-${activeIndex}`}
-                        className="ai-feed-progress-fill"
-                        style={{ animationDuration: `${RUNNING_DURATION_MS}ms` }}
-                      />
+                      {state === "running" && (
+                        <div
+                          key={`bar-${activeIndex}`}
+                          className="ai-feed-progress-fill"
+                          style={{ animationDuration: `${RUNNING_DURATION_MS}ms` }}
+                        />
+                      )}
                     </div>
-                  </>
-                )}
-                {isRowCelebrating && <p className="ai-feed-success">✓ {item.success}</p>}
-                {state === "done" &&
-                  !isRowCelebrating &&
-                  (Array.isArray(item.done) ? item.done : [item.done]).map((line) => (
-                    <p key={line} className="ai-feed-detail ai-feed-detail-arrow">
-                      {line}
-                    </p>
-                  ))}
+                  </div>
+                  <div className={`ai-feed-layer${state === "done" && !isRowCelebrating ? " is-visible" : ""}`}>
+                    {(Array.isArray(item.done) ? item.done : [item.done]).map((line) => (
+                      <p key={line} className="ai-feed-detail ai-feed-detail-arrow">{line}</p>
+                    ))}
+                  </div>
+                  <div className={`ai-feed-layer${isRowCelebrating ? " is-visible" : ""}`}>
+                    <p className="ai-feed-success">✓ {item.success}</p>
+                  </div>
+                </div>
               </div>
             </div>
           );
