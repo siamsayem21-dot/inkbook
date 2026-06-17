@@ -54,8 +54,8 @@ const WORKFLOW: { label: string; running: string; done: string | string[]; succe
 ];
 
 const STAGGER_MS = 60;
-const RUNNING_DURATION_MS = 600;
-const SUCCESS_DURATION_MS = 50;
+const RUNNING_DURATION_MS = 800;
+const SUCCESS_DURATION_MS = 80;
 
 type RowState = "queued" | "running" | "done";
 type Phase = "running" | "success";
