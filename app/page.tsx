@@ -671,10 +671,10 @@ export default function HomePage() {
                 Tattoo Business Operating System
               </span>
               <h1 className="font-bold leading-[1.1] mt-4 text-[#111111]">
-                <span className="hero-item block text-5xl lg:text-6xl xl:text-7xl" style={heroItemStyle(150, "translateY(20px)")}>
+                <span className="hero-item block text-4xl sm:text-5xl lg:text-6xl xl:text-7xl" style={heroItemStyle(150, "translateY(20px)")}>
                   Stop chasing inquiries.
                 </span>
-                <span className="hero-item block text-4xl lg:text-5xl xl:text-6xl" style={heroItemStyle(300, "translateY(20px)")}>
+                <span className="hero-item block text-3xl sm:text-4xl lg:text-5xl xl:text-6xl" style={heroItemStyle(300, "translateY(20px)")}>
                   Start tattooing.
                 </span>
               </h1>
@@ -690,10 +690,28 @@ export default function HomePage() {
                   <p className="mt-4 text-sm text-gray-400">14-day free trial · No credit card required</p>
                 </div>
               </div>
+            {/* Mobile hero — compact dashboard preview */}
+            <div className="lg:hidden mt-8 rounded-2xl overflow-hidden" style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div className="flex items-center gap-2 px-4 py-2.5" style={{ background: "#141414", borderBottom: "1px solid #1A1A1A" }}>
+                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse-dot flex-shrink-0" />
+                <span className="text-xs text-gray-400 font-medium">InkBook — Studio OS · Live</span>
+              </div>
+              <div className="grid grid-cols-2 gap-px" style={{ background: "#1A1A1A" }}>
+                {heroStats.map((s) => (
+                  <div key={s.label} className="px-4 py-4" style={{ background: "#111111" }}>
+                    <p className="text-[10px] text-gray-600 uppercase tracking-wider">{s.label}</p>
+                    <p className={`text-2xl font-bold text-white mt-0.5${s.flash ? " stat-flash" : ""}`}>{s.value}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="px-4 py-2.5" style={{ background: "#141414", borderTop: "1px solid #1A1A1A" }}>
+                <p className="text-[10px] text-[#D4A853] font-medium truncate" style={{ opacity: aiActivityOpacity, transition: "opacity 0.3s ease" }}>{AI_ACTIVITY[aiActivityIdx]}</p>
+              </div>
+            </div>
             </div>
 
-            {/* Right — Multi-surface layered composition */}
-            <div className="hero-item" style={heroItemStyle(200, "translateX(30px) scale(0.97)")}>
+            {/* Right — Multi-surface layered composition — desktop only */}
+            <div className="hero-item hidden lg:block" style={heroItemStyle(200, "translateX(30px) scale(0.97)")}>
               <div className="relative" style={{ minHeight: "640px" }}>
 
                 {/* Layer 5 — Primary gold glow */}
@@ -965,7 +983,7 @@ export default function HomePage() {
             <p className="text-3xl lg:text-4xl font-light text-gray-400">Other tools manage appointments.</p>
             <p className="text-3xl lg:text-4xl font-bold text-[#111111] mt-1">InkBook manages the entire client journey.</p>
           </div>
-          <div className="mt-5 grid grid-cols-2 gap-4 max-w-3xl mx-auto">
+          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
             <div className="bg-[#F8F8F6] rounded-2xl p-5 border border-[#E5E5E3]">
               <p className="text-sm font-semibold text-gray-400 mb-4">Other Booking Tools</p>
               <div className="space-y-2">
@@ -1043,29 +1061,32 @@ export default function HomePage() {
 
           {/* ── BOOKING LOOP: stages 01–05 ── */}
           <div className="relative mb-10">
-            {/* Track background */}
-            <div className="absolute" style={{ top: "31px", left: "10%", right: "10%", height: "2px", background: "#1A1A1A" }} />
-            {/* Animated gold fill */}
-            <div className="absolute" style={{ top: "31px", left: "10%", right: "10%", height: "2px", overflow: "hidden" }}>
+            {/* Desktop: horizontal track */}
+            <div className="hidden lg:block absolute" style={{ top: "31px", left: "10%", right: "10%", height: "2px", background: "#1A1A1A" }} />
+            <div className="hidden lg:block absolute" style={{ top: "31px", left: "10%", right: "10%", height: "2px", overflow: "hidden" }}>
               <div ref={journeyLineRef} className="journey-line" />
             </div>
+            {/* Mobile: vertical line */}
+            <div className="lg:hidden absolute" style={{ top: "28px", left: "27px", bottom: "12px", width: "2px", background: "#1A1A1A" }} />
 
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-0 lg:gap-2">
               {JOURNEY_STAGES.slice(0, 5).map((stage, i) => (
-                <div key={i} className="journey-stage flex flex-col items-center text-center px-1">
-                  <div className={`relative z-10 w-20 h-20 rounded-full flex items-center justify-center font-bold mb-4 flex-shrink-0 ${
+                <div key={i} className="journey-stage flex lg:flex-col items-start lg:items-center text-left lg:text-center gap-4 lg:gap-0 px-0 lg:px-1 py-3 lg:py-0">
+                  <div className={`relative z-10 flex-shrink-0 w-14 h-14 lg:w-20 lg:h-20 rounded-full flex items-center justify-center font-bold lg:mb-4 ${
                     stage.ai
                       ? "bg-[#D4A853] text-black text-sm journey-node-ai"
                       : "text-white text-xs"
                   }`} style={stage.ai ? {} : { background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.08)" }}>
                     {stage.ai ? "AI" : stage.done ? "✓" : stage.num}
                   </div>
-                  <p className="text-xs font-semibold text-white leading-tight mb-1">{stage.label}</p>
-                  {stage.ai && (
-                    <span className="text-[8px] bg-[#D4A853]/12 text-[#D4A853] px-1.5 py-0.5 rounded font-bold mb-1">Automated</span>
-                  )}
-                  <p className="text-[10px] font-mono text-[#D4A853] font-medium">{stage.time}</p>
-                  <p className="text-[10px] text-gray-600 mt-1 leading-relaxed">{stage.sub}</p>
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold text-white leading-tight mb-1">{stage.label}</p>
+                    {stage.ai && (
+                      <span className="text-[8px] bg-[#D4A853]/12 text-[#D4A853] px-1.5 py-0.5 rounded font-bold mb-1 inline-block">Automated</span>
+                    )}
+                    <p className="text-[10px] font-mono text-[#D4A853] font-medium">{stage.time}</p>
+                    <p className="text-[10px] text-gray-600 mt-1 leading-relaxed">{stage.sub}</p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1075,7 +1096,7 @@ export default function HomePage() {
           <div ref={journeyResultRef} className="journey-result text-center py-8 mb-10"
             style={{ borderTop: "1px solid #1A1A1A", borderBottom: "1px solid #1A1A1A" }}>
             <p className="text-[10px] uppercase tracking-[0.2em] text-gray-700 mb-5">Booking confirmed · Deposit collected</p>
-            <p className="text-8xl lg:text-[128px] font-bold font-mono leading-none text-gradient-gold">0:12</p>
+            <p className="text-6xl sm:text-8xl lg:text-[128px] font-bold font-mono leading-none text-gradient-gold">0:12</p>
             <p className="text-xl lg:text-2xl text-white font-semibold mt-6">
               From first message to fully booked appointment.
             </p>
@@ -1097,20 +1118,24 @@ export default function HomePage() {
 
           {/* ── FOLLOW-THROUGH: stages 06–10 ── */}
           <div className="relative">
-            <div className="absolute" style={{ top: "23px", left: "10%", right: "10%", height: "1px", background: "#1A1A1A" }} />
-            <div className="grid grid-cols-5 gap-2">
+            <div className="hidden lg:block absolute" style={{ top: "23px", left: "10%", right: "10%", height: "1px", background: "#1A1A1A" }} />
+            {/* Mobile: vertical line */}
+            <div className="lg:hidden absolute" style={{ top: "20px", left: "19px", bottom: "8px", width: "1px", background: "#1A1A1A" }} />
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-0 lg:gap-2">
               {JOURNEY_STAGES.slice(5).map((stage, i) => (
-                <div key={i} className="journey-stage flex flex-col items-center text-center px-1">
-                  <div className={`relative z-10 w-12 h-12 rounded-full flex items-center justify-center text-xs font-bold mb-3 flex-shrink-0 ${
+                <div key={i} className="journey-stage flex lg:flex-col items-start lg:items-center text-left lg:text-center gap-3 lg:gap-0 py-2.5 lg:py-0">
+                  <div className={`relative z-10 flex-shrink-0 w-10 h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center text-xs font-bold lg:mb-3 ${
                     stage.ai
                       ? "bg-[#D4A853]/10 text-[#D4A853] border border-[#D4A853]/25"
                       : "bg-[#141414] border border-[#222] text-gray-700"
                   }`}>
                     {stage.ai ? "AI" : "✓"}
                   </div>
-                  <p className="text-xs font-medium text-gray-500 leading-tight">{stage.label}</p>
-                  {stage.ai && <span className="text-[8px] text-[#D4A853]/60 mt-0.5">Auto</span>}
-                  <p className="text-[10px] font-mono text-gray-700 mt-1">{stage.time}</p>
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-gray-500 leading-tight">{stage.label}</p>
+                    {stage.ai && <span className="text-[8px] text-[#D4A853]/60 mt-0.5 block">Auto</span>}
+                    <p className="text-[10px] font-mono text-gray-700 mt-1">{stage.time}</p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1143,7 +1168,7 @@ export default function HomePage() {
                     <p className="text-xs text-gray-400">Ink &amp; Iron Studio</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="hidden sm:flex items-center gap-4">
                   <span className="text-xs text-gray-400">Step <span className="text-[#111111] font-semibold">{Math.min(visibleMessages, 9)}</span> / 9</span>
                   <div className="flex gap-0.5">
                     {Array.from({ length: 9 }, (_, i) => (
@@ -1378,7 +1403,40 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div ref={pipelineRef} className="flex gap-4 p-5 overflow-x-auto">
+            {/* Mobile pipeline — stacked stages */}
+            <div className="lg:hidden p-4 space-y-3">
+              {PIPELINE_COLS.map((col) => (
+                <div key={col.title} className="rounded-xl border border-[#E5E5E3] overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-[#F8F8F6]">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-xs font-bold uppercase tracking-wide ${col.titleClass}`}>{col.title}</span>
+                      {col.ai && <span className="w-1.5 h-1.5 rounded-full bg-[#D4A853] animate-pulse-dot" />}
+                    </div>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${col.countClass}`}>{col.cards.length}</span>
+                  </div>
+                  <div className="px-4 py-3 space-y-2 bg-white">
+                    {col.cards.map((card) => (
+                      <div key={card.name} className={`rounded-lg p-3 bg-[#F8F8F6] ${card.border}`}>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-semibold text-[#111111]">{card.name}</p>
+                          <span className="text-xs px-1.5 py-0.5 rounded-md flex-shrink-0"
+                            style={{ background: col.ai ? "rgba(212,168,83,0.1)" : "#EFEFED", color: col.ai ? "#D4A853" : "#6B7280" }}>
+                            {card.tag}
+                          </span>
+                        </div>
+                        <p className={`text-xs mt-1 ${card.subClass}`}>{card.sub}</p>
+                        {card.readyBadge && (
+                          <span className="inline-block mt-1.5 text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700">Ready to book</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop pipeline — kanban */}
+            <div ref={pipelineRef} className="hidden lg:flex gap-4 p-5 overflow-x-auto">
               {PIPELINE_COLS.map((col) => (
                 <div key={col.title} className="pipeline-col w-52 flex-shrink-0">
                   <div className="flex items-center justify-between mb-3">
@@ -1408,7 +1466,7 @@ export default function HomePage() {
             </div>
 
             {/* Multi-surface product panel */}
-            <div className="border-t border-[#E5E5E3] grid grid-cols-3 divide-x divide-[#E5E5E3]">
+            <div className="border-t border-[#E5E5E3] grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-[#E5E5E3]">
 
               {/* Surface 1: Selected lead profile */}
               <div className="p-5">
@@ -1507,21 +1565,21 @@ export default function HomePage() {
           </div>
 
           <div className="rounded-2xl overflow-hidden surface-premium-dark" style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.06)" }}>
-            <div className="px-6 py-4 border-b border-[#1A1A1A] flex items-center justify-between" style={{ background: "#141414" }}>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-[#D4A853] flex items-center justify-center text-sm font-bold text-black">SM</div>
-                <span className="text-sm font-semibold text-white">Sarah M. — Client Profile</span>
+            <div className="px-6 py-4 border-b border-[#1A1A1A] flex items-center justify-between gap-3" style={{ background: "#141414" }}>
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-8 h-8 rounded-full bg-[#D4A853] flex items-center justify-center text-sm font-bold text-black flex-shrink-0">SM</div>
+                <span className="text-sm font-semibold text-white truncate">Sarah M. — Client Profile</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
                 {["Floral", "Black & Grey", "VIP", "Returning"].map((tag) => (
                   <span key={tag} className="text-xs px-2 py-0.5 rounded-full text-gray-400" style={{ background: "#1A1A1A", border: "1px solid #2A2A2A" }}>{tag}</span>
                 ))}
               </div>
             </div>
 
-            <div className="grid" style={{ gridTemplateColumns: "280px 1fr" }}>
+            <div className="block lg:grid" style={{ gridTemplateColumns: "280px 1fr" }}>
 
-              <div className="p-6 border-r border-[#1A1A1A]">
+              <div className="p-6 lg:border-r border-b lg:border-b-0 border-[#1A1A1A]">
                 <div className="flex flex-col items-center">
                   <div className="gentle-pulse w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold"
                     style={{ background: "linear-gradient(135deg, #D4A853 0%, #B8923E 100%)" }}>SM</div>
@@ -1555,7 +1613,7 @@ export default function HomePage() {
               </div>
 
               <div className="p-6">
-                <div className="flex items-center gap-3 mb-5">
+                <div className="flex flex-wrap gap-1.5 mb-5">
                   {["Timeline", "Quotes", "Payments", "Consent", "Notes", "Aftercare"].map((tab, i) => (
                     <button key={tab} className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
                       i === 0 ? "bg-[#D4A853] text-black" : "text-gray-600 hover:text-gray-300"
@@ -1616,8 +1674,8 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="grid h-[400px]" style={{ gridTemplateColumns: "240px 1fr" }}>
-                <div className="bg-[#F8F8F6] border-r border-[#E5E5E3] p-4 flex flex-col">
+              <div className="block lg:grid lg:h-[400px]" style={{ gridTemplateColumns: "240px 1fr" }}>
+                <div className="hidden lg:flex bg-[#F8F8F6] border-r border-[#E5E5E3] p-4 flex-col">
                   <div className="flex flex-col items-center pt-2">
                     <div className="w-12 h-12 bg-[#D4A853] rounded-full flex items-center justify-center text-white font-bold">AR</div>
                     <p className="text-sm font-semibold mt-2 text-[#111111]">Alex R.</p>
@@ -1637,7 +1695,15 @@ export default function HomePage() {
                   </nav>
                 </div>
 
-                <div className="p-6 overflow-auto">
+                <div className="p-5 lg:p-6 overflow-auto">
+                  {/* Mobile artist header */}
+                  <div className="lg:hidden flex items-center gap-3 mb-4 pb-4 border-b border-[#E5E5E3]">
+                    <div className="w-10 h-10 bg-[#D4A853] rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">AR</div>
+                    <div>
+                      <p className="text-sm font-semibold text-[#111111]">Alex R.</p>
+                      <p className="text-xs text-gray-500">Neo-Traditional · Online</p>
+                    </div>
+                  </div>
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-sm font-semibold text-[#111111]">AI Inbox</span>
                     <span className="text-xs text-[#D4A853]">3 items need attention</span>
@@ -1694,7 +1760,38 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="p-5 overflow-x-auto">
+            {/* Mobile calendar — appointments list */}
+            <div className="lg:hidden p-4 space-y-4">
+              {CALENDAR_DAYS.filter(d => d.appts.length > 0).map((day) => (
+                <div key={day.day}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`text-sm font-bold ${day.date === "20" ? "text-[#D4A853]" : "text-[#111111]"}`}>{day.day} {day.date}</span>
+                    {day.date === "20" && <span className="text-xs text-gray-400 bg-[#F8F8F6] px-2 py-0.5 rounded-full border border-[#E5E5E3]">Today</span>}
+                  </div>
+                  <div className="space-y-2">
+                    {day.appts.map((appt, i) => (
+                      <div key={i} className="flex items-center gap-3 p-3 rounded-xl border border-[#E5E5E3] bg-[#F8F8F6]">
+                        <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: appt.color }} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-[#111111]">{appt.client}</p>
+                          <p className="text-xs text-gray-500 truncate">{appt.time} · {appt.service}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <div className="pt-2 border-t border-[#E5E5E3] flex flex-wrap gap-4">
+                {[{ color: "#D4A853", label: "Sarah M. · Sleeve outline · Jun 20" }, { color: "#7C3AED", label: "Jake T. · Neo-trad · Jun 17" }, { color: "#2563EB", label: "Chris M. · Cover-up · Jun 19" }].map(l => (
+                  <div key={l.label} className="flex items-center gap-1.5 text-xs text-gray-500">
+                    <span className="w-2.5 h-2.5 rounded flex-shrink-0" style={{ background: l.color }} />{l.label}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Desktop calendar — full grid */}
+            <div className="hidden lg:block p-5 overflow-x-auto">
               {/* Day headers */}
               <div className="grid mb-2" style={{ gridTemplateColumns: "40px repeat(6, 1fr)", gap: "8px" }}>
                 <div />
@@ -1858,22 +1955,22 @@ export default function HomePage() {
 
             <div className="p-6">
               {/* Stat cards */}
-              <div className="grid grid-cols-4 gap-4 mb-8">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-8">
                 {[
                   { label: "Monthly Revenue", value: "$12,480", sub: "+18% vs last month", green: true },
                   { label: "MRR Growth",       value: "$8,240",  sub: "Recurring subscriptions", green: false },
                   { label: "YTD Total",        value: "$82,400", sub: "Through Jun 2025", green: false },
                   { label: "Avg Session",      value: "$465",    sub: "Per booking", green: false },
                 ].map((stat) => (
-                  <div key={stat.label} className="rounded-xl p-5" style={{ background: "#141414", border: "1px solid #1A1A1A" }}>
+                  <div key={stat.label} className="rounded-xl p-4 lg:p-5" style={{ background: "#141414", border: "1px solid #1A1A1A" }}>
                     <p className="text-xs text-gray-500">{stat.label}</p>
-                    <p className="text-4xl lg:text-5xl font-bold text-white mt-1">{stat.value}</p>
+                    <p className="text-2xl lg:text-4xl xl:text-5xl font-bold text-white mt-1">{stat.value}</p>
                     <p className={`text-xs mt-1 ${stat.green ? "text-green-400" : "text-gray-600"}`}>{stat.sub}</p>
                   </div>
                 ))}
               </div>
 
-              <div className="grid lg:grid-cols-[2fr_1fr] gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
 
                 {/* Bar chart */}
                 <div>
