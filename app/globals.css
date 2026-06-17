@@ -715,8 +715,8 @@ body {
   border-left: 3px solid transparent;
   opacity: 0;
   transform: translateY(8px);
-  transition: opacity 120ms var(--ease-out), transform 80ms var(--ease-out),
-              background 80ms ease, box-shadow 80ms ease, border-color 80ms ease, margin 80ms ease;
+  transition: opacity 120ms var(--ease-out),
+              background 80ms ease, box-shadow 80ms ease, border-color 80ms ease;
 }
 .ai-feed-row.is-revealed {
   opacity: 1;
@@ -729,7 +729,6 @@ body {
   background: linear-gradient(90deg, rgba(212,168,83,0.24), rgba(212,168,83,0.05));
   border-left-color: #E8B84B;
   box-shadow: 0 12px 32px rgba(212,168,83,0.24), inset 0 0 0 1px rgba(212,168,83,0.22);
-  transform: translateY(-2px) translateX(2px);
   opacity: 1;
 }
 
