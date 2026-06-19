@@ -83,11 +83,27 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
 
   const b = bookingRaw as unknown as BookingDetail;
 
-  const { data: consentRaw } = await supabase
-    .from("consent_forms")
-    .select("id, signed_at, state_template, is_minor, guardian_name, id_photo_url")
-    .eq("booking_id", params.bookingId)
-    .maybeSingle();
+  const [{ data: consentRaw }, depositPaymentResult] = await Promise.all([
+    supabase
+      .from("consent_forms")
+      .select("id, signed_at, state_template, is_minor, guardian_name, id_photo_url")
+      .eq("booking_id", params.bookingId)
+      .maybeSingle(),
+    (supabase
+      .from("deposit_payments" as never)
+      .select("payment_status")
+      .eq("booking_id", params.bookingId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()) as unknown as Promise<{
+        data: { payment_status: string } | null;
+      }>,
+  ]);
+
+  const depositPaymentStatus =
+    (depositPaymentResult.data?.payment_status as
+      | "pending" | "paid" | "refunded" | "kept"
+      | undefined) ?? "none";
 
   const hasConsent = !!consentRaw;
   const consentForm = consentRaw as {
@@ -110,7 +126,14 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
     { label: "Date",          value: fmtDate(b.date) },
     { label: "Time",          value: fmt12h(b.time) },
     { label: "Style",         value: b.style },
-    { label: "Deposit",       value: `$${(b.deposit_amount_cents / 100).toFixed(2)} — ${b.deposit_paid ? "✓ Paid" : "Unpaid"}` },
+    {
+      label: "Deposit",
+      value: b.deposit_paid
+        ? `$${(b.deposit_amount_cents / 100).toFixed(2)} — ✓ Paid`
+        : depositPaymentStatus === "pending"
+        ? `$${(b.deposit_amount_cents / 100).toFixed(2)} — Request sent`
+        : `$${(b.deposit_amount_cents / 100).toFixed(2)} — Not requested`,
+    },
     { label: "Consent form",  value: hasConsent ? "✓ Signed" : "Not submitted" },
     { label: "Client email",  value: b.clients?.email ?? "—" },
     { label: "Client phone",  value: b.clients?.phone ?? "—" },
@@ -153,6 +176,7 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
         hasConsent={hasConsent}
         consentForm={consentForm}
         depositParam={depositParam}
+        depositPaymentStatus={depositPaymentStatus}
       />
     </div>
   );
