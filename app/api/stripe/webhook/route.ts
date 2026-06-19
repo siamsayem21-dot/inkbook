@@ -5,6 +5,7 @@ import { buildSmsMessage, trySendSms } from "@/lib/twilio/client";
 import { sendBookingConfirmationEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
+  // ── 1. Read raw body — must be text/buffer before any parsing ────────────
   const body = await request.text();
   const signature = request.headers.get("stripe-signature");
 
@@ -13,24 +14,37 @@ export async function POST(request: NextRequest) {
   }
 
   if (!process.env.STRIPE_WEBHOOK_SECRET) {
-    console.error("STRIPE_WEBHOOK_SECRET is not configured");
+    console.error("[stripe/webhook] STRIPE_WEBHOOK_SECRET is not configured");
     return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
   }
 
+  // ── 2. Verify Stripe signature ────────────────────────────────────────────
+  // constructEvent throws if the signature doesn't match — never skip this.
   let event;
   try {
     const stripe = getStripe();
     event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
-    console.error("Webhook signature verification failed:", err);
+    console.error("[stripe/webhook] Signature verification failed:", err);
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
+  // ── 3. Route by event type ────────────────────────────────────────────────
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
-    const customRequestId = session.metadata?.customRequestId;
 
-    // Handle custom request deposit
+    const depositPaymentId = session.metadata?.depositPaymentId;
+    const customRequestId  = session.metadata?.customRequestId;
+    const bookingId        = session.metadata?.bookingId;
+
+    // ── Branch A: new deposit_payments flow ──────────────────────────────
+    // Triggered when the owner uses "Send Deposit Request" from the dashboard.
+    // depositPaymentId is always set by sendDepositRequest() in actions.ts.
+    if (depositPaymentId) {
+      return handleDepositPayment(session);
+    }
+
+    // ── Branch B: custom request deposit (existing flow — unchanged) ──────
     if (customRequestId) {
       const supabase = createAdminClient();
       await supabase
@@ -43,100 +57,165 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true });
     }
 
-    const bookingId = session.metadata?.bookingId;
+    // ── Branch C: legacy booking deposit (existing flow — unchanged) ──────
+    // Kept for sessions created before deposit_payments was introduced.
+    if (bookingId) {
+      const supabase = createAdminClient();
+      const now = new Date().toISOString();
 
-    if (!bookingId) {
-      console.error("checkout.session.completed missing bookingId in metadata", session.id);
-      return NextResponse.json({ error: "No bookingId in metadata" }, { status: 400 });
-    }
-
-    const supabase = createAdminClient();
-    const now = new Date().toISOString();
-
-    await Promise.all([
-      supabase
-        .from("bookings")
-        .update({
-          status: "confirmed",
-          deposit_paid: true,
-          deposit_paid_at: now,
-        } as never)
-        .eq("id", bookingId),
-
-      supabase
-        .from("deposits")
-        .update({
-          status: "paid",
-          paid_at: now,
-          stripe_payment_intent_id: session.payment_intent as string,
-        } as never)
-        .eq("booking_id", bookingId),
-    ]);
-
-    // Send booking_confirmed SMS + email (non-blocking)
-    const { data: bookingRow } = await supabase
-      .from("bookings")
-      .select("client_id, artist_id, studio_id, date, time, deposit_amount_cents")
-      .eq("id", bookingId)
-      .single();
-
-    console.log("[webhook] bookingRow fetch:", bookingRow ? "found" : "null — email will not send");
-
-    if (bookingRow) {
-      const { client_id, artist_id, studio_id, date, time, deposit_amount_cents } = bookingRow as {
-        client_id: string;
-        artist_id: string;
-        studio_id: string;
-        date: string;
-        time: string;
-        deposit_amount_cents: number;
-      };
-
-      const [{ data: clientData }, { data: artistData }, { data: studioData }] = await Promise.all([
-        supabase.from("clients").select("full_name, email, phone").eq("id", client_id).single(),
-        supabase.from("artists").select("name").eq("id", artist_id).single(),
-        supabase.from("studios").select("name, address").eq("id", studio_id).single(),
+      await Promise.all([
+        supabase
+          .from("bookings")
+          .update({
+            status: "confirmed",
+            deposit_paid: true,
+            deposit_paid_at: now,
+          } as never)
+          .eq("id", bookingId),
+        supabase
+          .from("deposits")
+          .update({
+            status: "paid",
+            paid_at: now,
+            stripe_payment_intent_id: session.payment_intent as string,
+          } as never)
+          .eq("booking_id", bookingId),
       ]);
 
-      const client = clientData as { full_name: string; email: string; phone: string } | null;
-      const artistName = (artistData as { name: string } | null)?.name ?? "your artist";
-      const studioName = (studioData as { name: string; address: string | null } | null)?.name;
-      const studioAddress = (studioData as { name: string; address: string | null } | null)?.address ?? null;
+      // Send booking_confirmed SMS + email (non-blocking)
+      const { data: bookingRow } = await supabase
+        .from("bookings")
+        .select("client_id, artist_id, studio_id, date, time, deposit_amount_cents")
+        .eq("id", bookingId)
+        .single();
 
-      if (client?.phone && studioName) {
-        void trySendSms(client.phone, buildSmsMessage("booking_confirmed", studioName));
-      }
+      if (bookingRow) {
+        const { client_id, artist_id, studio_id, date, time, deposit_amount_cents } = bookingRow as {
+          client_id: string;
+          artist_id: string;
+          studio_id: string;
+          date: string;
+          time: string;
+          deposit_amount_cents: number;
+        };
 
-      console.log("[email] API key present:", !!process.env.RESEND_API_KEY);
-      console.log("[email] client email:", client?.email ?? "null — skipping email");
+        const [{ data: clientData }, { data: artistData }, { data: studioData }] = await Promise.all([
+          supabase.from("clients").select("full_name, email, phone").eq("id", client_id).single(),
+          supabase.from("artists").select("name").eq("id", artist_id).single(),
+          supabase.from("studios").select("name, address").eq("id", studio_id).single(),
+        ]);
 
-      if (client?.email && studioName) {
-        const formattedDate = new Date(date + "T12:00:00").toLocaleDateString("en-US", {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-        });
-        const formattedTime = time.slice(0, 5);
+        const client     = clientData as { full_name: string; email: string; phone: string } | null;
+        const artistName = (artistData as { name: string } | null)?.name ?? "your artist";
+        const studioName = (studioData as { name: string; address: string | null } | null)?.name;
+        const studioAddr = (studioData as { name: string; address: string | null } | null)?.address ?? null;
 
-        console.log("[email] attempting to send to:", client.email);
-        try {
-          await sendBookingConfirmationEmail({
-            to: client.email,
-            clientName: client.full_name,
-            artistName,
-            studioName,
-            studioAddress,
-            date: formattedDate,
-            time: formattedTime,
-            depositAmountCents: deposit_amount_cents,
+        if (client?.phone && studioName) {
+          void trySendSms(client.phone, buildSmsMessage("booking_confirmed", studioName));
+        }
+
+        if (client?.email && studioName) {
+          const formattedDate = new Date(date + "T12:00:00").toLocaleDateString("en-US", {
+            weekday: "long", month: "long", day: "numeric",
           });
-          console.log("[email] send completed for:", client.email);
-        } catch (err) {
-          console.error("[email] send failed:", err);
+          try {
+            await sendBookingConfirmationEmail({
+              to: client.email,
+              clientName: client.full_name,
+              artistName,
+              studioName,
+              studioAddress: studioAddr,
+              date: formattedDate,
+              time: time.slice(0, 5),
+              depositAmountCents: deposit_amount_cents,
+            });
+          } catch (err) {
+            console.error("[stripe/webhook] email send failed:", err);
+          }
         }
       }
+
+      return NextResponse.json({ received: true });
     }
+
+    console.error("[stripe/webhook] checkout.session.completed — no recognised metadata keys", session.id);
   }
 
+  return NextResponse.json({ received: true });
+}
+
+// ── Handler: deposit_payments flow ───────────────────────────────────────────
+// Called when depositPaymentId is present in session.metadata.
+// Looks up by stripe_checkout_session_id so the update is idempotent
+// (safe to retry if Stripe retries the event).
+async function handleDepositPayment(
+  session: { id: string; payment_intent: unknown; metadata: Record<string, string> | null }
+): Promise<NextResponse> {
+  const supabase = createAdminClient();
+  const now = new Date().toISOString();
+
+  // ── Step 1: find deposit_payment by checkout session ID ──────────────────
+  const { data: dpRows, error: dpError } = (await supabase
+    .from("deposit_payments" as never)
+    .select("id, booking_id, payment_status")
+    .eq("stripe_checkout_session_id", session.id)
+    .limit(1)) as {
+    data: Array<{ id: string; booking_id: string; payment_status: string }> | null;
+    error: unknown;
+  };
+
+  if (dpError) {
+    console.error("[stripe/webhook] deposit_payments lookup failed:", dpError);
+    return NextResponse.json({ error: "DB error" }, { status: 500 });
+  }
+
+  const dp = dpRows?.[0];
+
+  if (!dp) {
+    // Stripe retries — if already processed under a different session this is a no-op
+    console.warn("[stripe/webhook] no deposit_payment found for session:", session.id);
+    return NextResponse.json({ received: true });
+  }
+
+  // Idempotency guard — already processed (Stripe may deliver the event more than once)
+  if (dp.payment_status === "paid") {
+    return NextResponse.json({ received: true });
+  }
+
+  // ── Step 2: update deposit_payments ──────────────────────────────────────
+  // Uses the typed table (no cast) — the cast on the select above is needed only for
+  // the PostgREST select-shape inference; the update reads the proper Database type.
+  const { error: dpUpdateError } = await (supabase
+    .from("deposit_payments") as ReturnType<typeof supabase.from>)
+    .update({
+      payment_status:           "paid",
+      stripe_payment_intent_id: session.payment_intent as string,
+      paid_at:                  now,
+    })
+    .eq("id", dp.id);
+
+  if (dpUpdateError) {
+    console.error("[stripe/webhook] deposit_payments update failed:", dpUpdateError);
+    return NextResponse.json({ error: "DB error" }, { status: 500 });
+  }
+
+  // ── Step 3: confirm the booking ───────────────────────────────────────────
+  const { error: bookingUpdateError } = await supabase
+    .from("bookings")
+    .update({
+      status:          "confirmed",
+      deposit_paid:    true,
+      deposit_paid_at: now,
+    } as never)
+    .eq("id", dp.booking_id);
+
+  if (bookingUpdateError) {
+    console.error("[stripe/webhook] bookings update failed:", bookingUpdateError);
+    // deposit_payments is already marked paid — return 500 so Stripe retries
+    // and we can reconcile the booking update on the next attempt.
+    return NextResponse.json({ error: "DB error" }, { status: 500 });
+  }
+
+  console.log("[stripe/webhook] deposit confirmed — booking:", dp.booking_id, "| dp:", dp.id);
   return NextResponse.json({ received: true });
 }

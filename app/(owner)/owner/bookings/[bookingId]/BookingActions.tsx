@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { cancelBooking } from "./actions";
+import { cancelBooking, sendDepositRequest } from "./actions";
 
 type ConsentForm = {
   id: string;
@@ -16,11 +16,20 @@ type ConsentForm = {
 interface Props {
   bookingId: string;
   status: string;
+  depositAmountCents: number;
   hasConsent: boolean;
   consentForm: ConsentForm;
+  depositParam: string | null; // "paid" | "cancelled" | null — from ?deposit= query param
 }
 
-export default function BookingActions({ bookingId, status, hasConsent, consentForm }: Props) {
+export default function BookingActions({
+  bookingId,
+  status,
+  depositAmountCents,
+  hasConsent,
+  consentForm,
+  depositParam,
+}: Props) {
   const [showConsent, setShowConsent] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -28,6 +37,7 @@ export default function BookingActions({ bookingId, status, hasConsent, consentF
   const router = useRouter();
 
   const isCancellable = status !== "cancelled" && status !== "completed";
+  const canSendDeposit = status === "pending_deposit";
 
   function handleCancel() {
     startTransition(async () => {
@@ -42,8 +52,57 @@ export default function BookingActions({ bookingId, status, hasConsent, consentF
     });
   }
 
+  function handleSendDeposit() {
+    setError(null);
+    startTransition(async () => {
+      const result = await sendDepositRequest(bookingId);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      if (result.checkoutUrl) {
+        window.location.href = result.checkoutUrl;
+      }
+    });
+  }
+
   return (
     <div className="space-y-4">
+      {/* Return banners after Stripe redirect */}
+      {depositParam === "paid" && (
+        <div className="bg-green-950 border border-green-800 text-green-300 text-sm rounded-xl px-4 py-3 flex items-center gap-2">
+          <span className="text-green-400">✓</span>
+          Payment complete. Webhook will confirm the booking once processed.
+        </div>
+      )}
+      {depositParam === "cancelled" && (
+        <div className="bg-zinc-900 border border-zinc-700 text-zinc-400 text-sm rounded-xl px-4 py-3">
+          Payment was cancelled. The deposit request is still pending.
+        </div>
+      )}
+
+      {/* Deposit request block */}
+      {canSendDeposit && (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-3">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-white">Deposit request</p>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                ${(depositAmountCents / 100).toFixed(2)} required to confirm this booking
+              </p>
+            </div>
+            <button
+              onClick={handleSendDeposit}
+              disabled={isPending}
+              className="shrink-0 text-sm font-semibold bg-[#c9a84c] hover:bg-[#b8973b] text-black px-4 py-2 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isPending ? "Creating checkout…" : "Send Deposit Request"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Consent + cancel row */}
       <div className="flex flex-wrap items-center gap-3">
         {hasConsent ? (
           <button

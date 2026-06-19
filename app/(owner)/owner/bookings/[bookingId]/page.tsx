@@ -60,9 +60,10 @@ function ErrorCard({ message }: { message: string }) {
 
 interface Props {
   params: { bookingId: string };
+  searchParams: { deposit?: string };
 }
 
-export default async function BookingDetailPage({ params }: Props) {
+export default async function BookingDetailPage({ params, searchParams }: Props) {
   const supabase = createAdminClient();
 
   const { data: bookingRaw, error: bookingError } = await supabase
@@ -82,7 +83,6 @@ export default async function BookingDetailPage({ params }: Props) {
 
   const b = bookingRaw as unknown as BookingDetail;
 
-  // Separate query for consent form to avoid join ambiguity
   const { data: consentRaw } = await supabase
     .from("consent_forms")
     .select("id, signed_at, state_template, is_minor, guardian_name, id_photo_url")
@@ -98,7 +98,11 @@ export default async function BookingDetailPage({ params }: Props) {
     guardian_name: string | null;
     id_photo_url: string;
   } | null;
+
   const statusInfo = STATUS_LABELS[b.status] ?? { label: b.status, className: "bg-zinc-800 text-zinc-400 border-zinc-700" };
+  const depositParam = searchParams.deposit === "paid" || searchParams.deposit === "cancelled"
+    ? searchParams.deposit
+    : null;
 
   const fields: { label: string; value: string; wide?: boolean }[] = [
     { label: "Client",        value: b.clients?.full_name ?? "—" },
@@ -145,8 +149,10 @@ export default async function BookingDetailPage({ params }: Props) {
       <BookingActions
         bookingId={params.bookingId}
         status={b.status}
+        depositAmountCents={b.deposit_amount_cents}
         hasConsent={hasConsent}
         consentForm={consentForm}
+        depositParam={depositParam}
       />
     </div>
   );

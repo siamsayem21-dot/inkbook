@@ -78,6 +78,7 @@ export interface Database {
           style: string;
           description: string | null;
           status: BookingStatus;
+          quote_amount_cents: number | null;
           deposit_amount: number;
           deposit_paid: boolean;
           deposit_paid_at: string | null;
@@ -86,6 +87,20 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["bookings"]["Row"], "id" | "created_at">;
         Update: Partial<Database["public"]["Tables"]["bookings"]["Insert"]>;
+      };
+      deposit_payments: {
+        Row: {
+          id: string;
+          booking_id: string;
+          stripe_checkout_session_id: string | null;
+          stripe_payment_intent_id: string | null;
+          amount_cents: number;
+          payment_status: "pending" | "paid" | "refunded" | "kept";
+          paid_at: string | null;
+          created_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["deposit_payments"]["Row"], "id" | "created_at">;
+        Update: Partial<Database["public"]["Tables"]["deposit_payments"]["Insert"]>;
       };
       consent_forms: {
         Row: {
@@ -207,6 +222,42 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["flash_designs"]["Row"], "id" | "created_at">;
         Update: Partial<Database["public"]["Tables"]["flash_designs"]["Insert"]>;
+      };
+      consultations: {
+        Row: {
+          id: string;
+          studio_id: string;
+          client_name: string;
+          client_email: string;
+          client_phone: string;
+          tattoo_description: string;
+          placement: string;
+          estimated_size: string;
+          color_preference: string;
+          budget_range: string;
+          reference_photos: string[];
+          followup_questions: string[];
+          followup_answers: Record<number, string>;
+          detected_style: string | null;
+          style_confidence: number | null;
+          style_reasoning: string | null;
+          ai_notes: string | null;
+          status: "new" | "reviewed" | "quoted" | "deposit_paid" | "booked" | "completed" | "lost" | "converted";
+          ai_recommended_price_min: number | null;
+          ai_recommended_price_max: number | null;
+          ai_estimated_sessions:    number | null;
+          ai_estimated_hours:       string | null;
+          ai_difficulty:            string | null;
+          ai_quote_reasoning:       string | null;
+          final_price:              number | null;
+          final_sessions:           number | null;
+          quote_notes:              string | null;
+          quote_status:             string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["consultations"]["Row"], "id" | "created_at" | "updated_at">;
+        Update: Partial<Database["public"]["Tables"]["consultations"]["Insert"]>;
       };
     };
     Views: Record<string, never>;
