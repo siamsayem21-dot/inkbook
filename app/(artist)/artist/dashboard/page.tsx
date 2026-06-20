@@ -23,7 +23,7 @@ function NoArtistProfile() {
 type BookingWithClient = {
   id: string;
   time: string;
-  deposit_amount: number;
+  deposit_amount_cents: number;
   clients: { full_name: string } | null;
 };
 
@@ -116,7 +116,7 @@ export default async function ArtistDashboardPage() {
   //        FROM bookings WHERE artist_id = $1 AND date = $2 ORDER BY time ASC
   const { data: todayRaw } = await supabase
     .from("bookings")
-    .select("id, time, deposit_amount, clients(full_name)")
+    .select("id, time, deposit_amount_cents, clients(full_name)")
     .eq("artist_id", artist.id)
     .eq("date", todayStr)
     .order("time", { ascending: true });
@@ -148,16 +148,16 @@ export default async function ArtistDashboardPage() {
   //        AND date >= $2 AND date <= $3
   const { data: monthRaw } = await supabase
     .from("bookings")
-    .select("deposit_amount")
+    .select("deposit_amount_cents")
     .eq("artist_id", artist.id)
     .eq("status", "confirmed")
     .gte("date", firstOfMonth)
     .lte("date", lastOfMonth);
 
-  const monthEarnings = ((monthRaw ?? []) as { deposit_amount: number }[]).reduce(
-    (sum, b) => sum + (b.deposit_amount ?? 0),
+  const monthEarnings = ((monthRaw ?? []) as { deposit_amount_cents: number }[]).reduce(
+    (sum, b) => sum + (b.deposit_amount_cents ?? 0),
     0
-  );
+  ) / 100;
 
   return (
     <div className="space-y-8">
@@ -246,7 +246,7 @@ export default async function ArtistDashboardPage() {
                   {b.clients?.full_name ?? "—"}
                 </span>
                 <span className="text-sm text-zinc-400">
-                  ${b.deposit_amount}
+                  ${(b.deposit_amount_cents / 100).toFixed(2)}
                 </span>
               </div>
             ))

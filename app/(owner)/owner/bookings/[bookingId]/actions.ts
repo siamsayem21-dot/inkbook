@@ -1,11 +1,26 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getStudioId } from "@/lib/auth/config";
 import { getStripe } from "@/lib/stripe/client";
 import { revalidatePath } from "next/cache";
 
 export async function cancelBooking(bookingId: string): Promise<{ error?: string }> {
+  const studioId = await getStudioId();
+  if (!studioId) return { error: "Unauthorized" };
+
   const supabase = createAdminClient();
+
+  // Verify the booking belongs to the authenticated user's studio before mutating
+  const { data: bookingCheck } = await supabase
+    .from("bookings")
+    .select("studio_id")
+    .eq("id", bookingId)
+    .maybeSingle();
+
+  const check = bookingCheck as { studio_id: string } | null;
+  if (!check) return { error: "Booking not found" };
+  if (check.studio_id !== studioId) return { error: "Unauthorized" };
 
   const { error } = await supabase
     .from("bookings")

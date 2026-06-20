@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe/client";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const bookingId = searchParams.get("bookingId");
   if (!bookingId) return NextResponse.json({ error: "Missing bookingId" }, { status: 400 });
+
+  // Consent forms contain PII (signatures, photo ID paths, health disclosures).
+  // Server-validate the session — getUser() hits Supabase, not just the cookie.
+  const serverClient = createClient();
+  const { data: { user } } = await serverClient.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const supabase = createAdminClient();
   const { data } = await supabase

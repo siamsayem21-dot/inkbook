@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { buildSmsMessage, trySendSms } from "@/lib/twilio/client";
 
 export async function GET(request: NextRequest) {
+  // Bookings contain client PII. Require a valid session.
+  const serverClient = createClient();
+  const { data: { user } } = await serverClient.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { searchParams } = new URL(request.url);
   const studioId = searchParams.get("studioId");
   const artistId = searchParams.get("artistId");

@@ -18,8 +18,8 @@ function monthRange(offsetMonths: number) {
   };
 }
 
-function sumDeposits(rows: { deposit_amount: number }[]) {
-  return rows.reduce((s, b) => s + (b.deposit_amount ?? 0), 0);
+function sumDeposits(rows: { deposit_amount_cents: number }[]) {
+  return rows.reduce((s, b) => s + (b.deposit_amount_cents ?? 0), 0) / 100;
 }
 
 export default async function EarningsPage() {
@@ -47,24 +47,24 @@ export default async function EarningsPage() {
     { data: lastMonthRaw },
     { data: allTimeRaw },
   ] = await Promise.all([
-    supabase.from("bookings").select("deposit_amount").eq("artist_id", artist.id)
+    supabase.from("bookings").select("deposit_amount_cents").eq("artist_id", artist.id)
       .in("status", PAID_STATUSES).gte("date", thisMonth.first).lte("date", thisMonth.last),
-    supabase.from("bookings").select("deposit_amount").eq("artist_id", artist.id)
+    supabase.from("bookings").select("deposit_amount_cents").eq("artist_id", artist.id)
       .in("status", PAID_STATUSES).gte("date", lastMonth.first).lte("date", lastMonth.last),
-    supabase.from("bookings").select("deposit_amount").eq("artist_id", artist.id)
+    supabase.from("bookings").select("deposit_amount_cents").eq("artist_id", artist.id)
       .in("status", PAID_STATUSES),
   ]);
 
-  const thisMonthTotal = sumDeposits((thisMonthRaw ?? []) as { deposit_amount: number }[]);
-  const lastMonthTotal = sumDeposits((lastMonthRaw ?? []) as { deposit_amount: number }[]);
-  const allTimeTotal   = sumDeposits((allTimeRaw  ?? []) as { deposit_amount: number }[]);
+  const thisMonthTotal = sumDeposits((thisMonthRaw ?? []) as { deposit_amount_cents: number }[]);
+  const lastMonthTotal = sumDeposits((lastMonthRaw ?? []) as { deposit_amount_cents: number }[]);
+  const allTimeTotal   = sumDeposits((allTimeRaw  ?? []) as { deposit_amount_cents: number }[]);
 
   // Re-fetch with date for the weekly breakdown
   const now = new Date();
   const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const { data: thisMonthWithDate } = await supabase
     .from("bookings")
-    .select("deposit_amount, date")
+    .select("deposit_amount_cents, date")
     .eq("artist_id", artist.id)
     .in("status", PAID_STATUSES)
     .gte("date", thisMonth.first)
@@ -79,9 +79,9 @@ export default async function EarningsPage() {
     const pad = (n: number) => String(n).padStart(2, "0");
     const firstStr = `${wkFirst.getFullYear()}-${pad(wkFirst.getMonth() + 1)}-${pad(wkFirst.getDate())}`;
     const lastStr  = `${wkLast.getFullYear()}-${pad(wkLast.getMonth() + 1)}-${pad(wkLast.getDate())}`;
-    const amount = ((thisMonthWithDate ?? []) as { deposit_amount: number; date: string }[])
+    const amount = ((thisMonthWithDate ?? []) as { deposit_amount_cents: number; date: string }[])
       .filter((b) => b.date >= firstStr && b.date <= lastStr)
-      .reduce((s, b) => s + (b.deposit_amount ?? 0), 0);
+      .reduce((s, b) => s + (b.deposit_amount_cents ?? 0), 0) / 100;
     return { label: `Wk ${wk}`, amount };
   });
 
