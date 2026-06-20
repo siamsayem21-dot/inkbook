@@ -375,6 +375,70 @@ export default function ConsultationDetail({ consult }: { consult: ConsultRow })
         </div>
       )}
 
+      {/* Book Appointment */}
+      {!bookingId && (
+        <div className="bg-[#111] border border-[#1E1E1E] rounded-xl overflow-hidden">
+          <div className="px-5 py-3 border-b border-[#1A1A1A]">
+            <p className="text-[10px] uppercase tracking-widest text-zinc-600">Book Appointment</p>
+          </div>
+          <div className="px-5 py-4 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className={labelCls}>Artist</label>
+                <select
+                  value={bookArtist}
+                  onChange={(e) => setBookArtist(e.target.value)}
+                  className={inputCls}
+                >
+                  <option value="">Select artist…</option>
+                  {artists.map((a) => (
+                    <option key={a.id} value={a.id}>{a.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className={labelCls}>Date</label>
+                <input
+                  type="date"
+                  value={bookDate}
+                  min={new Date().toISOString().split("T")[0]}
+                  onChange={(e) => setBookDate(e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+              <div>
+                <label className={labelCls}>Time</label>
+                <input
+                  type="time"
+                  value={bookTime}
+                  onChange={(e) => setBookTime(e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+            </div>
+            {bookError && <p className="text-red-400 text-xs">{bookError}</p>}
+            <button
+              onClick={handleBookAppointment}
+              disabled={booking}
+              className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {booking ? "Creating booking…" : "Confirm Appointment →"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Booking confirmed badge */}
+      {bookingId && (
+        <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl px-5 py-4 flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+          <div>
+            <p className="text-xs font-medium text-emerald-400">Appointment Booked</p>
+            <p className="text-[11px] text-zinc-600 mt-0.5">Booking ID: {bookingId}</p>
+          </div>
+        </div>
+      )}
+
       {/* ── AI Quote Section ──────────────────────────────────────────────────── */}
       <div className="bg-[#111] border border-[#1E1E1E] rounded-xl overflow-hidden">
         <div className="px-5 py-3 border-b border-[#1A1A1A] flex items-center justify-between gap-3">
@@ -537,70 +601,6 @@ export default function ConsultationDetail({ consult }: { consult: ConsultRow })
           </div>
         )}
       </div>
-
-      {/* Book Appointment */}
-      {!bookingId && (
-        <div className="bg-[#111] border border-[#1E1E1E] rounded-xl overflow-hidden">
-          <div className="px-5 py-3 border-b border-[#1A1A1A]">
-            <p className="text-[10px] uppercase tracking-widest text-zinc-600">Book Appointment</p>
-          </div>
-          <div className="px-5 py-4 space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className={labelCls}>Artist</label>
-                <select
-                  value={bookArtist}
-                  onChange={(e) => setBookArtist(e.target.value)}
-                  className={inputCls}
-                >
-                  <option value="">Select artist…</option>
-                  {artists.map((a) => (
-                    <option key={a.id} value={a.id}>{a.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className={labelCls}>Date</label>
-                <input
-                  type="date"
-                  value={bookDate}
-                  min={new Date().toISOString().split("T")[0]}
-                  onChange={(e) => setBookDate(e.target.value)}
-                  className={inputCls}
-                />
-              </div>
-              <div>
-                <label className={labelCls}>Time</label>
-                <input
-                  type="time"
-                  value={bookTime}
-                  onChange={(e) => setBookTime(e.target.value)}
-                  className={inputCls}
-                />
-              </div>
-            </div>
-            {bookError && <p className="text-red-400 text-xs">{bookError}</p>}
-            <button
-              onClick={handleBookAppointment}
-              disabled={booking}
-              className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {booking ? "Creating booking…" : "Confirm Appointment →"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Booking confirmed badge */}
-      {bookingId && (
-        <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl px-5 py-4 flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-          <div>
-            <p className="text-xs font-medium text-emerald-400">Appointment Booked</p>
-            <p className="text-[11px] text-zinc-600 mt-0.5">Booking ID: {bookingId}</p>
-          </div>
-        </div>
-      )}
 
       {/* Status management */}
       <div className="bg-[#111] border border-[#1E1E1E] rounded-xl overflow-hidden">
