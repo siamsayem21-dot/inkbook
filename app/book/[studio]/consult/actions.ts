@@ -133,3 +133,104 @@ export async function updateConsultationStatus(
   return {};
 }
 
+// Converts a consultation into a real booking + client record.
+// Called from the ConsultationDetail "Book Appointment" form.
+export async function bookConsultation(
+  consultId: string,
+  data: {
+    artistId: string;
+    date: string; // YYYY-MM-DD
+    time: string; // HH:MM
+  }
+): Promise<{ error?: string; bookingId?: string }> {
+  if (!data.artistId || !data.date || !data.time) {
+    return { error: "Artist, date, and time are required." };
+  }
+
+  const supabase = createAdminClient();
+
+  const { data: consult } = await supabase
+    .from("consultations")
+    .select("id, studio_id, client_name, client_email, client_phone, detected_style, status")
+    .eq("id", consultId)
+    .maybeSingle();
+
+  if (!consult) return { error: "Consultation not found." };
+  const c = consult as {
+    id: string;
+    studio_id: string;
+    client_name: string;
+    client_email: string;
+    client_phone: string;
+    detected_style: string | null;
+    status: string;
+  };
+
+  const { data: studio } = await supabase
+    .from("studios")
+    .select("id, deposit_amount_cents")
+    .eq("id", c.studio_id)
+    .maybeSingle();
+
+  if (!studio) return { error: "Studio not found." };
+  const s = studio as { id: string; deposit_amount_cents: number };
+
+  // Find or create client record
+  const { data: existingClient } = await supabase
+    .from("clients")
+    .select("id")
+    .eq("studio_id", c.studio_id)
+    .eq("email", c.client_email)
+    .maybeSingle();
+
+  let clientId: string;
+  if (existingClient) {
+    clientId = (existingClient as { id: string }).id;
+  } else {
+    const { data: newClient, error: clientErr } = await supabase
+      .from("clients")
+      .insert({
+        studio_id: c.studio_id,
+        full_name:  c.client_name,
+        email:      c.client_email,
+        phone:      c.client_phone,
+      } as never)
+      .select("id")
+      .single();
+    if (clientErr || !newClient) return { error: "Failed to create client record." };
+    clientId = (newClient as { id: string }).id;
+  }
+
+  // Create booking
+  const { data: booking, error: bookErr } = await supabase
+    .from("bookings")
+    .insert({
+      studio_id:            c.studio_id,
+      artist_id:            data.artistId,
+      client_id:            clientId,
+      date:                 data.date,
+      time:                 data.time,
+      style:                c.detected_style ?? "Custom",
+      status:               "pending_deposit",
+      deposit_amount_cents: s.deposit_amount_cents,
+      deposit_paid:         false,
+    } as never)
+    .select("id")
+    .single();
+
+  if (bookErr || !booking) return { error: "Failed to create booking." };
+  const bookingId = (booking as { id: string }).id;
+
+  // Link booking back to consultation and advance status
+  await supabase
+    .from("consultations")
+    .update({
+      status:     "booked",
+      artist_id:  data.artistId,
+      booking_id: bookingId,
+    } as never)
+    .eq("id", consultId);
+
+  return { bookingId };
+}
+

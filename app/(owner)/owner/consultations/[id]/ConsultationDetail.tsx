@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   updateConsultationStatus,
   saveConsultationQuote,
+  bookConsultation,
 } from "@/app/book/[studio]/consult/actions";
 import { PIPELINE_STAGES, getStage } from "@/lib/pipeline";
 
@@ -12,6 +13,7 @@ import { PIPELINE_STAGES, getStage } from "@/lib/pipeline";
 
 type ConsultRow = {
   id: string;
+  studio_id: string;
   client_name: string;
   client_email: string;
   client_phone: string;
@@ -38,8 +40,12 @@ type ConsultRow = {
   final_sessions: number | null;
   quote_notes: string | null;
   quote_status: string;
+  artist_id: string | null;
+  booking_id: string | null;
   created_at: string;
 };
+
+type ArtistOption = { id: string; name: string };
 
 type QuoteDraft = {
   priceLow:   number;
@@ -96,6 +102,40 @@ export default function ConsultationDetail({ consult }: { consult: ConsultRow })
   const [status, setStatus]     = useState(consult.status);
   const [isPending, startTrans] = useTransition();
   const [statusError, setErr]   = useState<string | null>(null);
+
+  // ── Book appointment state ────────────────────────────────────────────────
+  const [artists, setArtists]         = useState<ArtistOption[]>([]);
+  const [bookArtist, setBookArtist]   = useState(consult.artist_id ?? "");
+  const [bookDate, setBookDate]       = useState("");
+  const [bookTime, setBookTime]       = useState("");
+  const [booking, setBooking]         = useState(false);
+  const [bookError, setBookError]     = useState<string | null>(null);
+  const [bookingId, setBookingId]     = useState(consult.booking_id ?? null);
+
+  useEffect(() => {
+    fetch(`/api/artists?studioId=${consult.studio_id}`)
+      .then((r) => r.json())
+      .then((d) => setArtists(d.artists ?? []))
+      .catch(() => {});
+  }, [consult.studio_id]);
+
+  async function handleBookAppointment() {
+    setBookError(null);
+    if (!bookArtist) { setBookError("Select an artist."); return; }
+    if (!bookDate)   { setBookError("Select a date."); return; }
+    if (!bookTime)   { setBookError("Select a time."); return; }
+    setBooking(true);
+    const result = await bookConsultation(consult.id, {
+      artistId: bookArtist,
+      date: bookDate,
+      time: bookTime,
+    });
+    setBooking(false);
+    if (result.error) { setBookError(result.error); return; }
+    setBookingId(result.bookingId ?? null);
+    setStatus("booked");
+    router.refresh();
+  }
 
   // ── Quote state ───────────────────────────────────────────────────────────
   const [quoteDraft, setQuoteDraft]     = useState<QuoteDraft | null>(null);
@@ -497,6 +537,70 @@ export default function ConsultationDetail({ consult }: { consult: ConsultRow })
           </div>
         )}
       </div>
+
+      {/* Book Appointment — shown when status is deposit_paid or quoted and no booking exists yet */}
+      {(status === "deposit_paid" || status === "quoted") && !bookingId && (
+        <div className="bg-[#111] border border-[#1E1E1E] rounded-xl overflow-hidden">
+          <div className="px-5 py-3 border-b border-[#1A1A1A]">
+            <p className="text-[10px] uppercase tracking-widest text-zinc-600">Book Appointment</p>
+          </div>
+          <div className="px-5 py-4 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className={labelCls}>Artist</label>
+                <select
+                  value={bookArtist}
+                  onChange={(e) => setBookArtist(e.target.value)}
+                  className={inputCls}
+                >
+                  <option value="">Select artist…</option>
+                  {artists.map((a) => (
+                    <option key={a.id} value={a.id}>{a.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className={labelCls}>Date</label>
+                <input
+                  type="date"
+                  value={bookDate}
+                  min={new Date().toISOString().split("T")[0]}
+                  onChange={(e) => setBookDate(e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+              <div>
+                <label className={labelCls}>Time</label>
+                <input
+                  type="time"
+                  value={bookTime}
+                  onChange={(e) => setBookTime(e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+            </div>
+            {bookError && <p className="text-red-400 text-xs">{bookError}</p>}
+            <button
+              onClick={handleBookAppointment}
+              disabled={booking}
+              className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {booking ? "Creating booking…" : "Confirm Appointment →"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Booking confirmed badge */}
+      {bookingId && (
+        <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl px-5 py-4 flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+          <div>
+            <p className="text-xs font-medium text-emerald-400">Appointment Booked</p>
+            <p className="text-[11px] text-zinc-600 mt-0.5">Booking ID: {bookingId}</p>
+          </div>
+        </div>
+      )}
 
       {/* Status management */}
       <div className="bg-[#111] border border-[#1E1E1E] rounded-xl overflow-hidden">

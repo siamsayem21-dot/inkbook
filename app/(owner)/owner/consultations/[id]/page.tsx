@@ -11,6 +11,7 @@ interface Props {
 
 type ConsultRow = {
   id: string;
+  studio_id: string;
   client_name: string;
   client_email: string;
   client_phone: string;
@@ -37,6 +38,8 @@ type ConsultRow = {
   final_sessions: number | null;
   quote_notes: string | null;
   quote_status: string;
+  artist_id: string | null;
+  booking_id: string | null;
   created_at: string;
 };
 
