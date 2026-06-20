@@ -55,6 +55,19 @@ export default async function ConsultationDetailPage({ params }: Props) {
   if (!data) notFound();
   const consult = data as ConsultRow;
 
+  // Self-heal: if quote was saved but status was never advanced (e.g. data entered
+  // directly in the DB dashboard), sync status → "quoted" now so the UI is correct.
+  if (
+    consult.quote_status === "saved" &&
+    (consult.status === "new" || consult.status === "reviewed")
+  ) {
+    await supabase
+      .from("consultations")
+      .update({ status: "quoted" } as never)
+      .eq("id" as never, params.id);
+    consult.status = "quoted";
+  }
+
   return (
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center gap-3">
