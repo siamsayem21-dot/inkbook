@@ -1,18 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
-export async function GET() {
-  // TODO: query artists from Supabase, filter by studioId + style
-  return NextResponse.json({ artists: [] });
-}
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const studioId = searchParams.get("studioId");
+  const style    = searchParams.get("style");
 
-export async function POST(request: NextRequest) {
-  const body = await request.json();
-  const { studioId, name, email } = body;
+  const supabase = createAdminClient();
 
-  if (!studioId || !name || !email) {
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-  }
+  let query = supabase
+    .from("artists")
+    .select("id, name, bio, styles, minimum_rate_cents, avatar_url")
+    .eq("is_active", true);
 
-  // TODO: create artist record + send invite email via Supabase Auth
-  return NextResponse.json({ artist: { id: "placeholder", name, email } }, { status: 201 });
+  if (studioId) query = query.eq("studio_id", studioId);
+  if (style)    query = query.contains("styles", [style]);
+
+  const { data, error } = await query.order("name");
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json({ artists: data ?? [] });
 }
