@@ -538,8 +538,8 @@ export default function ConsultationDetail({ consult }: { consult: ConsultRow })
         )}
       </div>
 
-      {/* Book Appointment — shown for any active consultation with no booking yet */}
-      {!["booked", "completed", "lost", "converted"].includes(status) && !bookingId && (
+      {/* Book Appointment */}
+      {!bookingId && (
         <div className="bg-[#111] border border-[#1E1E1E] rounded-xl overflow-hidden">
           <div className="px-5 py-3 border-b border-[#1A1A1A]">
             <p className="text-[10px] uppercase tracking-widest text-zinc-600">Book Appointment</p>
