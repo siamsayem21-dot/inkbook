@@ -62,11 +62,12 @@ export async function sendDepositRequest(
 
   const { data: studioRaw } = await supabase
     .from("studios")
-    .select("name")
+    .select("name, subdomain")
     .eq("id", booking.studio_id)
     .single();
 
-  const studioName = (studioRaw as { name: string } | null)?.name ?? "Studio";
+  const studioName      = (studioRaw as { name: string; subdomain: string } | null)?.name      ?? "Studio";
+  const studioSubdomain = (studioRaw as { name: string; subdomain: string } | null)?.subdomain ?? null;
   const artistName = booking.artists?.name ?? "Artist";
   const clientEmail = booking.clients?.email;
 
@@ -166,8 +167,14 @@ export async function sendDepositRequest(
         },
       ],
       mode: "payment",
-      success_url: `${baseUrl}/owner/bookings/${bookingId}?deposit=paid`,
-      cancel_url:  `${baseUrl}/owner/bookings/${bookingId}?deposit=cancelled`,
+      // After payment, send the client to the consent form page.
+      // Fall back to the owner dashboard only if the studio subdomain is unavailable.
+      success_url: studioSubdomain
+        ? `${baseUrl}/book/${studioSubdomain}/${booking.artist_id}/book/consent?booking_id=${bookingId}`
+        : `${baseUrl}/owner/bookings/${bookingId}?deposit=paid`,
+      cancel_url: studioSubdomain
+        ? `${baseUrl}/book/${studioSubdomain}/${booking.artist_id}/book/deposit?booking_id=${bookingId}&cancelled=true`
+        : `${baseUrl}/owner/bookings/${bookingId}?deposit=cancelled`,
       metadata: {
         bookingId,
         depositPaymentId,

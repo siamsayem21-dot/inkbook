@@ -64,35 +64,75 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, bookingId });
   }
 
-  // Verify deposit was paid — check DB first, then Stripe directly
-  const { data: depositData } = await supabase
-    .from("deposits" as never)
-    .select("status, stripe_checkout_session_id")
-    .eq("booking_id" as never, bookingId)
+  // Verify deposit paid — check deposit_payments (owner-initiated flow) first,
+  // then fall back to the legacy deposits table (client self-serve flow).
+  const { data: dpRaw } = await supabase
+    .from("deposit_payments" as never)
+    .select("payment_status, stripe_checkout_session_id")
+    .eq("booking_id", bookingId)
+    .order("created_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
-  const deposit = depositData as { status: string; stripe_checkout_session_id: string } | null;
+  const dp = dpRaw as { payment_status: string; stripe_checkout_session_id: string | null } | null;
 
-  if (!deposit) {
-    return NextResponse.json({ error: "No deposit found for this booking" }, { status: 402 });
-  }
-
-  if (deposit.status !== "paid") {
-    let stripe;
-    try {
-      stripe = getStripe();
-    } catch {
-      return NextResponse.json({ error: "Payment system unavailable" }, { status: 503 });
+  if (dp) {
+    if (dp.payment_status !== "paid") {
+      if (!dp.stripe_checkout_session_id) {
+        return NextResponse.json({ error: "Deposit payment has not been completed" }, { status: 402 });
+      }
+      let stripe;
+      try {
+        stripe = getStripe();
+      } catch {
+        return NextResponse.json({ error: "Payment system unavailable" }, { status: 503 });
+      }
+      const session = await stripe.checkout.sessions.retrieve(dp.stripe_checkout_session_id);
+      if (session.payment_status !== "paid") {
+        return NextResponse.json({ error: "Deposit payment has not been completed" }, { status: 402 });
+      }
+      // Webhook race — mark deposit_payments paid so consent form can proceed
+      await supabase
+        .from("deposit_payments" as never)
+        .update({
+          payment_status: "paid",
+          paid_at: new Date().toISOString(),
+          stripe_payment_intent_id: session.payment_intent as string,
+        } as never)
+        .eq("booking_id", bookingId)
+        .eq("payment_status", "pending");
     }
-    const session = await stripe.checkout.sessions.retrieve(deposit.stripe_checkout_session_id);
-    if (session.payment_status !== "paid") {
-      return NextResponse.json({ error: "Deposit payment has not been completed" }, { status: 402 });
-    }
-    // Webhook hasn't fired yet — mark paid now
-    await supabase
+  } else {
+    // No deposit_payments row — check legacy deposits table
+    const { data: legacyData } = await supabase
       .from("deposits" as never)
-      .update({ status: "paid", paid_at: new Date().toISOString() } as never)
-      .eq("booking_id" as never, bookingId);
+      .select("status, stripe_checkout_session_id")
+      .eq("booking_id" as never, bookingId)
+      .maybeSingle();
+
+    const legacyDeposit = legacyData as { status: string; stripe_checkout_session_id: string } | null;
+
+    if (!legacyDeposit) {
+      return NextResponse.json({ error: "No deposit found for this booking" }, { status: 402 });
+    }
+
+    if (legacyDeposit.status !== "paid") {
+      let stripe;
+      try {
+        stripe = getStripe();
+      } catch {
+        return NextResponse.json({ error: "Payment system unavailable" }, { status: 503 });
+      }
+      const session = await stripe.checkout.sessions.retrieve(legacyDeposit.stripe_checkout_session_id);
+      if (session.payment_status !== "paid") {
+        return NextResponse.json({ error: "Deposit payment has not been completed" }, { status: 402 });
+      }
+      // Webhook hasn't fired yet — mark paid now
+      await supabase
+        .from("deposits" as never)
+        .update({ status: "paid", paid_at: new Date().toISOString() } as never)
+        .eq("booking_id" as never, bookingId);
+    }
   }
 
   // Studio state for consent template
