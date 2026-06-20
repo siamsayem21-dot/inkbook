@@ -1,7 +1,9 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getStudioId } from "@/lib/auth/config";
 import BookingActions from "./BookingActions";
 
 type BookingStatus = "pending_deposit" | "confirmed" | "completed" | "cancelled" | "no_show";
@@ -64,12 +66,16 @@ interface Props {
 }
 
 export default async function BookingDetailPage({ params, searchParams }: Props) {
+  const studioId = await getStudioId();
+  if (!studioId) redirect("/login");
+
   const supabase = createAdminClient();
 
   const { data: bookingRaw, error: bookingError } = await supabase
     .from("bookings")
     .select("id, date, time, style, description, status, deposit_amount_cents, deposit_paid, deposit_kept, clients(full_name, email, phone), artists(name)")
     .eq("id", params.bookingId)
+    .eq("studio_id", studioId)
     .maybeSingle();
 
   if (bookingError) {

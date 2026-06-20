@@ -241,6 +241,59 @@ async function handleDepositPayment(
     return NextResponse.json({ error: "DB error" }, { status: 500 });
   }
 
+  // ── Step 4: send SMS + email confirmation ────────────────────────────────
+  const { data: bookingRow } = await supabase
+    .from("bookings")
+    .select("client_id, artist_id, studio_id, date, time, deposit_amount_cents")
+    .eq("id", dp.booking_id)
+    .single();
+
+  if (bookingRow) {
+    const { client_id, artist_id, studio_id, date, time, deposit_amount_cents } = bookingRow as {
+      client_id: string;
+      artist_id: string;
+      studio_id: string;
+      date: string;
+      time: string;
+      deposit_amount_cents: number;
+    };
+
+    const [{ data: clientData }, { data: artistData }, { data: studioData }] = await Promise.all([
+      supabase.from("clients").select("full_name, email, phone").eq("id", client_id).single(),
+      supabase.from("artists").select("name").eq("id", artist_id).single(),
+      supabase.from("studios").select("name, address").eq("id", studio_id).single(),
+    ]);
+
+    const client     = clientData as { full_name: string; email: string; phone: string } | null;
+    const artistName = (artistData as { name: string } | null)?.name ?? "your artist";
+    const studioName = (studioData as { name: string; address: string | null } | null)?.name;
+    const studioAddr = (studioData as { name: string; address: string | null } | null)?.address ?? null;
+
+    if (client?.phone && studioName) {
+      void trySendSms(client.phone, buildSmsMessage("booking_confirmed", studioName));
+    }
+
+    if (client?.email && studioName) {
+      const formattedDate = new Date(date + "T12:00:00").toLocaleDateString("en-US", {
+        weekday: "long", month: "long", day: "numeric",
+      });
+      try {
+        await sendBookingConfirmationEmail({
+          to: client.email,
+          clientName: client.full_name,
+          artistName,
+          studioName,
+          studioAddress: studioAddr,
+          date: formattedDate,
+          time: time.slice(0, 5),
+          depositAmountCents: deposit_amount_cents,
+        });
+      } catch (err) {
+        console.error("[stripe/webhook] confirmation email failed (deposit_payments flow):", err);
+      }
+    }
+  }
+
   console.log("[stripe/webhook] deposit confirmed — booking:", dp.booking_id, "| dp:", dp.id);
   return NextResponse.json({ received: true });
 }
