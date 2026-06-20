@@ -10,6 +10,21 @@ function adminClient() {
   );
 }
 
+async function findAuthUserByEmail(email: string): Promise<{ id: string } | null> {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/admin/users?page=1&per_page=1000`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+        apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      },
+    }
+  );
+  if (!res.ok) return null;
+  const data = (await res.json()) as { users?: Array<{ id: string; email: string }> };
+  return data.users?.find(u => u.email === email) ?? null;
+}
+
 export async function acceptInvite(data: {
   token: string;
   name: string;
@@ -40,23 +55,56 @@ export async function acceptInvite(data: {
     expires_at: string;
   };
 
-  // Create the Supabase auth user
+  let userId: string;
+  let createdNewUser = false;
+
   const { data: authData, error: createError } = await supabase.auth.admin.createUser({
     email: inv.invited_email,
     password: data.password,
-    email_confirm: true, // skip email verification — invite already verified identity
+    email_confirm: true,
     user_metadata: { full_name: data.name },
   });
 
   if (createError) {
-    console.error("[acceptInvite] createUser failed:", createError.message);
-    if (createError.message?.toLowerCase().includes("already")) {
-      return { error: "An account with this email already exists. Please sign in instead." };
-    }
-    return { error: createError.message ?? "Failed to create account — please try again" };
-  }
+    // GoTrue returns error_code "email_exists" when the address is already registered.
+    // Instead of blocking the invite, link the existing account to this studio as an artist.
+    const isEmailExists =
+      (createError as unknown as { code?: string }).code === "email_exists" ||
+      createError.message?.toLowerCase().includes("already been registered");
 
-  const userId = authData.user.id;
+    if (!isEmailExists) {
+      console.error("[acceptInvite] createUser failed:", createError.message);
+      return { error: createError.message ?? "Failed to create account — please try again" };
+    }
+
+    const existing = await findAuthUserByEmail(inv.invited_email);
+    if (!existing) {
+      console.error("[acceptInvite] email_exists but user not found:", inv.invited_email);
+      return { error: "Account conflict — please contact your studio owner." };
+    }
+
+    // If they already have an artist row at this studio, treat as already accepted
+    const { data: existingArtist } = await supabase
+      .from("artists")
+      .select("id")
+      .eq("user_id", existing.id)
+      .eq("studio_id", inv.studio_id)
+      .maybeSingle();
+
+    if (existingArtist) {
+      await supabase
+        .from("artist_invites")
+        .update({ accepted_at: new Date().toISOString(), artist_id: (existingArtist as { id: string }).id })
+        .eq("token", data.token);
+      return {};
+    }
+
+    userId = existing.id;
+    createdNewUser = false;
+  } else {
+    userId = authData.user.id;
+    createdNewUser = true;
+  }
 
   // Create the artist row
   const { data: newArtist, error: artistError } = await supabase
@@ -73,21 +121,26 @@ export async function acceptInvite(data: {
 
   if (artistError) {
     console.error("[acceptInvite] artist insert failed:", artistError.message);
-    // Rollback: delete the auth user we just created
-    await supabase.auth.admin.deleteUser(userId);
+    if (createdNewUser) {
+      await supabase.auth.admin.deleteUser(userId);
+    }
     return { error: "Failed to create artist profile — please try again" };
   }
 
   const artist = newArtist as { id: string };
 
   // Mark invite as accepted
-  await supabase
+  const { error: updateError } = await supabase
     .from("artist_invites")
     .update({
       accepted_at: new Date().toISOString(),
       artist_id: artist.id,
     })
     .eq("token", data.token);
+
+  if (updateError) {
+    console.error("[acceptInvite] accepted_at update failed:", updateError.message);
+  }
 
   return {};
 }
