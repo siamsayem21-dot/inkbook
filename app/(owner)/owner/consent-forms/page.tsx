@@ -1,8 +1,8 @@
 export const dynamic = "force-dynamic";
 
+import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
-
-const STUDIO_ID = "5fe382a1-fee7-4387-b625-4bf7a52b8f45";
+import { getStudioId } from "@/lib/auth/config";
 
 type ArtistRef = { name: string };
 type BookingRef = { id: string; date: string; artists: ArtistRef | null };
@@ -27,12 +27,15 @@ function formatDate(iso: string) {
 }
 
 export default async function OwnerConsentFormsPage() {
+  const studioId = await getStudioId();
+  if (!studioId) redirect("/login");
+
   const supabase = createAdminClient();
 
   const { data: bookingsRaw } = await supabase
     .from("bookings")
     .select("id, date, artists(name)")
-    .eq("studio_id", STUDIO_ID);
+    .eq("studio_id", studioId);
 
   const bookings = (bookingsRaw as BookingRef[]) ?? [];
   const bookingIds = bookings.map((b) => b.id);

@@ -1,9 +1,9 @@
+import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getStudioId } from "@/lib/auth/config";
 import RevenueChart, { type MonthRevenue } from "@/components/owner/RevenueChart";
 
 export const dynamic = "force-dynamic";
-
-const STUDIO_ID = "5fe382a1-fee7-4387-b625-4bf7a52b8f45";
 
 function fmtMoney(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(cents / 100);
@@ -24,6 +24,9 @@ function monthRange(offsetMonths: number) {
 }
 
 export default async function RevenuePage() {
+  const studioId = await getStudioId();
+  if (!studioId) redirect("/login");
+
   const supabase = createAdminClient();
 
   const thisMonth = monthRange(0);
@@ -33,7 +36,7 @@ export default async function RevenuePage() {
     const { data } = await supabase
       .from("bookings")
       .select("deposit_amount_cents")
-      .eq("studio_id", STUDIO_ID)
+      .eq("studio_id", studioId)
       .eq("deposit_paid", true)
       .gte("date", first)
       .lte("date", last);
@@ -48,7 +51,7 @@ export default async function RevenuePage() {
       const { data } = await supabase
         .from("bookings")
         .select("deposit_amount_cents")
-        .eq("studio_id", STUDIO_ID)
+        .eq("studio_id", studioId)
         .eq("deposit_kept", true);
       return ((data ?? []) as { deposit_amount_cents: number }[])
         .reduce((s, b) => s + (b.deposit_amount_cents ?? 0), 0);

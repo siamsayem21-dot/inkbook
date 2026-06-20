@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-
-const STUDIO_ID = "5fe382a1-fee7-4387-b625-4bf7a52b8f45";
+import { getStudioId } from "@/lib/auth/config";
 
 interface CsvRow {
   name?: string;
@@ -10,6 +9,11 @@ interface CsvRow {
 }
 
 export async function POST(req: NextRequest) {
+  const studioId = await getStudioId();
+  if (!studioId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   let body: { rows: CsvRow[] };
   try {
     body = await req.json();
@@ -32,7 +36,7 @@ export async function POST(req: NextRequest) {
   }
 
   const records = valid.map((r) => ({
-    studio_id: STUDIO_ID,
+    studio_id: studioId,
     full_name: r.name!.trim(),
     email:     r.email!.trim().toLowerCase(),
     phone:     r.phone!.trim(),

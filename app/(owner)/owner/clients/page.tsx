@@ -1,9 +1,9 @@
+import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getStudioId } from "@/lib/auth/config";
 import ClientsTable from "@/components/owner/ClientsTable";
 
 export const dynamic = "force-dynamic";
-
-const STUDIO_ID = "5fe382a1-fee7-4387-b625-4bf7a52b8f45";
 
 type ClientRow = {
   id: string;
@@ -14,12 +14,15 @@ type ClientRow = {
 };
 
 export default async function ClientsPage() {
+  const studioId = await getStudioId();
+  if (!studioId) redirect("/login");
+
   const supabase = createAdminClient();
 
   const { data } = await supabase
     .from("clients")
     .select("id, full_name, email, phone, created_at")
-    .eq("studio_id", STUDIO_ID)
+    .eq("studio_id", studioId)
     .order("created_at", { ascending: false });
 
   const clients = (data ?? []) as ClientRow[];

@@ -5,25 +5,43 @@ import DashboardSidebar from "./_components/DashboardSidebar";
 
 export const dynamic = "force-dynamic";
 
-const STUDIO_ID = "5fe382a1-fee7-4387-b625-4bf7a52b8f45";
-
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Use getUser() (validates token with Supabase server) instead of
-  // getCurrentUser() (uses getSession() which reads cookie without validation)
+  // getUser() validates the token server-side (more secure than getSession())
   const serverClient = createClient();
   const { data: { user } } = await serverClient.auth.getUser();
   if (!user) redirect("/login");
 
   const supabase = createAdminClient();
-  const { data: studioRaw } = await supabase
+
+  // Resolve studio from the authenticated user (owner or artist)
+  let studioRaw = null;
+  const { data: ownerStudio } = await supabase
     .from("studios")
     .select("name, subdomain")
-    .eq("id", STUDIO_ID)
+    .eq("owner_id", user.id)
     .maybeSingle();
+
+  if (ownerStudio) {
+    studioRaw = ownerStudio;
+  } else {
+    const { data: artistRow } = await supabase
+      .from("artists")
+      .select("studio_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (artistRow) {
+      const { data: artistStudio } = await supabase
+        .from("studios")
+        .select("name, subdomain")
+        .eq("id", (artistRow as { studio_id: string }).studio_id)
+        .maybeSingle();
+      studioRaw = artistStudio;
+    }
+  }
 
   const studio = studioRaw as { name: string; subdomain: string } | null;
 

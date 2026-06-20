@@ -2,15 +2,13 @@ export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getCurrentUser } from "@/lib/auth/config";
+import { getStudioId } from "@/lib/auth/config";
 import { PIPELINE_STAGES } from "@/lib/pipeline";
 import PipelineBoard, { type CardData } from "./PipelineBoard";
 
-const STUDIO_ID = "5fe382a1-fee7-4387-b625-4bf7a52b8f45";
-
 export default async function PipelinePage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  const studioId = await getStudioId();
+  if (!studioId) redirect("/login");
 
   const supabase = createAdminClient();
 
@@ -22,7 +20,7 @@ export default async function PipelinePage() {
       "ai_recommended_price_min, ai_recommended_price_max, " +
       "final_price, final_sessions"
     )
-    .eq("studio_id" as never, STUDIO_ID)
+    .eq("studio_id" as never, studioId)
     .order("created_at" as never, { ascending: false });
 
   const consults: CardData[] = (data ?? []) as CardData[];

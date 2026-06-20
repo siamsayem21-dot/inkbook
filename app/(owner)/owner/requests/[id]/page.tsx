@@ -2,15 +2,13 @@ export const dynamic = "force-dynamic";
 
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth/config";
+import { getStudioId } from "@/lib/auth/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import OwnerQuoteForm from "./OwnerQuoteForm";
 
 interface Props {
   params: { id: string };
 }
-
-const STUDIO_ID = "5fe382a1-fee7-4387-b625-4bf7a52b8f45";
 
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
@@ -33,8 +31,8 @@ const STATUS_CLASS: Record<string, string> = {
 };
 
 export default async function OwnerRequestDetailPage({ params }: Props) {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  const studioId = await getStudioId();
+  if (!studioId) redirect("/login");
 
   const supabase = createAdminClient();
 
@@ -44,7 +42,7 @@ export default async function OwnerRequestDetailPage({ params }: Props) {
       "id, studio_id, artist_id, client_name, client_email, client_phone, style, design_description, placement, size, budget_range, preferred_dates, reference_photos, status, quote_amount, quote_message, deposit_amount, artist_note, declined_reason, created_at"
     )
     .eq("id", params.id)
-    .eq("studio_id", STUDIO_ID)
+    .eq("studio_id", studioId)
     .single();
 
   if (!reqData) notFound();

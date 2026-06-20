@@ -1,9 +1,9 @@
+import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getStudioId } from "@/lib/auth/config";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
-
-const STUDIO_ID = "5fe382a1-fee7-4387-b625-4bf7a52b8f45";
 
 type BookingStatus = "pending_deposit" | "confirmed" | "completed" | "cancelled" | "no_show";
 
@@ -54,15 +54,18 @@ function depositBadgeInfo(depositPaid: boolean, hasPending: boolean): DepositBad
 }
 
 export default async function OwnerBookingsPage() {
+  const studioId = await getStudioId();
+  if (!studioId) redirect("/login");
+
   const supabase = createAdminClient();
 
   const { data: bookingsRaw, error: bookingsError } = await supabase
     .from("bookings")
     .select("id, date, time, status, deposit_amount_cents, deposit_paid, client_id, artist_id")
-    .eq("studio_id", STUDIO_ID)
+    .eq("studio_id", studioId)
     .order("date", { ascending: false });
 
-  console.log("[OwnerBookings] studioId:", STUDIO_ID);
+  console.log("[OwnerBookings] studioId:", studioId);
   console.log("[OwnerBookings] bookings:", bookingsRaw?.length ?? 0, "| error:", bookingsError?.message ?? "none");
 
   const bookings = (bookingsRaw ?? []) as {

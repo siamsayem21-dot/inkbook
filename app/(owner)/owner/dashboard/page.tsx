@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getStudioId } from "@/lib/auth/config";
 import DashboardStats from "@/components/owner/DashboardStats";
 import BookingOverview from "@/components/owner/BookingOverview";
 import RevenueChart, { type MonthRevenue } from "@/components/owner/RevenueChart";
@@ -7,8 +9,6 @@ import OnboardingChecklist from "@/components/owner/OnboardingChecklist";
 import CopyLinkButton from "@/components/artist/CopyLinkButton";
 
 export const dynamic = "force-dynamic";
-
-const STUDIO_ID = "5fe382a1-fee7-4387-b625-4bf7a52b8f45";
 
 const PLAN_LABELS: Record<string, string> = {
   solo: "Solo — $49/mo",
@@ -39,12 +39,15 @@ export default async function OwnerDashboardPage({
 }: {
   searchParams: { subscribed?: string };
 }) {
+  const studioId = await getStudioId();
+  if (!studioId) redirect("/login");
+
   const supabase = createAdminClient();
 
   const { data: studioRaw } = await supabase
     .from("studios")
     .select("plan, subscription_status, subdomain")
-    .eq("id", STUDIO_ID)
+    .eq("id", studioId)
     .maybeSingle();
 
   const studio = studioRaw as { plan: string; subscription_status: string; subdomain: string } | null;
@@ -62,25 +65,25 @@ export default async function OwnerDashboardPage({
     { data: noShowData },
     { data: bookingsByStatus },
   ] = await Promise.all([
-    supabase.from("bookings").select("id", { count: "exact", head: true }).eq("studio_id", STUDIO_ID),
+    supabase.from("bookings").select("id", { count: "exact", head: true }).eq("studio_id", studioId),
 
-    supabase.from("artists").select("id", { count: "exact", head: true }).eq("studio_id", STUDIO_ID),
+    supabase.from("artists").select("id", { count: "exact", head: true }).eq("studio_id", studioId),
 
     supabase.from("bookings")
       .select("deposit_amount_cents")
-      .eq("studio_id", STUDIO_ID)
+      .eq("studio_id", studioId)
       .eq("deposit_paid", true)
       .gte("date", thisMonth.first)
       .lte("date", thisMonth.last),
 
     supabase.from("bookings")
       .select("status")
-      .eq("studio_id", STUDIO_ID)
+      .eq("studio_id", studioId)
       .in("status", ["confirmed", "completed", "no_show"]),
 
     supabase.from("bookings")
       .select("status")
-      .eq("studio_id", STUDIO_ID),
+      .eq("studio_id", studioId),
   ]);
 
   const monthRevenueCents = ((monthBookings ?? []) as { deposit_amount_cents: number }[])
@@ -112,7 +115,7 @@ export default async function OwnerDashboardPage({
     ranges.map(({ first, last }) =>
       supabase.from("bookings")
         .select("deposit_amount_cents")
-        .eq("studio_id", STUDIO_ID)
+        .eq("studio_id", studioId)
         .eq("deposit_paid", true)
         .gte("date", first)
         .lte("date", last)

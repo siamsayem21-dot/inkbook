@@ -1,15 +1,13 @@
 export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/config";
+import { getStudioId } from "@/lib/auth/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import OwnerRequestsClient, { type OwnerRequest } from "./RequestsClient";
 
-const STUDIO_ID = "5fe382a1-fee7-4387-b625-4bf7a52b8f45";
-
 export default async function OwnerRequestsPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  const studioId = await getStudioId();
+  if (!studioId) redirect("/login");
 
   const supabase = createAdminClient();
 
@@ -18,7 +16,7 @@ export default async function OwnerRequestsPage() {
     .select(
       "id, artist_id, client_name, client_email, client_phone, style, placement, size, budget_range, preferred_dates, design_description, reference_photos, status, quote_amount, deposit_amount, artist_note, declined_reason, created_at"
     )
-    .eq("studio_id", STUDIO_ID)
+    .eq("studio_id", studioId)
     .order("created_at", { ascending: false });
 
   const requests = (reqsRaw ?? []) as OwnerRequest[];

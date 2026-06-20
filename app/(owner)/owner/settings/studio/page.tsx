@@ -1,9 +1,9 @@
 export const dynamic = "force-dynamic";
 
+import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getStudioId } from "@/lib/auth/config";
 import StudioSettingsClient from "./StudioSettingsClient";
-
-const STUDIO_ID = "5fe382a1-fee7-4387-b625-4bf7a52b8f45";
 
 type StudioRow = {
   id: string;
@@ -18,11 +18,14 @@ type StudioRow = {
 };
 
 export default async function StudioSettingsPage() {
+  const studioId = await getStudioId();
+  if (!studioId) redirect("/login");
+
   const supabase = createAdminClient();
   const { data: studioRaw } = await supabase
     .from("studios")
     .select("id, name, subdomain, address, state, logo_url, primary_color, secondary_color, font_choice")
-    .eq("id", STUDIO_ID)
+    .eq("id", studioId)
     .maybeSingle();
 
   const studio = studioRaw as StudioRow | null;

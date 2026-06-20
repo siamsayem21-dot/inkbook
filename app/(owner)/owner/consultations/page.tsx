@@ -2,12 +2,10 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getCurrentUser } from "@/lib/auth/config";
+import { getStudioId } from "@/lib/auth/config";
 import { redirect } from "next/navigation";
 import { PIPELINE_STAGES, getStage } from "@/lib/pipeline";
 import ConsultFilter from "./ConsultFilter";
-
-const STUDIO_ID = "5fe382a1-fee7-4387-b625-4bf7a52b8f45";
 
 type ConsultRow = {
   id: string;
@@ -39,8 +37,8 @@ export default async function ConsultationsPage({
 }: {
   searchParams: { status?: string };
 }) {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  const studioId = await getStudioId();
+  if (!studioId) redirect("/login");
 
   const supabase = createAdminClient();
 
@@ -52,7 +50,7 @@ export default async function ConsultationsPage({
       "detected_style, style_confidence, ai_notes, status, created_at, " +
       "reference_photos, final_price"
     )
-    .eq("studio_id" as never, STUDIO_ID)
+    .eq("studio_id" as never, studioId)
     .order("created_at" as never, { ascending: false });
 
   if (searchParams.status) {
@@ -66,7 +64,7 @@ export default async function ConsultationsPage({
   const { data: allRows } = await supabase
     .from("consultations")
     .select("status")
-    .eq("studio_id" as never, STUDIO_ID);
+    .eq("studio_id" as never, studioId);
 
   const all = (allRows ?? []) as { status: string }[];
   const stageCounts = Object.fromEntries(

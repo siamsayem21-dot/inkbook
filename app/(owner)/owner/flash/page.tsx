@@ -1,22 +1,20 @@
 export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/config";
+import { getStudioId } from "@/lib/auth/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import FlashOwnerClient, { type FlashDesign } from "./FlashOwnerClient";
 
-const STUDIO_ID = "5fe382a1-fee7-4387-b625-4bf7a52b8f45";
-
 export default async function OwnerFlashPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  const studioId = await getStudioId();
+  if (!studioId) redirect("/login");
 
   const supabase = createAdminClient();
 
   const { data: designsRaw } = await supabase
     .from("flash_designs")
     .select("id, artist_id, title, image_url, price, category, is_repeatable, is_available, is_booked, created_at")
-    .eq("studio_id", STUDIO_ID)
+    .eq("studio_id", studioId)
     .order("created_at", { ascending: false });
 
   const designs = (designsRaw ?? []) as FlashDesign[];
