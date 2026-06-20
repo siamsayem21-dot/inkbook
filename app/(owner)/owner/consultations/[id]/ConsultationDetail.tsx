@@ -538,6 +538,11 @@ export default function ConsultationDetail({ consult }: { consult: ConsultRow })
         )}
       </div>
 
+      {/* DEBUG — remove after fix */}
+      <pre className="text-[10px] text-zinc-600 bg-zinc-900 border border-zinc-700 rounded p-2">
+        {"status: " + JSON.stringify(status) + " | bookingId: " + JSON.stringify(bookingId) + " | !bookingId: " + String(!bookingId)}
+      </pre>
+
       {/* Book Appointment */}
       {!bookingId && (
         <div className="bg-[#111] border border-[#1E1E1E] rounded-xl overflow-hidden">
