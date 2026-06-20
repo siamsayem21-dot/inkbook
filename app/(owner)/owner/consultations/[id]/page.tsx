@@ -68,6 +68,18 @@ export default async function ConsultationDetailPage({ params }: Props) {
     consult.status = "quoted";
   }
 
+  // If a booking is linked, fetch the deposit amount for the deposit panel
+  let bookingDepositAmountCents: number | undefined;
+  if (consult.booking_id) {
+    const { data: bk } = await supabase
+      .from("bookings")
+      .select("deposit_amount_cents")
+      .eq("id", consult.booking_id)
+      .maybeSingle();
+    bookingDepositAmountCents =
+      (bk as { deposit_amount_cents: number } | null)?.deposit_amount_cents;
+  }
+
   return (
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center gap-3">
@@ -79,7 +91,10 @@ export default async function ConsultationDetailPage({ params }: Props) {
         </Link>
       </div>
 
-      <ConsultationDetail consult={consult} />
+      <ConsultationDetail
+        consult={consult}
+        bookingDepositAmountCents={bookingDepositAmountCents}
+      />
     </div>
   );
 }

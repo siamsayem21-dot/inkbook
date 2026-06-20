@@ -241,7 +241,15 @@ async function handleDepositPayment(
     return NextResponse.json({ error: "DB error" }, { status: 500 });
   }
 
-  // ── Step 4: send SMS + email confirmation ────────────────────────────────
+  // ── Step 4: advance consultation pipeline to deposit_paid ─────────────────
+  // No-op if no consultation is linked to this booking (e.g. direct self-serve
+  // bookings don't have a consultation row). Safe to run unconditionally.
+  await supabase
+    .from("consultations")
+    .update({ status: "deposit_paid" } as never)
+    .eq("booking_id" as never, dp.booking_id);
+
+  // ── Step 5: send SMS + email confirmation ────────────────────────────────
   const { data: bookingRow } = await supabase
     .from("bookings")
     .select("client_id, artist_id, studio_id, date, time, deposit_amount_cents")

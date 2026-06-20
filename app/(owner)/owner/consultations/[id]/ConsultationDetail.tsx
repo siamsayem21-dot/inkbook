@@ -7,6 +7,7 @@ import {
   saveConsultationQuote,
   bookConsultation,
 } from "@/app/book/[studio]/consult/actions";
+import { sendDepositRequest } from "@/app/(owner)/owner/bookings/[bookingId]/actions";
 import { PIPELINE_STAGES, getStage } from "@/lib/pipeline";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -95,7 +96,13 @@ const labelCls = "block text-[10px] uppercase tracking-[0.13em] text-zinc-500 mb
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 
-export default function ConsultationDetail({ consult }: { consult: ConsultRow }) {
+export default function ConsultationDetail({
+  consult,
+  bookingDepositAmountCents,
+}: {
+  consult: ConsultRow;
+  bookingDepositAmountCents?: number;
+}) {
   const router = useRouter();
 
   // ── Status state ──────────────────────────────────────────────────────────
@@ -111,6 +118,12 @@ export default function ConsultationDetail({ consult }: { consult: ConsultRow })
   const [booking, setBooking]         = useState(false);
   const [bookError, setBookError]     = useState<string | null>(null);
   const [bookingId, setBookingId]     = useState(consult.booking_id ?? null);
+
+  // ── Deposit link state ────────────────────────────────────────────────────
+  const [depositLink, setDepositLink]           = useState<string | null>(null);
+  const [depositLinkLoading, setDepositLoading] = useState(false);
+  const [depositLinkError, setDepositError]     = useState<string | null>(null);
+  const [copied, setCopied]                     = useState(false);
 
   useEffect(() => {
     fetch(`/api/artists?studioId=${consult.studio_id}`)
@@ -133,8 +146,27 @@ export default function ConsultationDetail({ consult }: { consult: ConsultRow })
     setBooking(false);
     if (result.error) { setBookError(result.error); return; }
     setBookingId(result.bookingId ?? null);
-    setStatus("booked");
     router.refresh();
+  }
+
+  // ── Deposit link handlers ─────────────────────────────────────────────────
+
+  async function handleGenerateDepositLink() {
+    if (!bookingId) return;
+    setDepositLoading(true);
+    setDepositError(null);
+    const result = await sendDepositRequest(bookingId);
+    setDepositLoading(false);
+    if (result.error) { setDepositError(result.error); return; }
+    setDepositLink(result.checkoutUrl ?? null);
+  }
+
+  function handleCopyLink() {
+    if (!depositLink) return;
+    navigator.clipboard.writeText(depositLink).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    });
   }
 
   // ── Quote state ───────────────────────────────────────────────────────────
@@ -428,13 +460,87 @@ export default function ConsultationDetail({ consult }: { consult: ConsultRow })
         </div>
       )}
 
-      {/* Booking confirmed badge */}
-      {bookingId && (
-        <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl px-5 py-4 flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-          <div>
-            <p className="text-xs font-medium text-emerald-400">Appointment Booked</p>
-            <p className="text-[11px] text-zinc-600 mt-0.5">Booking ID: {bookingId}</p>
+      {/* ── Deposit Collection ─────────────────────────────────────────────── */}
+      {/* Deposit Paid — green confirmation card */}
+      {bookingId && status === "deposit_paid" && (
+        <div className="bg-violet-500/5 border border-violet-500/20 rounded-xl px-5 py-5">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-2 h-2 rounded-full bg-violet-400 shrink-0" />
+            <p className="text-sm font-semibold text-violet-400">Deposit Paid</p>
+          </div>
+          <p className="text-[11px] text-zinc-500 pl-5">
+            {bookingDepositAmountCents
+              ? `$${(bookingDepositAmountCents / 100).toFixed(2)} received — `
+              : ""}
+            Booking confirmed. Client will receive SMS &amp; email confirmation.
+          </p>
+        </div>
+      )}
+
+      {/* Deposit pending — send link to client */}
+      {bookingId && status !== "deposit_paid" && (
+        <div className="bg-[#111] border border-[#1E1E1E] rounded-xl overflow-hidden">
+          <div className="px-5 py-3 border-b border-[#1A1A1A] flex items-center justify-between gap-3">
+            <p className="text-[10px] uppercase tracking-widest text-zinc-600">
+              Deposit Collection
+            </p>
+            {bookingDepositAmountCents && (
+              <span className="text-[10px] text-[#D4A853] font-semibold">
+                ${(bookingDepositAmountCents / 100).toFixed(2)} required
+              </span>
+            )}
+          </div>
+
+          <div className="px-5 py-4 space-y-4">
+            <p className="text-xs text-zinc-500 leading-relaxed">
+              Generate a secure payment link and share it with the client.
+              The booking is confirmed once they pay.
+            </p>
+
+            {!depositLink ? (
+              <div className="space-y-2">
+                <button
+                  onClick={handleGenerateDepositLink}
+                  disabled={depositLinkLoading}
+                  className="w-full py-3 rounded-xl bg-[#D4A853] hover:bg-[#C49A3C] text-black font-bold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {depositLinkLoading ? "Generating link…" : "Generate Deposit Link"}
+                </button>
+                {depositLinkError && (
+                  <p className="text-red-400 text-xs">{depositLinkError}</p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    readOnly
+                    value={depositLink}
+                    className="flex-1 min-w-0 bg-[#0a0a0a] border border-[#252525] text-zinc-400 text-xs rounded-xl px-3 py-2.5 focus:outline-none truncate"
+                  />
+                  <button
+                    onClick={handleCopyLink}
+                    className={`shrink-0 px-4 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
+                      copied
+                        ? "bg-green-500/10 text-green-400 border border-green-500/20"
+                        : "bg-[#D4A853] hover:bg-[#C49A3C] text-black"
+                    }`}
+                  >
+                    {copied ? "Copied!" : "Copy"}
+                  </button>
+                </div>
+                <p className="text-[10px] text-zinc-700">
+                  Send this link to the client via text or email. Expires in 24 hours.
+                </p>
+                <button
+                  onClick={handleGenerateDepositLink}
+                  disabled={depositLinkLoading}
+                  className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors disabled:opacity-40"
+                >
+                  {depositLinkLoading ? "Regenerating…" : "Regenerate link"}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
