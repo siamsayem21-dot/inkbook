@@ -52,16 +52,21 @@ const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
 
 // ── DB helpers ────────────────────────────────────────────────────────────────
 async function getConsultationWithBooking() {
+  // Scoped to Siam Enterprise studio (owner: m54030041@gmail.com)
+  // so pipeline counters, booking detail, and RLS all match the logged-in user.
+  const OWNER_STUDIO_ID = "5fe382a1-fee7-4387-b625-4bf7a52b8f45";
+
   const { data, error } = await supabase
     .from("consultations")
     .select("id, client_name, status, booking_id")
+    .eq("studio_id", OWNER_STUDIO_ID)
     .not("booking_id", "is", null)
     .neq("status", "deposit_paid")
     .order("created_at", { ascending: false })
     .limit(1);
 
   if (error) throw new Error("DB query failed: " + error.message);
-  if (!data?.length) throw new Error("No consultation with a booking and status≠deposit_paid found. Please create one.");
+  if (!data?.length) throw new Error("No consultation with a booking in the owner's studio. Run the setup script first.");
   return data[0];
 }
 
