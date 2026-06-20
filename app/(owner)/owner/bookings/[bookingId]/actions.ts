@@ -33,14 +33,6 @@ export type DepositPaymentRecord = {
   created_at: string;
 };
 
-// Narrow cast helper — avoids repeating `as never` on every supabase call for an untyped table.
-function depositPaymentsTable(supabase: ReturnType<typeof createAdminClient>) {
-  return supabase.from("deposit_payments" as never) as unknown as {
-    select: (cols: string) => ReturnType<typeof supabase.from>;
-    insert: (row: Record<string, unknown>) => ReturnType<typeof supabase.from>;
-    update: (row: Record<string, unknown>) => ReturnType<typeof supabase.from>;
-  };
-}
 
 export async function sendDepositRequest(
   bookingId: string
@@ -79,13 +71,6 @@ export async function sendDepositRequest(
   const clientEmail = booking.clients?.email;
 
   // ── 2. Reuse existing open Stripe session if one exists ───────────────────
-  const dp = depositPaymentsTable(supabase);
-
-  const { data: existingRaw } = await (dp
-    .select("id, stripe_checkout_session_id") as unknown as Promise<{
-      data: Array<{ id: string; stripe_checkout_session_id: string | null }> | null;
-    }>);
-
   // Run a filtered query for this booking's pending record with a session
   const { data: existingRows } = (await supabase
     .from("deposit_payments" as never)
