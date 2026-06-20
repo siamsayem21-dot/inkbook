@@ -7,6 +7,8 @@ import { useState } from "react";
 
 const ownerNav = [
   { label: "Dashboard",     href: "/owner/dashboard" },
+  { label: "Consultations", href: "/owner/consultations" },
+  { label: "Pipeline",      href: "/owner/pipeline" },
   { label: "Artists",       href: "/owner/artists" },
   { label: "Bookings",      href: "/owner/bookings" },
   { label: "Requests",      href: "/owner/requests" },

@@ -7,9 +7,9 @@ import type { UserRole } from "@/lib/supabase/types";
 // page component share one result instead of each creating a separate session read.
 export const getCurrentUser = cache(async () => {
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) return null;
-  return session.user;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  return user;
 });
 
 // Resolves the authenticated user's studio ID.

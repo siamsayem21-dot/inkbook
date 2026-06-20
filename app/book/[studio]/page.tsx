@@ -204,6 +204,43 @@ export default async function StudioLandingPage({ params }: Props) {
         </Link>
       </div>
 
+      {/* AI Consultation CTA */}
+      <div
+        className="mt-4 px-7 py-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 bg-[#0d0d0d]"
+        style={{
+          border: `1px solid ${brand.subtle}`,
+          borderLeft: `3px solid ${brand.full}`,
+        }}
+      >
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <span
+              className="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full"
+              style={{
+                background: `${brand.full}18`,
+                color: brand.full,
+                border: `1px solid ${brand.full}30`,
+              }}
+            >
+              AI Powered · 3 min
+            </span>
+          </div>
+          <p className="font-bold text-base tracking-wide mb-1" style={{ fontFamily: brandFont }}>
+            Not Sure Where to Start?
+          </p>
+          <p className="text-zinc-500 text-sm">
+            Answer a few questions and our AI will analyze your vision, detect your style, and build a complete brief for the artist.
+          </p>
+        </div>
+        <Link
+          href={`/book/${params.studio}/consult`}
+          className="shrink-0 text-xs font-bold uppercase tracking-widest px-6 py-3 border transition-all hover:opacity-90 whitespace-nowrap"
+          style={{ borderColor: `${brand.full}50`, color: brand.full }}
+        >
+          Start AI Consultation →
+        </Link>
+      </div>
+
       {/* Deposit notice */}
       <p className="label-xs text-zinc-700 text-center mt-14">
         A deposit is collected at booking and applied toward your session.

@@ -74,6 +74,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Slot collision — reject if artist already has a non-cancelled booking at this date/time
+  const { data: slotTaken } = await supabase
+    .from("bookings")
+    .select("id")
+    .eq("artist_id", artistId)
+    .eq("date", date)
+    .eq("time", time)
+    .neq("status", "cancelled")
+    .maybeSingle();
+
+  if (slotTaken) {
+    return NextResponse.json(
+      { error: "This time slot is no longer available. Please choose a different time." },
+      { status: 409 }
+    );
+  }
+
   // Find or create client
   const { data: existingClient } = await supabase
     .from("clients")
