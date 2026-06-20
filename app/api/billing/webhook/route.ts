@@ -59,8 +59,20 @@ export async function POST(req: Request) {
       const session = event.data.object as Stripe.Checkout.Session;
       const bookingId = session.metadata?.bookingId;
 
+      // ── Routing boundary ────────────────────────────────────────────────────
+      // Deposit payments  → /api/stripe/webhook  (handles deposit_payments table)
+      // Subscription billing → /api/billing/webhook  (this file)
+      //
+      // When depositPaymentId is present the event was created by sendDepositRequest()
+      // and the deposit webhook owns it entirely. Skip here to prevent duplicate writes
+      // to bookings and to avoid touching the wrong table (deposits vs deposit_payments).
+      if (session.metadata?.depositPaymentId) {
+        break;
+      }
+
       if (bookingId) {
-        // Booking deposit payment — billing/webhook is the registered endpoint, handle it here
+        // Legacy booking deposit (sessions created before deposit_payments was introduced).
+        // These sessions have bookingId but no depositPaymentId in metadata.
         const now = new Date().toISOString();
         await Promise.all([
           supabase

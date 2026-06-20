@@ -145,24 +145,50 @@ export async function POST(request: NextRequest) {
 }
 
 // ── Handler: deposit_payments flow ───────────────────────────────────────────
-// Called when depositPaymentId is present in session.metadata.
-// Looks up by stripe_checkout_session_id so the update is idempotent
-// (safe to retry if Stripe retries the event).
+// Owns ALL checkout.session.completed events that carry metadata.depositPaymentId.
+// /api/billing/webhook skips those events entirely (routing boundary enforced there).
+//
+// Lookup strategy: prefer depositPaymentId from metadata (always present, direct PK)
+// and fall back to stripe_checkout_session_id for any edge case where metadata is
+// missing (e.g. legacy resent events). This makes the handler resilient to timing
+// gaps where sendDepositRequest() hasn't yet persisted the session ID to the DB.
 async function handleDepositPayment(
   session: { id: string; payment_intent: unknown; metadata: Record<string, string> | null }
 ): Promise<NextResponse> {
   const supabase = createAdminClient();
   const now = new Date().toISOString();
 
-  // ── Step 1: find deposit_payment by checkout session ID ──────────────────
-  const { data: dpRows, error: dpError } = (await supabase
-    .from("deposit_payments" as never)
-    .select("id, booking_id, payment_status")
-    .eq("stripe_checkout_session_id", session.id)
-    .limit(1)) as {
-    data: Array<{ id: string; booking_id: string; payment_status: string }> | null;
-    error: unknown;
-  };
+  // ── Step 1: find deposit_payment ─────────────────────────────────────────
+  // Primary: look up by depositPaymentId in metadata (direct PK, always reliable).
+  // Fallback: look up by stripe_checkout_session_id (covers legacy/re-sent events).
+  const depositPaymentId = session.metadata?.depositPaymentId ?? null;
+
+  let dpRows: Array<{ id: string; booking_id: string; payment_status: string }> | null = null;
+  let dpError: unknown = null;
+
+  if (depositPaymentId) {
+    const result = (await supabase
+      .from("deposit_payments" as never)
+      .select("id, booking_id, payment_status")
+      .eq("id", depositPaymentId)
+      .limit(1)) as {
+      data: Array<{ id: string; booking_id: string; payment_status: string }> | null;
+      error: unknown;
+    };
+    dpRows = result.data;
+    dpError = result.error;
+  } else {
+    const result = (await supabase
+      .from("deposit_payments" as never)
+      .select("id, booking_id, payment_status")
+      .eq("stripe_checkout_session_id", session.id)
+      .limit(1)) as {
+      data: Array<{ id: string; booking_id: string; payment_status: string }> | null;
+      error: unknown;
+    };
+    dpRows = result.data;
+    dpError = result.error;
+  }
 
   if (dpError) {
     console.error("[stripe/webhook] deposit_payments lookup failed:", dpError);
@@ -172,8 +198,7 @@ async function handleDepositPayment(
   const dp = dpRows?.[0];
 
   if (!dp) {
-    // Stripe retries — if already processed under a different session this is a no-op
-    console.warn("[stripe/webhook] no deposit_payment found for session:", session.id);
+    console.warn("[stripe/webhook] no deposit_payment found — depositPaymentId:", depositPaymentId, "session:", session.id);
     return NextResponse.json({ received: true });
   }
 
