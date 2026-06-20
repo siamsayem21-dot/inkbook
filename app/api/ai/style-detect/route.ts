@@ -1,0 +1,80 @@
+import { NextResponse } from "next/server";
+
+const VALID_STYLES = [
+  "Traditional", "Neo Traditional", "Japanese", "Fine Line",
+  "Blackwork", "Realism", "Floral", "Geometric", "Tribal", "Watercolor", "Other",
+];
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const { description, placement, colorPreference, size, followupAnswers } = body;
+
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return NextResponse.json(fallback());
+    }
+
+    const answersText = Object.entries(followupAnswers as Record<string, string>)
+      .filter(([, v]) => v?.trim())
+      .map(([k, v]) => `Q: ${k}\nA: ${v}`)
+      .join("\n");
+
+    const prompt = `You are an expert tattoo style analyst working with a professional tattoo studio.
+
+Consultation details:
+- Description: ${description}
+- Placement: ${placement}
+- Size: ${size}
+- Color preference: ${colorPreference}
+${answersText ? `\nFollow-up Q&A:\n${answersText}` : ""}
+
+Classify the most fitting tattoo style from this exact list:
+${VALID_STYLES.join(", ")}
+
+Respond ONLY with a JSON object in exactly this format (no other text):
+{
+  "style": "<one style from the list above>",
+  "confidence": <integer 0-100>,
+  "reasoning": "<one sentence explaining why this style fits>",
+  "aiNotes": "<2-3 sentences of professional notes for the tattoo artist about this client and their vision — include anything that will help the artist prepare for the consult>"
+}`;
+
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 512,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+
+    if (!res.ok) throw new Error(`Anthropic ${res.status}`);
+
+    const data = await res.json();
+    const text: string = data.content?.[0]?.text ?? "";
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error("No JSON in response");
+
+    const result = JSON.parse(match[0]);
+    if (!VALID_STYLES.includes(result.style)) result.style = "Other";
+
+    return NextResponse.json(result);
+  } catch (err) {
+    console.error("[style-detect]", err);
+    return NextResponse.json(fallback());
+  }
+}
+
+function fallback() {
+  return {
+    style: "Other",
+    confidence: 50,
+    reasoning: "Style could not be determined from the provided information.",
+    aiNotes: "Please discuss style preferences directly with the client. Review their reference images and description carefully to identify the right direction before quoting.",
+  };
+}
