@@ -81,7 +81,8 @@ export const STAGE_MAP: Record<string, StageConfig> = Object.fromEntries(
   PIPELINE_STAGES.map((s) => [s.value, s])
 ) as Record<string, StageConfig>;
 
-// Fallback for unknown/legacy values like "converted"
 export function getStage(status: string): StageConfig {
+  // "converted" is a legacy terminal state semantically equivalent to "completed"
+  if (status === "converted") return STAGE_MAP["completed"] as StageConfig;
   return (STAGE_MAP[status] ?? STAGE_MAP["new"]) as StageConfig;
 }

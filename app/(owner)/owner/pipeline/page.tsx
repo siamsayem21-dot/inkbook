@@ -23,7 +23,12 @@ export default async function PipelinePage() {
     .eq("studio_id" as never, studioId)
     .order("created_at" as never, { ascending: false });
 
-  const consults: CardData[] = (data ?? []) as CardData[];
+  // Normalize legacy "converted" status to "completed" for display.
+  // Both are terminal closed-won states; "converted" has no pipeline column.
+  const consults: CardData[] = ((data ?? []) as CardData[]).map((c) => ({
+    ...c,
+    status: c.status === "converted" ? "completed" : c.status,
+  }));
 
   // Stage summary
   const stageSummary = PIPELINE_STAGES.map((s) => ({
