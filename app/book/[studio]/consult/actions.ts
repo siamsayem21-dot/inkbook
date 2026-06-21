@@ -176,7 +176,7 @@ export async function bookConsultation(
 
   const { data: consult } = await supabase
     .from("consultations")
-    .select("id, studio_id, client_name, client_email, client_phone, detected_style, status, booking_id")
+    .select("id, studio_id, client_name, client_email, client_phone, detected_style, status, booking_id, final_price")
     .eq("id", consultId)
     .eq("studio_id" as never, callerStudioId)
     .maybeSingle();
@@ -191,6 +191,7 @@ export async function bookConsultation(
     detected_style: string | null;
     status: string;
     booking_id: string | null;
+    final_price: number | null;
   };
 
   // Idempotency guard — booking already exists for this consultation.
@@ -233,6 +234,10 @@ export async function bookConsultation(
   }
 
   // Create booking
+  // final_price on the consultation is in dollars; quote_amount_cents on the
+  // booking is in cents. Convert here so remainder collection has a reference.
+  const quoteAmountCents = c.final_price ? c.final_price * 100 : null;
+
   const { data: booking, error: bookErr } = await supabase
     .from("bookings")
     .insert({
@@ -245,6 +250,7 @@ export async function bookConsultation(
       status:               "pending_deposit",
       deposit_amount_cents: s.deposit_amount_cents,
       deposit_paid:         false,
+      ...(quoteAmountCents !== null ? { quote_amount_cents: quoteAmountCents } : {}),
     } as never)
     .select("id")
     .single();
