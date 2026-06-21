@@ -1,6 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { validateImageFile } from "@/lib/file-validation";
 import {
   sendCustomRequestReceivedEmail,
   sendCustomRequestClientConfirmationEmail,
@@ -35,7 +36,9 @@ export async function submitCustomRequest(
   const photoUrls: string[] = [];
   for (const file of photoFiles) {
     if (!file || file.size === 0) continue;
-    if (file.size > 5 * 1024 * 1024) continue; // skip over-size silently
+    if (file.size > 5 * 1024 * 1024) continue;
+    const typeCheck = await validateImageFile(file);
+    if (!typeCheck.valid) continue; // skip non-image files silently
     const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
     const path = `${studioId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const bytes = await file.arrayBuffer();

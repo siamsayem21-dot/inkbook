@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudioId } from "@/lib/auth/config";
+import { validateImageFile } from "@/lib/file-validation";
 
 export async function submitConsultation(
   formData: FormData
@@ -40,6 +41,8 @@ export async function submitConsultation(
   for (const file of photoFiles) {
     if (!file || file.size === 0) continue;
     if (file.size > 8 * 1024 * 1024) continue;
+    const typeCheck = await validateImageFile(file);
+    if (!typeCheck.valid) continue; // skip non-image files silently
     const ext  = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
     const path = `consultations/${studioId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const bytes = await file.arrayBuffer();

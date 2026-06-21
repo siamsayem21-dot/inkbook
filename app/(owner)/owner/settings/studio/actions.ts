@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { validateImageFile } from "@/lib/file-validation";
 
 export async function saveStudio(data: {
   studioId: string;
@@ -54,6 +55,9 @@ export async function uploadLogo(
 
   if (!file || !studioId) return { error: "Missing required fields" };
   if (file.size > MAX_LOGO_BYTES) return { error: "Logo must be under 2 MB" };
+
+  const typeCheck = await validateImageFile(file);
+  if (!typeCheck.valid) return { error: typeCheck.error };
 
   const supabase = createAdminClient();
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "png";

@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { validateImageFile } from "@/lib/file-validation";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 
@@ -32,6 +33,9 @@ export async function createFlashDesign(
     return { error: "Title, image, and price are required" };
   }
   if (file.size > MAX_BYTES) return { error: "Image must be under 5 MB" };
+
+  const typeCheck = await validateImageFile(file);
+  if (!typeCheck.valid) return { error: typeCheck.error };
 
   const priceDollars = parseFloat(priceStr);
   if (isNaN(priceDollars) || priceDollars < 0) return { error: "Invalid price" };

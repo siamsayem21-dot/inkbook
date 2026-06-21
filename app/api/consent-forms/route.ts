@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe/client";
+import { validateImageFile } from "@/lib/file-validation";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -38,6 +39,11 @@ export async function POST(request: NextRequest) {
 
   if (!bookingId || !fullName || !dob || !signature || !idPhoto) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  }
+
+  const typeCheck = await validateImageFile(idPhoto);
+  if (!typeCheck.valid) {
+    return NextResponse.json({ error: typeCheck.error }, { status: 415 });
   }
   if (isMinor && (!guardianName || !guardianSignature)) {
     return NextResponse.json({ error: "Guardian information required for minors" }, { status: 400 });

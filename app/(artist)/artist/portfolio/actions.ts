@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { validateImageFile } from "@/lib/file-validation";
 
 export type Photo = {
   id: string;
@@ -20,6 +21,9 @@ export async function uploadPhoto(
 
   if (!file || !artistId) return { error: "Missing required fields" };
   if (file.size > MAX_BYTES) return { error: "File must be under 5MB" };
+
+  const typeCheck = await validateImageFile(file);
+  if (!typeCheck.valid) return { error: typeCheck.error };
 
   const supabase = createAdminClient();
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
