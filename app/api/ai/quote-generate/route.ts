@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
 
 function fallback() {
   return {
@@ -14,6 +15,9 @@ function fallback() {
 }
 
 export async function POST(req: Request) {
+  const rl = checkRateLimit(`quote:${getClientIp(req)}`, 20);
+  if (!rl.allowed) return rateLimitedResponse(rl.retryAfter);
+
   try {
     const body = await req.json();
     const { description, placement, size, colorPreference, budget, style, aiNotes } = body;

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
 
 const FALLBACK_QUESTIONS = [
   "Do you have any existing tattoos in or near this area?",
@@ -9,6 +10,9 @@ const FALLBACK_QUESTIONS = [
 ];
 
 export async function POST(req: Request) {
+  const rl = checkRateLimit(`consult-q:${getClientIp(req)}`, 20);
+  if (!rl.allowed) return rateLimitedResponse(rl.retryAfter);
+
   try {
     const body = await req.json();
     const { description, placement, size, colorPreference, budgetRange } = body;

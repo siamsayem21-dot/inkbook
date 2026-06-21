@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
 
 const VALID_STYLES = [
   "Traditional", "Neo Traditional", "Japanese", "Fine Line",
@@ -6,6 +7,9 @@ const VALID_STYLES = [
 ];
 
 export async function POST(req: Request) {
+  const rl = checkRateLimit(`style-detect:${getClientIp(req)}`, 20);
+  if (!rl.allowed) return rateLimitedResponse(rl.retryAfter);
+
   try {
     const body = await req.json();
     const { description, placement, colorPreference, size, followupAnswers } = body;
