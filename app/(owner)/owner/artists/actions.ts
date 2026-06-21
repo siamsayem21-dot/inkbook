@@ -1,6 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getStudioId } from "@/lib/auth/config";
 import { revalidatePath } from "next/cache";
 import { sendArtistInviteEmail } from "@/lib/email";
 
@@ -9,6 +10,10 @@ export async function inviteArtist(data: {
   email: string;
   studioId: string;
 }): Promise<{ error?: string }> {
+  const callerStudioId = await getStudioId();
+  if (!callerStudioId) return { error: "Unauthorized" };
+  if (callerStudioId !== data.studioId) return { error: "Unauthorized" };
+
   const supabase = createAdminClient();
 
   // Block if an active artist already has this email in this studio
@@ -88,6 +93,9 @@ export async function resendInvite(data: {
   inviteId: string;
   email: string;
 }): Promise<{ error?: string }> {
+  const callerStudioId = await getStudioId();
+  if (!callerStudioId) return { error: "Unauthorized" };
+
   const supabase = createAdminClient();
 
   const { data: inviteRaw, error } = await supabase
@@ -96,6 +104,7 @@ export async function resendInvite(data: {
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     } as never)
     .eq("id", data.inviteId)
+    .eq("studio_id", callerStudioId)
     .is("accepted_at", null)
     .select("token, invited_name, studio_id")
     .single();
@@ -131,11 +140,15 @@ export async function resendInvite(data: {
 }
 
 export async function cancelInvite(inviteId: string): Promise<{ error?: string }> {
+  const callerStudioId = await getStudioId();
+  if (!callerStudioId) return { error: "Unauthorized" };
+
   const supabase = createAdminClient();
   const { error } = await supabase
     .from("artist_invites")
     .delete()
     .eq("id", inviteId)
+    .eq("studio_id", callerStudioId)
     .is("accepted_at", null);
 
   if (error) {
@@ -148,11 +161,15 @@ export async function cancelInvite(inviteId: string): Promise<{ error?: string }
 }
 
 export async function removeArtist(artistId: string): Promise<{ error?: string }> {
+  const callerStudioId = await getStudioId();
+  if (!callerStudioId) return { error: "Unauthorized" };
+
   const supabase = createAdminClient();
   const { error } = await supabase
     .from("artists")
     .update({ user_id: null } as never)
-    .eq("id", artistId);
+    .eq("id", artistId)
+    .eq("studio_id", callerStudioId);
 
   if (error) return { error: "Something went wrong — try again" };
 

@@ -1,8 +1,16 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentUser } from "@/lib/auth/config";
 import { revalidatePath } from "next/cache";
 import { validateImageFile } from "@/lib/file-validation";
+
+async function verifyArtistOwnership(supabase: ReturnType<typeof createAdminClient>, artistId: string): Promise<boolean> {
+  const user = await getCurrentUser();
+  if (!user) return false;
+  const { data } = await supabase.from("artists").select("id").eq("user_id", user.id).eq("id", artistId).maybeSingle();
+  return !!data;
+}
 
 export type Photo = {
   id: string;
@@ -26,6 +34,8 @@ export async function uploadPhoto(
   if (!typeCheck.valid) return { error: typeCheck.error };
 
   const supabase = createAdminClient();
+
+  if (!await verifyArtistOwnership(supabase, artistId)) return { error: "Unauthorized" };
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
   const storagePath = `${artistId}/${Date.now()}.${ext}`;
   const bytes = await file.arrayBuffer();
@@ -73,6 +83,8 @@ export async function deletePhoto(data: {
   artistId: string;
 }): Promise<{ error?: string }> {
   const supabase = createAdminClient();
+
+  if (!await verifyArtistOwnership(supabase, data.artistId)) return { error: "Unauthorized" };
 
   // Remove from storage first (non-fatal if it already doesn't exist)
   await supabase.storage.from("portfolio").remove([data.storagePath]);

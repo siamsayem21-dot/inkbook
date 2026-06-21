@@ -65,9 +65,6 @@ export default async function OwnerBookingsPage() {
     .eq("studio_id", studioId)
     .order("date", { ascending: false });
 
-  console.log("[OwnerBookings] studioId:", studioId);
-  console.log("[OwnerBookings] bookings:", bookingsRaw?.length ?? 0, "| error:", bookingsError?.message ?? "none");
-
   const bookings = (bookingsRaw ?? []) as {
     id: string; date: string; time: string;
     status: BookingStatus; deposit_amount_cents: number;

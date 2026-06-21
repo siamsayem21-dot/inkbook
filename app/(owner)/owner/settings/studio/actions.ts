@@ -1,6 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getStudioId } from "@/lib/auth/config";
 import { revalidatePath } from "next/cache";
 import { validateImageFile } from "@/lib/file-validation";
 
@@ -13,6 +14,10 @@ export async function saveStudio(data: {
   secondaryColor: string;
   fontChoice: string;
 }): Promise<{ error?: string }> {
+  const callerStudioId = await getStudioId();
+  if (!callerStudioId) return { error: "Unauthorized" };
+  if (callerStudioId !== data.studioId) return { error: "Unauthorized" };
+
   if (!data.name.trim()) return { error: "Studio name is required" };
 
   const hexPattern = /^#[0-9a-fA-F]{6}$/;
@@ -54,6 +59,9 @@ export async function uploadLogo(
   const file = formData.get("file") as File | null;
 
   if (!file || !studioId) return { error: "Missing required fields" };
+
+  const callerStudioId = await getStudioId();
+  if (!callerStudioId || callerStudioId !== studioId) return { error: "Unauthorized" };
   if (file.size > MAX_LOGO_BYTES) return { error: "Logo must be under 2 MB" };
 
   const typeCheck = await validateImageFile(file);
