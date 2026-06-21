@@ -238,6 +238,13 @@ export async function bookConsultation(
   // booking is in cents. Convert here so remainder collection has a reference.
   const quoteAmountCents = c.final_price ? c.final_price * 100 : null;
 
+  // Deposit must not exceed the total quoted price — e.g. a $100 studio default
+  // deposit on a $75 quote would make the remainder negative. Cap at the quote
+  // total; fall back to the studio default when no quote has been saved.
+  const depositAmountCents = quoteAmountCents !== null
+    ? Math.min(s.deposit_amount_cents, quoteAmountCents)
+    : s.deposit_amount_cents;
+
   const { data: booking, error: bookErr } = await supabase
     .from("bookings")
     .insert({
@@ -248,7 +255,7 @@ export async function bookConsultation(
       time:                 data.time,
       style:                c.detected_style ?? "Custom",
       status:               "pending_deposit",
-      deposit_amount_cents: s.deposit_amount_cents,
+      deposit_amount_cents: depositAmountCents,
       deposit_paid:         false,
       ...(quoteAmountCents !== null ? { quote_amount_cents: quoteAmountCents } : {}),
     } as never)
