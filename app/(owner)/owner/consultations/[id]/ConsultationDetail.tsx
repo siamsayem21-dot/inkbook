@@ -227,23 +227,36 @@ export default function ConsultationDetail({
     setGenerating(true);
     setGenError(null);
     try {
-      const res = await fetch("/api/quote/generate", {
+      const res = await fetch("/api/ai/quote-generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          description:     consult.tattoo_description,
+          placement:       consult.placement,
           size:            consult.estimated_size,
           colorPreference: consult.color_preference,
+          budget:          consult.budget_range,
           style:           consult.detected_style,
+          aiNotes:         consult.ai_notes,
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data: QuoteDraft = await res.json();
+      const raw = await res.json();
+      // Map AI field names → QuoteDraft shape used by the rest of the UI
+      const data: QuoteDraft = {
+        priceLow:   raw.priceLow,
+        priceHigh:  raw.priceHigh,
+        sessions:   raw.sessionsEstimate,
+        hoursRange: `${raw.hoursLow}–${raw.hoursHigh}`,
+        difficulty: raw.difficulty,
+        reasoning:  raw.reasoning,
+      };
       setQuoteDraft(data);
       if (!finalPrice)    setFinalPrice(String(data.priceLow));
       if (!finalSessions) setFinalSessions(String(data.sessions));
       setQuoteSaved(false);
     } catch {
-      setGenError("Could not calculate quote. Please try again.");
+      setGenError("Could not generate AI quote. Please try again.");
     } finally {
       setGenerating(false);
     }
