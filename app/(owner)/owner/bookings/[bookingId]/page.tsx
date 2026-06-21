@@ -89,7 +89,7 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
 
   const b = bookingRaw as unknown as BookingDetail;
 
-  const [{ data: consentRaw }, depositPaymentResult] = await Promise.all([
+  const [{ data: consentRaw }, depositPaymentResult, legacyDepositResult] = await Promise.all([
     supabase
       .from("consent_forms")
       .select("id, signed_at, state_template, is_minor, guardian_name, id_photo_url")
@@ -104,12 +104,25 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
       .maybeSingle()) as unknown as Promise<{
         data: { payment_status: string } | null;
       }>,
+    // Self-serve bookings (white-label booking page) write to the legacy `deposits`
+    // table, not `deposit_payments`. Query both so owner sees the correct status
+    // regardless of which flow created the deposit session.
+    (supabase
+      .from("deposits" as never)
+      .select("status")
+      .eq("booking_id", params.bookingId)
+      .maybeSingle()) as unknown as Promise<{
+        data: { status: string } | null;
+      }>,
   ]);
 
-  const depositPaymentStatus =
-    (depositPaymentResult.data?.payment_status as
-      | "pending" | "paid" | "refunded" | "kept"
-      | undefined) ?? "none";
+  // Prefer deposit_payments (owner-initiated flow); fall back to deposits (self-serve).
+  // Both tables use the same status vocabulary: pending | paid | refunded | kept.
+  const depositPaymentStatus = (
+    depositPaymentResult.data?.payment_status ??
+    legacyDepositResult.data?.status ??
+    "none"
+  ) as "none" | "pending" | "paid" | "refunded" | "kept";
 
   const hasConsent = !!consentRaw;
   const consentForm = consentRaw as {
