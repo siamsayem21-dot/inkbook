@@ -176,7 +176,7 @@ export async function bookConsultation(
 
   const { data: consult } = await supabase
     .from("consultations")
-    .select("id, studio_id, client_name, client_email, client_phone, detected_style, status")
+    .select("id, studio_id, client_name, client_email, client_phone, detected_style, status, booking_id")
     .eq("id", consultId)
     .eq("studio_id" as never, callerStudioId)
     .maybeSingle();
@@ -190,7 +190,12 @@ export async function bookConsultation(
     client_phone: string;
     detected_style: string | null;
     status: string;
+    booking_id: string | null;
   };
+
+  // Idempotency guard — booking already exists for this consultation.
+  // Return the existing booking ID instead of creating a duplicate.
+  if (c.booking_id) return { bookingId: c.booking_id };
 
   const { data: studio } = await supabase
     .from("studios")
