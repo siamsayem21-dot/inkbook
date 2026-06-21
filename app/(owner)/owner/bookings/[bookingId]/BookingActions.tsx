@@ -38,6 +38,8 @@ export default function BookingActions({
   const [showConfirm, setShowConfirm] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [depositLink, setDepositLink] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const router = useRouter();
 
   const isCancellable      = status !== "cancelled" && status !== "completed";
@@ -66,8 +68,16 @@ export default function BookingActions({
         return;
       }
       if (result.checkoutUrl) {
-        window.location.href = result.checkoutUrl;
+        setDepositLink(result.checkoutUrl);
       }
+    });
+  }
+
+  function handleCopyLink() {
+    if (!depositLink) return;
+    navigator.clipboard.writeText(depositLink).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
     });
   }
 
@@ -99,23 +109,49 @@ export default function BookingActions({
               </p>
             </div>
 
-            {depositRequestSent ? (
-              /* Request already sent — show disabled indicator */
+            {depositRequestSent && !depositLink ? (
+              /* Request already sent, no fresh link — show pending indicator */
               <div className="shrink-0 flex items-center gap-2 text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-4 py-2 rounded-full cursor-default select-none">
                 <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
                 Deposit Request Sent
               </div>
-            ) : (
-              /* No request yet — active send button */
+            ) : !depositLink ? (
+              /* No request yet — active generate button */
               <button
                 onClick={handleSendDeposit}
                 disabled={isPending}
                 className="shrink-0 text-sm font-semibold bg-[#c9a84c] hover:bg-[#b8973b] text-black px-4 py-2 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isPending ? "Creating checkout…" : "Send Deposit Request"}
+                {isPending ? "Generating link…" : "Generate Deposit Link"}
               </button>
-            )}
+            ) : null}
           </div>
+
+          {/* Copy UI — shown after link is generated */}
+          {depositLink && (
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <input
+                  readOnly
+                  value={depositLink}
+                  className="flex-1 min-w-0 bg-[#0a0a0a] border border-zinc-700 text-zinc-400 text-xs rounded-xl px-3 py-2.5 focus:outline-none truncate"
+                />
+                <button
+                  onClick={handleCopyLink}
+                  className={`shrink-0 px-4 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
+                    copied
+                      ? "bg-green-500/10 text-green-400 border border-green-500/20"
+                      : "bg-[#c9a84c] hover:bg-[#b8973b] text-black"
+                  }`}
+                >
+                  {copied ? "Copied!" : "Copy"}
+                </button>
+              </div>
+              <p className="text-[10px] text-zinc-600">
+                Send this link to the client via text or email. Do not open it yourself.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
