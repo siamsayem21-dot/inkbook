@@ -247,12 +247,14 @@ export async function bookConsultation(
   if (bookErr || !booking) return { error: "Failed to create booking." };
   const bookingId = (booking as { id: string }).id;
 
-  // Link booking to consultation — status advances to deposit_paid via Stripe webhook
+  // Link booking to consultation and advance status to "booked".
+  // Status advances further to "deposit_paid" via Stripe webhook after client pays.
   await supabase
     .from("consultations")
     .update({
       artist_id:  data.artistId,
       booking_id: bookingId,
+      status:     "booked",
     } as never)
     .eq("id", consultId);
 

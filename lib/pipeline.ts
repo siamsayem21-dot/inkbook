@@ -35,15 +35,6 @@ export const PIPELINE_STAGES = [
     color:  "bg-amber-500/10 text-amber-400 border-amber-500/20",
     dot:    "bg-amber-500",
     text:   "text-amber-400",
-    next:   "deposit_paid" as LeadStatus,
-  },
-  {
-    value:  "deposit_paid" as LeadStatus,
-    label:  "Deposit Paid",
-    short:  "Deposit",
-    color:  "bg-violet-500/10 text-violet-400 border-violet-500/20",
-    dot:    "bg-violet-500",
-    text:   "text-violet-400",
     next:   "booked"      as LeadStatus,
   },
   {
@@ -53,6 +44,15 @@ export const PIPELINE_STAGES = [
     color:  "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
     dot:    "bg-emerald-500",
     text:   "text-emerald-400",
+    next:   "deposit_paid" as LeadStatus,
+  },
+  {
+    value:  "deposit_paid" as LeadStatus,
+    label:  "Deposit Paid",
+    short:  "Deposit",
+    color:  "bg-violet-500/10 text-violet-400 border-violet-500/20",
+    dot:    "bg-violet-500",
+    text:   "text-violet-400",
     next:   "completed"   as LeadStatus,
   },
   {
