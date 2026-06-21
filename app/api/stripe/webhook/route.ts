@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe/client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildSmsMessage, trySendSms } from "@/lib/twilio/client";
-import { sendBookingConfirmationEmail } from "@/lib/email";
+import { sendBookingConfirmationEmail, sendCustomRequestAcceptedEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   // ── 1. Read raw body — must be text/buffer before any parsing ────────────
@@ -44,9 +44,11 @@ export async function POST(request: NextRequest) {
       return handleDepositPayment(session);
     }
 
-    // ── Branch B: custom request deposit (existing flow — unchanged) ──────
+    // ── Branch B: custom request deposit ─────────────────────────────────
     if (customRequestId) {
       const supabase = createAdminClient();
+
+      // Step 1: mark accepted + record payment intent
       await supabase
         .from("custom_requests")
         .update({
@@ -54,6 +56,49 @@ export async function POST(request: NextRequest) {
           stripe_payment_intent_id: session.payment_intent as string,
         } as never)
         .eq("id", customRequestId);
+
+      // Step 2: fetch request data needed for notifications
+      const { data: crRaw } = await supabase
+        .from("custom_requests")
+        .select("client_name, client_email, client_phone, studio_id, deposit_amount")
+        .eq("id", customRequestId)
+        .single();
+
+      const cr = crRaw as {
+        client_name: string;
+        client_email: string;
+        client_phone: string;
+        studio_id: string;
+        deposit_amount: number | null;
+      } | null;
+
+      if (cr) {
+        const { data: studioRaw } = await supabase
+          .from("studios")
+          .select("name, subdomain")
+          .eq("id", cr.studio_id)
+          .single();
+
+        const studioName = (studioRaw as { name: string; subdomain: string } | null)?.name ?? "Studio";
+        const studioSlug = (studioRaw as { name: string; subdomain: string } | null)?.subdomain ?? "";
+
+        // Step 3: SMS confirmation (non-blocking)
+        void trySendSms(
+          cr.client_phone,
+          `Your custom tattoo deposit at ${studioName} is confirmed. We'll be in touch to schedule your session.`
+        );
+
+        // Step 4: email confirmation (non-blocking)
+        void sendCustomRequestAcceptedEmail({
+          to:            cr.client_email,
+          clientName:    cr.client_name,
+          studioName,
+          studioSlug,
+          requestId:     customRequestId,
+          depositAmount: cr.deposit_amount ?? 0,
+        });
+      }
+
       return NextResponse.json({ received: true });
     }
 
