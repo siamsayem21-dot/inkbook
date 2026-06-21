@@ -119,7 +119,7 @@ export async function POST(req: Request) {
           }
 
           console.log("[email] API key present:", !!process.env.RESEND_API_KEY);
-          console.log("[email] client email:", client?.email ?? "null — skipping email");
+          console.log("[email] client email present:", !!client?.email);
 
           if (client?.email && studioName) {
             const formattedDate = new Date(date + "T12:00:00").toLocaleDateString("en-US", {
@@ -129,7 +129,6 @@ export async function POST(req: Request) {
             });
             const formattedTime = time.slice(0, 5);
 
-            console.log("[email] attempting send to:", client.email);
             try {
               await sendBookingConfirmationEmail({
                 to: client.email,
