@@ -1,8 +1,9 @@
 export const dynamic = "force-dynamic";
 
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getStudioId } from "@/lib/auth/config";
 import ConsultationDetail from "./ConsultationDetail";
 
 interface Props {
@@ -44,13 +45,17 @@ type ConsultRow = {
 };
 
 export default async function ConsultationDetailPage({ params }: Props) {
+  const studioId = await getStudioId();
+  if (!studioId) redirect("/login");
+
   const supabase = createAdminClient();
 
   const { data } = await supabase
     .from("consultations")
     .select("*")
     .eq("id" as never, params.id)
-    .single();
+    .eq("studio_id" as never, studioId)
+    .maybeSingle();
 
   if (!data) notFound();
   const consult = data as ConsultRow;
