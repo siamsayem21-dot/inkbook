@@ -1,6 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getStudioId } from "@/lib/auth/config";
 
 export async function submitConsultation(
   formData: FormData
@@ -97,6 +98,9 @@ export async function saveConsultationQuote(
     notes:         string;
   }
 ): Promise<{ error?: string }> {
+  const callerStudioId = await getStudioId();
+  if (!callerStudioId) return { error: "Unauthorized" };
+
   const supabase = createAdminClient();
 
   // Read current status before writing — never downgrade a status that has
@@ -105,6 +109,7 @@ export async function saveConsultationQuote(
     .from("consultations")
     .select("status")
     .eq("id", id)
+    .eq("studio_id" as never, callerStudioId)
     .maybeSingle();
 
   const currentStatus = (current as { status: string } | null)?.status ?? "new";
@@ -125,7 +130,8 @@ export async function saveConsultationQuote(
       quote_status:             "saved",
       ...(canAdvanceToQuoted ? { status: "quoted" } : {}),
     } as never)
-    .eq("id", id);
+    .eq("id", id)
+    .eq("studio_id" as never, callerStudioId);
 
   if (error) return { error: error.message };
   return {};
@@ -135,11 +141,15 @@ export async function updateConsultationStatus(
   id: string,
   status: "new" | "reviewed" | "quoted" | "deposit_paid" | "booked" | "completed" | "lost" | "converted"
 ): Promise<{ error?: string }> {
+  const callerStudioId = await getStudioId();
+  if (!callerStudioId) return { error: "Unauthorized" };
+
   const supabase = createAdminClient();
   const { error } = await supabase
     .from("consultations")
     .update({ status } as never)
-    .eq("id", id);
+    .eq("id", id)
+    .eq("studio_id" as never, callerStudioId);
 
   if (error) return { error: error.message };
   return {};
@@ -159,12 +169,16 @@ export async function bookConsultation(
     return { error: "Artist, date, and time are required." };
   }
 
+  const callerStudioId = await getStudioId();
+  if (!callerStudioId) return { error: "Unauthorized" };
+
   const supabase = createAdminClient();
 
   const { data: consult } = await supabase
     .from("consultations")
     .select("id, studio_id, client_name, client_email, client_phone, detected_style, status")
     .eq("id", consultId)
+    .eq("studio_id" as never, callerStudioId)
     .maybeSingle();
 
   if (!consult) return { error: "Consultation not found." };
