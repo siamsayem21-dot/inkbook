@@ -52,6 +52,30 @@ export async function POST(request: NextRequest) {
 
   const studioRow = studio as { id: string; name: string; subdomain: string };
 
+  // Block blacklisted clients — same check used in /api/bookings
+  const [{ data: blockedByEmail }, { data: blockedByPhone }] = await Promise.all([
+    supabase
+      .from("blacklist")
+      .select("id")
+      .eq("studio_id", studioRow.id)
+      .eq("client_email", String(client_email))
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("blacklist")
+      .select("id")
+      .eq("studio_id", studioRow.id)
+      .eq("client_phone", String(client_phone))
+      .limit(1)
+      .maybeSingle(),
+  ]);
+  if (blockedByEmail !== null || blockedByPhone !== null) {
+    return NextResponse.json(
+      { error: "Request cannot be submitted. Please contact the studio directly." },
+      { status: 403 }
+    );
+  }
+
   const { data: req, error } = await supabase
     .from("custom_requests")
     .insert({
