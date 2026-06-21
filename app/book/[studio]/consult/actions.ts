@@ -98,6 +98,18 @@ export async function saveConsultationQuote(
   }
 ): Promise<{ error?: string }> {
   const supabase = createAdminClient();
+
+  // Read current status before writing — never downgrade a status that has
+  // already advanced past "quoted" (e.g. deposit_paid, booked, completed).
+  const { data: current } = await supabase
+    .from("consultations")
+    .select("status")
+    .eq("id", id)
+    .maybeSingle();
+
+  const currentStatus = (current as { status: string } | null)?.status ?? "new";
+  const canAdvanceToQuoted = ["new", "reviewed"].includes(currentStatus);
+
   const { error } = await supabase
     .from("consultations")
     .update({
@@ -111,7 +123,7 @@ export async function saveConsultationQuote(
       final_sessions:           data.finalSessions || null,
       quote_notes:              data.notes         || null,
       quote_status:             "saved",
-      status:                   "quoted",
+      ...(canAdvanceToQuoted ? { status: "quoted" } : {}),
     } as never)
     .eq("id", id);
 

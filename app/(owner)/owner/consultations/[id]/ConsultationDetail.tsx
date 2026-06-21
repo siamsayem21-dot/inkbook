@@ -280,7 +280,7 @@ export default function ConsultationDetail({
     setSaving(false);
     if (result.error) { setSaveError(result.error); return; }
     setQuoteSaved(true);
-    setStatus("quoted");
+    if (["new", "reviewed"].includes(status)) setStatus("quoted");
     router.refresh();
   }
 
