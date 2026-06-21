@@ -74,7 +74,7 @@ export default function FlashBookingForm({
 
       // Mark non-repeatable flash as booked (best-effort, non-blocking)
       if (!isRepeatable) {
-        await markFlashAsBooked(flashDesignId);
+        await markFlashAsBooked(flashDesignId, studioSlug);
       }
 
       router.push(

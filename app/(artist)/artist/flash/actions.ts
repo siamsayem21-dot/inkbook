@@ -1,6 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentUser } from "@/lib/auth/config";
 import { revalidatePath } from "next/cache";
 import { validateImageFile } from "@/lib/file-validation";
 
@@ -14,6 +15,21 @@ function extractStoragePath(imageUrl: string): string | null {
   } catch {
     return null;
   }
+}
+
+async function verifyArtistOwnership(
+  supabase: ReturnType<typeof createAdminClient>,
+  artistId: string
+): Promise<boolean> {
+  const user = await getCurrentUser();
+  if (!user) return false;
+  const { data } = await supabase
+    .from("artists")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("id", artistId)
+    .maybeSingle();
+  return !!data;
 }
 
 export async function createFlashDesign(
@@ -37,11 +53,12 @@ export async function createFlashDesign(
   const typeCheck = await validateImageFile(file);
   if (!typeCheck.valid) return { error: typeCheck.error };
 
+  const supabase = createAdminClient();
+  if (!await verifyArtistOwnership(supabase, artistId)) return { error: "Unauthorized" };
+
   const priceDollars = parseFloat(priceStr);
   if (isNaN(priceDollars) || priceDollars < 0) return { error: "Invalid price" };
   const priceCents = Math.round(priceDollars * 100);
-
-  const supabase = createAdminClient();
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
   const storagePath = `flash/${artistId}/${Date.now()}.${ext}`;
   const bytes = await file.arrayBuffer();
@@ -110,6 +127,7 @@ export async function updateFlashDesign(data: {
   if (!data.title.trim()) return { error: "Title is required" };
 
   const supabase = createAdminClient();
+  if (!await verifyArtistOwnership(supabase, data.artistId)) return { error: "Unauthorized" };
 
   const { error } = await supabase
     .from("flash_designs")
@@ -139,6 +157,7 @@ export async function deleteFlashDesign(data: {
   imageUrl: string;
 }): Promise<{ error?: string }> {
   const supabase = createAdminClient();
+  if (!await verifyArtistOwnership(supabase, data.artistId)) return { error: "Unauthorized" };
 
   const storagePath = extractStoragePath(data.imageUrl);
   if (storagePath) {

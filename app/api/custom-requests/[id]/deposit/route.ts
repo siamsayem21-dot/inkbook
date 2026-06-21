@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe/client";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // Limit per-request-ID to prevent Stripe session spam
+  const rl = checkRateLimit(`custom-deposit:${getClientIp(request)}:${params.id}`, 3, 60_000);
+  if (!rl.allowed) return rateLimitedResponse(rl.retryAfter);
+
   const body = await request.json();
   const { studioSlug } = body as { studioSlug?: string };
 

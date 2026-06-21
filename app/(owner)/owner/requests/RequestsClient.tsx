@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 
 export type OwnerRequest = {
   id: string;
@@ -149,28 +150,34 @@ function RequestCard({
       )}
 
       {/* Actions */}
-      {req.status === "pending" && (
-        <div className="px-5 py-4 flex gap-3">
-          <button onClick={() => onApprove(req.id)}
-            className="flex-1 bg-green-600 hover:bg-green-500 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors"
-          >
-            Approve ✓
-          </button>
-          <button onClick={() => onDecline(req.id)}
-            className="flex-1 border border-white/10 hover:border-red-500/40 text-zinc-400 hover:text-red-400 text-sm font-semibold py-2.5 rounded-lg transition-colors"
-          >
-            Decline ✗
-          </button>
-        </div>
-      )}
-      {req.status === "quoted" && req.deposit_amount != null && (
-        <div className="px-5 py-4">
-          <p className="text-xs text-zinc-600">
+      <div className={`px-5 py-4 flex items-center gap-3 ${req.status === "pending" ? "border-t border-[#1A1A1A]" : ""}`}>
+        {req.status === "pending" && (
+          <>
+            <button onClick={() => onApprove(req.id)}
+              className="flex-1 bg-green-600 hover:bg-green-500 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors"
+            >
+              Approve ✓
+            </button>
+            <button onClick={() => onDecline(req.id)}
+              className="flex-1 border border-white/10 hover:border-red-500/40 text-zinc-400 hover:text-red-400 text-sm font-semibold py-2.5 rounded-lg transition-colors"
+            >
+              Decline ✗
+            </button>
+          </>
+        )}
+        {req.status === "quoted" && req.deposit_amount != null && (
+          <p className="text-xs text-zinc-600 flex-1">
             Deposit: <span className="text-[#c9a84c]">${req.deposit_amount.toFixed(2)}</span>
             {" "}· Awaiting client payment
           </p>
-        </div>
-      )}
+        )}
+        <Link
+          href={`/owner/requests/${req.id}`}
+          className="text-xs text-zinc-500 hover:text-zinc-200 transition-colors shrink-0 underline underline-offset-2"
+        >
+          Full details →
+        </Link>
+      </div>
     </div>
   );
 }
@@ -189,6 +196,7 @@ export default function OwnerRequestsClient({
   const [artistFilter, setArtistFilter] = useState("");
 
   const [modal, setModal]           = useState<{ type: "approve" | "decline"; id: string } | null>(null);
+  const [modalQuote, setModalQuote]     = useState("");
   const [modalDeposit, setModalDeposit] = useState("");
   const [modalNote, setModalNote]       = useState("");
   const [modalReason, setModalReason]   = useState("");
@@ -213,7 +221,7 @@ export default function OwnerRequestsClient({
 
   function openApprove(id: string) {
     setModal({ type: "approve", id });
-    setModalDeposit(""); setModalNote(""); setModalError(null);
+    setModalQuote(""); setModalDeposit(""); setModalNote(""); setModalError(null);
   }
   function openDecline(id: string) {
     setModal({ type: "decline", id });
@@ -222,19 +230,22 @@ export default function OwnerRequestsClient({
   function closeModal() { setModal(null); setModalError(null); }
 
   function handleApprove() {
+    const quote   = parseFloat(modalQuote);
     const deposit = parseFloat(modalDeposit);
+    if (isNaN(quote)   || quote   <= 0) { setModalError("Enter a valid total quote amount"); return; }
     if (isNaN(deposit) || deposit <= 0) { setModalError("Enter a valid deposit amount"); return; }
+    if (deposit > quote) { setModalError("Deposit cannot exceed the total quote"); return; }
     startTransition(async () => {
       const res = await fetch(`/api/custom-requests/${modal!.id}/quote`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quote_amount: deposit, deposit_amount: deposit, quote_message: modalNote.trim() || undefined }),
+        body: JSON.stringify({ quote_amount: quote, deposit_amount: deposit, quote_message: modalNote.trim() || undefined }),
       });
       const data = await res.json();
       if (!res.ok) { setModalError(data.error ?? "Failed to approve"); return; }
       setRequests((prev) =>
         prev.map((r) => r.id === modal!.id
-          ? { ...r, status: "quoted", deposit_amount: deposit, artist_note: modalNote.trim() || null }
+          ? { ...r, status: "quoted", quote_amount: quote, deposit_amount: deposit, artist_note: modalNote.trim() || null }
           : r
         )
       );
@@ -336,11 +347,20 @@ export default function OwnerRequestsClient({
               <>
                 <h3 className="font-cinzel text-lg font-bold">Approve Request</h3>
                 <div>
+                  <label className="block text-xs uppercase tracking-widest text-zinc-500 mb-1.5">Total Quote ($) *</label>
+                  <input type="number" min="1" step="0.01" value={modalQuote}
+                    onChange={(e) => setModalQuote(e.target.value)}
+                    className={inputCls} placeholder="e.g. 500.00" autoFocus
+                  />
+                  <p className="text-[11px] text-zinc-600 mt-1">Full session price shown to the client</p>
+                </div>
+                <div>
                   <label className="block text-xs uppercase tracking-widest text-zinc-500 mb-1.5">Deposit Amount ($) *</label>
                   <input type="number" min="1" step="0.01" value={modalDeposit}
                     onChange={(e) => setModalDeposit(e.target.value)}
-                    className={inputCls} placeholder="e.g. 150.00" autoFocus
+                    className={inputCls} placeholder="e.g. 150.00"
                   />
+                  <p className="text-[11px] text-zinc-600 mt-1">Collected now to secure the appointment</p>
                 </div>
                 <div>
                   <label className="block text-xs uppercase tracking-widest text-zinc-500 mb-1.5">Note to Client (optional)</label>

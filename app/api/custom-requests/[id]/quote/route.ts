@@ -44,8 +44,8 @@ export async function POST(
     status: string;
   };
 
-  if (cr.status !== "pending") {
-    return NextResponse.json({ error: "Request is not in pending state" }, { status: 409 });
+  if (!["pending", "quoted"].includes(cr.status)) {
+    return NextResponse.json({ error: "Request cannot be quoted in its current state" }, { status: 409 });
   }
 
   // Verify this user is the artist or studio owner
