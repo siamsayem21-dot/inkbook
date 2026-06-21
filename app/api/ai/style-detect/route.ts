@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
+import { getStudioKnowledge, formatKnowledgeForAI } from "@/lib/studio-knowledge";
 
 const VALID_STYLES = [
   "Traditional", "Neo Traditional", "Japanese", "Fine Line",
@@ -12,7 +13,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { description, placement, colorPreference, size, followupAnswers } = body;
+    const { description, placement, colorPreference, size, followupAnswers, studioId } = body;
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json(fallback());
@@ -23,7 +24,12 @@ export async function POST(req: Request) {
       .map(([k, v]) => `Q: ${k}\nA: ${v}`)
       .join("\n");
 
+    const knowledgeContext = studioId
+      ? formatKnowledgeForAI(await getStudioKnowledge(studioId as string))
+      : "";
+
     const prompt = `You are an expert tattoo style analyst working with a professional tattoo studio.
+${knowledgeContext ? `\n${knowledgeContext}\n` : ""}
 
 Consultation details:
 - Description: ${description}

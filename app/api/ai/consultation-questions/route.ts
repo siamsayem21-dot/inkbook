@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
+import { getStudioKnowledge, formatKnowledgeForAI } from "@/lib/studio-knowledge";
 
 const FALLBACK_QUESTIONS = [
   "Do you have any existing tattoos in or near this area?",
@@ -15,7 +16,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { description, placement, size, colorPreference, budgetRange } = body;
+    const { description, placement, size, colorPreference, budgetRange, studioId } = body;
 
     if (!description || !placement) {
       return NextResponse.json({ questions: FALLBACK_QUESTIONS });
@@ -30,8 +31,13 @@ export async function POST(req: Request) {
       : colorPreference === "black_grey" ? "Black & Grey"
       : "Open to both";
 
-    const prompt = `You are an assistant for a professional tattoo studio. A client just submitted a consultation form. Generate 4–5 specific follow-up questions to help the artist prepare and qualify this lead.
+    // Inject studio-specific context if available
+    const knowledgeContext = studioId
+      ? formatKnowledgeForAI(await getStudioKnowledge(studioId as string))
+      : "";
 
+    const prompt = `You are an assistant for a professional tattoo studio. A client just submitted a consultation form. Generate 4–5 specific follow-up questions to help the artist prepare and qualify this lead.
+${knowledgeContext ? `\n${knowledgeContext}\n` : ""}
 Client's consultation:
 - Description: ${description}
 - Placement: ${placement}
@@ -41,6 +47,7 @@ Client's consultation:
 
 Requirements:
 - Ask practical questions a tattoo artist would genuinely need answered
+- If the studio has stated styles they don't take, ask if the client's request aligns with what they do
 - Cover: style specifics (if unclear), timeline, existing tattoos nearby, design flexibility, and any meaningful context
 - Be conversational, not clinical
 - Return ONLY a JSON array of question strings. No other text.

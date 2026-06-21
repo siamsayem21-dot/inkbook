@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
+import { getStudioKnowledge, formatKnowledgeForAI } from "@/lib/studio-knowledge";
 
 function fallback() {
   return {
@@ -20,7 +21,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { description, placement, size, colorPreference, budget, style, aiNotes } = body;
+    const { description, placement, size, colorPreference, budget, style, aiNotes, studioId } = body;
 
     if (!description || !placement) {
       return NextResponse.json(fallback());
@@ -35,10 +36,14 @@ export async function POST(req: Request) {
       : colorPreference === "black_grey" ? "Black & grey"
       : "Open to both";
 
+    const knowledgeContext = studioId
+      ? formatKnowledgeForAI(await getStudioKnowledge(studioId as string))
+      : "";
+
     const prompt = `You are a professional tattoo studio manager with 15+ years of experience pricing custom tattoo work in the USA.
 
 A client submitted this consultation. Generate a professional quote recommendation.
-
+${knowledgeContext ? `\n${knowledgeContext}\n` : ""}
 Consultation:
 - Style: ${style || "Not specified"}
 - Description: ${description}
@@ -50,7 +55,7 @@ ${aiNotes ? `- AI notes: ${aiNotes}` : ""}
 
 Studio context:
 - Professional custom tattoo studio, USA market
-- Typical rate: $150–$250/hour depending on complexity
+- Use the studio's own pricing context above if provided; otherwise assume $150–$250/hour
 - Deposits are mandatory; quotes are for the full session cost
 
 Assess the work and return ONLY a JSON object in exactly this format (no other text):

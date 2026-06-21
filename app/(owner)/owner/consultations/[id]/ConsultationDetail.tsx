@@ -238,6 +238,7 @@ export default function ConsultationDetail({
           budget:          consult.budget_range,
           style:           consult.detected_style,
           aiNotes:         consult.ai_notes,
+          studioId:        consult.studio_id,
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);

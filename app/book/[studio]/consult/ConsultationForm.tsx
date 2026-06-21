@@ -855,6 +855,7 @@ export default function ConsultationForm({
           size:        formData.size,
           colorPreference: formData.colorPref,
           budgetRange: formData.budget,
+          studioId,
         }),
       });
       const json = await res.json();
@@ -896,6 +897,7 @@ export default function ConsultationForm({
             : formData.colorPref === "black_grey" ? "Black & Grey"
             : "Open to both",
           followupAnswers: answersMap,
+          studioId,
         }),
       });
       const result = await res.json();

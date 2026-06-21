@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import ArtistCard from "@/components/booking/ArtistCard";
 import FlashSection, { type FlashCard } from "@/components/booking/FlashSection";
+import { getPublicFaq, type KnowledgeEntry } from "@/lib/studio-knowledge";
 
 interface Props {
   params: { studio: string };
@@ -83,6 +84,8 @@ export default async function StudioLandingPage({ params }: Props) {
     .order("created_at", { ascending: false });
 
   const flashRows = (flashRaw ?? []) as FlashRow[];
+
+  const faqEntries = await getPublicFaq(studio.id);
 
   // Join artist names into flash cards
   const artistById = Object.fromEntries(artists.map((a) => [a.id, a.name]));
@@ -240,6 +243,39 @@ export default async function StudioLandingPage({ params }: Props) {
           Start AI Consultation →
         </Link>
       </div>
+
+      {/* FAQ section — only shown if studio has public knowledge entries */}
+      {faqEntries.length > 0 && (
+        <div className="mt-16">
+          <h2
+            className="text-xl font-bold tracking-wide mb-6"
+            style={{ fontFamily: brandFont }}
+          >
+            Frequently Asked Questions
+          </h2>
+          <div className="space-y-3">
+            {(faqEntries as KnowledgeEntry[]).map((entry) => (
+              <details
+                key={entry.id}
+                className="group bg-zinc-900/60 border border-zinc-800 rounded-xl overflow-hidden"
+              >
+                <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none select-none">
+                  <span className="text-sm font-semibold text-zinc-200 pr-4">{entry.title}</span>
+                  <span
+                    className="text-xs shrink-0 transition-transform group-open:rotate-45"
+                    style={{ color: brand.full }}
+                  >
+                    +
+                  </span>
+                </summary>
+                <div className="px-5 pb-5">
+                  <p className="text-sm text-zinc-400 leading-relaxed whitespace-pre-wrap">{entry.content}</p>
+                </div>
+              </details>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Deposit notice */}
       <p className="label-xs text-zinc-700 text-center mt-14">
