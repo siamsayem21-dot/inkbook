@@ -52,6 +52,9 @@ export type DepositPaymentRecord = {
 export async function sendDepositRequest(
   bookingId: string
 ): Promise<{ checkoutUrl?: string; error?: string }> {
+  const studioId = await getStudioId();
+  if (!studioId) return { error: "Unauthorized" };
+
   const supabase = createAdminClient();
 
   // ── 1. Load booking + related names ──────────────────────────────────────
@@ -75,10 +78,15 @@ export async function sendDepositRequest(
     artists: { name: string } | null;
   };
 
+  // Verify the booking belongs to the authenticated studio before proceeding.
+  // Returns "not found" rather than "unauthorized" to avoid leaking that the
+  // booking ID is valid for a different studio.
+  if (booking.studio_id !== studioId) return { error: "Booking not found" };
+
   const { data: studioRaw } = await supabase
     .from("studios")
     .select("name, subdomain")
-    .eq("id", booking.studio_id)
+    .eq("id", studioId)
     .single();
 
   const studioName      = (studioRaw as { name: string; subdomain: string } | null)?.name      ?? "Studio";
