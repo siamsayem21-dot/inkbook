@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getStudioId } from "@/lib/auth/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import OwnerQuoteForm from "./OwnerQuoteForm";
+import CopyLinkButton from "./CopyLinkButton";
 
 interface Props {
   params: { id: string };
@@ -36,16 +37,27 @@ export default async function OwnerRequestDetailPage({ params }: Props) {
 
   const supabase = createAdminClient();
 
-  const { data: reqData } = await supabase
-    .from("custom_requests")
-    .select(
-      "id, studio_id, artist_id, client_name, client_email, client_phone, style, design_description, placement, size, budget_range, preferred_dates, reference_photos, status, quote_amount, quote_message, deposit_amount, artist_note, declined_reason, created_at"
-    )
-    .eq("id", params.id)
-    .eq("studio_id", studioId)
-    .single();
+  const [{ data: reqData }, { data: studioData }] = await Promise.all([
+    supabase
+      .from("custom_requests")
+      .select(
+        "id, studio_id, artist_id, client_name, client_email, client_phone, style, design_description, placement, size, budget_range, preferred_dates, reference_photos, status, quote_amount, quote_message, deposit_amount, artist_note, declined_reason, created_at"
+      )
+      .eq("id", params.id)
+      .eq("studio_id", studioId)
+      .single(),
+    supabase
+      .from("studios")
+      .select("subdomain")
+      .eq("id", studioId)
+      .single(),
+  ]);
 
   if (!reqData) notFound();
+
+  const subdomain = (studioData as { subdomain: string } | null)?.subdomain ?? "";
+  const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.inkbook.tech";
+  const clientPaymentUrl = `${BASE_URL}/book/${subdomain}/request/${params.id}`;
 
   const cr = reqData as {
     id: string;
@@ -96,14 +108,18 @@ export default async function OwnerRequestDetailPage({ params }: Props) {
       </div>
 
       {cr.status === "quoted" && cr.deposit_amount != null && (
-        <div className="bg-green-500/[0.06] border border-green-500/20 rounded-xl p-5 space-y-2">
-          <p className="text-xs uppercase tracking-widest text-green-400/70">Approved</p>
+        <div className="bg-green-500/[0.06] border border-green-500/20 rounded-xl p-5 space-y-4">
+          <p className="text-xs uppercase tracking-widest text-green-400/70">Approved — Awaiting Client Payment</p>
           <p className="text-2xl font-bold text-green-400">
             ${cr.deposit_amount.toFixed(2)} <span className="text-sm font-normal text-zinc-400">deposit</span>
           </p>
           {cr.artist_note && (
             <p className="text-sm text-zinc-400 border-t border-white/[0.06] pt-3 whitespace-pre-wrap">{cr.artist_note}</p>
           )}
+          <div className="border-t border-white/[0.06] pt-4">
+            <p className="text-xs uppercase tracking-widest text-zinc-500 mb-2">Client Payment Link</p>
+            <CopyLinkButton url={clientPaymentUrl} />
+          </div>
         </div>
       )}
 
