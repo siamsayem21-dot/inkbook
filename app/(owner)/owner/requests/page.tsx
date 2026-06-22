@@ -11,13 +11,15 @@ export default async function OwnerRequestsPage() {
 
   const supabase = createAdminClient();
 
-  const { data: reqsRaw } = await supabase
+  const { data: reqsRaw, error: reqsError } = await supabase
     .from("custom_requests")
     .select(
       "id, artist_id, client_name, client_email, client_phone, style, placement, size, budget_range, preferred_dates, design_description, reference_photos, status, quote_amount, deposit_amount, artist_note, declined_reason, created_at"
     )
     .eq("studio_id", studioId)
     .order("created_at", { ascending: false });
+
+  if (reqsError) console.error("[OwnerRequestsPage] query error:", reqsError.code, reqsError.message);
 
   const requests = (reqsRaw ?? []) as OwnerRequest[];
 
