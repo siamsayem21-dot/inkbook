@@ -72,8 +72,8 @@ export async function submitCustomRequest(
     .single();
 
   if (error || !req) {
-    console.error("[submitCustomRequest] insert:", error?.message, error?.code, error?.details, error?.hint);
-    return { error: `[DEBUG] ${error?.code}: ${error?.message} | ${error?.hint ?? ""} | ${error?.details ?? ""}` };
+    console.error("[submitCustomRequest] insert:", error?.code, error?.message);
+    return { error: "Failed to save your request — please try again" };
   }
 
   const newId = (req as { id: string }).id;
