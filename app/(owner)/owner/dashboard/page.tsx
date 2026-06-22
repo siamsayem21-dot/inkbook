@@ -81,8 +81,8 @@ export default async function OwnerDashboardPage({
       .select("deposit_amount")
       .eq("studio_id", studioId)
       .eq("status", "accepted")
-      .gte("created_at", `${thisMonth.first}T00:00:00`)
-      .lte("created_at", `${thisMonth.last}T23:59:59`),
+      .gte("deposit_paid_at", `${thisMonth.first}T00:00:00`)
+      .lte("deposit_paid_at", `${thisMonth.last}T23:59:59`),
 
     supabase.from("bookings")
       .select("status")
@@ -141,8 +141,8 @@ export default async function OwnerDashboardPage({
           .select("deposit_amount")
           .eq("studio_id", studioId)
           .eq("status", "accepted")
-          .gte("created_at", `${first}T00:00:00`)
-          .lte("created_at", `${last}T23:59:59`)
+          .gte("deposit_paid_at", `${first}T00:00:00`)
+          .lte("deposit_paid_at", `${last}T23:59:59`)
       )
     ),
   ]);

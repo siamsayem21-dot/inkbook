@@ -93,7 +93,7 @@ export default async function PipelinePage() {
     return (
       <div className="text-center py-16">
         <p className="text-zinc-500 text-sm">Failed to load pipeline.</p>
-        <p className="text-xs text-zinc-700 mt-2 font-mono">{error.message}</p>
+        <p className="text-xs text-red-400 mt-2 font-mono">{error.code}: {error.message}</p>
       </div>
     );
   }
@@ -129,8 +129,8 @@ export default async function PipelinePage() {
 
       {/* Board */}
       {allCards.length === 0 ? (
-        <div className="bg-[#111] border border-[#1E1E1E] rounded-xl px-6 py-16 text-center">
-          <p className="font-cinzel text-base font-semibold tracking-wide mb-2">
+        <div className="bg-[#111] border border-[#1E1E1E] rounded-xl px-6 py-16 text-center space-y-3">
+          <p className="font-cinzel text-base font-semibold tracking-wide">
             Pipeline Empty
           </p>
           <p className="text-zinc-500 text-sm">
@@ -139,6 +139,14 @@ export default async function PipelinePage() {
               /book/[your-subdomain]/consult
             </span>{" "}
             to start filling your pipeline.
+          </p>
+          {crError && (
+            <p className="text-xs text-red-400 font-mono mt-2">
+              custom_requests query error: {crError.code} — {crError.message}
+            </p>
+          )}
+          <p className="text-[10px] text-zinc-800 font-mono">
+            studio={studioId} · consultations={data?.length ?? 0} · custom_requests={crData?.length ?? 0}
           </p>
         </div>
       ) : (
