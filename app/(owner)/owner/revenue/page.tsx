@@ -29,6 +29,14 @@ export default async function RevenuePage() {
 
   const supabase = createAdminClient();
 
+  // DIAGNOSTIC: fetch ALL custom_requests for this studio regardless of status/date
+  const { data: allCrRaw, error: allCrError } = await supabase
+    .from("custom_requests")
+    .select("id, status, deposit_amount, created_at")
+    .eq("studio_id", studioId)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
   const thisMonth = monthRange(0);
   const lastMonth = monthRange(-1);
 
@@ -84,9 +92,9 @@ export default async function RevenuePage() {
   ]);
 
   const statCards = [
-    { label: "This month",               value: fmtMoney(thisMonthCents) },
-    { label: "Last month",               value: fmtMoney(lastMonthCents) },
-    { label: "Deposits kept (no-shows)", value: fmtMoney(keptCents) },
+    { label: `This month (${thisMonth.label})`, value: fmtMoney(thisMonthCents) },
+    { label: `Last month (${lastMonth.label})`, value: fmtMoney(lastMonthCents) },
+    { label: "Deposits kept (no-shows)",         value: fmtMoney(keptCents) },
   ];
 
   // Revenue chart — last 6 months
@@ -97,6 +105,8 @@ export default async function RevenuePage() {
       amount: (await fetchRevenueCents(first, last)) / 100,
     }))
   );
+
+  const diagRows = (allCrRaw ?? []) as { id: string; status: string; deposit_amount: number | null; created_at: string }[];
 
   return (
     <div className="space-y-6">
@@ -110,6 +120,29 @@ export default async function RevenuePage() {
         ))}
       </div>
       <RevenueChart months={monthData} />
+
+      {/* TEMPORARY DIAGNOSTIC — remove once revenue shows correctly */}
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
+        <p className="text-xs uppercase tracking-widest text-zinc-500 font-medium">Data Check (temporary)</p>
+        <p className="text-xs text-zinc-600 font-mono">Studio ID: {studioId}</p>
+        <p className="text-xs text-zinc-600 font-mono">This month filter: {thisMonth.first} → {thisMonth.last}</p>
+        {allCrError && (
+          <p className="text-xs text-red-400 font-mono">Query error: {allCrError.code} — {allCrError.message}</p>
+        )}
+        {diagRows.length === 0 ? (
+          <p className="text-xs text-zinc-700 font-mono">No custom_requests found for this studio at all.</p>
+        ) : (
+          <div className="space-y-1">
+            {diagRows.map((r) => (
+              <p key={r.id} className="text-xs font-mono text-zinc-600">
+                <span className={r.status === "accepted" ? "text-green-500" : "text-zinc-500"}>{r.status}</span>
+                {" · "}deposit_amount={r.deposit_amount ?? "NULL"}
+                {" · "}created_at={r.created_at.slice(0, 10)}
+              </p>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
