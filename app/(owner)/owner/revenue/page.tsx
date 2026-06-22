@@ -32,7 +32,7 @@ export default async function RevenuePage() {
   const thisMonth = monthRange(0);
   const lastMonth = monthRange(-1);
 
-  const fetchRevenueCents = async (first: string, last: string) => {
+  const fetchBookingRevenueCents = async (first: string, last: string) => {
     const { data } = await supabase
       .from("bookings")
       .select("deposit_amount_cents")
@@ -42,6 +42,30 @@ export default async function RevenuePage() {
       .lte("date", last);
     return ((data ?? []) as { deposit_amount_cents: number }[])
       .reduce((s, b) => s + (b.deposit_amount_cents ?? 0), 0);
+  };
+
+  // Custom request deposits land in custom_requests.deposit_amount (dollars, NUMERIC)
+  // with status="accepted". updated_at is set by trigger when webhook marks it accepted.
+  const fetchCustomRequestRevenueCents = async (first: string, last: string) => {
+    const { data } = await supabase
+      .from("custom_requests")
+      .select("deposit_amount")
+      .eq("studio_id", studioId)
+      .eq("status", "accepted")
+      .gte("updated_at", `${first}T00:00:00`)
+      .lte("updated_at", `${last}T23:59:59`);
+    return Math.round(
+      ((data ?? []) as { deposit_amount: number | null }[])
+        .reduce((s, r) => s + (r.deposit_amount ?? 0), 0) * 100
+    );
+  };
+
+  const fetchRevenueCents = async (first: string, last: string) => {
+    const [bookings, custom] = await Promise.all([
+      fetchBookingRevenueCents(first, last),
+      fetchCustomRequestRevenueCents(first, last),
+    ]);
+    return bookings + custom;
   };
 
   const [thisMonthCents, lastMonthCents, keptCents] = await Promise.all([
