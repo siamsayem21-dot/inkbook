@@ -639,7 +639,7 @@ export default function HomePage() {
           </nav>
           <div className="hidden md:flex items-center gap-3">
             <a href="#book-demo" className="border border-gray-300 rounded-full px-5 py-2 text-sm font-medium text-[#111111] hover:border-gray-400 transition-colors">Book Demo</a>
-            <a href="#trial" className="bg-black text-white rounded-full px-5 py-2 text-sm font-medium hover:bg-[#2A2A2A] transition-colors">Start Free Trial</a>
+            <a href="/register" className="bg-black text-white rounded-full px-5 py-2 text-sm font-medium hover:bg-[#2A2A2A] transition-colors">Start Free Trial</a>
           </div>
           <button className="md:hidden p-1.5 rounded-md text-[#111111]" onClick={() => setMobileOpen((o) => !o)} aria-label="Toggle menu">
             {mobileOpen ? <IconClose /> : <IconMenu />}
@@ -653,7 +653,7 @@ export default function HomePage() {
             ))}
             <div className="flex flex-col gap-2 pt-3">
               <a href="#book-demo" className="py-2.5 text-sm font-medium rounded-full border border-gray-300 text-center text-[#111111]">Book Demo</a>
-              <a href="#trial" className="py-2.5 text-sm font-medium rounded-full bg-black text-white text-center">Start Free Trial</a>
+              <a href="/register" className="py-2.5 text-sm font-medium rounded-full bg-black text-white text-center">Start Free Trial</a>
             </div>
           </div>
         )}
@@ -684,7 +684,7 @@ export default function HomePage() {
               <div className="hero-item mt-10" style={heroItemStyle(600, "translateY(10px)")}>
                 <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "center" }}>
                   <div className="flex flex-wrap gap-4">
-                    <a href="#trial" className="bg-black text-white rounded-full px-8 py-4 text-base font-medium hover:bg-[#2A2A2A] transition-colors">Start Free Trial</a>
+                    <a href="/register" className="bg-black text-white rounded-full px-8 py-4 text-base font-medium hover:bg-[#2A2A2A] transition-colors">Start Free Trial</a>
                     <a href="#book-demo" className="border border-gray-300 rounded-full px-8 py-4 text-base text-[#111111] hover:border-gray-400 transition-colors">Book Demo</a>
                   </div>
                   <p className="mt-4 text-sm text-gray-400">14-day free trial · No credit card required</p>
@@ -2108,7 +2108,7 @@ export default function HomePage() {
                 <span className="text-sm text-gray-500 mb-2">/mo</span>
               </div>
               <p className="text-sm text-gray-500 mb-8">For individual tattoo artists.</p>
-              <a href="#trial" className="block w-full py-3 text-center text-sm font-semibold rounded-full text-white transition-colors"
+              <a href="/register" className="block w-full py-3 text-center text-sm font-semibold rounded-full text-white transition-colors"
                 style={{ border: "1px solid #333" }}
                 onMouseEnter={e => (e.currentTarget.style.borderColor = "#555")}
                 onMouseLeave={e => (e.currentTarget.style.borderColor = "#333")}>
@@ -2129,7 +2129,7 @@ export default function HomePage() {
                 <span className="text-sm text-gray-500 mb-2">/mo</span>
               </div>
               <p className="text-sm text-gray-500 mb-8">For small studios and growing teams.</p>
-              <a href="#trial" className="block w-full py-3 text-center text-sm font-semibold rounded-full bg-[#D4A853] text-black hover:opacity-90 transition-opacity">
+              <a href="/register" className="block w-full py-3 text-center text-sm font-semibold rounded-full bg-[#D4A853] text-black hover:opacity-90 transition-opacity">
                 Start Free Trial
               </a>
             </div>
@@ -2143,7 +2143,7 @@ export default function HomePage() {
                 <span className="text-sm text-gray-500 mb-2">/mo</span>
               </div>
               <p className="text-sm text-gray-500 mb-8">For larger studios with advanced needs.</p>
-              <a href="#trial" className="block w-full py-3 text-center text-sm font-semibold rounded-full text-white transition-colors"
+              <a href="/register" className="block w-full py-3 text-center text-sm font-semibold rounded-full text-white transition-colors"
                 style={{ border: "1px solid #333" }}
                 onMouseEnter={e => (e.currentTarget.style.borderColor = "#555")}
                 onMouseLeave={e => (e.currentTarget.style.borderColor = "#333")}>
@@ -2166,7 +2166,7 @@ export default function HomePage() {
           <p className="text-xs uppercase tracking-widest text-gray-500 mt-2">The Tattoo Business Operating System</p>
           <p className="text-sm text-gray-400 mt-4">Start your 14-day free trial. No credit card required.</p>
           <div className="mt-8 flex flex-wrap gap-4 justify-center">
-            <a href="#signup" className="bg-[#D4A853] text-black font-semibold rounded-full px-8 py-4 text-sm hover:opacity-90 transition-opacity">Start Free Trial</a>
+            <a href="/register" className="bg-[#D4A853] text-black font-semibold rounded-full px-8 py-4 text-sm hover:opacity-90 transition-opacity">Start Free Trial</a>
             <a href="#book-demo" className="border border-gray-600 text-white rounded-full px-8 py-4 text-sm hover:border-gray-400 transition-colors">Book Demo</a>
           </div>
           <p className="text-xs text-gray-500 mt-8">Join tattoo artists and studios already automating their client journey.</p>
