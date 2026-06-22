@@ -29,8 +29,6 @@ const CATEGORY_COLOR: Record<KnowledgeCategory, string> = {
 const inputCls = "w-full bg-zinc-900 border border-zinc-800 text-white text-sm rounded-lg px-4 py-2.5 placeholder-zinc-600 focus:outline-none focus:border-zinc-600 transition-colors";
 const textareaCls = `${inputCls} resize-none`;
 
-type EditState = { id: string; title: string; content: string; isPublic: boolean; isActive: boolean } | null;
-
 function AddEntryForm({
   onSaved,
 }: {

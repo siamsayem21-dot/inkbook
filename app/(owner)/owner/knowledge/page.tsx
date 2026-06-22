@@ -31,7 +31,7 @@ export default async function KnowledgePage() {
           </p>
           <ul className="text-sm text-zinc-400 space-y-1 list-none">
             <li><span className="text-zinc-200">1.</span> <strong className="text-zinc-300">Pricing Context</strong> — your hourly rate, minimums, and what drives pricing at your studio</li>
-            <li><span className="text-zinc-200">2.</span> <strong className="text-zinc-300">Style &amp; Specialties</strong> — what styles you do and don't take</li>
+            <li><span className="text-zinc-200">2.</span> <strong className="text-zinc-300">Style &amp; Specialties</strong> — what styles you do and don&apos;t take</li>
             <li><span className="text-zinc-200">3.</span> <strong className="text-zinc-300">Policy</strong> — your cancellation, deposit, and no-show rules</li>
           </ul>
         </div>

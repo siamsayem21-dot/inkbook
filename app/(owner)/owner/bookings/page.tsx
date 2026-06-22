@@ -59,7 +59,7 @@ export default async function OwnerBookingsPage() {
 
   const supabase = createAdminClient();
 
-  const { data: bookingsRaw, error: bookingsError } = await supabase
+  const { data: bookingsRaw } = await supabase
     .from("bookings")
     .select("id, date, time, status, deposit_amount_cents, deposit_paid, client_id, artist_id")
     .eq("studio_id", studioId)
