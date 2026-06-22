@@ -49,14 +49,24 @@ export async function POST(request: NextRequest) {
       const supabase = createAdminClient();
       const now = new Date().toISOString();
 
-      // Step 1: mark accepted + record payment intent + set deposit_paid_at
-      await supabase
+      // Step 1a: critical update — status + payment intent (always works, no new columns)
+      const { error: statusUpdateError } = await supabase
         .from("custom_requests")
         .update({
           status: "accepted",
           stripe_payment_intent_id: session.payment_intent as string,
-          deposit_paid_at: now,
         } as never)
+        .eq("id", customRequestId);
+
+      if (statusUpdateError) {
+        console.error("[stripe/webhook] custom_request status update failed:", statusUpdateError.code, statusUpdateError.message);
+        return NextResponse.json({ error: "DB error" }, { status: 500 });
+      }
+
+      // Step 1b: best-effort — set deposit_paid_at (only exists after migration 20260622000006)
+      await supabase
+        .from("custom_requests")
+        .update({ deposit_paid_at: now } as never)
         .eq("id", customRequestId);
 
       // Step 2: fetch request data needed for notifications + client record

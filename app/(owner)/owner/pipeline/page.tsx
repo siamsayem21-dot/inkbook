@@ -12,7 +12,7 @@ export default async function PipelinePage() {
 
   const supabase = createAdminClient();
 
-  const [{ data, error }, { data: crData }] = await Promise.all([
+  const [{ data, error }, { data: crData, error: crError }] = await Promise.all([
     supabase
       .from("consultations")
       .select(
@@ -84,6 +84,10 @@ export default async function PipelinePage() {
   ).length;
 
   const convertedCount = allCards.filter((c) => c.status === "completed").length;
+
+  if (crError) {
+    console.error("[pipeline] custom_requests query failed:", crError.code, crError.message);
+  }
 
   if (error) {
     return (
