@@ -62,6 +62,7 @@ export default async function OwnerDashboardPage({
     { count: totalBookings },
     { count: activeArtists },
     { data: monthBookings },
+    { data: monthCustomRequests },
     { data: noShowData },
     { data: bookingsByStatus },
   ] = await Promise.all([
@@ -76,6 +77,13 @@ export default async function OwnerDashboardPage({
       .gte("date", thisMonth.first)
       .lte("date", thisMonth.last),
 
+    supabase.from("custom_requests")
+      .select("deposit_amount")
+      .eq("studio_id", studioId)
+      .eq("status", "accepted")
+      .gte("deposit_paid_at", `${thisMonth.first}T00:00:00`)
+      .lte("deposit_paid_at", `${thisMonth.last}T23:59:59`),
+
     supabase.from("bookings")
       .select("status")
       .eq("studio_id", studioId)
@@ -86,8 +94,13 @@ export default async function OwnerDashboardPage({
       .eq("studio_id", studioId),
   ]);
 
-  const monthRevenueCents = ((monthBookings ?? []) as { deposit_amount_cents: number }[])
+  const bookingRevenueCents = ((monthBookings ?? []) as { deposit_amount_cents: number }[])
     .reduce((s, b) => s + (b.deposit_amount_cents ?? 0), 0);
+  const customRequestRevenueCents = Math.round(
+    ((monthCustomRequests ?? []) as { deposit_amount: number | null }[])
+      .reduce((s, r) => s + (r.deposit_amount ?? 0), 0) * 100
+  );
+  const monthRevenueCents = bookingRevenueCents + customRequestRevenueCents;
 
   const noShowRows = (noShowData ?? []) as { status: string }[];
   const noShows = noShowRows.filter((b) => b.status === "no_show").length;
@@ -111,22 +124,38 @@ export default async function OwnerDashboardPage({
   ];
 
   const ranges = Array.from({ length: 6 }, (_, i) => monthRange(i - 5));
-  const chartResults = await Promise.all(
-    ranges.map(({ first, last }) =>
-      supabase.from("bookings")
-        .select("deposit_amount_cents")
-        .eq("studio_id", studioId)
-        .eq("deposit_paid", true)
-        .gte("date", first)
-        .lte("date", last)
-    )
-  );
+  const [bookingChartResults, crChartResults] = await Promise.all([
+    Promise.all(
+      ranges.map(({ first, last }) =>
+        supabase.from("bookings")
+          .select("deposit_amount_cents")
+          .eq("studio_id", studioId)
+          .eq("deposit_paid", true)
+          .gte("date", first)
+          .lte("date", last)
+      )
+    ),
+    Promise.all(
+      ranges.map(({ first, last }) =>
+        supabase.from("custom_requests")
+          .select("deposit_amount")
+          .eq("studio_id", studioId)
+          .eq("status", "accepted")
+          .gte("deposit_paid_at", `${first}T00:00:00`)
+          .lte("deposit_paid_at", `${last}T23:59:59`)
+      )
+    ),
+  ]);
 
-  const monthData: MonthRevenue[] = ranges.map(({ label }, i) => ({
-    label,
-    amount: ((chartResults[i].data ?? []) as { deposit_amount_cents: number }[])
-      .reduce((s, b) => s + (b.deposit_amount_cents ?? 0), 0) / 100,
-  }));
+  const monthData: MonthRevenue[] = ranges.map(({ label }, i) => {
+    const bookingCents = ((bookingChartResults[i].data ?? []) as { deposit_amount_cents: number }[])
+      .reduce((s, b) => s + (b.deposit_amount_cents ?? 0), 0);
+    const crCents = Math.round(
+      ((crChartResults[i].data ?? []) as { deposit_amount: number | null }[])
+        .reduce((s, r) => s + (r.deposit_amount ?? 0), 0) * 100
+    );
+    return { label, amount: (bookingCents + crCents) / 100 };
+  });
 
   const artistsDone = (activeArtists ?? 0) > 0;
   const linkDone    = (totalBookings ?? 0) > 0;

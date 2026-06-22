@@ -45,15 +45,16 @@ export default async function RevenuePage() {
   };
 
   // Custom request deposits land in custom_requests.deposit_amount (dollars, NUMERIC)
-  // with status="accepted". updated_at is set by trigger when webhook marks it accepted.
+  // with status="accepted". deposit_paid_at is set explicitly by the webhook.
   const fetchCustomRequestRevenueCents = async (first: string, last: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("custom_requests")
       .select("deposit_amount")
       .eq("studio_id", studioId)
       .eq("status", "accepted")
-      .gte("updated_at", `${first}T00:00:00`)
-      .lte("updated_at", `${last}T23:59:59`);
+      .gte("deposit_paid_at", `${first}T00:00:00`)
+      .lte("deposit_paid_at", `${last}T23:59:59`);
+    if (error) console.error("[revenue] custom_requests query:", error.code, error.message);
     return Math.round(
       ((data ?? []) as { deposit_amount: number | null }[])
         .reduce((s, r) => s + (r.deposit_amount ?? 0), 0) * 100

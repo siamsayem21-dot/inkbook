@@ -19,6 +19,7 @@ export type CardData = {
   ai_recommended_price_max: number | null;
   final_price: number | null;
   final_sessions: number | null;
+  source: "consultation" | "custom_request";
 };
 
 function fmtDate(d: string) {
@@ -89,20 +90,26 @@ function PipelineCard({
 
       {/* Actions */}
       <div className="px-3 pb-3 flex items-center gap-1.5">
-        <select
-          value={card.status}
-          disabled={moving}
-          onChange={(e) => onMove(card.id, e.target.value)}
-          className="flex-1 min-w-0 text-[9px] bg-[#0d0d0d] border border-[#252525] text-zinc-500 rounded-lg px-2 py-1.5 cursor-pointer focus:outline-none hover:border-zinc-600 transition-colors appearance-none truncate"
-        >
-          {PIPELINE_STAGES.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
-            </option>
-          ))}
-        </select>
+        {card.source === "consultation" ? (
+          <select
+            value={card.status}
+            disabled={moving}
+            onChange={(e) => onMove(card.id, e.target.value)}
+            className="flex-1 min-w-0 text-[9px] bg-[#0d0d0d] border border-[#252525] text-zinc-500 rounded-lg px-2 py-1.5 cursor-pointer focus:outline-none hover:border-zinc-600 transition-colors appearance-none truncate"
+          >
+            {PIPELINE_STAGES.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <span className="flex-1 text-[9px] uppercase tracking-widest text-zinc-600 px-2 py-1.5 border border-[#1E1E1E] rounded-lg truncate">
+            Custom Request
+          </span>
+        )}
         <Link
-          href={`/owner/consultations/${card.id}`}
+          href={card.source === "consultation" ? `/owner/consultations/${card.id}` : `/owner/requests/${card.id}`}
           className="text-[9px] uppercase tracking-widest text-[#D4A853] hover:text-[#C49A3C] transition-colors shrink-0 px-2 py-1.5 border border-[#D4A853]/20 rounded-lg hover:border-[#D4A853]/40"
         >
           Open
@@ -160,20 +167,26 @@ function MobileCard({
         </div>
       </div>
       <div className="px-4 pb-3 flex items-center gap-2">
-        <select
-          value={card.status}
-          disabled={moving}
-          onChange={(e) => onMove(card.id, e.target.value)}
-          className="flex-1 text-[10px] bg-[#0d0d0d] border border-[#252525] text-zinc-500 rounded-lg px-3 py-2 cursor-pointer focus:outline-none hover:border-zinc-600 transition-colors"
-        >
-          {PIPELINE_STAGES.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
-            </option>
-          ))}
-        </select>
+        {card.source === "consultation" ? (
+          <select
+            value={card.status}
+            disabled={moving}
+            onChange={(e) => onMove(card.id, e.target.value)}
+            className="flex-1 text-[10px] bg-[#0d0d0d] border border-[#252525] text-zinc-500 rounded-lg px-3 py-2 cursor-pointer focus:outline-none hover:border-zinc-600 transition-colors"
+          >
+            {PIPELINE_STAGES.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <span className="flex-1 text-[10px] uppercase tracking-widest text-zinc-600 px-3 py-2 border border-[#1E1E1E] rounded-lg truncate">
+            Custom Request
+          </span>
+        )}
         <Link
-          href={`/owner/consultations/${card.id}`}
+          href={card.source === "consultation" ? `/owner/consultations/${card.id}` : `/owner/requests/${card.id}`}
           className="text-[10px] text-[#D4A853] hover:text-[#C49A3C] transition-colors px-3 py-2 border border-[#D4A853]/20 rounded-lg hover:border-[#D4A853]/40 shrink-0"
         >
           Open →

@@ -47,17 +47,19 @@ export async function POST(request: NextRequest) {
     // ── Branch B: custom request deposit ─────────────────────────────────
     if (customRequestId) {
       const supabase = createAdminClient();
+      const now = new Date().toISOString();
 
-      // Step 1: mark accepted + record payment intent
+      // Step 1: mark accepted + record payment intent + set deposit_paid_at
       await supabase
         .from("custom_requests")
         .update({
           status: "accepted",
           stripe_payment_intent_id: session.payment_intent as string,
+          deposit_paid_at: now,
         } as never)
         .eq("id", customRequestId);
 
-      // Step 2: fetch request data needed for notifications
+      // Step 2: fetch request data needed for notifications + client record
       const { data: crRaw } = await supabase
         .from("custom_requests")
         .select("client_name, client_email, client_phone, studio_id, deposit_amount")
@@ -73,6 +75,23 @@ export async function POST(request: NextRequest) {
       } | null;
 
       if (cr) {
+        // Step 3: create client CRM record if not already present for this studio + email
+        const { data: existingClient } = await supabase
+          .from("clients")
+          .select("id")
+          .eq("studio_id", cr.studio_id)
+          .eq("email", cr.client_email)
+          .maybeSingle();
+
+        if (!existingClient) {
+          await supabase.from("clients").insert({
+            studio_id: cr.studio_id,
+            full_name: cr.client_name,
+            email:     cr.client_email,
+            phone:     cr.client_phone,
+          } as never);
+        }
+
         const { data: studioRaw } = await supabase
           .from("studios")
           .select("name, subdomain")
@@ -82,13 +101,13 @@ export async function POST(request: NextRequest) {
         const studioName = (studioRaw as { name: string; subdomain: string } | null)?.name ?? "Studio";
         const studioSlug = (studioRaw as { name: string; subdomain: string } | null)?.subdomain ?? "";
 
-        // Step 3: SMS confirmation (non-blocking)
+        // Step 4: SMS confirmation (non-blocking)
         void trySendSms(
           cr.client_phone,
           `Your custom tattoo deposit at ${studioName} is confirmed. We'll be in touch to schedule your session.`
         );
 
-        // Step 4: email confirmation (non-blocking)
+        // Step 5: email confirmation (non-blocking)
         void sendCustomRequestAcceptedEmail({
           to:            cr.client_email,
           clientName:    cr.client_name,

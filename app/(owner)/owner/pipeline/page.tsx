@@ -12,35 +12,78 @@ export default async function PipelinePage() {
 
   const supabase = createAdminClient();
 
-  const { data, error } = await supabase
-    .from("consultations")
-    .select(
-      "id, client_name, tattoo_description, placement, estimated_size, " +
-      "detected_style, budget_range, status, created_at, " +
-      "ai_recommended_price_min, ai_recommended_price_max, " +
-      "final_price, final_sessions"
-    )
-    .eq("studio_id" as never, studioId)
-    .order("created_at" as never, { ascending: false });
+  const [{ data, error }, { data: crData }] = await Promise.all([
+    supabase
+      .from("consultations")
+      .select(
+        "id, client_name, tattoo_description, placement, estimated_size, " +
+        "detected_style, budget_range, status, created_at, " +
+        "ai_recommended_price_min, ai_recommended_price_max, " +
+        "final_price, final_sessions"
+      )
+      .eq("studio_id" as never, studioId)
+      .order("created_at" as never, { ascending: false }),
+
+    supabase
+      .from("custom_requests")
+      .select("id, client_name, design_description, placement, size, style, budget_range, status, created_at, quote_amount")
+      .eq("studio_id", studioId)
+      .order("created_at", { ascending: false }),
+  ]);
 
   // Normalize legacy "converted" status to "completed" for display.
-  // Both are terminal closed-won states; "converted" has no pipeline column.
-  const consults: CardData[] = ((data ?? []) as CardData[]).map((c) => ({
+  const consults: CardData[] = ((data ?? []) as Omit<CardData, "source">[]).map((c) => ({
     ...c,
     status: c.status === "converted" ? "completed" : c.status,
+    source: "consultation" as const,
   }));
+
+  // Map custom_request statuses → pipeline stages
+  const crStatusMap: Record<string, string> = {
+    pending:   "new",
+    quoted:    "quoted",
+    accepted:  "deposit_paid",
+    declined:  "lost",
+    completed: "completed",
+  };
+  const crCards: CardData[] = ((crData ?? []) as {
+    id: string; client_name: string; design_description: string;
+    placement: string; size: string; style: string | null;
+    budget_range: string; status: string; created_at: string;
+    quote_amount: number | null;
+  }[]).map((cr) => ({
+    id:                        cr.id,
+    client_name:               cr.client_name,
+    tattoo_description:        cr.design_description,
+    placement:                 cr.placement,
+    estimated_size:            cr.size,
+    detected_style:            cr.style ?? null,
+    budget_range:              cr.budget_range,
+    status:                    crStatusMap[cr.status] ?? "new",
+    created_at:                cr.created_at,
+    ai_recommended_price_min:  null,
+    ai_recommended_price_max:  null,
+    final_price:               cr.quote_amount != null ? Math.round(cr.quote_amount) : null,
+    final_sessions:            null,
+    source:                    "custom_request" as const,
+  }));
+
+  // Merge and sort by created_at descending
+  const allCards = [...consults, ...crCards].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
 
   // Stage summary
   const stageSummary = PIPELINE_STAGES.map((s) => ({
     ...s,
-    count: consults.filter((c) => c.status === s.value).length,
+    count: allCards.filter((c) => c.status === s.value).length,
   }));
 
-  const activeCount = consults.filter(
+  const activeCount = allCards.filter(
     (c) => !["completed", "lost"].includes(c.status)
   ).length;
 
-  const convertedCount = consults.filter((c) => c.status === "completed").length;
+  const convertedCount = allCards.filter((c) => c.status === "completed").length;
 
   if (error) {
     return (
@@ -60,7 +103,7 @@ export default async function PipelinePage() {
             Lead Pipeline
           </h1>
           <p className="text-zinc-500 text-sm mt-1">
-            {consults.length} total · {activeCount} active · {convertedCount} completed
+            {allCards.length} total · {activeCount} active · {convertedCount} completed
           </p>
         </div>
       </div>
@@ -81,7 +124,7 @@ export default async function PipelinePage() {
       </div>
 
       {/* Board */}
-      {consults.length === 0 ? (
+      {allCards.length === 0 ? (
         <div className="bg-[#111] border border-[#1E1E1E] rounded-xl px-6 py-16 text-center">
           <p className="font-cinzel text-base font-semibold tracking-wide mb-2">
             Pipeline Empty
@@ -95,7 +138,7 @@ export default async function PipelinePage() {
           </p>
         </div>
       ) : (
-        <PipelineBoard initialConsults={consults} />
+        <PipelineBoard initialConsults={allCards} />
       )}
     </div>
   );
