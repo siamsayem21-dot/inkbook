@@ -13,6 +13,12 @@ const config: Config = {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "monospace"],
       },
+      colors: {
+        gold: {
+          DEFAULT: "#D4A853",
+          light:   "#E8B84B",
+        },
+      },
     },
   },
   plugins: [],
