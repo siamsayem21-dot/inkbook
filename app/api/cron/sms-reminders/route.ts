@@ -20,12 +20,15 @@ export async function GET(request: NextRequest) {
   let sent48hr = 0;
   let sentDayOf = 0;
 
-  // 48-hour reminders
+  // 48-hour reminders.
+  // .not("date", "is", null) excludes awaiting_schedule bookings — those have
+  // a null date and must never be matched by date comparisons.
   const { data: reminders48hr } = await supabase
     .from("bookings")
     .select("id, client_id, studio_id")
     .eq("status", "confirmed")
     .eq("sms_48hr_sent" as never, false)
+    .not("date", "is", null)
     .eq("date", twoDaysOutStr);
 
   for (const row of (reminders48hr ?? []) as { id: string; client_id: string; studio_id: string }[]) {
@@ -46,12 +49,14 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Day-of reminders
+  // Day-of reminders.
+  // Same null-date guard — awaiting_schedule bookings have no date.
   const { data: dayOfBookings } = await supabase
     .from("bookings")
     .select("id, client_id, studio_id")
     .eq("status", "confirmed")
     .eq("sms_day_of_sent" as never, false)
+    .not("date", "is", null)
     .eq("date", today);
 
   for (const row of (dayOfBookings ?? []) as { id: string; client_id: string; studio_id: string }[]) {

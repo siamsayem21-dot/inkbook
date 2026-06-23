@@ -237,12 +237,14 @@ export async function sendCustomRequestDeclinedEmail({
   studioName,
   studioSlug,
   declinedReason,
+  depositWasPaid = false,
 }: {
   to: string;
   clientName: string;
   studioName: string;
   studioSlug: string;
   declinedReason?: string;
+  depositWasPaid?: boolean;
 }) {
   const bookUrl = `${BASE_URL}/book/${studioSlug}`;
   const subject = `Update on your tattoo request — ${studioName}`;
@@ -254,9 +256,10 @@ export async function sendCustomRequestDeclinedEmail({
 <p style="color:#666;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 24px;">Request Update</p>
 <h1 style="color:#E8E8E8;font-size:22px;margin:0 0 8px;">Hi ${clientName},</h1>
 <p style="color:#A0A0A0;font-size:15px;margin:0 0 24px;">
-Thank you for reaching out to <strong style="color:#E8E8E8;">${studioName}</strong>. Unfortunately, the artist is unable to take on this project at this time.
+Thank you for reaching out to <strong style="color:#E8E8E8;">${studioName}</strong>. Unfortunately, the artist is unable to proceed with this project at this time.
 </p>
-${declinedReason ? `<div style="background:#0d0d0d;border:1px solid #1E1E1E;border-radius:10px;padding:20px;margin:0 0 24px;"><p style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin:0 0 6px;">Note from the artist</p><p style="color:#A0A0A0;font-size:14px;margin:0;">${declinedReason}</p></div>` : ""}
+${declinedReason ? `<div style="background:#0d0d0d;border:1px solid #1E1E1E;border-radius:10px;padding:20px;margin:0 0 24px;"><p style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin:0 0 6px;">Note from the studio</p><p style="color:#A0A0A0;font-size:14px;margin:0;">${declinedReason}</p></div>` : ""}
+${depositWasPaid ? `<div style="background:#1a1200;border:1px solid #c9a84c33;border-radius:10px;padding:16px 20px;margin:0 0 24px;"><p style="color:#c9a84c;font-size:13px;margin:0;">Your deposit will be refunded by the studio. Please allow 5–10 business days for the refund to appear on your original payment method. Contact ${studioName} directly if you have questions.</p></div>` : ""}
 <p style="color:#A0A0A0;font-size:14px;margin:0 0 28px;">
 Feel free to browse other artists or submit a new request — we'd love to work with you in the future.
 </p>
@@ -278,6 +281,7 @@ export async function sendCustomRequestAcceptedEmail({
   studioSlug,
   requestId,
   depositAmount,
+  quoteAmount,
 }: {
   to: string;
   clientName: string;
@@ -285,9 +289,12 @@ export async function sendCustomRequestAcceptedEmail({
   studioSlug: string;
   requestId: string;
   depositAmount: number;
+  quoteAmount?: number;
 }) {
   const statusUrl = `${BASE_URL}/book/${studioSlug}/request/${requestId}`;
   const subject = `Deposit received — ${studioName} will be in touch`;
+  const remaining = quoteAmount != null ? quoteAmount - depositAmount : null;
+
   const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0A0A0A;font-family:sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0A0A;padding:40px 16px;">
 <tr><td align="center">
@@ -301,13 +308,21 @@ export async function sendCustomRequestAcceptedEmail({
 </p>
 <table width="100%" cellpadding="10" cellspacing="0" style="background:#0d0d0d;border:1px solid #1E1E1E;border-radius:10px;margin:0 0 28px;">
   <tr>
-    <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;width:140px;">Studio</td>
+    <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;width:160px;">Studio</td>
     <td style="color:#E8E8E8;font-size:14px;">${studioName}</td>
   </tr>
+  ${quoteAmount != null ? `<tr>
+    <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;">Total price</td>
+    <td style="color:#E8E8E8;font-size:14px;">$${quoteAmount.toFixed(2)}</td>
+  </tr>` : ""}
   <tr>
     <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;">Deposit paid</td>
-    <td style="color:#c9a84c;font-size:14px;font-weight:700;">$${depositAmount.toFixed(2)}</td>
+    <td style="color:#c9a84c;font-size:14px;font-weight:700;">$${depositAmount.toFixed(2)} ✓</td>
   </tr>
+  ${remaining != null ? `<tr>
+    <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;">Balance at session</td>
+    <td style="color:#E8E8E8;font-size:14px;">$${remaining.toFixed(2)}</td>
+  </tr>` : ""}
   <tr>
     <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;">Next step</td>
     <td style="color:#A0A0A0;font-size:14px;">Studio will contact you to schedule</td>
@@ -322,6 +337,143 @@ View Request Status →
   </p>
 </div>
 <p style="color:#555;font-size:12px;margin:24px 0 0;text-align:center;">Powered by InkBook &middot; inkbook.tech</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+  await sendEmail(to, subject, html);
+}
+
+export async function sendOwnerDepositNotificationEmail({
+  to,
+  clientName,
+  studioName,
+  depositAmount,
+  quoteAmount,
+  scheduleUrl,
+}: {
+  to: string;
+  clientName: string;
+  studioName: string;
+  depositAmount: number;
+  quoteAmount: number;
+  scheduleUrl: string;
+}) {
+  const subject = `Action required: Schedule ${clientName}'s session — ${studioName}`;
+  const remaining = quoteAmount - depositAmount;
+
+  const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0A0A0A;font-family:sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0A0A;padding:40px 16px;">
+<tr><td align="center">
+<table width="520" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1E1E1E;border-radius:16px;padding:40px;">
+<tr><td>
+<p style="color:#c9a84c;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 24px;">Deposit Received</p>
+<h1 style="color:#E8E8E8;font-size:22px;font-weight:700;margin:0 0 8px;">Schedule ${clientName}'s session</h1>
+<p style="color:#A0A0A0;font-size:15px;margin:0 0 28px;">
+  <strong style="color:#c9a84c;">${clientName}</strong> has paid their deposit for a custom tattoo at
+  <strong style="color:#E8E8E8;">${studioName}</strong>. Assign a date and time to complete the booking.
+</p>
+<table width="100%" cellpadding="10" cellspacing="0" style="background:#0d0d0d;border:1px solid #1E1E1E;border-radius:10px;margin:0 0 28px;">
+  <tr>
+    <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;width:160px;">Client</td>
+    <td style="color:#E8E8E8;font-size:14px;">${clientName}</td>
+  </tr>
+  <tr>
+    <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;">Deposit received</td>
+    <td style="color:#c9a84c;font-size:14px;font-weight:700;">$${depositAmount.toFixed(2)}</td>
+  </tr>
+  <tr>
+    <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;">Balance at session</td>
+    <td style="color:#E8E8E8;font-size:14px;">$${remaining.toFixed(2)}</td>
+  </tr>
+  <tr>
+    <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;">Total quote</td>
+    <td style="color:#E8E8E8;font-size:14px;">$${quoteAmount.toFixed(2)}</td>
+  </tr>
+</table>
+<a href="${scheduleUrl}" style="display:inline-block;background:#c9a84c;color:#000;font-weight:700;font-size:15px;text-decoration:none;padding:14px 28px;border-radius:10px;">
+Schedule Session →
+</a>
+<p style="color:#555;font-size:12px;margin:28px 0 0;text-align:center;">Powered by InkBook &middot; inkbook.tech</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+  await sendEmail(to, subject, html);
+}
+
+export async function sendSessionScheduledEmail({
+  to,
+  clientName,
+  artistName,
+  studioName,
+  studioAddress,
+  date,
+  time,
+  depositAmountCents,
+  totalAmountCents,
+}: {
+  to: string;
+  clientName: string;
+  artistName: string;
+  studioName: string;
+  studioAddress: string | null;
+  date: string;
+  time: string;
+  depositAmountCents: number;
+  totalAmountCents: number;
+}) {
+  const subject = `Your session is scheduled — ${studioName}`;
+  const depositDisplay  = `$${(depositAmountCents / 100).toFixed(2)}`;
+  const remainingCents  = totalAmountCents - depositAmountCents;
+  const remainingDisplay = `$${(remainingCents / 100).toFixed(2)}`;
+
+  const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0A0A0A;font-family:sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0A0A;padding:40px 16px;">
+<tr><td align="center">
+<table width="520" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1E1E1E;border-radius:16px;padding:40px;">
+<tr><td>
+<p style="color:#c9a84c;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 24px;">Session Scheduled</p>
+<h1 style="color:#E8E8E8;font-size:22px;font-weight:700;margin:0 0 8px;">You&apos;re booked in, ${clientName}.</h1>
+<p style="color:#A0A0A0;font-size:15px;margin:0 0 28px;">
+  Your custom session with <strong style="color:#c9a84c;">${artistName}</strong> at
+  <strong style="color:#E8E8E8;">${studioName}</strong> has been scheduled.
+</p>
+<table width="100%" cellpadding="10" cellspacing="0" style="background:#0d0d0d;border:1px solid #1E1E1E;border-radius:10px;margin:0 0 28px;">
+  <tr>
+    <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;width:160px;">Artist</td>
+    <td style="color:#E8E8E8;font-size:14px;">${artistName}</td>
+  </tr>
+  <tr>
+    <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;">Date</td>
+    <td style="color:#E8E8E8;font-size:14px;">${date}</td>
+  </tr>
+  <tr>
+    <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;">Time</td>
+    <td style="color:#E8E8E8;font-size:14px;">${time}</td>
+  </tr>
+  ${studioAddress ? `<tr>
+    <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;vertical-align:top;">Location</td>
+    <td style="color:#A0A0A0;font-size:14px;">${studioAddress}</td>
+  </tr>` : ""}
+  <tr>
+    <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;">Deposit paid</td>
+    <td style="color:#c9a84c;font-size:14px;font-weight:700;">${depositDisplay} ✓</td>
+  </tr>
+  <tr>
+    <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;">Balance at session</td>
+    <td style="color:#E8E8E8;font-size:14px;">${remainingDisplay}</td>
+  </tr>
+</table>
+<div style="background:#0d0d0d;border:1px solid #1E1E1E;border-radius:10px;padding:16px 20px;margin:0 0 28px;">
+  <p style="color:#A0A0A0;font-size:13px;margin:0;">
+    Please arrive on time. Your remaining balance of <strong style="color:#E8E8E8;">${remainingDisplay}</strong> is
+    due at the end of your session. Your deposit is non-refundable for no-shows or cancellations within 48 hours.
+  </p>
+</div>
+<p style="color:#555;font-size:12px;margin:0;text-align:center;">Powered by InkBook &middot; inkbook.tech</p>
 </td></tr>
 </table>
 </td></tr>

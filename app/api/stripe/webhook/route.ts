@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe/client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildSmsMessage, trySendSms } from "@/lib/twilio/client";
-import { sendBookingConfirmationEmail, sendCustomRequestAcceptedEmail } from "@/lib/email";
+import {
+  sendBookingConfirmationEmail,
+  sendCustomRequestAcceptedEmail,
+  sendOwnerDepositNotificationEmail,
+} from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   // ── 1. Read raw body — must be text/buffer before any parsing ────────────
@@ -19,7 +23,6 @@ export async function POST(request: NextRequest) {
   }
 
   // ── 2. Verify Stripe signature ────────────────────────────────────────────
-  // constructEvent throws if the signature doesn't match — never skip this.
   let event;
   try {
     const stripe = getStripe();
@@ -37,179 +40,19 @@ export async function POST(request: NextRequest) {
     const customRequestId  = session.metadata?.customRequestId;
     const bookingId        = session.metadata?.bookingId;
 
-    // ── Branch A: new deposit_payments flow ──────────────────────────────
-    // Triggered when the owner uses "Send Deposit Request" from the dashboard.
-    // depositPaymentId is always set by sendDepositRequest() in actions.ts.
+    // ── Branch A: deposit_payments flow ──────────────────────────────────
     if (depositPaymentId) {
       return handleDepositPayment(session);
     }
 
     // ── Branch B: custom request deposit ─────────────────────────────────
     if (customRequestId) {
-      const supabase = createAdminClient();
-      const now = new Date().toISOString();
-
-      // Step 1a: critical update — status + payment intent (always works, no new columns)
-      const { error: statusUpdateError } = await supabase
-        .from("custom_requests")
-        .update({
-          status: "accepted",
-          stripe_payment_intent_id: session.payment_intent as string,
-        } as never)
-        .eq("id", customRequestId);
-
-      if (statusUpdateError) {
-        console.error("[stripe/webhook] custom_request status update failed:", statusUpdateError.code, statusUpdateError.message);
-        return NextResponse.json({ error: "DB error" }, { status: 500 });
-      }
-
-      // Step 1b: best-effort — set deposit_paid_at (only exists after migration 20260622000006)
-      await supabase
-        .from("custom_requests")
-        .update({ deposit_paid_at: now } as never)
-        .eq("id", customRequestId);
-
-      // Step 2: fetch request data needed for notifications + client record
-      const { data: crRaw } = await supabase
-        .from("custom_requests")
-        .select("client_name, client_email, client_phone, studio_id, deposit_amount")
-        .eq("id", customRequestId)
-        .single();
-
-      const cr = crRaw as {
-        client_name: string;
-        client_email: string;
-        client_phone: string;
-        studio_id: string;
-        deposit_amount: number | null;
-      } | null;
-
-      if (cr) {
-        // Step 3: create client CRM record if not already present for this studio + email
-        const { data: existingClient } = await supabase
-          .from("clients")
-          .select("id")
-          .eq("studio_id", cr.studio_id)
-          .eq("email", cr.client_email)
-          .maybeSingle();
-
-        if (!existingClient) {
-          await supabase.from("clients").insert({
-            studio_id: cr.studio_id,
-            full_name: cr.client_name,
-            email:     cr.client_email,
-            phone:     cr.client_phone,
-          } as never);
-        }
-
-        const { data: studioRaw } = await supabase
-          .from("studios")
-          .select("name, subdomain")
-          .eq("id", cr.studio_id)
-          .single();
-
-        const studioName = (studioRaw as { name: string; subdomain: string } | null)?.name ?? "Studio";
-        const studioSlug = (studioRaw as { name: string; subdomain: string } | null)?.subdomain ?? "";
-
-        // Step 4: SMS confirmation (non-blocking)
-        void trySendSms(
-          cr.client_phone,
-          `Your custom tattoo deposit at ${studioName} is confirmed. We'll be in touch to schedule your session.`
-        );
-
-        // Step 5: email confirmation (non-blocking)
-        void sendCustomRequestAcceptedEmail({
-          to:            cr.client_email,
-          clientName:    cr.client_name,
-          studioName,
-          studioSlug,
-          requestId:     customRequestId,
-          depositAmount: cr.deposit_amount ?? 0,
-        });
-      }
-
-      return NextResponse.json({ received: true });
+      return handleCustomRequestDeposit(session, customRequestId, event.created);
     }
 
-    // ── Branch C: legacy booking deposit (existing flow — unchanged) ──────
-    // Kept for sessions created before deposit_payments was introduced.
+    // ── Branch C: legacy booking deposit (unchanged) ──────────────────────
     if (bookingId) {
-      const supabase = createAdminClient();
-      const now = new Date().toISOString();
-
-      await Promise.all([
-        supabase
-          .from("bookings")
-          .update({
-            status: "confirmed",
-            deposit_paid: true,
-            deposit_paid_at: now,
-          } as never)
-          .eq("id", bookingId),
-        supabase
-          .from("deposits")
-          .update({
-            status: "paid",
-            paid_at: now,
-            stripe_payment_intent_id: session.payment_intent as string,
-          } as never)
-          .eq("booking_id", bookingId),
-      ]);
-
-      // Send booking_confirmed SMS + email (non-blocking)
-      const { data: bookingRow } = await supabase
-        .from("bookings")
-        .select("client_id, artist_id, studio_id, date, time, deposit_amount_cents")
-        .eq("id", bookingId)
-        .single();
-
-      if (bookingRow) {
-        const { client_id, artist_id, studio_id, date, time, deposit_amount_cents } = bookingRow as {
-          client_id: string;
-          artist_id: string;
-          studio_id: string;
-          date: string;
-          time: string;
-          deposit_amount_cents: number;
-        };
-
-        const [{ data: clientData }, { data: artistData }, { data: studioData }] = await Promise.all([
-          supabase.from("clients").select("full_name, email, phone").eq("id", client_id).single(),
-          supabase.from("artists").select("name").eq("id", artist_id).single(),
-          supabase.from("studios").select("name, address").eq("id", studio_id).single(),
-        ]);
-
-        const client     = clientData as { full_name: string; email: string; phone: string } | null;
-        const artistName = (artistData as { name: string } | null)?.name ?? "your artist";
-        const studioName = (studioData as { name: string; address: string | null } | null)?.name;
-        const studioAddr = (studioData as { name: string; address: string | null } | null)?.address ?? null;
-
-        if (client?.phone && studioName) {
-          void trySendSms(client.phone, buildSmsMessage("booking_confirmed", studioName));
-        }
-
-        if (client?.email && studioName) {
-          const formattedDate = new Date(date + "T12:00:00").toLocaleDateString("en-US", {
-            weekday: "long", month: "long", day: "numeric",
-          });
-          try {
-            await sendBookingConfirmationEmail({
-              to: client.email,
-              clientName: client.full_name,
-              artistName,
-              studioName,
-              studioAddress: studioAddr,
-              date: formattedDate,
-              time: time.slice(0, 5),
-              depositAmountCents: deposit_amount_cents,
-            });
-          } catch (err) {
-            console.error("[stripe/webhook] email send failed:", err);
-          }
-        }
-      }
-
-      return NextResponse.json({ received: true });
+      return handleLegacyBookingDeposit(session, bookingId);
     }
 
     console.error("[stripe/webhook] checkout.session.completed — no recognised metadata keys", session.id);
@@ -218,23 +61,160 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ received: true });
 }
 
-// ── Handler: deposit_payments flow ───────────────────────────────────────────
-// Owns ALL checkout.session.completed events that carry metadata.depositPaymentId.
-// /api/billing/webhook skips those events entirely (routing boundary enforced there).
-//
-// Lookup strategy: prefer depositPaymentId from metadata (always present, direct PK)
-// and fall back to stripe_checkout_session_id for any edge case where metadata is
-// missing (e.g. legacy resent events). This makes the handler resilient to timing
-// gaps where sendDepositRequest() hasn't yet persisted the session ID to the DB.
+// ── Branch B: Custom Request Deposit ─────────────────────────────────────────
+// Triggered when a client pays a deposit for a custom request quote.
+// Calls the process_custom_request_deposit RPC which atomically:
+//   1. Creates the booking (status: awaiting_schedule)
+//   2. Creates the deposit record (status: paid)
+//   3. Updates custom_requests (status: accepted, booking_id linked)
+// All writes are idempotent — safe for Stripe retries.
+async function handleCustomRequestDeposit(
+  session: { id: string; payment_intent: unknown; metadata: Record<string, string> | null },
+  customRequestId: string,
+  eventCreatedAt: number
+): Promise<NextResponse> {
+  const supabase = createAdminClient();
+
+  // Pre-flight: fetch the custom request for notifications and the fast-path
+  // status guard. If not found, log and return 200 — retrying won't help.
+  const { data: crRaw } = await supabase
+    .from("custom_requests")
+    .select("studio_id, artist_id, client_name, client_email, client_phone, status, deposit_amount, quote_amount")
+    .eq("id", customRequestId)
+    .single();
+
+  if (!crRaw) {
+    console.error("[stripe/webhook] Branch B: custom_request not found — id:", customRequestId);
+    return NextResponse.json({ received: true });
+  }
+
+  const cr = crRaw as {
+    studio_id:      string;
+    artist_id:      string | null;
+    client_name:    string;
+    client_email:   string;
+    client_phone:   string;
+    status:         string;
+    deposit_amount: number | null;
+    quote_amount:   number | null;
+  };
+
+  // Application-level status guard (fast path before hitting the RPC).
+  // The RPC also checks this with a FOR UPDATE lock — this avoids the DB
+  // round trip on the common case of a re-delivered event.
+  if (cr.status !== "quoted") {
+    console.log("[stripe/webhook] Branch B: fast-path skip — status:", cr.status, "id:", customRequestId);
+    return NextResponse.json({ received: true });
+  }
+
+  // Compute the paid_at timestamp from the Stripe session creation time.
+  const paidAt = new Date(eventCreatedAt * 1000).toISOString();
+
+  // Call the atomic RPC — all DB writes happen inside a single transaction.
+  // If this throws or returns an error, return 500 so Stripe retries.
+  const { data: rpcRaw, error: rpcError } = await (supabase as ReturnType<typeof createAdminClient>)
+    .rpc("process_custom_request_deposit" as never, {
+      p_stripe_session_id:  session.id,
+      p_custom_request_id:  customRequestId,
+      p_payment_intent_id:  session.payment_intent as string,
+      p_paid_at:            paidAt,
+    } as never);
+
+  if (rpcError) {
+    console.error("[stripe/webhook] Branch B: RPC error:", rpcError);
+    return NextResponse.json({ error: "DB error" }, { status: 500 });
+  }
+
+  const result = rpcRaw as { outcome: string; booking_id?: string } | null;
+
+  switch (result?.outcome) {
+    case "already_processed":
+      console.log("[stripe/webhook] Branch B: already processed — session:", session.id);
+      return NextResponse.json({ received: true });
+
+    case "conflict":
+      // Status was not 'quoted' at the DB level — stale payment or duplicate.
+      console.warn("[stripe/webhook] Branch B: conflict — status not quoted at DB level — id:", customRequestId);
+      return NextResponse.json({ received: true });
+
+    case "not_found":
+      console.error("[stripe/webhook] Branch B: RPC not_found — id:", customRequestId);
+      return NextResponse.json({ received: true });
+
+    case "missing_artist":
+      // Quote was sent without an artist assigned. The B2 fix prevents future
+      // occurrences. Existing affected requests require manual studio intervention.
+      console.error("[stripe/webhook] Branch B: missing_artist — id:", customRequestId, "— manual fix required");
+      return NextResponse.json({ received: true });
+
+    case "success":
+      break; // continue to notifications
+
+    default:
+      console.error("[stripe/webhook] Branch B: unexpected RPC outcome:", result?.outcome);
+      return NextResponse.json({ error: "Unexpected RPC outcome" }, { status: 500 });
+  }
+
+  // ── Notifications (non-blocking — failures are logged, not thrown) ────────
+  // Fetch studio data for notification content and the owner email.
+  const { data: studioRaw } = await supabase
+    .from("studios")
+    .select("name, subdomain, owner_id")
+    .eq("id", cr.studio_id)
+    .single();
+
+  const studio = studioRaw as { name: string; subdomain: string; owner_id: string } | null;
+  const studioName = studio?.name ?? "Studio";
+  const studioSlug = studio?.subdomain ?? "";
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.inkbook.tech";
+
+  // SMS to client
+  void trySendSms(
+    cr.client_phone,
+    `Your custom tattoo deposit at ${studioName} is confirmed. We'll be in touch shortly to schedule your session.`
+  );
+
+  // Deposit confirmation email to client with full financial breakdown
+  void sendCustomRequestAcceptedEmail({
+    to:            cr.client_email,
+    clientName:    cr.client_name,
+    studioName,
+    studioSlug,
+    requestId:     customRequestId,
+    depositAmount: cr.deposit_amount ?? 0,
+    quoteAmount:   cr.quote_amount ?? undefined,
+  });
+
+  // Action-required email to studio owner
+  if (studio?.owner_id) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: ownerUserData } = await (supabase as any).auth.admin.getUserById(studio.owner_id);
+    const ownerEmail: string | undefined = ownerUserData?.user?.email;
+
+    if (ownerEmail && cr.deposit_amount != null && cr.quote_amount != null) {
+      void sendOwnerDepositNotificationEmail({
+        to:            ownerEmail,
+        clientName:    cr.client_name,
+        studioName,
+        depositAmount: cr.deposit_amount,
+        quoteAmount:   cr.quote_amount,
+        scheduleUrl:   `${baseUrl}/owner/requests/${customRequestId}`,
+      });
+    }
+  }
+
+  console.log("[stripe/webhook] Branch B: success — customRequestId:", customRequestId, "| bookingId:", result?.booking_id);
+  return NextResponse.json({ received: true });
+}
+
+// ── Branch A: deposit_payments flow ──────────────────────────────────────────
 async function handleDepositPayment(
   session: { id: string; payment_intent: unknown; metadata: Record<string, string> | null }
 ): Promise<NextResponse> {
   const supabase = createAdminClient();
   const now = new Date().toISOString();
 
-  // ── Step 1: find deposit_payment ─────────────────────────────────────────
-  // Primary: look up by depositPaymentId in metadata (direct PK, always reliable).
-  // Fallback: look up by stripe_checkout_session_id (covers legacy/re-sent events).
   const depositPaymentId = session.metadata?.depositPaymentId ?? null;
 
   let dpRows: Array<{ id: string; booking_id: string; payment_status: string }> | null = null;
@@ -276,14 +256,10 @@ async function handleDepositPayment(
     return NextResponse.json({ received: true });
   }
 
-  // Idempotency guard — already processed (Stripe may deliver the event more than once)
   if (dp.payment_status === "paid") {
     return NextResponse.json({ received: true });
   }
 
-  // ── Step 2: update deposit_payments ──────────────────────────────────────
-  // Uses the typed table (no cast) — the cast on the select above is needed only for
-  // the PostgREST select-shape inference; the update reads the proper Database type.
   const { error: dpUpdateError } = await (supabase
     .from("deposit_payments") as ReturnType<typeof supabase.from>)
     .update({
@@ -298,7 +274,6 @@ async function handleDepositPayment(
     return NextResponse.json({ error: "DB error" }, { status: 500 });
   }
 
-  // ── Step 3: confirm the booking ───────────────────────────────────────────
   const { error: bookingUpdateError } = await supabase
     .from("bookings")
     .update({
@@ -310,20 +285,14 @@ async function handleDepositPayment(
 
   if (bookingUpdateError) {
     console.error("[stripe/webhook] bookings update failed:", bookingUpdateError);
-    // deposit_payments is already marked paid — return 500 so Stripe retries
-    // and we can reconcile the booking update on the next attempt.
     return NextResponse.json({ error: "DB error" }, { status: 500 });
   }
 
-  // ── Step 4: advance consultation pipeline to deposit_paid ─────────────────
-  // No-op if no consultation is linked to this booking (e.g. direct self-serve
-  // bookings don't have a consultation row). Safe to run unconditionally.
   await supabase
     .from("consultations")
     .update({ status: "deposit_paid" } as never)
     .eq("booking_id" as never, dp.booking_id);
 
-  // ── Step 5: send SMS + email confirmation ────────────────────────────────
   const { data: bookingRow } = await supabase
     .from("bookings")
     .select("client_id, artist_id, studio_id, date, time, deposit_amount_cents")
@@ -371,11 +340,93 @@ async function handleDepositPayment(
           depositAmountCents: deposit_amount_cents,
         });
       } catch (err) {
-        console.error("[stripe/webhook] confirmation email failed (deposit_payments flow):", err);
+        console.error("[stripe/webhook] email send failed:", err);
       }
     }
   }
 
   console.log("[stripe/webhook] deposit confirmed — booking:", dp.booking_id, "| dp:", dp.id);
+  return NextResponse.json({ received: true });
+}
+
+// ── Branch C: Legacy booking deposit (unchanged) ──────────────────────────────
+async function handleLegacyBookingDeposit(
+  session: { id: string; payment_intent: unknown; metadata: Record<string, string> | null },
+  bookingId: string
+): Promise<NextResponse> {
+  const supabase = createAdminClient();
+  const now = new Date().toISOString();
+
+  await Promise.all([
+    supabase
+      .from("bookings")
+      .update({
+        status:          "confirmed",
+        deposit_paid:    true,
+        deposit_paid_at: now,
+      } as never)
+      .eq("id", bookingId),
+    supabase
+      .from("deposits")
+      .update({
+        status:                   "paid",
+        paid_at:                  now,
+        stripe_payment_intent_id: session.payment_intent as string,
+      } as never)
+      .eq("booking_id", bookingId),
+  ]);
+
+  const { data: bookingRow } = await supabase
+    .from("bookings")
+    .select("client_id, artist_id, studio_id, date, time, deposit_amount_cents")
+    .eq("id", bookingId)
+    .single();
+
+  if (bookingRow) {
+    const { client_id, artist_id, studio_id, date, time, deposit_amount_cents } = bookingRow as {
+      client_id: string;
+      artist_id: string;
+      studio_id: string;
+      date: string;
+      time: string;
+      deposit_amount_cents: number;
+    };
+
+    const [{ data: clientData }, { data: artistData }, { data: studioData }] = await Promise.all([
+      supabase.from("clients").select("full_name, email, phone").eq("id", client_id).single(),
+      supabase.from("artists").select("name").eq("id", artist_id).single(),
+      supabase.from("studios").select("name, address").eq("id", studio_id).single(),
+    ]);
+
+    const client     = clientData as { full_name: string; email: string; phone: string } | null;
+    const artistName = (artistData as { name: string } | null)?.name ?? "your artist";
+    const studioName = (studioData as { name: string; address: string | null } | null)?.name;
+    const studioAddr = (studioData as { name: string; address: string | null } | null)?.address ?? null;
+
+    if (client?.phone && studioName) {
+      void trySendSms(client.phone, buildSmsMessage("booking_confirmed", studioName));
+    }
+
+    if (client?.email && studioName) {
+      const formattedDate = new Date(date + "T12:00:00").toLocaleDateString("en-US", {
+        weekday: "long", month: "long", day: "numeric",
+      });
+      try {
+        await sendBookingConfirmationEmail({
+          to: client.email,
+          clientName: client.full_name,
+          artistName,
+          studioName,
+          studioAddress: studioAddr,
+          date: formattedDate,
+          time: time.slice(0, 5),
+          depositAmountCents: deposit_amount_cents,
+        });
+      } catch (err) {
+        console.error("[stripe/webhook] legacy branch email failed:", err);
+      }
+    }
+  }
+
   return NextResponse.json({ received: true });
 }
