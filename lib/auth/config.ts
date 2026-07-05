@@ -23,21 +23,22 @@ export const getStudioId = cache(async (): Promise<string | null> => {
 
   const supabase = createAdminClient();
 
-  const { data: studio } = await supabase
+  // .limit(1) — .maybeSingle() errors (and returns null) when multiple rows match
+  const { data: studios } = await supabase
     .from("studios")
     .select("id")
     .eq("owner_id", user.id)
-    .maybeSingle();
+    .limit(1);
 
-  if (studio) return (studio as { id: string }).id;
+  if (studios && studios.length > 0) return (studios[0] as { id: string }).id;
 
-  const { data: artist } = await supabase
+  const { data: artists } = await supabase
     .from("artists")
     .select("studio_id")
     .eq("user_id", user.id)
-    .maybeSingle();
+    .limit(1);
 
-  return (artist as { studio_id: string } | null)?.studio_id ?? null;
+  return (artists?.[0] as { studio_id: string } | undefined)?.studio_id ?? null;
 });
 
 export async function getUserRole(userId: string): Promise<UserRole | null> {
