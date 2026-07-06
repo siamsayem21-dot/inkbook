@@ -9,6 +9,15 @@
 # testing
 /coverage
 /.test-screenshots
+/test-results
+/playwright-report
+/playwright/.cache
+/blob-report
+/reports
+
+# supabase local dev
+/supabase/.branches
+/supabase/.temp
 
 # next.js
 /.next/

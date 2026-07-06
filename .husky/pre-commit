@@ -1,0 +1,2 @@
+# Fast suite only (mocked, ~2s) — component/DB/E2E suites run in CI, not here.
+npm test

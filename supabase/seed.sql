@@ -1,0 +1,2 @@
+-- Intentionally empty. DB verification tests (tests/db/) create and tear down
+-- their own fixture data against a fresh local Supabase instance.

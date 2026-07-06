@@ -1,0 +1,172 @@
+name: Test
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  CRON_SECRET: test-cron-secret
+  NEXT_PUBLIC_APP_URL: http://localhost:3000
+  # Test-mode only. Add these as repo secrets to unlock the deposit-payment,
+  # consent-form, and dashboard-confirmation steps of the E2E suite — without
+  # them those steps are skipped (not failed), everything else still runs.
+  STRIPE_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_TEST_PUBLISHABLE_KEY }}
+  STRIPE_WEBHOOK_SECRET: whsec_dummy_billing
+  STRIPE_DEPOSIT_WEBHOOK_SECRET: whsec_dummy_deposit
+  NEXT_PUBLIC_STRIPE_SOLO_PRICE_ID: price_dummy_solo
+  NEXT_PUBLIC_STRIPE_STUDIO_PRICE_ID: price_dummy_studio
+  NEXT_PUBLIC_STRIPE_PRO_PRICE_ID: price_dummy_pro
+
+jobs:
+  # ── Fast suite: mocked, offline — unit (Vitest) + component (Playwright CT) ──
+  fast:
+    name: Unit + Component
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit -p tsconfig.json
+
+      - name: Unit tests (with coverage)
+        run: npm run test:coverage
+
+      - name: Unit tests (JSON report for dashboard)
+        run: npx vitest run --reporter=json --outputFile=reports/vitest-unit.json
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Component tests
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: reports/ct.json
+        run: npx playwright test -c playwright-ct.config.ts --reporter=list,json
+
+      - name: Coverage-by-feature report
+        run: node scripts/coverage-by-feature.mjs
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fast-suite-reports
+          path: |
+            reports/
+            coverage/coverage-summary.json
+          retention-days: 14
+
+  # ── Slow suite: live DB verification + full-browser E2E ──────────────────
+  # Needs Docker for `supabase start` — GitHub-hosted ubuntu runners have it
+  # preinstalled, no local machine needs Docker for this to work in CI.
+  db-and-e2e:
+    name: DB Verification + E2E
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start local Supabase (applies all migrations)
+        run: supabase start
+
+      - name: Export Supabase connection env
+        run: |
+          supabase status -o env > /tmp/supabase-status.env
+          cat /tmp/supabase-status.env
+          set -a
+          source /tmp/supabase-status.env
+          set +a
+          : "${API_URL:?API_URL missing from supabase status output — CLI output format may have changed}"
+          : "${SERVICE_ROLE_KEY:?SERVICE_ROLE_KEY missing from supabase status output}"
+          : "${ANON_KEY:?ANON_KEY missing from supabase status output}"
+          : "${DB_URL:?DB_URL missing from supabase status output}"
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_DB_URL=$DB_URL"
+          } >> "$GITHUB_ENV"
+
+      - name: DB verification tests
+        run: npx vitest run -c vitest.config.db.ts --reporter=list,json --outputFile=reports/vitest-db.json
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build app
+        run: npm run build
+
+      - name: E2E tests (full owner workflow)
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: reports/e2e.json
+        run: npx playwright test -c playwright-e2e.config.ts --reporter=list,json
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: db-e2e-reports
+          path: |
+            reports/
+            playwright-report/
+            test-results/
+          retention-days: 14
+
+  # ── Aggregate everything into one dashboard, regardless of pass/fail ──────
+  dashboard:
+    name: Test Dashboard
+    needs: [fast, db-and-e2e]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: fast-suite-reports
+          path: .
+        continue-on-error: true
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: db-e2e-reports
+          path: .
+        continue-on-error: true
+
+      - name: Generate dashboard
+        run: node scripts/generate-test-dashboard.mjs
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-dashboard
+          path: reports/dashboard.html
+          retention-days: 30

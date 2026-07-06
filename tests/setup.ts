@@ -1,0 +1,11 @@
+process.env.NEXT_PUBLIC_SUPABASE_URL ??= "http://localhost:54321";
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??= "test-anon-key";
+process.env.SUPABASE_SERVICE_ROLE_KEY ??= "test-service-role-key";
+process.env.CRON_SECRET ??= "test-cron-secret";
+process.env.NEXT_PUBLIC_APP_URL ??= "http://localhost:3000";
+process.env.STRIPE_SECRET_KEY ??= "sk_test_dummy";
+process.env.STRIPE_WEBHOOK_SECRET ??= "whsec_billing_dummy";
+process.env.STRIPE_DEPOSIT_WEBHOOK_SECRET ??= "whsec_deposit_dummy";
+process.env.NEXT_PUBLIC_STRIPE_SOLO_PRICE_ID ??= "price_solo";
+process.env.NEXT_PUBLIC_STRIPE_STUDIO_PRICE_ID ??= "price_studio";
+process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID ??= "price_pro";
