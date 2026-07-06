@@ -12,9 +12,10 @@ env:
   NEXT_PUBLIC_APP_URL: http://localhost:3000
   STRIPE_WEBHOOK_SECRET: whsec_dummy_billing
   STRIPE_DEPOSIT_WEBHOOK_SECRET: whsec_dummy_deposit
-  NEXT_PUBLIC_STRIPE_SOLO_PRICE_ID: price_dummy_solo
-  NEXT_PUBLIC_STRIPE_STUDIO_PRICE_ID: price_dummy_studio
-  NEXT_PUBLIC_STRIPE_PRO_PRICE_ID: price_dummy_pro
+  # NEXT_PUBLIC_STRIPE_*_PRICE_ID intentionally NOT set here — tests/setup.ts's
+  # own defaults (price_solo/price_studio/price_pro) match what the unit tests
+  # hardcode. Setting a different dummy value here would win (non-empty beats
+  # tests/setup.ts's fallback) and silently break the price->plan mapping test.
 
 jobs:
   # ── Fast suite: mocked, offline — unit (Vitest) + component (Playwright CT) ──
@@ -112,7 +113,7 @@ jobs:
           } >> "$GITHUB_ENV"
 
       - name: DB verification tests
-        run: npx vitest run -c vitest.config.db.ts --reporter=list,json --outputFile=reports/vitest-db.json
+        run: npx vitest run -c vitest.config.db.ts --reporter=default --reporter=json --outputFile=reports/vitest-db.json
 
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium

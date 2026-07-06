@@ -156,7 +156,8 @@
       "Bash(where.exe gh *)",
       "Read(//c/Users/asiacom/.config/**)",
       "Read(//c/Users/asiacom/.config/gh/**)",
-      "Bash(npx -y js-yaml .github/workflows/test.yml)"
+      "Bash(npx -y js-yaml .github/workflows/test.yml)",
+      "Bash(rm -rf reports)"
     ],
     "additionalDirectories": [
       "c:\\Users\\asiacom\\Desktop"
