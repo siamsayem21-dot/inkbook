@@ -4,7 +4,7 @@
 // have produced their reports/*.json — see .github/workflows/test.yml.
 // Safe to run with any subset missing (renders "not run" for that suite).
 
-import { readFileSync, writeFileSync, existsSync } from "fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -229,5 +229,6 @@ const html = `<!doctype html>
 </body>
 </html>`;
 
+mkdirSync(REPORTS, { recursive: true });
 writeFileSync(path.join(REPORTS, "dashboard.html"), html);
 console.log(`Dashboard written to reports/dashboard.html — ${grandTotal} tests total, ${grandFailed} failed.`);

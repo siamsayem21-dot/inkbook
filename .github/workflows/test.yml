@@ -10,11 +10,6 @@ on:
 env:
   CRON_SECRET: test-cron-secret
   NEXT_PUBLIC_APP_URL: http://localhost:3000
-  # Test-mode only. Add these as repo secrets to unlock the deposit-payment,
-  # consent-form, and dashboard-confirmation steps of the E2E suite — without
-  # them those steps are skipped (not failed), everything else still runs.
-  STRIPE_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
-  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_TEST_PUBLISHABLE_KEY }}
   STRIPE_WEBHOOK_SECRET: whsec_dummy_billing
   STRIPE_DEPOSIT_WEBHOOK_SECRET: whsec_dummy_deposit
   NEXT_PUBLIC_STRIPE_SOLO_PRICE_ID: price_dummy_solo
@@ -35,6 +30,8 @@ jobs:
           cache: npm
 
       - run: npm ci
+
+      - run: mkdir -p reports
 
       - name: Typecheck
         run: npx tsc --noEmit -p tsconfig.json
@@ -71,6 +68,12 @@ jobs:
   db-and-e2e:
     name: DB Verification + E2E
     runs-on: ubuntu-latest
+    env:
+      # Test-mode only. Add these as repo secrets to unlock the deposit-payment,
+      # consent-form, and dashboard-confirmation steps of the E2E suite — without
+      # them those specific steps are skipped (not failed), everything else still runs.
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_TEST_PUBLISHABLE_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -80,6 +83,8 @@ jobs:
           cache: npm
 
       - run: npm ci
+
+      - run: mkdir -p reports
 
       - uses: supabase/setup-cli@v1
         with:

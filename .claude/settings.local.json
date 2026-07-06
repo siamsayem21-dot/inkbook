@@ -148,7 +148,15 @@
       "Bash(npx husky *)",
       "Bash(PLAYWRIGHT_JSON_OUTPUT_NAME=reports/ct.json npx playwright test -c playwright-ct.config.ts --reporter=list,json)",
       "Skill(artifact-design)",
-      "Artifact"
+      "Artifact",
+      "PowerShell(gh run *)",
+      "Read(//tmp/**)",
+      "Bash(env)",
+      "Read(//c//**)",
+      "Bash(where.exe gh *)",
+      "Read(//c/Users/asiacom/.config/**)",
+      "Read(//c/Users/asiacom/.config/gh/**)",
+      "Bash(npx -y js-yaml .github/workflows/test.yml)"
     ],
     "additionalDirectories": [
       "c:\\Users\\asiacom\\Desktop"
