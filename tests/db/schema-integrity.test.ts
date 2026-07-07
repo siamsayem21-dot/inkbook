@@ -11,6 +11,7 @@ const RLS_ENABLED_TABLES = [
   "blacklist", "session_agreements", "waitlist", "consultations",
   "deposit_payments", "standalone_consent_forms", "artist_invites",
   "custom_requests", "flash_designs", "studio_knowledge",
+  "reviews", "portfolio_images",
 ];
 
 const FOREIGN_KEYS: Array<{ table: string; column: string; refTable: string; onDelete: string }> = [
@@ -37,6 +38,9 @@ const FOREIGN_KEYS: Array<{ table: string; column: string; refTable: string; onD
   { table: "flash_designs", column: "studio_id", refTable: "studios", onDelete: "CASCADE" },
   { table: "flash_designs", column: "artist_id", refTable: "artists", onDelete: "CASCADE" },
   { table: "studio_knowledge", column: "studio_id", refTable: "studios", onDelete: "CASCADE" },
+  { table: "reviews", column: "studio_id", refTable: "studios", onDelete: "CASCADE" },
+  { table: "portfolio_images", column: "studio_id", refTable: "studios", onDelete: "CASCADE" },
+  { table: "portfolio_images", column: "artist_id", refTable: "artists", onDelete: "CASCADE" },
 ];
 
 const UNIQUE_COLUMNS: Array<{ table: string; columns: string[] }> = [
@@ -53,6 +57,7 @@ const CHECK_CONSTRAINTS = [
   { table: "studios", name: "studios_plan_check" },
   { table: "consent_forms", name: "minor_requires_guardian" },
   { table: "blacklist", name: "blacklist_needs_identifier" },
+  { table: "reviews", name: "reviews_rating_check" },
 ];
 
 describe("RLS is enabled on every tenant-scoped table", () => {
