@@ -1,4 +1,4 @@
-export type UserRole = "owner" | "artist";
+export type UserRole = "owner" | "artist" | "client";
 
 export type BookingStatus =
   | "pending_deposit"
@@ -222,6 +222,17 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["flash_designs"]["Row"], "id" | "created_at">;
         Update: Partial<Database["public"]["Tables"]["flash_designs"]["Insert"]>;
+      };
+      client_accounts: {
+        Row: {
+          id: string;
+          user_id: string;
+          email: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["client_accounts"]["Row"], "id" | "created_at" | "updated_at">;
+        Update: Partial<Database["public"]["Tables"]["client_accounts"]["Insert"]>;
       };
       consultations: {
         Row: {

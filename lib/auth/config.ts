@@ -61,8 +61,39 @@ export async function getUserRole(userId: string): Promise<UserRole | null> {
 
   if (artists && artists.length > 0) return "artist";
 
+  const { data: clientAccounts } = await supabase
+    .from("client_accounts")
+    .select("id")
+    .eq("user_id", userId)
+    .limit(1);
+
+  if (clientAccounts && clientAccounts.length > 0) return "client";
+
   return null;
 }
+
+// Resolves the authenticated user's client_accounts row, creating it on first
+// login (upsert keyed on user_id — safe to call on every portal request).
+// Only the service-role client can insert into client_accounts (no public
+// INSERT policy), so this always goes through createAdminClient().
+export const ensureClientAccount = cache(async (): Promise<{ id: string; email: string } | null> => {
+  const user = await getCurrentUser();
+  if (!user?.email) return null;
+
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("client_accounts")
+    .upsert({ user_id: user.id, email: user.email } as never, { onConflict: "user_id" })
+    .select("id, email")
+    .single();
+
+  if (error) {
+    console.error("[ensureClientAccount] upsert failed:", error.message, "| user:", user.id);
+    return null;
+  }
+
+  return data as { id: string; email: string };
+});
 
 export async function requireAuth(role?: UserRole) {
   const user = await getCurrentUser();

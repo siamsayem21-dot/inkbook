@@ -116,7 +116,7 @@ export default async function StudioBookingLayout({ children, params }: Props) {
           </nav>
 
           <a
-            href={`/book/${params.studio}/consult`}
+            href={`/book/${params.studio}/login`}
             className="shrink-0 text-xs font-bold uppercase tracking-widest px-4 sm:px-5 py-2.5 transition-opacity hover:opacity-90 whitespace-nowrap"
             style={{ backgroundColor: primaryColor, color: brand.textOnBrand }}
           >

@@ -131,7 +131,7 @@ export default async function StudioLandingPage({ params }: Props) {
 
         <div className="flex flex-wrap items-center gap-4">
           <Link
-            href={`/book/${params.studio}/consult`}
+            href={`/book/${params.studio}/login`}
             className="text-sm font-bold uppercase tracking-widest px-7 py-3.5 transition-opacity hover:opacity-90"
             style={{ backgroundColor: brand.full, color: brand.textOnBrand }}
           >
@@ -279,7 +279,7 @@ export default async function StudioLandingPage({ params }: Props) {
           Answer a few questions and our AI will analyze your vision, detect your style, and build a complete brief for the artist.
         </p>
         <Link
-          href={`/book/${params.studio}/consult`}
+          href={`/book/${params.studio}/login`}
           className="inline-block text-sm font-bold uppercase tracking-widest px-8 py-3.5 transition-opacity hover:opacity-90"
           style={{ backgroundColor: brand.full, color: brand.textOnBrand }}
         >
