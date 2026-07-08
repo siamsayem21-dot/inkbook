@@ -5,6 +5,8 @@ import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ensureClientAccount } from "@/lib/auth/config";
 import { getBrand } from "@/lib/brand";
+import { getLatestSubmittedConsultation } from "@/lib/ai-consultation/session";
+import ProjectTimeline from "../_components/ProjectTimeline";
 
 interface Props {
   params: { studio: string };
@@ -22,15 +24,16 @@ export default async function ClientDashboardPage({ params }: Props) {
   const supabase = createAdminClient();
   const { data: studioData } = await supabase
     .from("studios")
-    .select("name, primary_color")
+    .select("id, name, primary_color")
     .eq("subdomain", params.studio)
     .single();
 
-  const studio = studioData as { name: string; primary_color: string | null } | null;
+  const studio = studioData as { id: string; name: string; primary_color: string | null } | null;
   if (!studio) notFound();
 
   const account = await ensureClientAccount();
   const brand = getBrand(studio.primary_color ?? "#D4AF37");
+  const activeProject = account ? await getLatestSubmittedConsultation(studio.id, account.id) : null;
 
   return (
     <div className="max-w-3xl">
@@ -40,6 +43,13 @@ export default async function ClientDashboardPage({ params }: Props) {
         You&apos;re signed in as <span className="text-zinc-200 font-medium">{account?.email}</span> to{" "}
         {studio.name}&apos;s client portal.
       </p>
+
+      {activeProject && (
+        <div className="mt-8 border border-white/[0.08] bg-zinc-900/40 p-5 max-w-md">
+          <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-3">Your Tattoo Project</p>
+          <ProjectTimeline status={activeProject.status} brandColor={brand.full} />
+        </div>
+      )}
 
       <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
         {SECTIONS.map((section) => (
