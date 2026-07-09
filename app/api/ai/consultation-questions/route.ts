@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
 import { getStudioKnowledge, formatKnowledgeForAI } from "@/lib/studio-knowledge";
+import { getAIProvider } from "@/lib/ai";
 
 const FALLBACK_QUESTIONS = [
   "Do you have any existing tattoos in or near this area?",
@@ -54,24 +55,7 @@ Requirements:
 
 Example format: ["Question 1?", "Question 2?"]`;
 
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 512,
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
-
-    if (!res.ok) throw new Error(`Anthropic ${res.status}`);
-
-    const data = await res.json();
-    const text: string = data.content?.[0]?.text ?? "";
+    const text = await getAIProvider().extract({ prompt });
     const match = text.match(/\[[\s\S]*\]/);
     if (!match) throw new Error("No JSON array in response");
 

@@ -1,4 +1,5 @@
 import { getStudioKnowledge, formatKnowledgeForAI } from "@/lib/studio-knowledge";
+import { getAIProvider, type AIMessage } from "@/lib/ai";
 
 export type GatheredFields = {
   name?: string;
@@ -78,21 +79,16 @@ async function imageUrlToContentBlock(url: string): Promise<
   }
 }
 
-type AnthropicMessage = {
-  role: "user" | "assistant";
-  content: string | Array<{ type: "text"; text: string } | { type: "image"; source: { type: "base64"; media_type: string; data: string } }>;
-};
-
 // Only the most recent image is sent as real image data (Claude vision) — older
 // image messages are represented as a text placeholder so token usage stays
 // bounded as the conversation grows. Anthropic's Messages API requires the
 // array to start with a "user" role, so the seeded assistant greeting (if it's
 // the very first row) is dropped before building the request.
-async function buildAnthropicMessages(history: ChatMessageRow[]): Promise<AnthropicMessage[]> {
+async function buildAnthropicMessages(history: ChatMessageRow[]): Promise<AIMessage[]> {
   const trimmed = history[0]?.role === "assistant" ? history.slice(1) : history;
   const lastImagePos = trimmed.reduce((acc, m, i) => (m.image_url ? i : acc), -1);
 
-  const messages: AnthropicMessage[] = [];
+  const messages: AIMessage[] = [];
   for (let i = 0; i < trimmed.length; i++) {
     const m = trimmed[i];
     if (m.image_url && i === lastImagePos) {
@@ -174,28 +170,12 @@ export async function runConsultationTurn(params: {
     const systemPrompt = buildSystemPrompt(studioName, gathered, knowledgeContext);
     const anthropicMessages = await buildAnthropicMessages(history);
 
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-5",
-        max_tokens: 1024,
-        system: systemPrompt,
-        messages: anthropicMessages,
-      }),
+    const text = await getAIProvider().chat({
+      system: systemPrompt,
+      messages: anthropicMessages,
+      maxTokens: 1024,
     });
 
-    if (!res.ok) throw new Error(`Anthropic ${res.status}`);
-
-    const data = await res.json();
-    // claude-sonnet-5 sometimes emits a leading "thinking" content block before
-    // the actual "text" block — find the text block by type, not by position.
-    const textBlock = (data.content as Array<{ type: string; text?: string }> | undefined)?.find((b) => b.type === "text");
-    const text: string = textBlock?.text ?? "";
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) throw new Error("No JSON object in response");
 
