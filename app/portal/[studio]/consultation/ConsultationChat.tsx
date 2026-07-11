@@ -159,7 +159,13 @@ export default function ConsultationChat({ studioSlug, studioName, chatId, initi
           Thank you. Your consultation has been sent to {studioName} and they&apos;ll review it shortly.
         </p>
         <div className="max-w-md mx-auto text-left mb-8">
-          <ProjectTimeline status="new" brandColor={brandColor} />
+          <ProjectTimeline
+            status="new"
+            quoteAcceptedAt={null}
+            depositPaidAt={null}
+            bookingStatus={null}
+            brandColor={brandColor}
+          />
         </div>
         <button
           type="button"

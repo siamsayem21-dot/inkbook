@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { fetchBookingSignals, type ProjectStageInput } from "@/lib/client-portal/project-stage";
 import type { ChatMessageRow, GatheredFields } from "./chat-engine";
 
 export type ChatRow = {
@@ -64,11 +65,15 @@ export async function getOrCreateActiveChat(
 }
 
 // Fetches the most recent submitted chat (if any) so the page can show the
-// project timeline for a consultation the client already submitted.
+// project timeline for a consultation the client already submitted. Returns
+// everything ProjectTimeline needs to derive its stage (see
+// lib/client-portal/project-stage.ts) — not just `status` — because "Quote
+// Accepted" / "Deposit Paid" / "Booking Confirmed" each depend on a signal
+// that lives outside consultations.status.
 export async function getLatestSubmittedConsultation(
   studioId: string,
   clientAccountId: string
-): Promise<{ id: string; status: string } | null> {
+): Promise<(ProjectStageInput & { id: string }) | null> {
   const supabase = createAdminClient();
 
   const { data: chat } = await supabase
@@ -87,9 +92,22 @@ export async function getLatestSubmittedConsultation(
 
   const { data: consult } = await supabase
     .from("consultations")
-    .select("id, status")
+    .select("id, status, quote_accepted_at, booking_id")
     .eq("id", consultationId)
     .maybeSingle();
 
-  return consult as { id: string; status: string } | null;
+  const row = consult as
+    | { id: string; status: string; quote_accepted_at: string | null; booking_id: string | null }
+    | null;
+  if (!row) return null;
+
+  const { depositPaidAt, bookingStatus } = await fetchBookingSignals(supabase, row.booking_id);
+
+  return {
+    id: row.id,
+    status: row.status,
+    quoteAcceptedAt: row.quote_accepted_at,
+    depositPaidAt,
+    bookingStatus,
+  };
 }

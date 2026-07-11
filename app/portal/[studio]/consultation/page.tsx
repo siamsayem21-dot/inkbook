@@ -42,7 +42,13 @@ export default async function ConsultationPage({ params }: Props) {
       {submitted && messages.length <= 1 && (
         <div className="mb-6 border border-white/[0.08] bg-zinc-900/40 p-5">
           <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-3">Your Latest Consultation</p>
-          <ProjectTimeline status={submitted.status} brandColor={brand.full} />
+          <ProjectTimeline
+            status={submitted.status}
+            quoteAcceptedAt={submitted.quoteAcceptedAt}
+            depositPaidAt={submitted.depositPaidAt}
+            bookingStatus={submitted.bookingStatus}
+            brandColor={brand.full}
+          />
         </div>
       )}
 

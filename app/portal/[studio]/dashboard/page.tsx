@@ -14,7 +14,7 @@ interface Props {
 
 const SECTIONS = [
   { label: "AI Consultation", href: "consultation", description: "Start a new guided intake." },
-  { label: "My Bookings",     href: "bookings",     description: "Upcoming appointments & deposits." },
+  { label: "Projects",        href: "projects",     description: "Track your tattoo projects end to end." },
   { label: "History",         href: "history",      description: "Past sessions with this studio." },
   { label: "Messages",        href: "messages",     description: "Talk to your artist or the studio." },
   { label: "Settings",        href: "settings",     description: "Manage your account." },
@@ -47,7 +47,13 @@ export default async function ClientDashboardPage({ params }: Props) {
       {activeProject && (
         <div className="mt-8 border border-white/[0.08] bg-zinc-900/40 p-5 max-w-md">
           <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-3">Your Tattoo Project</p>
-          <ProjectTimeline status={activeProject.status} brandColor={brand.full} />
+          <ProjectTimeline
+            status={activeProject.status}
+            quoteAcceptedAt={activeProject.quoteAcceptedAt}
+            depositPaidAt={activeProject.depositPaidAt}
+            bookingStatus={activeProject.bookingStatus}
+            brandColor={brand.full}
+          />
         </div>
       )}
 
