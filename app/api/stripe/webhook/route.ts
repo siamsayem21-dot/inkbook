@@ -274,10 +274,30 @@ async function handleDepositPayment(
     return NextResponse.json({ error: "DB error" }, { status: 500 });
   }
 
+  // Whether this booking already has a real date/time decides what "paid"
+  // means for it. The legacy owner-driven flow (bookConsultation()) always
+  // assigns date+time before a deposit is ever collected, so "confirmed" is
+  // correct immediately. The client self-serve flow (continueToDeposit() in
+  // app/portal/[studio]/projects/[id]/actions.ts) creates the booking with no
+  // date/time — the owner still has to schedule it afterward — so it must land
+  // in "awaiting_schedule" instead, exactly like the existing custom_requests
+  // deposit flow (see supabase/migrations/20260623000005_process_custom_request_deposit_rpc.sql
+  // and the analogous owner-side app/api/custom-requests/[id]/schedule/route.ts,
+  // which performs the awaiting_schedule → confirmed transition once a real
+  // date/time is assigned).
+  const { data: bookingBefore } = await supabase
+    .from("bookings")
+    .select("date")
+    .eq("id", dp.booking_id)
+    .maybeSingle();
+
+  const hasSchedule = Boolean((bookingBefore as { date: string | null } | null)?.date);
+  const nextBookingStatus = hasSchedule ? "confirmed" : "awaiting_schedule";
+
   const { error: bookingUpdateError } = await supabase
     .from("bookings")
     .update({
-      status:          "confirmed",
+      status:          nextBookingStatus,
       deposit_paid:    true,
       deposit_paid_at: now,
     } as never)
@@ -299,7 +319,11 @@ async function handleDepositPayment(
     .eq("id", dp.booking_id)
     .single();
 
-  if (bookingRow) {
+  // Only send the "your session is confirmed" notifications when there's a
+  // real date/time to put in them — an awaiting_schedule booking has neither
+  // yet, and the owner's later scheduling step (see above) is the point where
+  // the client actually learns their appointment time.
+  if (bookingRow && hasSchedule) {
     const { client_id, artist_id, studio_id, date, time, deposit_amount_cents } = bookingRow as {
       client_id: string;
       artist_id: string;

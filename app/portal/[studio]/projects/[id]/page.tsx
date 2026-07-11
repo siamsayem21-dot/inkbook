@@ -12,13 +12,14 @@ import QuoteActions from "./QuoteActions";
 
 interface Props {
   params: { studio: string; id: string };
+  searchParams: { checkout?: string };
 }
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
-export default async function ProjectDetailPage({ params }: Props) {
+export default async function ProjectDetailPage({ params, searchParams }: Props) {
   const supabase = createAdminClient();
   const { data: studioData } = await supabase
     .from("studios")
@@ -69,45 +70,69 @@ export default async function ProjectDetailPage({ params }: Props) {
         />
       </div>
 
-      {project.status === "quoted" && project.quote && (
+      {/*
+        This card must stay visible past status "quoted" — once the deposit is
+        paid, the webhook advances consultations.status to "deposit_paid"
+        (app/api/stripe/webhook/route.ts), which would otherwise hide the
+        "✓ Deposit Paid" banner and "Waiting for Booking Confirmation" CTA
+        along with the quote detail fields. The quote detail fields (amount/
+        sessions/duration/notes) still only show while status === "quoted",
+        per the original requirement — only the action/progress area persists
+        beyond it, driven by project.stage rather than project.quote so it
+        keeps working regardless of current status.
+      */}
+      {(project.stage.status === "quoted" ||
+        Boolean(project.stage.quoteAcceptedAt) ||
+        Boolean(project.stage.depositPaidAt)) && (
         <div className="border border-white/[0.08] bg-zinc-900/40 p-5 mb-6">
           <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-4">Quote</p>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Quote Amount</p>
-              <p className="text-sm text-zinc-200">
-                {project.quote.amountDollars != null
-                  ? `$${project.quote.amountDollars.toLocaleString()}`
-                  : "Pending"}
-              </p>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Estimated Sessions</p>
-              <p className="text-sm text-zinc-200">{project.quote.estimatedSessions ?? "—"}</p>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Estimated Duration</p>
-              <p className="text-sm text-zinc-200">{project.quote.estimatedDuration || "—"}</p>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Quote Created</p>
-              <p className="text-sm text-zinc-200">{fmtDate(project.quote.quoteCreatedAt)}</p>
-            </div>
-          </div>
+          {project.status === "quoted" && project.quote && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Quote Amount</p>
+                  <p className="text-sm text-zinc-200">
+                    {project.quote.amountDollars != null
+                      ? `$${project.quote.amountDollars.toLocaleString()}`
+                      : "Pending"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Estimated Sessions</p>
+                  <p className="text-sm text-zinc-200">{project.quote.estimatedSessions ?? "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Estimated Duration</p>
+                  <p className="text-sm text-zinc-200">{project.quote.estimatedDuration || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Quote Created</p>
+                  <p className="text-sm text-zinc-200">{fmtDate(project.quote.quoteCreatedAt)}</p>
+                </div>
+              </div>
 
-          {project.quote.artistNotes && (
-            <div className="mt-4 pt-4 border-t border-white/[0.06]">
-              <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1.5">Artist Notes</p>
-              <p className="text-sm text-zinc-300 leading-relaxed">{project.quote.artistNotes}</p>
-            </div>
+              {project.quote.artistNotes && (
+                <div className="mt-4 pt-4 border-t border-white/[0.06]">
+                  <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1.5">Artist Notes</p>
+                  <p className="text-sm text-zinc-300 leading-relaxed">{project.quote.artistNotes}</p>
+                </div>
+              )}
+            </>
           )}
 
           <QuoteActions
             projectId={project.id}
             brandColor={brand.full}
             textOnBrand={brand.textOnBrand}
-            initialAcceptedAt={project.quote.acceptedAt}
+            initialAcceptedAt={project.stage.quoteAcceptedAt}
+            initialDepositPaidAt={project.stage.depositPaidAt}
+            initialBookingStatus={project.stage.bookingStatus}
+            initialNotice={
+              searchParams.checkout === "cancelled"
+                ? "Checkout cancelled — you can try again whenever you're ready."
+                : null
+            }
           />
         </div>
       )}

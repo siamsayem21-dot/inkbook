@@ -3,6 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudioId } from "@/lib/auth/config";
 import { validateImageFile } from "@/lib/file-validation";
+import { capDepositAmountCents } from "@/lib/stripe/deposit-checkout";
 
 export async function submitConsultation(
   formData: FormData
@@ -240,13 +241,7 @@ export async function bookConsultation(
   // final_price on the consultation is in dollars; quote_amount_cents on the
   // booking is in cents. Convert here so remainder collection has a reference.
   const quoteAmountCents = c.final_price ? c.final_price * 100 : null;
-
-  // Deposit must not exceed the total quoted price — e.g. a $100 studio default
-  // deposit on a $75 quote would make the remainder negative. Cap at the quote
-  // total; fall back to the studio default when no quote has been saved.
-  const depositAmountCents = quoteAmountCents !== null
-    ? Math.min(s.deposit_amount_cents, quoteAmountCents)
-    : s.deposit_amount_cents;
+  const depositAmountCents = capDepositAmountCents(s.deposit_amount_cents, quoteAmountCents);
 
   const { data: booking, error: bookErr } = await supabase
     .from("bookings")

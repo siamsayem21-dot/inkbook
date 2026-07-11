@@ -102,6 +102,7 @@ describe("POST /api/stripe/webhook — Branch A (deposit_payments)", () => {
     mockConstructEvent(event({ depositPaymentId: "dp_1" }));
     sb.queueFrom("deposit_payments", [{ id: "dp_1", booking_id: "bk_1", payment_status: "pending" }]); // lookup
     sb.queueFrom("deposit_payments", ok()); // update -> paid
+    sb.queueFrom("bookings", { date: "2026-08-01" }); // pre-update schedule check -> hasSchedule = true
     sb.queueFrom("bookings", ok()); // update -> confirmed
     sb.queueFrom("consultations", ok()); // update -> deposit_paid
     sb.queueFrom("bookings", {
@@ -122,6 +123,27 @@ describe("POST /api/stripe/webhook — Branch A (deposit_payments)", () => {
     sb.queueFrom("deposit_payments", null, { message: "db down" });
     const res = await POST(makeRequest("{}"));
     expect(res.status).toBe(500);
+  });
+
+  it("lands an unscheduled booking (no date/time) in awaiting_schedule and skips confirmation notifications", async () => {
+    // Client self-serve deposit flow (app/portal/[studio]/projects/[id]/actions.ts
+    // continueToDeposit()) creates the booking with no date/time — the owner
+    // schedules it afterward — so paying the deposit must NOT jump straight to
+    // "confirmed", and there's no real date/time yet to put in a confirmation SMS/email.
+    mockConstructEvent(event({ depositPaymentId: "dp_1" }));
+    sb.queueFrom("deposit_payments", [{ id: "dp_1", booking_id: "bk_1", payment_status: "pending" }]); // lookup
+    sb.queueFrom("deposit_payments", ok()); // update -> paid
+    sb.queueFrom("bookings", { date: null }); // pre-update schedule check -> hasSchedule = false
+    sb.queueFrom("bookings", ok()); // update -> awaiting_schedule
+    sb.queueFrom("consultations", ok()); // update -> deposit_paid
+
+    const res = await POST(makeRequest("{}"));
+    expect(res.status).toBe(200);
+    expect(sb.getChain("bookings", 2).update).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "awaiting_schedule" })
+    );
+    // No date/time to notify with — must not contact anyone.
+    expect(trySendSms).not.toHaveBeenCalled();
   });
 });
 
