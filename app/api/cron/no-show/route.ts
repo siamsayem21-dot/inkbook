@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { buildSmsMessage, trySendSms } from "@/lib/twilio/client";
+import { sendNoShowEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -21,7 +23,7 @@ export async function GET(request: NextRequest) {
   // the intent clear and protects against any future query changes.
   const { data: overdueBookingsRaw, error: fetchError } = await supabase
     .from("bookings")
-    .select("id")
+    .select("id, client_id, studio_id, deposit_amount_cents")
     .eq("status", "confirmed")
     .not("date", "is", null)
     .lt("date", today);
@@ -31,7 +33,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: fetchError.message }, { status: 500 });
   }
 
-  const overdueBookings = (overdueBookingsRaw ?? []) as Array<{ id: string }>;
+  const overdueBookings = (overdueBookingsRaw ?? []) as Array<{
+    id: string;
+    client_id: string;
+    studio_id: string;
+    deposit_amount_cents: number;
+  }>;
   const ids = overdueBookings.map((b) => b.id);
 
   if (ids.length === 0) {
@@ -51,6 +58,35 @@ export async function GET(request: NextRequest) {
   }
 
   console.log(`[cron/no-show] marked ${ids.length} booking(s) as no_show:`, ids);
+
+  // Notify each affected client — failures here are logged, not thrown, so a
+  // notification issue never rolls back or blocks the status update above.
+  const clientIds = Array.from(new Set(overdueBookings.map((b) => b.client_id)));
+  const studioIds = Array.from(new Set(overdueBookings.map((b) => b.studio_id)));
+
+  const [{ data: clientsRaw }, { data: studiosRaw }] = await Promise.all([
+    supabase.from("clients").select("id, full_name, email, phone").in("id", clientIds),
+    supabase.from("studios").select("id, name").in("id", studioIds),
+  ]);
+
+  const clientsById = new Map(
+    ((clientsRaw ?? []) as { id: string; full_name: string; email: string; phone: string }[]).map((c) => [c.id, c])
+  );
+  const studioNameById = new Map(((studiosRaw ?? []) as { id: string; name: string }[]).map((s) => [s.id, s.name]));
+
+  for (const booking of overdueBookings) {
+    const client = clientsById.get(booking.client_id);
+    const studioName = studioNameById.get(booking.studio_id) ?? "the studio";
+    if (client?.phone) void trySendSms(client.phone, buildSmsMessage("no_show", studioName));
+    if (client?.email) {
+      void sendNoShowEmail({
+        to: client.email,
+        clientName: client.full_name,
+        studioName,
+        depositAmountCents: booking.deposit_amount_cents,
+      });
+    }
+  }
 
   return NextResponse.json({ updated: ids.length, bookings: ids });
 }

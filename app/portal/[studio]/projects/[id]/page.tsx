@@ -129,6 +129,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
             initialAcceptedAt={project.stage.quoteAcceptedAt}
             initialDepositPaidAt={project.stage.depositPaidAt}
             initialBookingStatus={project.stage.bookingStatus}
+            hasConsentForm={project.hasConsentForm}
             initialNotice={
               searchParams.checkout === "cancelled"
                 ? "Checkout cancelled — you can try again whenever you're ready."

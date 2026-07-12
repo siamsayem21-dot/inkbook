@@ -482,6 +482,82 @@ export async function sendSessionScheduledEmail({
   await sendEmail(to, subject, html);
 }
 
+export async function sendBookingCancelledEmail({
+  to,
+  clientName,
+  studioName,
+}: {
+  to: string;
+  clientName: string;
+  studioName: string;
+}) {
+  const subject = `Your booking at ${studioName} was cancelled`;
+
+  const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0A0A0A;font-family:sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0A0A;padding:40px 16px;">
+<tr><td align="center">
+<table width="520" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1E1E1E;border-radius:16px;padding:40px;">
+<tr><td>
+<p style="color:#666;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 24px;">Booking Cancelled</p>
+<h1 style="color:#E8E8E8;font-size:22px;font-weight:700;margin:0 0 8px;">Hi ${clientName},</h1>
+<p style="color:#A0A0A0;font-size:15px;margin:0 0 24px;">
+Your booking at <strong style="color:#E8E8E8;">${studioName}</strong> has been cancelled by the studio.
+</p>
+<p style="color:#A0A0A0;font-size:14px;margin:0 0 28px;">
+Please contact the studio directly if you'd like to rebook or have questions about your deposit.
+</p>
+<p style="color:#555;font-size:12px;margin:0;text-align:center;">Powered by InkBook &middot; inkbook.tech</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+
+  await sendEmail(to, subject, html);
+}
+
+export async function sendNoShowEmail({
+  to,
+  clientName,
+  studioName,
+  depositAmountCents,
+}: {
+  to: string;
+  clientName: string;
+  studioName: string;
+  depositAmountCents: number;
+}) {
+  const subject = `You were marked as a no-show — ${studioName}`;
+  const depositDisplay = `$${(depositAmountCents / 100).toFixed(2)}`;
+
+  const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0A0A0A;font-family:sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0A0A;padding:40px 16px;">
+<tr><td align="center">
+<table width="520" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1E1E1E;border-radius:16px;padding:40px;">
+<tr><td>
+<p style="color:#e05252;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 24px;">Missed Appointment</p>
+<h1 style="color:#E8E8E8;font-size:22px;font-weight:700;margin:0 0 8px;">Hi ${clientName},</h1>
+<p style="color:#A0A0A0;font-size:15px;margin:0 0 24px;">
+You were marked as a no-show for your appointment at <strong style="color:#E8E8E8;">${studioName}</strong>.
+</p>
+<div style="background:#1a0d0d;border:1px solid #e0525233;border-radius:10px;padding:16px 20px;margin:0 0 28px;">
+<p style="color:#e05252;font-size:13px;margin:0;">
+Your deposit of ${depositDisplay} is non-refundable and has been kept by the studio, per its booking policy.
+</p>
+</div>
+<p style="color:#A0A0A0;font-size:14px;margin:0 0 28px;">
+Please contact the studio directly if you'd like to rebook.
+</p>
+<p style="color:#555;font-size:12px;margin:0;text-align:center;">Powered by InkBook &middot; inkbook.tech</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+
+  await sendEmail(to, subject, html);
+}
+
 export async function sendArtistInviteEmail({
   to,
   inviteeName,

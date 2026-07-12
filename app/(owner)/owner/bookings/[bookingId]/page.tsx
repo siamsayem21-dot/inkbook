@@ -6,20 +6,21 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudioId } from "@/lib/auth/config";
 import BookingActions from "./BookingActions";
 
-type BookingStatus = "pending_deposit" | "confirmed" | "completed" | "cancelled" | "no_show";
+type BookingStatus = "pending_deposit" | "awaiting_schedule" | "confirmed" | "completed" | "cancelled" | "no_show";
 
 const STATUS_LABELS: Record<BookingStatus, { label: string; className: string }> = {
-  confirmed:       { label: "Confirmed",        className: "bg-[#c9a84c]/10 text-[#c9a84c] border-[#c9a84c]/20" },
-  pending_deposit: { label: "Awaiting deposit", className: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
-  completed:       { label: "Completed",        className: "bg-green-500/10 text-green-400 border-green-500/20" },
-  cancelled:       { label: "Cancelled",        className: "bg-white/5 text-white/30 border-white/10" },
-  no_show:         { label: "No-show",          className: "bg-red-500/10 text-red-400 border-red-500/20" },
+  confirmed:         { label: "Confirmed",        className: "bg-[#c9a84c]/10 text-[#c9a84c] border-[#c9a84c]/20" },
+  pending_deposit:   { label: "Awaiting deposit", className: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
+  awaiting_schedule: { label: "Awaiting schedule",className: "bg-violet-500/10 text-violet-400 border-violet-500/20" },
+  completed:         { label: "Completed",        className: "bg-green-500/10 text-green-400 border-green-500/20" },
+  cancelled:         { label: "Cancelled",        className: "bg-white/5 text-white/30 border-white/10" },
+  no_show:           { label: "No-show",          className: "bg-red-500/10 text-red-400 border-red-500/20" },
 };
 
 type BookingDetail = {
   id: string;
-  date: string;
-  time: string;
+  date: string | null;
+  time: string | null;
   style: string;
   description: string | null;
   status: BookingStatus;
@@ -30,14 +31,16 @@ type BookingDetail = {
   artists: { name: string } | null;
 };
 
-function fmtDate(dateStr: string) {
+function fmtDate(dateStr: string | null) {
+  if (!dateStr) return "Not yet scheduled";
   const [y, m, d] = dateStr.split("-").map(Number);
   return new Date(y, m - 1, d).toLocaleDateString("en-US", {
     weekday: "long", month: "long", day: "numeric", year: "numeric",
   });
 }
 
-function fmt12h(time: string) {
+function fmt12h(time: string | null) {
+  if (!time) return "—";
   const [h, m] = time.split(":").map(Number);
   const ampm = h >= 12 ? "PM" : "AM";
   return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${ampm}`;
@@ -191,6 +194,7 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
       <BookingActions
         bookingId={params.bookingId}
         status={b.status}
+        date={b.date}
         depositAmountCents={b.deposit_amount_cents}
         hasConsent={hasConsent}
         consentForm={consentForm}

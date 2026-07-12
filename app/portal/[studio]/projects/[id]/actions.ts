@@ -152,6 +152,19 @@ export async function continueToDeposit(projectId: string): Promise<{ checkoutUr
   const artist = artistRow as { id: string; name: string } | null;
   if (!artist) return { error: "No artist has been assigned to this project yet — please check back soon." };
 
+  // Blacklist check — same is_client_blacklisted() RPC the classic /api/bookings
+  // and /api/custom-requests flows are backed by, checked here (not earlier, at
+  // consultation submission) to match that same precedent: gate at the point a
+  // real booking/deposit record is about to be created, not at initial inquiry.
+  const { data: isBlacklisted } = await supabase.rpc("is_client_blacklisted" as never, {
+    p_studio_id: consult.studio_id,
+    p_email: consult.client_email,
+    p_phone: consult.client_phone,
+  } as never);
+  if (isBlacklisted) {
+    return { error: "Booking cannot be completed. Please contact the studio directly." };
+  }
+
   // ── Find or create the booking this deposit attaches to ──────────────────
   let booking: { id: string; status: string; deposit_paid: boolean; deposit_amount_cents: number } | null = null;
 

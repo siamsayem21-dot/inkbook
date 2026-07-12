@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { cancelBooking, sendDepositRequest } from "./actions";
+import { cancelBooking, sendDepositRequest, assignSchedule, markCompleted } from "./actions";
 
 type ConsentForm = {
   id: string;
@@ -18,6 +18,7 @@ type DepositPaymentStatus = "none" | "pending" | "paid" | "refunded" | "kept";
 interface Props {
   bookingId: string;
   status: string;
+  date: string | null;
   depositAmountCents: number;
   hasConsent: boolean;
   consentForm: ConsentForm;
@@ -28,6 +29,7 @@ interface Props {
 export default function BookingActions({
   bookingId,
   status,
+  date,
   depositAmountCents,
   hasConsent,
   consentForm,
@@ -40,11 +42,42 @@ export default function BookingActions({
   const [error, setError] = useState<string | null>(null);
   const [depositLink, setDepositLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("");
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
+  const [completedError, setCompletedError] = useState<string | null>(null);
   const router = useRouter();
 
   const isCancellable      = status !== "cancelled" && status !== "completed";
   const canSendDeposit     = status === "pending_deposit";
   const depositRequestSent = depositPaymentStatus === "pending";
+  const needsSchedule      = status === "awaiting_schedule" && !date;
+  const waitingOnConsent   = status === "awaiting_schedule" && Boolean(date);
+  const canMarkCompleted   = status === "confirmed" && hasConsent;
+
+  function handleAssignSchedule() {
+    setScheduleError(null);
+    startTransition(async () => {
+      const result = await assignSchedule(bookingId, scheduleDate, scheduleTime);
+      if (result.error) {
+        setScheduleError(result.error);
+        return;
+      }
+      router.refresh();
+    });
+  }
+
+  function handleMarkCompleted() {
+    setCompletedError(null);
+    startTransition(async () => {
+      const result = await markCompleted(bookingId);
+      if (result.error) {
+        setCompletedError(result.error);
+        return;
+      }
+      router.refresh();
+    });
+  }
 
   function handleCancel() {
     startTransition(async () => {
@@ -154,6 +187,73 @@ export default function BookingActions({
           )}
         </div>
       )}
+
+      {/* Assign schedule — awaiting_schedule bookings with no date/time yet */}
+      {needsSchedule && (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
+          <div>
+            <p className="text-sm font-semibold text-white">Assign schedule</p>
+            <p className="text-xs text-zinc-500 mt-0.5">
+              Deposit is paid — set a date and time to move this booking forward.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <input
+              type="date"
+              value={scheduleDate}
+              onChange={(e) => setScheduleDate(e.target.value)}
+              className="bg-zinc-950 border border-zinc-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-zinc-500"
+            />
+            <input
+              type="time"
+              value={scheduleTime}
+              onChange={(e) => setScheduleTime(e.target.value)}
+              className="bg-zinc-950 border border-zinc-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-zinc-500"
+            />
+            <button
+              onClick={handleAssignSchedule}
+              disabled={isPending || !scheduleDate || !scheduleTime}
+              className="text-sm font-semibold bg-[#c9a84c] hover:bg-[#b8973b] text-black px-4 py-2 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isPending ? "Assigning…" : "Assign Schedule"}
+            </button>
+          </div>
+          {!hasConsent && (
+            <p className="text-[10px] text-zinc-600">
+              This booking will stay &quot;Awaiting schedule&quot; until the client also signs their consent form — it only
+              moves to Confirmed once both are done.
+            </p>
+          )}
+          {scheduleError && <p className="text-sm text-red-400">{scheduleError}</p>}
+        </div>
+      )}
+
+      {/* Waiting on consent — schedule already assigned, consent is the only thing left */}
+      {waitingOnConsent && (
+        <div className="bg-violet-950/40 border border-violet-800/40 text-violet-300 text-sm rounded-xl px-4 py-3">
+          Schedule assigned — waiting on the client to sign their consent form before this booking can be confirmed.
+        </div>
+      )}
+
+      {/* Mark session completed — confirmed bookings with consent signed */}
+      {status === "confirmed" && (
+        <div className="flex flex-wrap items-center gap-3">
+          {canMarkCompleted ? (
+            <button
+              onClick={handleMarkCompleted}
+              disabled={isPending}
+              className="text-sm font-semibold bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full transition-colors disabled:opacity-50"
+            >
+              {isPending ? "Marking…" : "Mark Session Completed"}
+            </button>
+          ) : (
+            <span className="text-sm text-zinc-500 bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-full">
+              Consent form required before this session can be marked completed
+            </span>
+          )}
+        </div>
+      )}
+      {completedError && <p className="text-sm text-red-400">{completedError}</p>}
 
       {/* Consent + cancel row */}
       <div className="flex flex-wrap items-center gap-3">

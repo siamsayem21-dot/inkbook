@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe/client";
 import { validateImageFile } from "@/lib/file-validation";
+import { isReadyToConfirm } from "@/lib/booking-lifecycle";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
 
   const { data: bookingData } = await supabase
     .from("bookings")
-    .select("id, client_id, studio_id, status")
+    .select("id, client_id, studio_id, status, date")
     .eq("id", bookingId)
     .single();
 
@@ -62,6 +63,7 @@ export async function POST(request: NextRequest) {
     client_id: string;
     studio_id: string;
     status: string;
+    date: string | null;
   } | null;
 
   if (!booking) return NextResponse.json({ error: "Booking not found" }, { status: 404 });
@@ -213,11 +215,19 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Confirm booking (handles webhook-not-yet-fired case)
+  // Confirm booking only once BOTH a schedule and consent exist (Phase C
+  // Feature 1 rule — see lib/booking-lifecycle.ts). Consent was just signed
+  // above, so the only unknown here is whether a date/time has been assigned
+  // yet. A booking still awaiting_schedule (portal quote-deposit flow) stays
+  // awaiting_schedule until the owner assigns a schedule (assignSchedule() in
+  // app/(owner)/owner/bookings/[bookingId]/actions.ts checks consent the same
+  // way and confirms it then instead). This also handles the webhook-not-yet
+  // -fired race for the classic flow, unchanged from before.
+  const hasSchedule = Boolean(booking.date);
   await supabase
     .from("bookings")
     .update({
-      status: "confirmed",
+      ...(isReadyToConfirm(hasSchedule, true) ? { status: "confirmed" } : {}),
       deposit_paid: true,
       deposit_paid_at: new Date().toISOString(),
     } as never)

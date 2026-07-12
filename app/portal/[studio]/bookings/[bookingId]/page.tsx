@@ -151,7 +151,7 @@ export default async function ClientBookingDetailPage({ params }: Props) {
           <div className="col-span-2">
             <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Consent Form</p>
             <p className="text-sm text-zinc-200">
-              {booking.hasConsentForm ? "✓ Signed" : "Not required for this booking"}
+              {booking.hasConsentForm ? "✓ Signed" : booking.depositPaid ? "Required — not yet signed" : "Sign after your deposit is paid"}
             </p>
           </div>
         </div>
@@ -160,6 +160,8 @@ export default async function ClientBookingDetailPage({ params }: Props) {
           consultationId={booking.consultationId}
           studioSlug={params.studio}
           status={booking.status}
+          depositPaid={booking.depositPaid}
+          hasConsentForm={booking.hasConsentForm}
           brandColor={brand.full}
           textOnBrand={brand.textOnBrand}
         />

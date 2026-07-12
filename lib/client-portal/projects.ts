@@ -25,6 +25,11 @@ export type ClientProjectDetail = ClientProject & {
   // lib/client-portal/project-stage.ts). `quote.acceptedAt` above covers the
   // Quote section's own display; this covers the Timeline.
   stage: ProjectStageInput;
+  // Needed by QuoteActions to link to the consent page and to decide whether
+  // to show its "Sign Consent Form" CTA (Phase C Feature 1). null until a
+  // booking exists (i.e. before deposit checkout is ever started).
+  bookingId: string | null;
+  hasConsentForm: boolean;
 };
 
 type ConsultationRow = {
@@ -145,6 +150,16 @@ export async function getClientProjectDetail(
   const artistNames = await fetchArtistNames(supabase, c.artist_id ? [c.artist_id] : []);
   const { depositPaidAt, bookingStatus } = await fetchBookingSignals(supabase, c.booking_id);
 
+  let hasConsentForm = false;
+  if (c.booking_id) {
+    const { data: consentRow } = await supabase
+      .from("consent_forms")
+      .select("id")
+      .eq("booking_id", c.booking_id)
+      .maybeSingle();
+    hasConsentForm = Boolean(consentRow);
+  }
+
   return {
     id: c.id,
     title: deriveTitle(c.tattoo_description, c.detected_style),
@@ -164,5 +179,7 @@ export async function getClientProjectDetail(
       depositPaidAt,
       bookingStatus,
     },
+    bookingId: c.booking_id,
+    hasConsentForm,
   };
 }

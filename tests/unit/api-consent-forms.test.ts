@@ -145,6 +145,39 @@ describe("POST /api/consent-forms", () => {
     expect(res.status).toBe(503);
   });
 
+  it("confirms the booking when it already has a date (classic flow, schedule already assigned)", async () => {
+    sb.queueFrom("bookings", { id: "bk-1", client_id: "c1", studio_id: "s1", status: "pending_deposit", date: "2026-09-01" });
+    sb.queueFrom("consent_forms", null);
+    sb.queueFrom("deposit_payments", { payment_status: "paid", stripe_checkout_session_id: "cs_1" });
+    sb.queueFrom("studios", { state: "CA" });
+    sb.queueFrom("consent_forms", { success: true });
+    sb.queueFrom("bookings", { success: true });
+
+    const res = await POST(req(buildForm()));
+    expect(res.status).toBe(200);
+
+    const finalUpdate = sb.getChain("bookings", 2);
+    const updateArg = (finalUpdate as { update: { mock: { calls: unknown[][] } } }).update.mock.calls[0][0] as Record<string, unknown>;
+    expect(updateArg.status).toBe("confirmed");
+  });
+
+  it("does NOT confirm an awaiting_schedule booking (no date yet) after consent is signed — Phase C Feature 1 gate", async () => {
+    sb.queueFrom("bookings", { id: "bk-1", client_id: "c1", studio_id: "s1", status: "awaiting_schedule", date: null });
+    sb.queueFrom("consent_forms", null);
+    sb.queueFrom("deposit_payments", { payment_status: "paid", stripe_checkout_session_id: "cs_1" });
+    sb.queueFrom("studios", { state: "CA" });
+    sb.queueFrom("consent_forms", { success: true });
+    sb.queueFrom("bookings", { success: true });
+
+    const res = await POST(req(buildForm()));
+    expect(res.status).toBe(200);
+
+    const finalUpdate = sb.getChain("bookings", 2);
+    const updateArg = (finalUpdate as { update: { mock: { calls: unknown[][] } } }).update.mock.calls[0][0] as Record<string, unknown>;
+    expect(updateArg.status).toBeUndefined();
+    expect(updateArg.deposit_paid).toBe(true);
+  });
+
   it("accepts a minor submission when guardian info is provided", async () => {
     sb.queueFrom("bookings", { id: "bk-1", client_id: "c1", studio_id: "s1", status: "pending_deposit" });
     sb.queueFrom("consent_forms", null);

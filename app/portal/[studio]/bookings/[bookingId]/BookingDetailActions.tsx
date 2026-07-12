@@ -2,12 +2,15 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { continueToDeposit, askQuoteQuestion } from "../../projects/[id]/actions";
 
 interface Props {
   consultationId: string;
   studioSlug: string;
   status: string;
+  depositPaid: boolean;
+  hasConsentForm: boolean;
   brandColor: string;
   textOnBrand: string;
 }
@@ -18,7 +21,15 @@ interface Props {
 // that action's return URL wasn't changed), so after paying the client next
 // sees this booking's updated status on their next visit here rather than an
 // immediate redirect back — consistent with this feature's no-realtime scope.
-export default function BookingDetailActions({ consultationId, studioSlug, status, brandColor, textOnBrand }: Props) {
+export default function BookingDetailActions({
+  consultationId,
+  studioSlug,
+  status,
+  depositPaid,
+  hasConsentForm,
+  brandColor,
+  textOnBrand,
+}: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [notice, setNotice] = useState<string | null>(null);
@@ -60,6 +71,16 @@ export default function BookingDetailActions({ consultationId, studioSlug, statu
           >
             {isPending ? "Working…" : "Pay Deposit Now"}
           </button>
+        )}
+
+        {depositPaid && !hasConsentForm && (status === "awaiting_schedule" || status === "confirmed") && (
+          <Link
+            href={`/portal/${studioSlug}/projects/${consultationId}/consent`}
+            className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 transition-opacity hover:opacity-90"
+            style={{ backgroundColor: brandColor, color: textOnBrand }}
+          >
+            Sign Consent Form
+          </Link>
         )}
 
         <button

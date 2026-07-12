@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { acceptQuote, continueToDeposit, askQuoteQuestion } from "./actions";
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
   initialDepositPaidAt: string | null;
   initialBookingStatus: string | null;
   initialNotice: string | null;
+  hasConsentForm: boolean;
 }
 
 function fmtDateTime(iso: string) {
@@ -28,6 +30,7 @@ export default function QuoteActions({
   initialDepositPaidAt,
   initialBookingStatus,
   initialNotice,
+  hasConsentForm,
 }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -91,12 +94,22 @@ export default function QuoteActions({
       <div className="flex flex-wrap gap-3">
         {depositPaid ? (
           !bookingConfirmed && (
-            <span
-              aria-disabled="true"
-              className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 border border-white/[0.15] text-zinc-500 cursor-default"
-            >
-              Waiting for Booking Confirmation
-            </span>
+            hasConsentForm ? (
+              <span
+                aria-disabled="true"
+                className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 border border-white/[0.15] text-zinc-500 cursor-default"
+              >
+                Waiting for Booking Confirmation
+              </span>
+            ) : (
+              <Link
+                href={`/portal/${studioSlug}/projects/${projectId}/consent`}
+                className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 transition-opacity hover:opacity-90"
+                style={{ backgroundColor: brandColor, color: textOnBrand }}
+              >
+                Sign Consent Form
+              </Link>
+            )
           )
         ) : acceptedAt ? (
           <button

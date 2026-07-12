@@ -5,32 +5,35 @@ import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-type BookingStatus = "pending_deposit" | "confirmed" | "completed" | "cancelled" | "no_show";
+type BookingStatus = "pending_deposit" | "awaiting_schedule" | "confirmed" | "completed" | "cancelled" | "no_show";
 
 const STATUS_LABEL: Record<BookingStatus, string> = {
-  pending_deposit: "Awaiting deposit",
-  confirmed:       "Confirmed",
-  completed:       "Completed",
-  cancelled:       "Cancelled",
-  no_show:         "No-show",
+  pending_deposit:   "Awaiting deposit",
+  awaiting_schedule: "Awaiting schedule",
+  confirmed:         "Confirmed",
+  completed:         "Completed",
+  cancelled:         "Cancelled",
+  no_show:           "No-show",
 };
 
 const STATUS_CLASS: Record<BookingStatus, string> = {
-  pending_deposit: "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20",
-  confirmed:       "bg-[#c9a84c]/10 text-[#c9a84c] border border-[#c9a84c]/20",
-  completed:       "bg-green-500/10 text-green-400 border border-green-500/20",
-  cancelled:       "bg-white/5 text-white/30 border border-white/10",
-  no_show:         "bg-red-500/10 text-red-400 border border-red-500/20",
+  pending_deposit:   "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20",
+  awaiting_schedule: "bg-violet-500/10 text-violet-400 border border-violet-500/20",
+  confirmed:         "bg-[#c9a84c]/10 text-[#c9a84c] border border-[#c9a84c]/20",
+  completed:         "bg-green-500/10 text-green-400 border border-green-500/20",
+  cancelled:         "bg-white/5 text-white/30 border border-white/10",
+  no_show:           "bg-red-500/10 text-red-400 border border-red-500/20",
 };
 
-function fmtDate(d: string) {
+function fmtDate(d: string | null) {
+  if (!d) return "Not yet scheduled";
   const [y, mo, day] = d.split("-").map(Number);
   return new Date(y, mo - 1, day).toLocaleDateString("en-US", {
     month: "short", day: "numeric", year: "numeric",
   });
 }
 
-function fmtTime(t: string) {
+function fmtTime(t: string | null) {
   if (!t) return "—";
   const [h, m] = t.split(":").map(Number);
   return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
@@ -66,7 +69,7 @@ export default async function OwnerBookingsPage() {
     .order("date", { ascending: false });
 
   const bookings = (bookingsRaw ?? []) as {
-    id: string; date: string; time: string;
+    id: string; date: string | null; time: string | null;
     status: BookingStatus; deposit_amount_cents: number;
     deposit_paid: boolean;
     client_id: string; artist_id: string;

@@ -17,7 +17,8 @@ export type SmsMessageType =
   | "day_of_reminder"
   | "deposit_pending"
   | "cancellation"
-  | "booking_confirmed";
+  | "booking_confirmed"
+  | "no_show";
 
 export function buildSmsMessage(type: SmsMessageType, studioName: string): string {
   const templates: Record<SmsMessageType, string> = {
@@ -26,6 +27,7 @@ export function buildSmsMessage(type: SmsMessageType, studioName: string): strin
     day_of_reminder: `Today's the day! Your appointment at ${studioName} is today. See you soon. Reply STOP to opt out.`,
     deposit_pending: `Your booking at ${studioName} is held — please pay your deposit within 24 hours or the slot will be released.`,
     cancellation: `Your booking at ${studioName} has been cancelled. Contact the studio to rebook.`,
+    no_show: `You were marked as a no-show for your appointment at ${studioName}. Your deposit has been kept. Contact the studio to rebook.`,
   };
   return templates[type];
 }

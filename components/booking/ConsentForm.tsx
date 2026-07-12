@@ -7,9 +7,13 @@ interface Props {
   bookingId: string;
   studioSlug: string;
   artistId: string;
+  // Overrides the post-submit redirect. Defaults to the classic booking
+  // flow's confirmation page so that caller is unaffected; the client portal
+  // passes its own project page path instead.
+  redirectTo?: string;
 }
 
-export default function ConsentForm({ bookingId, studioSlug, artistId }: Props) {
+export default function ConsentForm({ bookingId, studioSlug, artistId, redirectTo }: Props) {
   const router = useRouter();
 
   const [fullName, setFullName] = useState("");
@@ -73,7 +77,7 @@ export default function ConsentForm({ bookingId, studioSlug, artistId }: Props) 
       }
 
       router.push(
-        `/book/${studioSlug}/${artistId}/book/confirmation?booking_id=${bookingId}`
+        redirectTo ?? `/book/${studioSlug}/${artistId}/book/confirmation?booking_id=${bookingId}`
       );
     } catch {
       setError("Network error. Please check your connection and try again.");
