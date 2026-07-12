@@ -6,7 +6,9 @@ import {
   sendBookingConfirmationEmail,
   sendCustomRequestAcceptedEmail,
   sendOwnerDepositNotificationEmail,
+  sendRemainderReceivedEmail,
 } from "@/lib/email";
+import { getBalanceDueCents } from "@/lib/booking-balance";
 
 export async function POST(request: NextRequest) {
   // ── 1. Read raw body — must be text/buffer before any parsing ────────────
@@ -217,16 +219,16 @@ async function handleDepositPayment(
 
   const depositPaymentId = session.metadata?.depositPaymentId ?? null;
 
-  let dpRows: Array<{ id: string; booking_id: string; payment_status: string }> | null = null;
+  let dpRows: Array<{ id: string; booking_id: string; payment_status: string; payment_type: string }> | null = null;
   let dpError: unknown = null;
 
   if (depositPaymentId) {
     const result = (await supabase
       .from("deposit_payments" as never)
-      .select("id, booking_id, payment_status")
+      .select("id, booking_id, payment_status, payment_type")
       .eq("id", depositPaymentId)
       .limit(1)) as {
-      data: Array<{ id: string; booking_id: string; payment_status: string }> | null;
+      data: Array<{ id: string; booking_id: string; payment_status: string; payment_type: string }> | null;
       error: unknown;
     };
     dpRows = result.data;
@@ -234,10 +236,10 @@ async function handleDepositPayment(
   } else {
     const result = (await supabase
       .from("deposit_payments" as never)
-      .select("id, booking_id, payment_status")
+      .select("id, booking_id, payment_status, payment_type")
       .eq("stripe_checkout_session_id", session.id)
       .limit(1)) as {
-      data: Array<{ id: string; booking_id: string; payment_status: string }> | null;
+      data: Array<{ id: string; booking_id: string; payment_status: string; payment_type: string }> | null;
       error: unknown;
     };
     dpRows = result.data;
@@ -272,6 +274,13 @@ async function handleDepositPayment(
   if (dpUpdateError) {
     console.error("[stripe/webhook] deposit_payments update failed:", dpUpdateError);
     return NextResponse.json({ error: "DB error" }, { status: 500 });
+  }
+
+  // Remainder payments never touch the booking's status/deposit fields — that
+  // lifecycle machinery (awaiting_schedule/confirmed, deposit_paid) is a
+  // deposit-only concern. This just records collection and notifies.
+  if (dp.payment_type === "remainder") {
+    return handleRemainderPayment(supabase, dp.booking_id, now);
   }
 
   // Whether this booking already has a real date/time decides what "paid"
@@ -370,6 +379,62 @@ async function handleDepositPayment(
   }
 
   console.log("[stripe/webhook] deposit confirmed — booking:", dp.booking_id, "| dp:", dp.id);
+  return NextResponse.json({ received: true });
+}
+
+// Remainder payment side effect — sets remainder_collected/remainder_collected_at
+// on the booking and notifies the client. Deliberately does not touch
+// bookings.status/deposit_paid — those belong to the deposit lifecycle only.
+async function handleRemainderPayment(
+  supabase: ReturnType<typeof createAdminClient>,
+  bookingId: string,
+  paidAt: string
+): Promise<NextResponse> {
+  const { error: bookingUpdateError } = await supabase
+    .from("bookings")
+    .update({ remainder_collected: true, remainder_collected_at: paidAt } as never)
+    .eq("id", bookingId);
+
+  if (bookingUpdateError) {
+    console.error("[stripe/webhook] remainder bookings update failed:", bookingUpdateError.message);
+    return NextResponse.json({ error: "DB error" }, { status: 500 });
+  }
+
+  const { data: bookingRow } = await supabase
+    .from("bookings")
+    .select("client_id, studio_id, deposit_amount_cents, total_amount_cents, quote_amount_cents")
+    .eq("id", bookingId)
+    .maybeSingle();
+
+  if (bookingRow) {
+    const booking = bookingRow as {
+      client_id: string; studio_id: string;
+      deposit_amount_cents: number; total_amount_cents: number | null; quote_amount_cents: number | null;
+    };
+
+    const [{ data: clientData }, { data: studioData }] = await Promise.all([
+      supabase.from("clients").select("full_name, email, phone").eq("id", booking.client_id).maybeSingle(),
+      supabase.from("studios").select("name").eq("id", booking.studio_id).maybeSingle(),
+    ]);
+
+    const client = clientData as { full_name: string; email: string; phone: string } | null;
+    const studioName = (studioData as { name: string } | null)?.name ?? "the studio";
+    const balanceDueCents = getBalanceDueCents(booking) ?? 0;
+
+    if (client?.phone) {
+      void trySendSms(client.phone, buildSmsMessage("remainder_received", studioName));
+    }
+    if (client?.email) {
+      void sendRemainderReceivedEmail({
+        to: client.email,
+        clientName: client.full_name,
+        studioName,
+        balanceDueCents,
+      });
+    }
+  }
+
+  console.log("[stripe/webhook] remainder collected — booking:", bookingId);
   return NextResponse.json({ received: true });
 }
 

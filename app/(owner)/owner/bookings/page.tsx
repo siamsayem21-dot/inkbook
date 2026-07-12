@@ -91,6 +91,7 @@ export default async function OwnerBookingsPage() {
           .from("deposit_payments" as never)
           .select("booking_id")
           .in("booking_id", bookingIds)
+          .eq("payment_type", "deposit")
           .eq("payment_status", "pending") as unknown as Promise<{
             data: Array<{ booking_id: string }> | null;
           }>)

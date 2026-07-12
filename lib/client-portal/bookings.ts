@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getBalanceDueCents } from "@/lib/booking-balance";
 
 export type ClientBooking = {
   id: string;
@@ -20,6 +21,9 @@ export type ClientBookingDetail = ClientBooking & {
   depositExpiresAt: string | null;
   totalAmountCents: number | null;
   hasConsentForm: boolean;
+  balanceDueCents: number | null;
+  remainderCollected: boolean;
+  remainderCollectedAt: string | null;
 };
 
 type BookingRow = {
@@ -36,11 +40,15 @@ type BookingRow = {
   deposit_kept: boolean;
   deposit_expires_at: string | null;
   total_amount_cents: number | null;
+  quote_amount_cents: number | null;
+  remainder_collected: boolean;
+  remainder_collected_at: string | null;
 };
 
 const BOOKING_COLUMNS =
   "id, artist_id, date, time, style, description, status, deposit_amount_cents, " +
-  "deposit_paid, deposit_paid_at, deposit_kept, deposit_expires_at, total_amount_cents";
+  "deposit_paid, deposit_paid_at, deposit_kept, deposit_expires_at, total_amount_cents, " +
+  "quote_amount_cents, remainder_collected, remainder_collected_at";
 
 function deriveTitle(description: string, style: string | null): string {
   const base = (style ? `${style} Tattoo` : description) || "Tattoo Project";
@@ -184,5 +192,8 @@ export async function getClientBookingDetail(
     depositExpiresAt: b.deposit_expires_at,
     totalAmountCents: b.total_amount_cents,
     hasConsentForm: Boolean(consentResult.data),
+    balanceDueCents: getBalanceDueCents(b),
+    remainderCollected: b.remainder_collected,
+    remainderCollectedAt: b.remainder_collected_at,
   };
 }

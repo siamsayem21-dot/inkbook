@@ -21,6 +21,9 @@ export type DepositCheckoutParams = {
   clientEmail?: string | null;
   successUrl: string;
   cancelUrl: string;
+  // Defaults to "deposit" so every pre-existing caller (both of them) keeps
+  // working unchanged. Phase C Feature 2 passes "remainder" explicitly.
+  paymentType?: "deposit" | "remainder";
 };
 
 export type DepositCheckoutResult = { checkoutUrl?: string; error?: string };
@@ -33,13 +36,17 @@ export type DepositCheckoutResult = { checkoutUrl?: string; error?: string };
 export async function getOrCreateDepositCheckoutSession(
   params: DepositCheckoutParams
 ): Promise<DepositCheckoutResult> {
-  const { bookingId, depositAmountCents, artistId, artistName, studioName, clientEmail, successUrl, cancelUrl } = params;
+  const {
+    bookingId, depositAmountCents, artistId, artistName, studioName, clientEmail, successUrl, cancelUrl,
+    paymentType = "deposit",
+  } = params;
   const supabase = createAdminClient();
 
   const { data: existingRows } = (await supabase
     .from("deposit_payments" as never)
     .select("id, stripe_checkout_session_id")
     .eq("booking_id", bookingId)
+    .eq("payment_type", paymentType)
     .eq("payment_status", "pending")
     .not("stripe_checkout_session_id", "is", null)
     .order("created_at", { ascending: false })
@@ -76,6 +83,7 @@ export async function getOrCreateDepositCheckoutSession(
       .from("deposit_payments" as never)
       .select("id")
       .eq("booking_id", bookingId)
+      .eq("payment_type", paymentType)
       .eq("payment_status", "pending")
       .order("created_at", { ascending: false })
       .limit(1)) as { data: Array<{ id: string }> | null };
@@ -89,6 +97,7 @@ export async function getOrCreateDepositCheckoutSession(
           booking_id: bookingId,
           amount_cents: depositAmountCents,
           payment_status: "pending",
+          payment_type: paymentType,
         } as never)
         .select("id")
         .single()) as { data: { id: string } | null; error: unknown };
@@ -110,10 +119,16 @@ export async function getOrCreateDepositCheckoutSession(
         {
           price_data: {
             currency: "usd",
-            product_data: {
-              name: `Tattoo deposit — ${artistName}`,
-              description: `${studioName} · Non-refundable on no-show or late cancellation`,
-            },
+            product_data:
+              paymentType === "remainder"
+                ? {
+                    name: `Remaining balance — ${artistName}`,
+                    description: `${studioName} · Balance due for your tattoo session`,
+                  }
+                : {
+                    name: `Tattoo deposit — ${artistName}`,
+                    description: `${studioName} · Non-refundable on no-show or late cancellation`,
+                  },
             unit_amount: depositAmountCents,
           },
           quantity: 1,

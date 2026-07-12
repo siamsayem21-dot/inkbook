@@ -5,8 +5,10 @@ import { getStudioId } from "@/lib/auth/config";
 import { getStripe } from "@/lib/stripe/client";
 import { revalidatePath } from "next/cache";
 import { buildSmsMessage, trySendSms } from "@/lib/twilio/client";
-import { sendSessionScheduledEmail, sendBookingCancelledEmail } from "@/lib/email";
+import { sendSessionScheduledEmail, sendBookingCancelledEmail, sendRemainderRequestEmail } from "@/lib/email";
+import { getOrCreateDepositCheckoutSession } from "@/lib/stripe/deposit-checkout";
 import { isReadyToConfirm, bookingHasConsent } from "@/lib/booking-lifecycle";
+import { getBookingTotalCents, getBalanceDueCents } from "@/lib/booking-balance";
 
 export async function cancelBooking(bookingId: string): Promise<{ error?: string }> {
   const studioId = await getStudioId();
@@ -83,7 +85,7 @@ export async function assignSchedule(
 
   const { data: bookingRaw } = await supabase
     .from("bookings")
-    .select("id, studio_id, artist_id, status, client_id, deposit_amount_cents, total_amount_cents")
+    .select("id, studio_id, artist_id, status, client_id, deposit_amount_cents, total_amount_cents, quote_amount_cents")
     .eq("id", bookingId)
     .maybeSingle();
 
@@ -95,6 +97,7 @@ export async function assignSchedule(
     client_id: string;
     deposit_amount_cents: number;
     total_amount_cents: number | null;
+    quote_amount_cents: number | null;
   } | null;
 
   if (!booking) return { error: "Booking not found" };
@@ -186,7 +189,7 @@ export async function assignSchedule(
       date: formattedDate,
       time,
       depositAmountCents: booking.deposit_amount_cents,
-      totalAmountCents: booking.total_amount_cents ?? booking.deposit_amount_cents,
+      totalAmountCents: getBookingTotalCents(booking) ?? booking.deposit_amount_cents,
     });
   }
 
@@ -303,6 +306,7 @@ export async function sendDepositRequest(
     .from("deposit_payments" as never)
     .select("id, stripe_checkout_session_id")
     .eq("booking_id", bookingId)
+    .eq("payment_type", "deposit")
     .eq("payment_status", "pending")
     .not("stripe_checkout_session_id", "is", null)
     .order("created_at", { ascending: false })
@@ -337,6 +341,7 @@ export async function sendDepositRequest(
       .from("deposit_payments" as never)
       .select("id")
       .eq("booking_id", bookingId)
+      .eq("payment_type", "deposit")
       .eq("payment_status", "pending")
       .order("created_at", { ascending: false })
       .limit(1)) as { data: Array<{ id: string }> | null };
@@ -350,6 +355,7 @@ export async function sendDepositRequest(
           booking_id: bookingId,
           amount_cents: booking.deposit_amount_cents,
           payment_status: "pending",
+          payment_type: "deposit",
         } as never)
         .select("id")
         .single()) as { data: { id: string } | null; error: unknown };
@@ -424,4 +430,94 @@ export async function sendDepositRequest(
   }
 
   return { checkoutUrl: session.url! };
+}
+
+// Generates (or reuses) a Stripe Checkout link for the remaining balance on
+// a booking. Unlike sendDepositRequest() above — which hand-rolls Stripe
+// session creation because it needs a special post-payment redirect to the
+// consent page — this reuses getOrCreateDepositCheckoutSession() as-is
+// (paymentType: "remainder"), since a remainder payment has no further
+// booking-lifecycle step after it; there's nothing special-case to hand-roll.
+export async function requestRemainderPayment(
+  bookingId: string
+): Promise<{ checkoutUrl?: string; error?: string }> {
+  const studioId = await getStudioId();
+  if (!studioId) return { error: "Unauthorized" };
+
+  const supabase = createAdminClient();
+
+  const { data: bookingRaw, error: bookingError } = await supabase
+    .from("bookings")
+    .select(
+      "id, studio_id, artist_id, deposit_amount_cents, total_amount_cents, quote_amount_cents, " +
+        "remainder_collected, clients(email, full_name, phone), artists(name)"
+    )
+    .eq("id", bookingId)
+    .single();
+
+  if (bookingError || !bookingRaw) return { error: "Booking not found" };
+
+  const booking = bookingRaw as {
+    id: string;
+    studio_id: string;
+    artist_id: string;
+    deposit_amount_cents: number;
+    total_amount_cents: number | null;
+    quote_amount_cents: number | null;
+    remainder_collected: boolean;
+    clients: { email: string; full_name: string; phone: string } | null;
+    artists: { name: string } | null;
+  };
+
+  // Same "return not-found rather than unauthorized" reasoning as sendDepositRequest.
+  if (booking.studio_id !== studioId) return { error: "Booking not found" };
+  if (booking.remainder_collected) return { error: "Remaining balance has already been collected" };
+
+  const balanceDueCents = getBalanceDueCents(booking);
+  if (balanceDueCents === null) {
+    return { error: "This booking has no agreed total price — nothing to collect" };
+  }
+  if (balanceDueCents <= 0) {
+    return { error: "There is no remaining balance to collect" };
+  }
+
+  const { data: studioRaw } = await supabase.from("studios").select("name").eq("id", studioId).single();
+  const studioName = (studioRaw as { name: string } | null)?.name ?? "Studio";
+  const artistName = booking.artists?.name ?? "Artist";
+  const clientEmail = booking.clients?.email;
+  const clientPhone = booking.clients?.phone;
+
+  const baseUrl =
+    process.env.NEXT_PUBLIC_APP_URL ??
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
+  const result = await getOrCreateDepositCheckoutSession({
+    bookingId,
+    depositAmountCents: balanceDueCents,
+    artistId: booking.artist_id,
+    artistName,
+    studioName,
+    clientEmail,
+    paymentType: "remainder",
+    successUrl: `${baseUrl}/owner/bookings/${bookingId}?remainder=paid`,
+    cancelUrl: `${baseUrl}/owner/bookings/${bookingId}?remainder=cancelled`,
+  });
+
+  if (result.error) return { error: result.error };
+
+  if (clientEmail && result.checkoutUrl) {
+    void sendRemainderRequestEmail({
+      to: clientEmail,
+      clientName: booking.clients?.full_name ?? "there",
+      studioName,
+      artistName,
+      balanceDueCents,
+      checkoutUrl: result.checkoutUrl,
+    });
+  }
+  if (clientPhone) {
+    void trySendSms(clientPhone, buildSmsMessage("remainder_pending", studioName));
+  }
+
+  return { checkoutUrl: result.checkoutUrl };
 }

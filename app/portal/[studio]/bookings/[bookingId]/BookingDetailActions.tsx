@@ -3,14 +3,17 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { continueToDeposit, askQuoteQuestion } from "../../projects/[id]/actions";
+import { continueToDeposit, askQuoteQuestion, payRemainderBalance } from "../../projects/[id]/actions";
 
 interface Props {
+  bookingId: string;
   consultationId: string;
   studioSlug: string;
   status: string;
   depositPaid: boolean;
   hasConsentForm: boolean;
+  balanceDueCents: number | null;
+  remainderCollected: boolean;
   brandColor: string;
   textOnBrand: string;
 }
@@ -22,11 +25,14 @@ interface Props {
 // sees this booking's updated status on their next visit here rather than an
 // immediate redirect back — consistent with this feature's no-realtime scope.
 export default function BookingDetailActions({
+  bookingId,
   consultationId,
   studioSlug,
   status,
   depositPaid,
   hasConsentForm,
+  balanceDueCents,
+  remainderCollected,
   brandColor,
   textOnBrand,
 }: Props) {
@@ -34,10 +40,26 @@ export default function BookingDetailActions({
   const [isPending, startTransition] = useTransition();
   const [notice, setNotice] = useState<string | null>(null);
 
+  const canPayRemainder =
+    (status === "confirmed" || status === "completed") &&
+    balanceDueCents !== null && balanceDueCents > 0 && !remainderCollected;
+
   function handlePayDeposit() {
     setNotice(null);
     startTransition(async () => {
       const result = await continueToDeposit(consultationId);
+      if (result.error || !result.checkoutUrl) {
+        setNotice(result.error ?? "Failed to start checkout.");
+        return;
+      }
+      window.location.href = result.checkoutUrl;
+    });
+  }
+
+  function handlePayRemainder() {
+    setNotice(null);
+    startTransition(async () => {
+      const result = await payRemainderBalance(bookingId);
       if (result.error || !result.checkoutUrl) {
         setNotice(result.error ?? "Failed to start checkout.");
         return;
@@ -81,6 +103,18 @@ export default function BookingDetailActions({
           >
             Sign Consent Form
           </Link>
+        )}
+
+        {canPayRemainder && (
+          <button
+            type="button"
+            onClick={handlePayRemainder}
+            disabled={isPending}
+            className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 transition-opacity hover:opacity-90 disabled:opacity-50"
+            style={{ backgroundColor: brandColor, color: textOnBrand }}
+          >
+            {isPending ? "Working…" : "Pay Remaining Balance"}
+          </button>
         )}
 
         <button

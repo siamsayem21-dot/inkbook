@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getBalanceDueCents } from "@/lib/booking-balance";
 import Link from "next/link";
 
 const ARTIST_ID = "fa2900bc-f613-4f75-8f64-e1e0d7e32a79";
@@ -15,6 +16,9 @@ type BookingDetail = {
   deposit_paid: boolean;
   deposit_kept: boolean;
   deposit_amount_cents: number;
+  total_amount_cents: number | null;
+  quote_amount_cents: number | null;
+  remainder_collected: boolean;
   clients: { full_name: string; email: string; phone: string } | null;
 };
 
@@ -65,7 +69,10 @@ export default async function ArtistBookingDetailPage({ params }: Props) {
 
   const { data: bookingRaw, error: bookingError } = await supabase
     .from("bookings")
-    .select("id, date, time, style, description, status, deposit_paid, deposit_kept, deposit_amount_cents, clients(full_name, email, phone)")
+    .select(
+      "id, date, time, style, description, status, deposit_paid, deposit_kept, deposit_amount_cents, " +
+        "total_amount_cents, quote_amount_cents, remainder_collected, clients(full_name, email, phone)"
+    )
     .eq("id", params.bookingId)
     .eq("artist_id", ARTIST_ID)
     .maybeSingle();
@@ -89,6 +96,7 @@ export default async function ArtistBookingDetailPage({ params }: Props) {
 
   const hasConsent = !!consentRaw;
   const statusInfo = STATUS_LABELS[b.status] ?? { label: b.status, className: "bg-zinc-800 text-zinc-400 border-zinc-700" };
+  const balanceDueCents = getBalanceDueCents(b);
 
   const fields = [
     { label: "Client name",  value: b.clients?.full_name ?? "—" },
@@ -96,6 +104,12 @@ export default async function ArtistBookingDetailPage({ params }: Props) {
     { label: "Time",         value: fmt12h(b.time) },
     { label: "Style",        value: b.style },
     { label: "Deposit",      value: `$${(b.deposit_amount_cents / 100).toFixed(2)} ${b.deposit_paid ? "✓ Paid" : "— Unpaid"}` },
+    ...(balanceDueCents !== null
+      ? [{
+          label: "Remaining balance",
+          value: `$${(balanceDueCents / 100).toFixed(2)} ${b.remainder_collected ? "✓ Collected" : "— Not yet collected"}`,
+        }]
+      : []),
     { label: "Consent form", value: hasConsent ? "✓ Signed" : "Not submitted" },
     { label: "Description",  value: b.description ?? "—" },
     { label: "Client email", value: b.clients?.email ?? "—" },

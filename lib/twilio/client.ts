@@ -18,7 +18,9 @@ export type SmsMessageType =
   | "deposit_pending"
   | "cancellation"
   | "booking_confirmed"
-  | "no_show";
+  | "no_show"
+  | "remainder_pending"
+  | "remainder_received";
 
 export function buildSmsMessage(type: SmsMessageType, studioName: string): string {
   const templates: Record<SmsMessageType, string> = {
@@ -28,6 +30,8 @@ export function buildSmsMessage(type: SmsMessageType, studioName: string): strin
     deposit_pending: `Your booking at ${studioName} is held — please pay your deposit within 24 hours or the slot will be released.`,
     cancellation: `Your booking at ${studioName} has been cancelled. Contact the studio to rebook.`,
     no_show: `You were marked as a no-show for your appointment at ${studioName}. Your deposit has been kept. Contact the studio to rebook.`,
+    remainder_pending: `${studioName} is requesting your remaining balance. Check your email for the payment link.`,
+    remainder_received: `Thanks! Your remaining balance at ${studioName} has been received in full.`,
   };
   return templates[type];
 }

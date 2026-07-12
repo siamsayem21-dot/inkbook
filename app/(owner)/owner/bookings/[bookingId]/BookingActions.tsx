@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { cancelBooking, sendDepositRequest, assignSchedule, markCompleted } from "./actions";
+import { cancelBooking, sendDepositRequest, assignSchedule, markCompleted, requestRemainderPayment } from "./actions";
 
 type ConsentForm = {
   id: string;
@@ -24,6 +24,10 @@ interface Props {
   consentForm: ConsentForm;
   depositParam: string | null; // "paid" | "cancelled" | null — from ?deposit= query param
   depositPaymentStatus: DepositPaymentStatus;
+  balanceDueCents: number | null; // null when this booking has no agreed total price
+  remainderCollected: boolean;
+  remainderPaymentStatus: DepositPaymentStatus;
+  remainderParam: string | null; // "paid" | "cancelled" | null — from ?remainder= query param
 }
 
 export default function BookingActions({
@@ -35,6 +39,10 @@ export default function BookingActions({
   consentForm,
   depositParam,
   depositPaymentStatus,
+  balanceDueCents,
+  remainderCollected,
+  remainderPaymentStatus,
+  remainderParam,
 }: Props) {
   const [showConsent, setShowConsent] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -46,6 +54,9 @@ export default function BookingActions({
   const [scheduleTime, setScheduleTime] = useState("");
   const [scheduleError, setScheduleError] = useState<string | null>(null);
   const [completedError, setCompletedError] = useState<string | null>(null);
+  const [remainderLink, setRemainderLink] = useState<string | null>(null);
+  const [remainderCopied, setRemainderCopied] = useState(false);
+  const [remainderError, setRemainderError] = useState<string | null>(null);
   const router = useRouter();
 
   const isCancellable      = status !== "cancelled" && status !== "completed";
@@ -54,6 +65,10 @@ export default function BookingActions({
   const needsSchedule      = status === "awaiting_schedule" && !date;
   const waitingOnConsent   = status === "awaiting_schedule" && Boolean(date);
   const canMarkCompleted   = status === "confirmed" && hasConsent;
+  const canRequestRemainder =
+    (status === "confirmed" || status === "completed") &&
+    balanceDueCents !== null && balanceDueCents > 0 && !remainderCollected;
+  const remainderRequestSent = remainderPaymentStatus === "pending";
 
   function handleAssignSchedule() {
     setScheduleError(null);
@@ -114,6 +129,28 @@ export default function BookingActions({
     });
   }
 
+  function handleRequestRemainder() {
+    setRemainderError(null);
+    startTransition(async () => {
+      const result = await requestRemainderPayment(bookingId);
+      if (result.error) {
+        setRemainderError(result.error);
+        return;
+      }
+      if (result.checkoutUrl) {
+        setRemainderLink(result.checkoutUrl);
+      }
+    });
+  }
+
+  function handleCopyRemainderLink() {
+    if (!remainderLink) return;
+    navigator.clipboard.writeText(remainderLink).then(() => {
+      setRemainderCopied(true);
+      setTimeout(() => setRemainderCopied(false), 2500);
+    });
+  }
+
   return (
     <div className="space-y-4">
       {/* Return banners after Stripe redirect */}
@@ -126,6 +163,17 @@ export default function BookingActions({
       {depositParam === "cancelled" && (
         <div className="bg-zinc-900 border border-zinc-700 text-zinc-400 text-sm rounded-xl px-4 py-3">
           Payment was cancelled. The deposit request is still pending.
+        </div>
+      )}
+      {remainderParam === "paid" && (
+        <div className="bg-green-950 border border-green-800 text-green-300 text-sm rounded-xl px-4 py-3 flex items-center gap-2">
+          <span className="text-green-400">✓</span>
+          Payment complete. Webhook will mark the balance collected once processed.
+        </div>
+      )}
+      {remainderParam === "cancelled" && (
+        <div className="bg-zinc-900 border border-zinc-700 text-zinc-400 text-sm rounded-xl px-4 py-3">
+          Payment was cancelled. The remainder request is still pending.
         </div>
       )}
 
@@ -185,6 +233,63 @@ export default function BookingActions({
               </p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Remainder request block — shown once a balance is owed and not yet collected */}
+      {canRequestRemainder && (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-white">Remaining balance</p>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                {remainderRequestSent
+                  ? "Awaiting client payment"
+                  : `$${((balanceDueCents ?? 0) / 100).toFixed(2)} remaining for this session`}
+              </p>
+            </div>
+
+            {remainderRequestSent && !remainderLink ? (
+              <div className="shrink-0 flex items-center gap-2 text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-4 py-2 rounded-full cursor-default select-none">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                Remainder Request Sent
+              </div>
+            ) : !remainderLink ? (
+              <button
+                onClick={handleRequestRemainder}
+                disabled={isPending}
+                className="shrink-0 text-sm font-semibold bg-[#c9a84c] hover:bg-[#b8973b] text-black px-4 py-2 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isPending ? "Generating link…" : "Request Remainder Payment"}
+              </button>
+            ) : null}
+          </div>
+
+          {remainderLink && (
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <input
+                  readOnly
+                  value={remainderLink}
+                  className="flex-1 min-w-0 bg-[#0a0a0a] border border-zinc-700 text-zinc-400 text-xs rounded-xl px-3 py-2.5 focus:outline-none truncate"
+                />
+                <button
+                  onClick={handleCopyRemainderLink}
+                  className={`shrink-0 px-4 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
+                    remainderCopied
+                      ? "bg-green-500/10 text-green-400 border border-green-500/20"
+                      : "bg-[#c9a84c] hover:bg-[#b8973b] text-black"
+                  }`}
+                >
+                  {remainderCopied ? "Copied!" : "Copy"}
+                </button>
+              </div>
+              <p className="text-[10px] text-zinc-600">
+                Send this link to the client via text or email. Do not open it yourself.
+              </p>
+            </div>
+          )}
+          {remainderError && <p className="text-sm text-red-400 mt-3">{remainderError}</p>}
         </div>
       )}
 

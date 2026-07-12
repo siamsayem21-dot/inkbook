@@ -61,8 +61,7 @@ export default async function ClientBookingDetailPage({ params }: Props) {
 
   const brand = getBrand(studio.primary_color ?? "#D4AF37");
   const meta = getBookingStatusMeta(booking.status);
-  const balanceDueCents =
-    booking.totalAmountCents != null ? Math.max(booking.totalAmountCents - booking.depositAmountCents, 0) : null;
+  const balanceDueCents = booking.balanceDueCents;
 
   return (
     <div className="max-w-2xl">
@@ -145,7 +144,14 @@ export default async function ClientBookingDetailPage({ params }: Props) {
           {balanceDueCents !== null && (
             <div>
               <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Remaining Balance</p>
-              <p className="text-sm text-zinc-200">{fmtDollars(balanceDueCents)} — due at your session</p>
+              <p className="text-sm text-zinc-200">
+                {fmtDollars(balanceDueCents)}{" "}
+                {booking.remainderCollected ? (
+                  <span className="text-emerald-400">— Paid</span>
+                ) : (
+                  <span className="text-zinc-500">— due at your session</span>
+                )}
+              </p>
             </div>
           )}
           <div className="col-span-2">
@@ -157,11 +163,14 @@ export default async function ClientBookingDetailPage({ params }: Props) {
         </div>
 
         <BookingDetailActions
+          bookingId={booking.id}
           consultationId={booking.consultationId}
           studioSlug={params.studio}
           status={booking.status}
           depositPaid={booking.depositPaid}
           hasConsentForm={booking.hasConsentForm}
+          balanceDueCents={balanceDueCents}
+          remainderCollected={booking.remainderCollected}
           brandColor={brand.full}
           textOnBrand={brand.textOnBrand}
         />

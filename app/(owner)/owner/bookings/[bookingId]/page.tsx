@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudioId } from "@/lib/auth/config";
+import { getBalanceDueCents } from "@/lib/booking-balance";
 import BookingActions from "./BookingActions";
 
 type BookingStatus = "pending_deposit" | "awaiting_schedule" | "confirmed" | "completed" | "cancelled" | "no_show";
@@ -27,6 +28,10 @@ type BookingDetail = {
   deposit_amount_cents: number;
   deposit_paid: boolean;
   deposit_kept: boolean;
+  total_amount_cents: number | null;
+  quote_amount_cents: number | null;
+  remainder_collected: boolean;
+  remainder_collected_at: string | null;
   clients: { full_name: string; email: string; phone: string } | null;
   artists: { name: string } | null;
 };
@@ -65,7 +70,7 @@ function ErrorCard({ message }: { message: string }) {
 
 interface Props {
   params: { bookingId: string };
-  searchParams: { deposit?: string };
+  searchParams: { deposit?: string; remainder?: string };
 }
 
 export default async function BookingDetailPage({ params, searchParams }: Props) {
@@ -76,7 +81,11 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
 
   const { data: bookingRaw, error: bookingError } = await supabase
     .from("bookings")
-    .select("id, date, time, style, description, status, deposit_amount_cents, deposit_paid, deposit_kept, clients(full_name, email, phone), artists(name)")
+    .select(
+      "id, date, time, style, description, status, deposit_amount_cents, deposit_paid, deposit_kept, " +
+        "total_amount_cents, quote_amount_cents, remainder_collected, remainder_collected_at, " +
+        "clients(full_name, email, phone), artists(name)"
+    )
     .eq("id", params.bookingId)
     .eq("studio_id", studioId)
     .maybeSingle();
@@ -92,7 +101,7 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
 
   const b = bookingRaw as unknown as BookingDetail;
 
-  const [{ data: consentRaw }, depositPaymentResult, legacyDepositResult] = await Promise.all([
+  const [{ data: consentRaw }, depositPaymentResult, legacyDepositResult, remainderPaymentResult] = await Promise.all([
     supabase
       .from("consent_forms")
       .select("id, signed_at, state_template, is_minor, guardian_name, id_photo_url")
@@ -102,6 +111,7 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
       .from("deposit_payments" as never)
       .select("payment_status")
       .eq("booking_id", params.bookingId)
+      .eq("payment_type", "deposit")
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle()) as unknown as Promise<{
@@ -116,6 +126,16 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
       .eq("booking_id", params.bookingId)
       .maybeSingle()) as unknown as Promise<{
         data: { status: string } | null;
+      }>,
+    (supabase
+      .from("deposit_payments" as never)
+      .select("payment_status")
+      .eq("booking_id", params.bookingId)
+      .eq("payment_type", "remainder")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()) as unknown as Promise<{
+        data: { payment_status: string } | null;
       }>,
   ]);
 
@@ -137,9 +157,16 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
     id_photo_url: string;
   } | null;
 
+  const remainderPaymentStatus = (remainderPaymentResult.data?.payment_status ?? "none") as
+    "none" | "pending" | "paid" | "refunded" | "kept";
+
   const statusInfo = STATUS_LABELS[b.status] ?? { label: b.status, className: "bg-zinc-800 text-zinc-400 border-zinc-700" };
   const depositParam = searchParams.deposit === "paid" || searchParams.deposit === "cancelled"
     ? searchParams.deposit
+    : null;
+  const balanceDueCents = getBalanceDueCents(b);
+  const remainderParam = searchParams.remainder === "paid" || searchParams.remainder === "cancelled"
+    ? searchParams.remainder
     : null;
 
   const fields: { label: string; value: string; wide?: boolean }[] = [
@@ -156,6 +183,16 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
         ? `$${(b.deposit_amount_cents / 100).toFixed(2)} — Request sent`
         : `$${(b.deposit_amount_cents / 100).toFixed(2)} — Not requested`,
     },
+    ...(balanceDueCents !== null
+      ? [{
+          label: "Remaining balance",
+          value: b.remainder_collected
+            ? `$${(balanceDueCents / 100).toFixed(2)} — ✓ Collected`
+            : remainderPaymentStatus === "pending"
+            ? `$${(balanceDueCents / 100).toFixed(2)} — Request sent`
+            : `$${(balanceDueCents / 100).toFixed(2)} — Not requested`,
+        }]
+      : []),
     { label: "Consent form",  value: hasConsent ? "✓ Signed" : "Not submitted" },
     { label: "Client email",  value: b.clients?.email ?? "—" },
     { label: "Client phone",  value: b.clients?.phone ?? "—" },
@@ -200,6 +237,10 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
         consentForm={consentForm}
         depositParam={depositParam}
         depositPaymentStatus={depositPaymentStatus}
+        balanceDueCents={balanceDueCents}
+        remainderCollected={b.remainder_collected}
+        remainderPaymentStatus={remainderPaymentStatus}
+        remainderParam={remainderParam}
       />
     </div>
   );

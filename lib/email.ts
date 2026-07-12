@@ -558,6 +558,85 @@ Please contact the studio directly if you'd like to rebook.
   await sendEmail(to, subject, html);
 }
 
+export async function sendRemainderRequestEmail({
+  to,
+  clientName,
+  studioName,
+  artistName,
+  balanceDueCents,
+  checkoutUrl,
+}: {
+  to: string;
+  clientName: string;
+  studioName: string;
+  artistName: string;
+  balanceDueCents: number;
+  checkoutUrl: string;
+}) {
+  const subject = `Remaining balance due — ${studioName}`;
+  const balanceDisplay = `$${(balanceDueCents / 100).toFixed(2)}`;
+
+  const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0A0A0A;font-family:sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0A0A;padding:40px 16px;">
+<tr><td align="center">
+<table width="520" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1E1E1E;border-radius:16px;padding:40px;">
+<tr><td>
+<p style="color:#c9a84c;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 24px;">Balance Due</p>
+<h1 style="color:#E8E8E8;font-size:22px;font-weight:700;margin:0 0 8px;">Hi ${clientName},</h1>
+<p style="color:#A0A0A0;font-size:15px;margin:0 0 24px;">
+${studioName} is requesting the remaining balance for your session with <strong style="color:#c9a84c;">${artistName}</strong>.
+</p>
+<div style="background:#0d0d0d;border:1px solid #c9a84c33;border-radius:12px;padding:24px;margin:0 0 24px;">
+<p style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin:0 0 6px;">Balance Due</p>
+<p style="color:#c9a84c;font-size:32px;font-weight:700;margin:0;">${balanceDisplay}</p>
+</div>
+<a href="${checkoutUrl}" style="display:inline-block;background:#c9a84c;color:#000;font-weight:700;font-size:15px;text-decoration:none;padding:14px 28px;border-radius:10px;">
+Pay Remaining Balance →
+</a>
+<p style="color:#555;font-size:12px;margin:24px 0 0;text-align:center;">Powered by InkBook &middot; inkbook.tech</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+
+  await sendEmail(to, subject, html);
+}
+
+export async function sendRemainderReceivedEmail({
+  to,
+  clientName,
+  studioName,
+  balanceDueCents,
+}: {
+  to: string;
+  clientName: string;
+  studioName: string;
+  balanceDueCents: number;
+}) {
+  const subject = `Payment received — ${studioName}`;
+  const balanceDisplay = `$${(balanceDueCents / 100).toFixed(2)}`;
+
+  const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0A0A0A;font-family:sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0A0A;padding:40px 16px;">
+<tr><td align="center">
+<table width="520" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1E1E1E;border-radius:16px;padding:40px;">
+<tr><td>
+<p style="color:#c9a84c;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 24px;">Payment Received</p>
+<h1 style="color:#E8E8E8;font-size:22px;font-weight:700;margin:0 0 8px;">Thanks, ${clientName}.</h1>
+<p style="color:#A0A0A0;font-size:15px;margin:0 0 28px;">
+Your remaining balance of <strong style="color:#c9a84c;">${balanceDisplay}</strong> at <strong style="color:#E8E8E8;">${studioName}</strong> has been received in full.
+</p>
+<p style="color:#555;font-size:12px;margin:0;text-align:center;">Powered by InkBook &middot; inkbook.tech</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+
+  await sendEmail(to, subject, html);
+}
+
 export async function sendArtistInviteEmail({
   to,
   inviteeName,

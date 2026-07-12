@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
     .from("deposit_payments" as never)
     .select("payment_status, stripe_checkout_session_id")
     .eq("booking_id", bookingId)
+    .eq("payment_type", "deposit")
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();

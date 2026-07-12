@@ -147,6 +147,59 @@ describe("POST /api/stripe/webhook — Branch A (deposit_payments)", () => {
   });
 });
 
+describe("POST /api/stripe/webhook — Branch A, remainder payment_type (Phase C Feature 2)", () => {
+  function event(metadata: Record<string, string>) {
+    return {
+      type: "checkout.session.completed",
+      data: { object: { id: "cs_R", payment_intent: "pi_R", metadata } },
+      created: 1700000000,
+    };
+  }
+
+  it("marks remainder_collected without touching booking status, and skips deposit-confirmation notifications", async () => {
+    mockConstructEvent(event({ depositPaymentId: "dp_r1" }));
+    sb.queueFrom("deposit_payments", [
+      { id: "dp_r1", booking_id: "bk_1", payment_status: "pending", payment_type: "remainder" },
+    ]); // lookup
+    sb.queueFrom("deposit_payments", ok()); // update -> paid
+    sb.queueFrom("bookings", ok()); // update -> remainder_collected/remainder_collected_at
+    sb.queueFrom("bookings", {
+      client_id: "client-1", studio_id: "studio-1",
+      deposit_amount_cents: 5000, total_amount_cents: 20000, quote_amount_cents: null,
+    }); // re-fetch for notification
+    sb.queueFrom("clients", { full_name: "Alex", email: "alex@example.com", phone: "5551234567" });
+    sb.queueFrom("studios", { name: "Ink & Iron" });
+
+    const res = await POST(makeRequest("{}"));
+    expect(res.status).toBe(200);
+
+    // The remainder-marking update must be exactly remainder_collected fields —
+    // never status/deposit_paid, which belong to the deposit lifecycle only.
+    const bookingUpdateArg = (sb.getChain("bookings", 1) as { update: { mock: { calls: unknown[][] } } })
+      .update.mock.calls[0][0] as Record<string, unknown>;
+    expect(bookingUpdateArg).toEqual(
+      expect.objectContaining({ remainder_collected: true })
+    );
+    expect(bookingUpdateArg.status).toBeUndefined();
+    expect(bookingUpdateArg.deposit_paid).toBeUndefined();
+
+    expect(trySendSms).toHaveBeenCalledWith("5551234567", "sms body");
+    // Must not run the "no date -> awaiting_schedule" schedule-check query at
+    // all — that's deposit-only logic this branch must skip entirely.
+    expect(sb.fromCalls.filter((t) => t === "consultations")).toHaveLength(0);
+  });
+
+  it("is idempotent — already-paid remainder row is skipped", async () => {
+    mockConstructEvent(event({ depositPaymentId: "dp_r1" }));
+    sb.queueFrom("deposit_payments", [
+      { id: "dp_r1", booking_id: "bk_1", payment_status: "paid", payment_type: "remainder" },
+    ]);
+    const res = await POST(makeRequest("{}"));
+    expect(res.status).toBe(200);
+    expect(sb.fromCalls).not.toContain("bookings");
+  });
+});
+
 describe("POST /api/stripe/webhook — Branch B (custom request deposit)", () => {
   function event(customRequestId: string) {
     return {

@@ -11,14 +11,16 @@ vi.mock("@/lib/twilio/client", () => ({
 vi.mock("@/lib/email", () => ({
   sendSessionScheduledEmail: vi.fn(() => Promise.resolve()),
   sendBookingCancelledEmail: vi.fn(() => Promise.resolve()),
+  sendRemainderRequestEmail: vi.fn(() => Promise.resolve()),
 }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudioId } from "@/lib/auth/config";
+import { getStripe } from "@/lib/stripe/client";
 import { trySendSms } from "@/lib/twilio/client";
-import { sendSessionScheduledEmail, sendBookingCancelledEmail } from "@/lib/email";
-import { assignSchedule, markCompleted, cancelBooking } from "@/app/(owner)/owner/bookings/[bookingId]/actions";
+import { sendSessionScheduledEmail, sendBookingCancelledEmail, sendRemainderRequestEmail } from "@/lib/email";
+import { assignSchedule, markCompleted, cancelBooking, requestRemainderPayment } from "@/app/(owner)/owner/bookings/[bookingId]/actions";
 
 let sb: SupabaseMock;
 
@@ -29,6 +31,7 @@ beforeEach(() => {
   vi.mocked(trySendSms).mockClear();
   vi.mocked(sendSessionScheduledEmail).mockClear();
   vi.mocked(sendBookingCancelledEmail).mockClear();
+  vi.mocked(sendRemainderRequestEmail).mockClear();
 });
 
 describe("assignSchedule — Phase C Feature 1 gate", () => {
@@ -160,6 +163,83 @@ describe("cancelBooking — client notifications", () => {
     expect(trySendSms).toHaveBeenCalledWith("+15551234567", "sms:cancellation");
     expect(sendBookingCancelledEmail).toHaveBeenCalledWith(
       expect.objectContaining({ to: "jane@example.com", studioName: "Studio Y" })
+    );
+  });
+});
+
+describe("requestRemainderPayment — Phase C Feature 2", () => {
+  it("errors when not signed in", async () => {
+    vi.mocked(getStudioId).mockResolvedValue(null);
+    const result = await requestRemainderPayment("bk-1");
+    expect(result.error).toBe("Unauthorized");
+  });
+
+  it("errors when the remainder was already collected", async () => {
+    sb.queueFrom("bookings", {
+      id: "bk-1", studio_id: "studio-1", artist_id: "art-1",
+      deposit_amount_cents: 10000, total_amount_cents: 50000, quote_amount_cents: null,
+      remainder_collected: true, clients: { email: "jane@example.com", full_name: "Jane", phone: "+15551234567" },
+      artists: { name: "Artist X" },
+    });
+    const result = await requestRemainderPayment("bk-1");
+    expect(result.error).toMatch(/already been collected/);
+  });
+
+  it("errors when the booking has no agreed total price (classic self-serve booking)", async () => {
+    sb.queueFrom("bookings", {
+      id: "bk-1", studio_id: "studio-1", artist_id: "art-1",
+      deposit_amount_cents: 10000, total_amount_cents: null, quote_amount_cents: null,
+      remainder_collected: false, clients: { email: "jane@example.com", full_name: "Jane", phone: "+15551234567" },
+      artists: { name: "Artist X" },
+    });
+    const result = await requestRemainderPayment("bk-1");
+    expect(result.error).toMatch(/no agreed total price/);
+  });
+
+  it("errors when there is no remaining balance (deposit already covers the total)", async () => {
+    sb.queueFrom("bookings", {
+      id: "bk-1", studio_id: "studio-1", artist_id: "art-1",
+      deposit_amount_cents: 10000, total_amount_cents: 10000, quote_amount_cents: null,
+      remainder_collected: false, clients: { email: "jane@example.com", full_name: "Jane", phone: "+15551234567" },
+      artists: { name: "Artist X" },
+    });
+    const result = await requestRemainderPayment("bk-1");
+    expect(result.error).toMatch(/no remaining balance/);
+  });
+
+  it("creates a remainder checkout session and notifies the client", async () => {
+    sb.queueFrom("bookings", {
+      id: "bk-1", studio_id: "studio-1", artist_id: "art-1",
+      deposit_amount_cents: 10000, total_amount_cents: 50000, quote_amount_cents: null,
+      remainder_collected: false, clients: { email: "jane@example.com", full_name: "Jane", phone: "+15551234567" },
+      artists: { name: "Artist X" },
+    });
+    sb.queueFrom("studios", { name: "Studio Y" }); // requestRemainderPayment's own studio lookup
+    sb.queueFrom("deposit_payments", []); // getOrCreateDepositCheckoutSession: existingRows
+    sb.queueFrom("deposit_payments", []); // pendingRows
+    sb.queueFrom("deposit_payments", { id: "dp-new" }); // insert
+    sb.queueFrom("deposit_payments", { success: true }); // update session id
+
+    vi.mocked(getStripe).mockReturnValue({
+      checkout: {
+        sessions: {
+          create: vi.fn(() => Promise.resolve({ id: "cs_remainder_1", url: "https://stripe.test/remainder" })),
+        },
+      },
+    } as unknown as ReturnType<typeof getStripe>);
+
+    const result = await requestRemainderPayment("bk-1");
+    expect(result.error).toBeUndefined();
+    expect(result.checkoutUrl).toBe("https://stripe.test/remainder");
+
+    const insertArg = (sb.getChain("deposit_payments", 3) as { insert: { mock: { calls: unknown[][] } } })
+      .insert.mock.calls[0][0] as Record<string, unknown>;
+    expect(insertArg.payment_type).toBe("remainder");
+    expect(insertArg.amount_cents).toBe(40000); // 50000 total - 10000 deposit
+
+    expect(trySendSms).toHaveBeenCalledWith("+15551234567", "sms:remainder_pending");
+    expect(sendRemainderRequestEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ to: "jane@example.com", balanceDueCents: 40000 })
     );
   });
 });

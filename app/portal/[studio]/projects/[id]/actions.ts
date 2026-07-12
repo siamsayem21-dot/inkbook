@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { ensureClientAccount } from "@/lib/auth/config";
 import { getOrCreateDepositCheckoutSession, capDepositAmountCents } from "@/lib/stripe/deposit-checkout";
 import { getOrCreateThread } from "@/lib/messaging/threads";
+import { getBalanceDueCents } from "@/lib/booking-balance";
 
 // Persists the client's "Accept Quote" action onto
 // consultations.quote_accepted_at (see
@@ -298,4 +299,93 @@ export async function askQuoteQuestion(projectId: string): Promise<{ threadId?: 
   });
   if (result.error || !result.thread) return { error: result.error ?? "Failed to open conversation." };
   return { threadId: result.thread.id };
+}
+
+// Client self-serve remaining-balance payment (Phase C Feature 2). Reuses the
+// exact same getOrCreateDepositCheckoutSession() helper as continueToDeposit()
+// above (paymentType: "remainder" instead of the default "deposit") and the
+// same Stripe webhook that already processes both. Keyed by bookingId rather
+// than projectId, since it's called from the booking-detail page
+// (lib/client-portal/bookings.ts) rather than the project page — ownership is
+// proven the same way getClientBookingDetail() does: a submitted ai_chats row
+// linking this client account to a consultation whose booking_id matches.
+export async function payRemainderBalance(bookingId: string): Promise<{ checkoutUrl?: string; error?: string }> {
+  const account = await ensureClientAccount();
+  if (!account) return { error: "Not signed in." };
+
+  const supabase = createAdminClient();
+
+  const { data: chatRows } = await supabase
+    .from("ai_chats")
+    .select("consultation_id")
+    .eq("client_account_id", account.id)
+    .eq("status", "submitted")
+    .not("consultation_id", "is", null);
+
+  const consultationIds = Array.from(
+    new Set(
+      ((chatRows ?? []) as { consultation_id: string | null }[])
+        .map((r) => r.consultation_id)
+        .filter((id): id is string => Boolean(id))
+    )
+  );
+  if (consultationIds.length === 0) return { error: "Booking not found." };
+
+  const { data: consultRow } = await supabase
+    .from("consultations")
+    .select("studio_id")
+    .in("id", consultationIds)
+    .eq("booking_id", bookingId)
+    .maybeSingle();
+  const consult = consultRow as { studio_id: string } | null;
+  if (!consult) return { error: "Booking not found." };
+
+  const { data: bookingRow } = await supabase
+    .from("bookings")
+    .select("id, artist_id, client_id, deposit_amount_cents, total_amount_cents, quote_amount_cents, remainder_collected")
+    .eq("id", bookingId)
+    .maybeSingle();
+  const booking = bookingRow as {
+    id: string; artist_id: string; client_id: string;
+    deposit_amount_cents: number; total_amount_cents: number | null; quote_amount_cents: number | null;
+    remainder_collected: boolean;
+  } | null;
+  if (!booking) return { error: "Booking not found." };
+
+  if (booking.remainder_collected) {
+    return { error: "Your remaining balance has already been paid." };
+  }
+
+  const balanceDueCents = getBalanceDueCents(booking);
+  if (balanceDueCents === null || balanceDueCents <= 0) {
+    return { error: "There is no remaining balance to pay." };
+  }
+
+  const [{ data: studioRow }, { data: artistRow }, { data: clientRow }] = await Promise.all([
+    supabase.from("studios").select("name, subdomain").eq("id", consult.studio_id).maybeSingle(),
+    supabase.from("artists").select("name").eq("id", booking.artist_id).maybeSingle(),
+    supabase.from("clients").select("email").eq("id", booking.client_id).maybeSingle(),
+  ]);
+  const studio = studioRow as { name: string; subdomain: string } | null;
+  const artist = artistRow as { name: string } | null;
+  const client = clientRow as { email: string } | null;
+  if (!studio) return { error: "Booking not found." };
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const returnPath = `/portal/${studio.subdomain}/bookings/${bookingId}`;
+
+  const result = await getOrCreateDepositCheckoutSession({
+    bookingId,
+    depositAmountCents: balanceDueCents,
+    artistId: booking.artist_id,
+    artistName: artist?.name ?? "Artist",
+    studioName: studio.name,
+    clientEmail: client?.email,
+    paymentType: "remainder",
+    successUrl: `${baseUrl}${returnPath}?checkout=success`,
+    cancelUrl: `${baseUrl}${returnPath}?checkout=cancelled`,
+  });
+
+  if (result.error) return { error: result.error };
+  return { checkoutUrl: result.checkoutUrl };
 }
