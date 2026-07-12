@@ -6,6 +6,7 @@ import { acceptQuote, continueToDeposit, askQuoteQuestion } from "./actions";
 
 interface Props {
   projectId: string;
+  studioSlug: string;
   brandColor: string;
   textOnBrand: string;
   initialAcceptedAt: string | null;
@@ -20,6 +21,7 @@ function fmtDateTime(iso: string) {
 
 export default function QuoteActions({
   projectId,
+  studioSlug,
   brandColor,
   textOnBrand,
   initialAcceptedAt,
@@ -63,7 +65,11 @@ export default function QuoteActions({
     setNotice(null);
     startTransition(async () => {
       const result = await askQuoteQuestion(projectId);
-      setNotice(result.error ?? "Message sent.");
+      if (result.error || !result.threadId) {
+        setNotice(result.error ?? "Failed to open conversation.");
+        return;
+      }
+      router.push(`/portal/${studioSlug}/messages/${result.threadId}`);
     });
   }
 

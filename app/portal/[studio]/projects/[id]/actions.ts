@@ -3,6 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ensureClientAccount } from "@/lib/auth/config";
 import { getOrCreateDepositCheckoutSession, capDepositAmountCents } from "@/lib/stripe/deposit-checkout";
+import { getOrCreateThread } from "@/lib/messaging/threads";
 
 // Persists the client's "Accept Quote" action onto
 // consultations.quote_accepted_at (see
@@ -250,12 +251,38 @@ export async function continueToDeposit(projectId: string): Promise<{ checkoutUr
   return { checkoutUrl: result.checkoutUrl };
 }
 
-// TODO(messaging): Wire this to the client portal messaging system once that step
-// is built (see the "Messages" nav placeholder at app/portal/[studio]/messages/).
-// Needs: a thread keyed by studio + client (+ optionally this project), a message
-// row insert here, and a notification to the studio/artist.
-export async function askQuoteQuestion(projectId: string, message?: string): Promise<{ error?: string }> {
-  void projectId;
-  void message;
-  return { error: "Messaging isn't available yet — check back soon." };
+// Opens (or creates) this project's message thread — see lib/messaging/threads.ts.
+// QuoteActions.tsx navigates the client to /portal/[studio]/messages/[threadId]
+// on success rather than sending a message inline from here.
+export async function askQuoteQuestion(projectId: string): Promise<{ threadId?: string; error?: string }> {
+  const account = await ensureClientAccount();
+  if (!account) return { error: "Not signed in." };
+
+  const supabase = createAdminClient();
+
+  const { data: chat } = await supabase
+    .from("ai_chats")
+    .select("id")
+    .eq("client_account_id", account.id)
+    .eq("status", "submitted")
+    .eq("consultation_id", projectId)
+    .maybeSingle();
+  if (!chat) return { error: "Project not found." };
+
+  const { data: consultRow } = await supabase
+    .from("consultations")
+    .select("studio_id, artist_id")
+    .eq("id", projectId)
+    .maybeSingle();
+  const consult = consultRow as { studio_id: string; artist_id: string | null } | null;
+  if (!consult) return { error: "Project not found." };
+
+  const result = await getOrCreateThread({
+    studioId: consult.studio_id,
+    clientAccountId: account.id,
+    consultationId: projectId,
+    artistId: consult.artist_id,
+  });
+  if (result.error || !result.thread) return { error: result.error ?? "Failed to open conversation." };
+  return { threadId: result.thread.id };
 }

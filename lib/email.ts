@@ -572,3 +572,125 @@ function buildEmailHtml({
 </body>
 </html>`;
 }
+
+function truncatePreview(preview: string): string {
+  return preview.length > 160 ? `${preview.slice(0, 157).trimEnd()}…` : preview;
+}
+
+export async function sendOwnerNewMessageEmail({
+  to,
+  clientName,
+  studioName,
+  preview,
+  threadUrl,
+}: {
+  to: string;
+  clientName: string;
+  studioName: string;
+  preview: string;
+  threadUrl: string;
+}) {
+  const subject = `New message from ${clientName} — ${studioName}`;
+
+  const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0A0A0A;font-family:sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0A0A;padding:40px 16px;">
+<tr><td align="center">
+<table width="520" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1E1E1E;border-radius:16px;padding:40px;">
+<tr><td>
+<p style="color:#c9a84c;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 24px;">New Message</p>
+<h1 style="color:#E8E8E8;font-size:22px;font-weight:700;margin:0 0 8px;">${clientName} sent you a message</h1>
+<p style="color:#A0A0A0;font-size:15px;margin:0 0 24px;">at ${studioName}</p>
+<div style="background:#0d0d0d;border:1px solid #1E1E1E;border-radius:10px;padding:16px 20px;margin:0 0 28px;">
+  <p style="color:#A0A0A0;font-size:14px;margin:0;font-style:italic;">"${truncatePreview(preview)}"</p>
+</div>
+<a href="${threadUrl}" style="display:inline-block;background:#c9a84c;color:#000;font-weight:700;font-size:15px;text-decoration:none;padding:14px 28px;border-radius:10px;">
+Reply →
+</a>
+<p style="color:#555;font-size:12px;margin:28px 0 0;text-align:center;">Powered by InkBook &middot; inkbook.tech</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+
+  await sendEmail(to, subject, html);
+}
+
+export async function sendArtistNewMessageEmail({
+  to,
+  artistName,
+  clientName,
+  studioName,
+  preview,
+  threadUrl,
+}: {
+  to: string;
+  artistName: string;
+  clientName: string;
+  studioName: string;
+  preview: string;
+  threadUrl: string;
+}) {
+  const subject = `New message from ${clientName} — ${studioName}`;
+
+  const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0A0A0A;font-family:sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0A0A;padding:40px 16px;">
+<tr><td align="center">
+<table width="520" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1E1E1E;border-radius:16px;padding:40px;">
+<tr><td>
+<p style="color:#c9a84c;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 24px;">New Message</p>
+<h1 style="color:#E8E8E8;font-size:22px;font-weight:700;margin:0 0 8px;">Hi ${artistName},</h1>
+<p style="color:#A0A0A0;font-size:15px;margin:0 0 24px;">
+<strong style="color:#c9a84c;">${clientName}</strong> sent you a message at ${studioName}.
+</p>
+<div style="background:#0d0d0d;border:1px solid #1E1E1E;border-radius:10px;padding:16px 20px;margin:0 0 28px;">
+  <p style="color:#A0A0A0;font-size:14px;margin:0;font-style:italic;">"${truncatePreview(preview)}"</p>
+</div>
+<a href="${threadUrl}" style="display:inline-block;background:#c9a84c;color:#000;font-weight:700;font-size:15px;text-decoration:none;padding:14px 28px;border-radius:10px;">
+Reply →
+</a>
+<p style="color:#555;font-size:12px;margin:28px 0 0;text-align:center;">Powered by InkBook &middot; inkbook.tech</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+
+  await sendEmail(to, subject, html);
+}
+
+export async function sendClientNewMessageEmail({
+  to,
+  studioName,
+  preview,
+  threadUrl,
+}: {
+  to: string;
+  studioName: string;
+  preview: string;
+  threadUrl: string;
+}) {
+  const subject = `New message from ${studioName}`;
+
+  const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0A0A0A;font-family:sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0A0A;padding:40px 16px;">
+<tr><td align="center">
+<table width="520" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1E1E1E;border-radius:16px;padding:40px;">
+<tr><td>
+<p style="color:#c9a84c;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 24px;">New Message</p>
+<h1 style="color:#E8E8E8;font-size:22px;font-weight:700;margin:0 0 8px;">${studioName} sent you a message</h1>
+<div style="background:#0d0d0d;border:1px solid #1E1E1E;border-radius:10px;padding:16px 20px;margin:24px 0 28px;">
+  <p style="color:#A0A0A0;font-size:14px;margin:0;font-style:italic;">"${truncatePreview(preview)}"</p>
+</div>
+<a href="${threadUrl}" style="display:inline-block;background:#c9a84c;color:#000;font-weight:700;font-size:15px;text-decoration:none;padding:14px 28px;border-radius:10px;">
+View & Reply →
+</a>
+<p style="color:#555;font-size:12px;margin:28px 0 0;text-align:center;">Powered by InkBook &middot; inkbook.tech</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+
+  await sendEmail(to, subject, html);
+}

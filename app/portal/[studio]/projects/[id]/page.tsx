@@ -123,6 +123,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
 
           <QuoteActions
             projectId={project.id}
+            studioSlug={params.studio}
             brandColor={brand.full}
             textOnBrand={brand.textOnBrand}
             initialAcceptedAt={project.stage.quoteAcceptedAt}
