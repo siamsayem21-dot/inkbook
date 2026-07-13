@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@supabase/supabase-js";
+import { getCurrentUser } from "@/lib/auth/config";
 
 function adminClient() {
   return createClient(
@@ -29,13 +30,21 @@ export async function createStudio(data: {
   state: string;
   userId: string;
 }): Promise<{ error?: string }> {
+  // Creates a studio owned by a given user — a privileged action, so the
+  // caller must be authenticated as that same user. Never trust a
+  // client-supplied user id for this (same fix as POST /api/studios).
+  const user = await getCurrentUser();
+  if (!user || user.id !== data.userId) {
+    return { error: "Unauthorized" };
+  }
+
   const supabase = adminClient();
 
   // If they already own a studio, skip the insert — form will redirect to dashboard
   const { data: existing } = await supabase
     .from("studios")
     .select("id")
-    .eq("owner_id", data.userId)
+    .eq("owner_id", user.id)
     .limit(1);
   if (existing && existing.length > 0) return {};
 
@@ -45,7 +54,7 @@ export async function createStudio(data: {
     phone: data.phone,
     city: data.city,
     state: data.state,
-    owner_id: data.userId,
+    owner_id: user.id,
   });
 
   if (error) {
