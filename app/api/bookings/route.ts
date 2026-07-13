@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { buildSmsMessage, trySendSms } from "@/lib/twilio/client";
 import { findOrCreateClient } from "@/lib/clients";
 import { isAtMonthlyCap } from "@/lib/waitlist";
+import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   // Bookings contain client PII. Require a valid session.
@@ -26,6 +27,12 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  // Public, unauthenticated endpoint — anyone can hit this from a studio's
+  // booking page. Cap per-IP to stop scripted spam (junk bookings + wasted
+  // Twilio SMS sends) without blocking legitimate retry attempts.
+  const rl = checkRateLimit(`bookings:${getClientIp(request)}`, 5, 10 * 60_000);
+  if (!rl.allowed) return rateLimitedResponse(rl.retryAfter);
+
   const body = await request.json();
   const { artistId, clientName, clientEmail, clientPhone, date, time, style, description } = body;
 

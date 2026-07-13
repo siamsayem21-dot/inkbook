@@ -16,11 +16,15 @@ import { POST } from "@/app/api/bookings/route";
 const ARTIST = { id: "artist-1", name: "Jane Artist", studio_id: "studio-1", monthly_booking_cap: 20 };
 const STUDIO = { id: "studio-1", name: "Ink & Iron", deposit_amount_cents: 5000 };
 
-function makeRequest(body: unknown) {
+// Each call defaults to its own IP so the shared rate-limit store (a
+// module-level singleton in lib/rate-limit.ts) doesn't let one test's
+// requests count against another's budget.
+let ipCounter = 0;
+function makeRequest(body: unknown, ip = `10.0.0.${++ipCounter}`) {
   return new NextRequest("http://localhost/api/bookings", {
     method: "POST",
     body: JSON.stringify(body),
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", "x-forwarded-for": ip },
   });
 }
 
@@ -149,5 +153,36 @@ describe("POST /api/bookings", () => {
 
     const res = await POST(makeRequest(VALID_BODY));
     expect(res.status).toBe(500);
+  });
+});
+
+describe("POST /api/bookings — rate limiting", () => {
+  it("blocks the 6th request within the window from the same IP", async () => {
+    const ip = "203.0.113.9";
+    for (let i = 0; i < 5; i++) {
+      const res = await POST(makeRequest({}, ip)); // missing fields -> 400, but under the rate limit
+      expect(res.status).toBe(400);
+    }
+    const blocked = await POST(makeRequest({}, ip));
+    expect(blocked.status).toBe(429);
+    expect(blocked.headers.get("Retry-After")).toBeTruthy();
+  });
+
+  it("never reaches Supabase once a request is rate-limited", async () => {
+    const ip = "203.0.113.10";
+    for (let i = 0; i < 5; i++) await POST(makeRequest({}, ip));
+    sb.fromCalls.length = 0;
+
+    const res = await POST(makeRequest(VALID_BODY, ip));
+    expect(res.status).toBe(429);
+    expect(sb.fromCalls).toHaveLength(0);
+  });
+
+  it("tracks a different IP independently of one that's already at its limit", async () => {
+    const exhaustedIp = "203.0.113.11";
+    for (let i = 0; i < 5; i++) await POST(makeRequest({}, exhaustedIp));
+
+    const res = await POST(makeRequest({}, "203.0.113.12"));
+    expect(res.status).toBe(400); // missing fields, not rate-limited
   });
 });

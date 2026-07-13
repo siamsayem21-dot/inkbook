@@ -30,6 +30,7 @@ const routes = {
   'style-detect':            'app/api/ai/style-detect/route.ts',
   'consultation-questions':  'app/api/ai/consultation-questions/route.ts',
   'quote-generate':          'app/api/ai/quote-generate/route.ts',
+  'bookings':                'app/api/bookings/route.ts',
 };
 
 const sources = {};
@@ -45,13 +46,14 @@ for (const [name, path] of Object.entries(routes)) {
 HEAD('TEST 2 — Rate limit check fires before body parse in each route');
 
 for (const [name, src] of Object.entries(sources)) {
-  // checkRateLimit must appear before req.json() in the source
+  // checkRateLimit must appear before the request body is parsed
+  // (param is named `req` in the AI routes, `request` in /api/bookings).
   const rlIdx   = src.indexOf('checkRateLimit(');
-  const jsonIdx = src.indexOf('req.json()');
+  const jsonIdx = src.indexOf('req.json()') !== -1 ? src.indexOf('req.json()') : src.indexOf('request.json()');
   if (rlIdx !== -1 && jsonIdx !== -1 && rlIdx < jsonIdx) {
-    PASS(`${name}: checkRateLimit called before req.json()`);
+    PASS(`${name}: checkRateLimit called before the body is parsed`);
   } else {
-    FAIL(`${name}: checkRateLimit must come before req.json() — found at index ${rlIdx} vs ${jsonIdx}`);
+    FAIL(`${name}: checkRateLimit must come before the body is parsed — found at index ${rlIdx} vs ${jsonIdx}`);
   }
 }
 
@@ -71,6 +73,7 @@ const keyPatterns = {
   'style-detect':           /`style-detect:\$/,
   'consultation-questions': /`consult-q:\$/,
   'quote-generate':         /`quote:\$/,
+  'bookings':               /`bookings:\$/,
 };
 
 for (const [name, pattern] of Object.entries(keyPatterns)) {
