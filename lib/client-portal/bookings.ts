@@ -25,6 +25,7 @@ export type ClientBookingDetail = ClientBooking & {
   remainderCollected: boolean;
   remainderCollectedAt: string | null;
   completedAt: string | null;
+  hasReview: boolean;
 };
 
 type BookingRow = {
@@ -183,9 +184,10 @@ export async function getClientBookingDetail(
   const b = bookingRow as BookingRow | null;
   if (!b) return null;
 
-  const [artistNames, consentResult] = await Promise.all([
+  const [artistNames, consentResult, reviewResult] = await Promise.all([
     fetchArtistNames(supabase, b.artist_id ? [b.artist_id] : []),
     supabase.from("consent_forms").select("id").eq("booking_id", bookingId).maybeSingle(),
+    supabase.from("reviews").select("id").eq("booking_id", bookingId).maybeSingle(),
   ]);
 
   return {
@@ -198,5 +200,6 @@ export async function getClientBookingDetail(
     remainderCollected: b.remainder_collected,
     remainderCollectedAt: b.remainder_collected_at,
     completedAt: b.completed_at,
+    hasReview: Boolean(reviewResult.data),
   };
 }

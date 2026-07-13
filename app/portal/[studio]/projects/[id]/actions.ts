@@ -389,3 +389,98 @@ export async function payRemainderBalance(bookingId: string): Promise<{ checkout
   if (result.error) return { error: result.error };
   return { checkoutUrl: result.checkoutUrl };
 }
+
+// Client review submission (Phase C Feature 5). Reuses the reviews table
+// and its existing moderation mechanism (is_public/is_active) added in
+// 20260708000000_public_studio_page.sql for owner-entered testimonials —
+// nothing new is invented here, a client-submitted review is just another
+// row in the same table, defaulting is_public: false so nothing goes live
+// on the public studio page until the owner approves it. Ownership proven
+// the same ai_chats -> consultations.booking_id chain as payRemainderBalance().
+export async function submitReview(
+  bookingId: string,
+  rating: number,
+  quote: string
+): Promise<{ error?: string }> {
+  const account = await ensureClientAccount();
+  if (!account) return { error: "Not signed in." };
+
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return { error: "Rating must be between 1 and 5 stars." };
+  }
+  const trimmedQuote = quote.trim();
+  if (!trimmedQuote) return { error: "Please write a short review." };
+
+  const supabase = createAdminClient();
+
+  const { data: chatRows } = await supabase
+    .from("ai_chats")
+    .select("consultation_id")
+    .eq("client_account_id", account.id)
+    .eq("status", "submitted")
+    .not("consultation_id", "is", null);
+
+  const consultationIds = Array.from(
+    new Set(
+      ((chatRows ?? []) as { consultation_id: string | null }[])
+        .map((r) => r.consultation_id)
+        .filter((id): id is string => Boolean(id))
+    )
+  );
+  if (consultationIds.length === 0) return { error: "Booking not found." };
+
+  const { data: consultRow } = await supabase
+    .from("consultations")
+    .select("studio_id")
+    .in("id", consultationIds)
+    .eq("booking_id", bookingId)
+    .maybeSingle();
+  const consult = consultRow as { studio_id: string } | null;
+  if (!consult) return { error: "Booking not found." };
+
+  const { data: bookingRow } = await supabase
+    .from("bookings")
+    .select("id, status, client_id")
+    .eq("id", bookingId)
+    .maybeSingle();
+  const booking = bookingRow as { id: string; status: string; client_id: string } | null;
+  if (!booking) return { error: "Booking not found." };
+  if (booking.status !== "completed") {
+    return { error: "Reviews can only be left after your session is completed." };
+  }
+
+  const { data: existingReview } = await supabase
+    .from("reviews")
+    .select("id")
+    .eq("booking_id", bookingId)
+    .maybeSingle();
+  if (existingReview) return { error: "You've already left a review for this booking." };
+
+  const { data: clientRow } = await supabase.from("clients").select("full_name").eq("id", booking.client_id).maybeSingle();
+  const authorName = (clientRow as { full_name: string } | null)?.full_name ?? "Anonymous";
+
+  const { error } = await supabase
+    .from("reviews")
+    .insert({
+      studio_id: consult.studio_id,
+      booking_id: bookingId,
+      client_account_id: account.id,
+      author_name: authorName,
+      rating,
+      quote: trimmedQuote,
+      is_public: false,
+      is_active: true,
+    } as never);
+
+  if (error) {
+    console.error("[submitReview]", error.message);
+    // 23505 = unique_violation — the DB-level UNIQUE(booking_id) guard caught
+    // a race the pre-check above missed (e.g. a double-submit).
+    if ((error as { code?: string }).code === "23505") {
+      return { error: "You've already left a review for this booking." };
+    }
+    return { error: "Failed to submit your review — please try again." };
+  }
+
+  return {};
+}

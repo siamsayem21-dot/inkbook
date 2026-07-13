@@ -170,6 +170,14 @@ export default async function ClientBookingDetailPage({ params }: Props) {
               </p>
             </div>
           )}
+          {booking.status === "completed" && (
+            <div className="col-span-2">
+              <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Review</p>
+              <p className="text-sm text-zinc-200">
+                {booking.hasReview ? "✓ Submitted — thank you!" : "Not yet submitted"}
+              </p>
+            </div>
+          )}
         </div>
 
         <BookingDetailActions
@@ -181,6 +189,7 @@ export default async function ClientBookingDetailPage({ params }: Props) {
           hasConsentForm={booking.hasConsentForm}
           balanceDueCents={balanceDueCents}
           remainderCollected={booking.remainderCollected}
+          hasReview={booking.hasReview}
           brandColor={brand.full}
           textOnBrand={brand.textOnBrand}
         />

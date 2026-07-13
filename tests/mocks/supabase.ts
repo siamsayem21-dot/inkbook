@@ -14,7 +14,7 @@ function makeChain(result: Result) {
   const chainMethods = [
     "select", "insert", "update", "delete", "upsert",
     "eq", "neq", "in", "not", "or", "order", "limit",
-    "gt", "gte", "lt", "lte", "ilike", "like", "match", "range",
+    "gt", "gte", "lt", "lte", "ilike", "like", "match", "range", "is",
   ];
 
   const chain: Record<string, unknown> = {};

@@ -687,6 +687,44 @@ If you notice excessive redness, swelling, or discharge, contact ${studioName} o
   await sendEmail(to, subject, html);
 }
 
+export async function sendReviewRequestEmail({
+  to,
+  clientName,
+  studioName,
+  artistName,
+  reviewUrl,
+}: {
+  to: string;
+  clientName: string;
+  studioName: string;
+  artistName: string;
+  reviewUrl: string;
+}) {
+  const subject = `How's your new tattoo healing? — ${studioName}`;
+
+  const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0A0A0A;font-family:sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0A0A;padding:40px 16px;">
+<tr><td align="center">
+<table width="520" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1E1E1E;border-radius:16px;padding:40px;">
+<tr><td>
+<p style="color:#c9a84c;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 24px;">We'd Love Your Feedback</p>
+<h1 style="color:#E8E8E8;font-size:22px;font-weight:700;margin:0 0 8px;">Hi ${clientName},</h1>
+<p style="color:#A0A0A0;font-size:15px;margin:0 0 28px;">
+It's been a couple weeks since your session with <strong style="color:#c9a84c;">${artistName}</strong> at ${studioName} — we hope it's healing well! If you have a minute, we'd really appreciate a quick review of your experience.
+</p>
+<a href="${reviewUrl}" style="display:inline-block;background:#c9a84c;color:#000;font-weight:700;font-size:15px;text-decoration:none;padding:14px 28px;border-radius:10px;">
+Leave a Review →
+</a>
+<p style="color:#555;font-size:12px;margin:28px 0 0;text-align:center;">Powered by InkBook &middot; inkbook.tech</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+
+  await sendEmail(to, subject, html);
+}
+
 export async function sendArtistInviteEmail({
   to,
   inviteeName,

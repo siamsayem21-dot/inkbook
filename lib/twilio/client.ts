@@ -21,7 +21,8 @@ export type SmsMessageType =
   | "no_show"
   | "remainder_pending"
   | "remainder_received"
-  | "aftercare";
+  | "aftercare"
+  | "review_request";
 
 export function buildSmsMessage(type: SmsMessageType, studioName: string): string {
   const templates: Record<SmsMessageType, string> = {
@@ -34,6 +35,7 @@ export function buildSmsMessage(type: SmsMessageType, studioName: string): strin
     remainder_pending: `${studioName} is requesting your remaining balance. Check your email for the payment link.`,
     remainder_received: `Thanks! Your remaining balance at ${studioName} has been received in full.`,
     aftercare: `Thanks for your session at ${studioName}! Keep the area clean and moisturized, and avoid sun/swimming for 2 weeks. Full instructions emailed to you.`,
+    review_request: `How's your new tattoo healing? We'd love a quick review of your experience at ${studioName}. Check your email for the link.`,
   };
   return templates[type];
 }

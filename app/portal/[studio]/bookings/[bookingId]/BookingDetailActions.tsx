@@ -14,6 +14,7 @@ interface Props {
   hasConsentForm: boolean;
   balanceDueCents: number | null;
   remainderCollected: boolean;
+  hasReview: boolean;
   brandColor: string;
   textOnBrand: string;
 }
@@ -33,6 +34,7 @@ export default function BookingDetailActions({
   hasConsentForm,
   balanceDueCents,
   remainderCollected,
+  hasReview,
   brandColor,
   textOnBrand,
 }: Props) {
@@ -115,6 +117,16 @@ export default function BookingDetailActions({
           >
             {isPending ? "Working…" : "Pay Remaining Balance"}
           </button>
+        )}
+
+        {status === "completed" && !hasReview && (
+          <Link
+            href={`/portal/${studioSlug}/bookings/${bookingId}/review`}
+            className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 transition-opacity hover:opacity-90"
+            style={{ backgroundColor: brandColor, color: textOnBrand }}
+          >
+            Leave a Review
+          </Link>
         )}
 
         <button
