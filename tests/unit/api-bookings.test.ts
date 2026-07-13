@@ -13,7 +13,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { trySendSms } from "@/lib/twilio/client";
 import { POST } from "@/app/api/bookings/route";
 
-const ARTIST = { id: "artist-1", name: "Jane Artist", studio_id: "studio-1" };
+const ARTIST = { id: "artist-1", name: "Jane Artist", studio_id: "studio-1", monthly_booking_cap: 20 };
 const STUDIO = { id: "studio-1", name: "Ink & Iron", deposit_amount_cents: 5000 };
 
 function makeRequest(body: unknown) {
@@ -42,13 +42,18 @@ beforeEach(() => {
   vi.mocked(trySendSms).mockClear();
 });
 
-/** Queues the standard happy-path lookups: artist, studio, blacklist x2 (clear), no slot collision. */
-function queueHappyPathPrelude(overrides?: { blockedByEmail?: unknown; blockedByPhone?: unknown; slotTaken?: unknown }) {
+/** Queues the standard happy-path lookups: artist, studio, blacklist x2 (clear), no slot collision, under monthly cap. */
+function queueHappyPathPrelude(overrides?: {
+  blockedByEmail?: unknown; blockedByPhone?: unknown; slotTaken?: unknown; bookingsThisMonth?: unknown[];
+}) {
   sb.queueFrom("artists", ARTIST);
   sb.queueFrom("studios", STUDIO);
   sb.queueFrom("blacklist", overrides?.blockedByEmail ?? null);
   sb.queueFrom("blacklist", overrides?.blockedByPhone ?? null);
   sb.queueFrom("bookings", overrides?.slotTaken ?? null); // slot collision check
+  if (overrides?.slotTaken === undefined) {
+    sb.queueFrom("bookings", overrides?.bookingsThisMonth ?? []); // monthly cap count (Phase C Feature 6)
+  }
 }
 
 describe("POST /api/bookings", () => {
@@ -120,6 +125,21 @@ describe("POST /api/bookings", () => {
     expect(body.artistName).toBe(ARTIST.name);
     expect(sb.fromCalls.filter((t) => t === "clients")).toHaveLength(2);
     expect(trySendSms).toHaveBeenCalledWith(VALID_BODY.clientPhone, "sms body");
+  });
+
+  it("409s with waitlistEligible when the artist is at their monthly booking cap (Phase C Feature 6)", async () => {
+    sb.queueFrom("artists", ARTIST);
+    sb.queueFrom("studios", STUDIO);
+    sb.queueFrom("blacklist", null);
+    sb.queueFrom("blacklist", null);
+    sb.queueFrom("bookings", null); // no slot collision
+    sb.queueFrom("bookings", Array.from({ length: 20 }, (_, i) => ({ id: `bk-${i}` }))); // at cap (20/20)
+
+    const res = await POST(makeRequest(VALID_BODY));
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.waitlistEligible).toBe(true);
+    expect(sb.fromCalls).not.toContain("clients");
   });
 
   it("500s when the booking insert fails", async () => {

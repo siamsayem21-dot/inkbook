@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { buildSmsMessage, trySendSms } from "@/lib/twilio/client";
+import { findOrCreateClient } from "@/lib/clients";
+import { isAtMonthlyCap } from "@/lib/waitlist";
 
 export async function GET(request: NextRequest) {
   // Bookings contain client PII. Require a valid session.
@@ -36,10 +38,10 @@ export async function POST(request: NextRequest) {
   // Fetch artist → studio
   const { data: artistData } = await supabase
     .from("artists")
-    .select("id, name, studio_id")
+    .select("id, name, studio_id, monthly_booking_cap")
     .eq("id", artistId)
     .single();
-  const artist = artistData as { id: string; name: string; studio_id: string } | null;
+  const artist = artistData as { id: string; name: string; studio_id: string; monthly_booking_cap: number } | null;
   if (!artist) return NextResponse.json({ error: "Artist not found" }, { status: 404 });
 
   const { data: studioData } = await supabase
@@ -91,34 +93,30 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Monthly booking cap (Phase C Feature 6) — checked against the month of
+  // the REQUESTED date, not "this month" (see lib/waitlist.ts for why the
+  // existing artist_bookings_this_month() RPC doesn't fit this check).
+  // Rejecting here, before any client record is created, keeps the reject
+  // path clean — the client can still join the waitlist via a separate
+  // POST /api/waitlist call, which creates its own client record.
+  if (await isAtMonthlyCap(supabase, artistId, artist.monthly_booking_cap, date)) {
+    return NextResponse.json(
+      {
+        error: `${artist.name} is fully booked for that month. Join the waitlist to be notified when a slot opens.`,
+        waitlistEligible: true,
+      },
+      { status: 409 }
+    );
+  }
+
   // Find or create client
-  const { data: existingClient } = await supabase
-    .from("clients")
-    .select("id")
-    .eq("studio_id" as never, studio.id)
-    .eq("email", clientEmail)
-    .maybeSingle();
-
-  let clientId: string;
-
-  if (existingClient) {
-    clientId = (existingClient as { id: string }).id;
-  } else {
-    const { data: newClient, error: clientErr } = await supabase
-      .from("clients")
-      .insert({
-        studio_id: studio.id,
-        full_name: clientName,
-        email: clientEmail,
-        phone: clientPhone,
-      } as never)
-      .select("id")
-      .single();
-
-    if (clientErr || !newClient) {
-      return NextResponse.json({ error: "Failed to create client record" }, { status: 500 });
-    }
-    clientId = (newClient as { id: string }).id;
+  const { clientId, error: clientError } = await findOrCreateClient(supabase, studio.id, {
+    name: clientName,
+    email: clientEmail,
+    phone: clientPhone,
+  });
+  if (clientError || !clientId) {
+    return NextResponse.json({ error: clientError ?? "Failed to create client record" }, { status: 500 });
   }
 
   // Create booking

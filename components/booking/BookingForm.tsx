@@ -35,12 +35,17 @@ export default function BookingForm({ studioSlug, artistId }: Props) {
   const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [waitlistEligible, setWaitlistEligible] = useState(false);
+  const [waitlistJoining, setWaitlistJoining] = useState(false);
+  const [waitlistJoined, setWaitlistJoined] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setWaitlistEligible(false);
+    setWaitlistJoined(false);
     setLoading(true);
 
     try {
@@ -63,6 +68,7 @@ export default function BookingForm({ studioSlug, artistId }: Props) {
 
       if (!res.ok) {
         setError(data.error ?? "Something went wrong. Please try again.");
+        setWaitlistEligible(Boolean(data.waitlistEligible));
         setLoading(false);
         return;
       }
@@ -74,6 +80,36 @@ export default function BookingForm({ studioSlug, artistId }: Props) {
     }
   };
 
+  const handleJoinWaitlist = async () => {
+    setWaitlistJoining(true);
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          artistId,
+          clientName: fullName,
+          clientEmail: email,
+          clientPhone: phone,
+          style,
+          notes: description,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Failed to join waitlist. Please try again.");
+        setWaitlistJoining(false);
+        return;
+      }
+      setWaitlistJoined(true);
+      setWaitlistEligible(false);
+    } catch {
+      setError("Network error. Please check your connection and try again.");
+    } finally {
+      setWaitlistJoining(false);
+    }
+  };
+
   const inputClass =
     "w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/25 focus:outline-none focus:border-gold transition-colors";
   const labelClass = "block text-xs font-medium text-white/50 mb-2 uppercase tracking-wide";
@@ -81,8 +117,24 @@ export default function BookingForm({ studioSlug, artistId }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {error && (
-        <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-xl px-4 py-3">
-          {error}
+        <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-xl px-4 py-3 space-y-3">
+          <p>{error}</p>
+          {waitlistEligible && !waitlistJoined && (
+            <button
+              type="button"
+              onClick={handleJoinWaitlist}
+              disabled={waitlistJoining}
+              className="bg-gold text-black font-semibold text-xs px-4 py-2 rounded-full hover:bg-gold-light disabled:opacity-50 transition-colors"
+            >
+              {waitlistJoining ? "Joining…" : "Join Waitlist"}
+            </button>
+          )}
+        </div>
+      )}
+
+      {waitlistJoined && (
+        <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm rounded-xl px-4 py-3">
+          You&apos;re on the waitlist — we&apos;ll text and email you if a slot opens up this month.
         </div>
       )}
 

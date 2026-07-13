@@ -8,6 +8,7 @@ import { buildSmsMessage, trySendSms } from "@/lib/twilio/client";
 import { sendSessionScheduledEmail, sendBookingCancelledEmail, sendAftercareEmail } from "@/lib/email";
 import { isReadyToConfirm, bookingHasConsent } from "@/lib/booking-lifecycle";
 import { getBookingTotalCents, getBalanceDueCents } from "@/lib/booking-balance";
+import { isAtMonthlyCap } from "@/lib/waitlist";
 import { sendRemainderPaymentRequest } from "@/lib/remainder-payment";
 
 export async function cancelBooking(bookingId: string): Promise<{ error?: string }> {
@@ -119,6 +120,20 @@ export async function assignSchedule(
 
   if ((conflictRows ?? []).length > 0) {
     return { error: "Artist already has a booking at that date and time" };
+  }
+
+  // Monthly booking cap (Phase C Feature 6) — checked against the month of
+  // the date being assigned, not "this month". This client already has a
+  // paid deposit, so hitting the cap means picking a different month, not
+  // losing the booking.
+  const { data: artistCapRow } = await supabase
+    .from("artists")
+    .select("name, monthly_booking_cap")
+    .eq("id", booking.artist_id)
+    .maybeSingle();
+  const artistForCap = artistCapRow as { name: string; monthly_booking_cap: number } | null;
+  if (artistForCap && (await isAtMonthlyCap(supabase, booking.artist_id, artistForCap.monthly_booking_cap, date))) {
+    return { error: `${artistForCap.name} is already at capacity for that month — choose a different date.` };
   }
 
   const hasConsent = await bookingHasConsent(supabase, bookingId);

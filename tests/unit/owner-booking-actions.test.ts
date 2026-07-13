@@ -61,6 +61,16 @@ describe("assignSchedule — Phase C Feature 1 gate", () => {
     expect(result.error).toMatch(/already has a booking/);
   });
 
+  it("rejects when the artist is at their monthly booking cap for that month (Phase C Feature 6)", async () => {
+    sb.queueFrom("bookings", { id: "bk-1", studio_id: "studio-1", artist_id: "art-1", status: "awaiting_schedule" });
+    sb.queueFrom("bookings", []); // no conflict
+    sb.queueFrom("artists", { name: "Artist X", monthly_booking_cap: 2 });
+    sb.queueFrom("bookings", [{ id: "bk-a" }, { id: "bk-b" }]); // 2 bookings that month — at cap
+
+    const result = await assignSchedule("bk-1", "2099-09-01", "14:00");
+    expect(result.error).toMatch(/at capacity for that month/);
+  });
+
   it("sets date/time but stays awaiting_schedule when consent has not been signed yet", async () => {
     sb.queueFrom("bookings", {
       id: "bk-1", studio_id: "studio-1", artist_id: "art-1", status: "awaiting_schedule",
@@ -89,6 +99,8 @@ describe("assignSchedule — Phase C Feature 1 gate", () => {
       client_id: "c1", deposit_amount_cents: 10000, total_amount_cents: 50000,
     });
     sb.queueFrom("bookings", []); // no conflict
+    sb.queueFrom("artists", { name: "Artist X", monthly_booking_cap: 20 }); // monthly cap check (Phase C Feature 6)
+    sb.queueFrom("bookings", []); // monthly cap count — under cap
     sb.queueFrom("consent_forms", { id: "cf-1" }); // bookingHasConsent -> true
     sb.queueFrom("bookings", { success: true }); // final update
     sb.queueFrom("custom_requests", { success: true }); // sync (0 or 1 rows, doesn't matter)
@@ -100,7 +112,7 @@ describe("assignSchedule — Phase C Feature 1 gate", () => {
     expect(result.error).toBeUndefined();
     expect(result.confirmed).toBe(true);
 
-    const finalUpdate = sb.getChain("bookings", 3);
+    const finalUpdate = sb.getChain("bookings", 4);
     const updateArg = (finalUpdate as { update: { mock: { calls: unknown[][] } } }).update.mock.calls[0][0] as Record<string, unknown>;
     expect(updateArg.status).toBe("confirmed");
 

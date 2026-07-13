@@ -725,6 +725,47 @@ Leave a Review →
   await sendEmail(to, subject, html);
 }
 
+export async function sendWaitlistSlotOpenEmail({
+  to,
+  clientName,
+  studioName,
+  artistName,
+  bookUrl,
+}: {
+  to: string;
+  clientName: string;
+  studioName: string;
+  artistName: string;
+  bookUrl: string;
+}) {
+  const subject = `A slot just opened up with ${artistName} — ${studioName}`;
+
+  const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0A0A0A;font-family:sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0A0A;padding:40px 16px;">
+<tr><td align="center">
+<table width="520" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1E1E1E;border-radius:16px;padding:40px;">
+<tr><td>
+<p style="color:#c9a84c;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 24px;">A Slot Opened Up</p>
+<h1 style="color:#E8E8E8;font-size:22px;font-weight:700;margin:0 0 8px;">Good news, ${clientName}!</h1>
+<p style="color:#A0A0A0;font-size:15px;margin:0 0 28px;">
+<strong style="color:#c9a84c;">${artistName}</strong> at ${studioName} has room this month — you're at the top of the waitlist.
+</p>
+<a href="${bookUrl}" style="display:inline-block;background:#c9a84c;color:#000;font-weight:700;font-size:15px;text-decoration:none;padding:14px 28px;border-radius:10px;">
+Book Your Session →
+</a>
+<p style="color:#666;font-size:13px;margin:24px 0 0;">
+This spot isn't held — book soon to make sure you get it.
+</p>
+<p style="color:#555;font-size:12px;margin:24px 0 0;text-align:center;">Powered by InkBook &middot; inkbook.tech</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+
+  await sendEmail(to, subject, html);
+}
+
 export async function sendArtistInviteEmail({
   to,
   inviteeName,

@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudioId } from "@/lib/auth/config";
 import { validateImageFile } from "@/lib/file-validation";
 import { capDepositAmountCents } from "@/lib/stripe/deposit-checkout";
+import { isAtMonthlyCap } from "@/lib/waitlist";
 
 export async function submitConsultation(
   formData: FormData
@@ -210,6 +211,20 @@ export async function bookConsultation(
 
   if (!studio) return { error: "Studio not found." };
   const s = studio as { id: string; deposit_amount_cents: number };
+
+  // Monthly booking cap (Phase C Feature 6) — checked against the month of
+  // the requested date. Unlike the client-facing self-serve flow, this is
+  // owner-driven: the owner already has a relationship with this client, so
+  // hitting the cap just means picking a different month, not a rejection.
+  const { data: artistRow } = await supabase
+    .from("artists")
+    .select("name, monthly_booking_cap")
+    .eq("id", data.artistId)
+    .maybeSingle();
+  const artistForCap = artistRow as { name: string; monthly_booking_cap: number } | null;
+  if (artistForCap && (await isAtMonthlyCap(supabase, data.artistId, artistForCap.monthly_booking_cap, data.date))) {
+    return { error: `${artistForCap.name} is already at capacity for that month — choose a different date.` };
+  }
 
   // Find or create client record
   const { data: existingClient } = await supabase

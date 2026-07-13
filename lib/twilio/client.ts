@@ -22,7 +22,8 @@ export type SmsMessageType =
   | "remainder_pending"
   | "remainder_received"
   | "aftercare"
-  | "review_request";
+  | "review_request"
+  | "waitlist_slot_open";
 
 export function buildSmsMessage(type: SmsMessageType, studioName: string): string {
   const templates: Record<SmsMessageType, string> = {
@@ -36,6 +37,7 @@ export function buildSmsMessage(type: SmsMessageType, studioName: string): strin
     remainder_received: `Thanks! Your remaining balance at ${studioName} has been received in full.`,
     aftercare: `Thanks for your session at ${studioName}! Keep the area clean and moisturized, and avoid sun/swimming for 2 weeks. Full instructions emailed to you.`,
     review_request: `How's your new tattoo healing? We'd love a quick review of your experience at ${studioName}. Check your email for the link.`,
+    waitlist_slot_open: `Good news! A slot just opened up at ${studioName} — you're at the top of the waitlist. Check your email to book.`,
   };
   return templates[type];
 }
