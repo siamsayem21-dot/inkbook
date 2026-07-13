@@ -4,11 +4,19 @@ import { createSupabaseMock, type SupabaseMock } from "../mocks/supabase";
 
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn() }));
 vi.mock("@/lib/stripe/client", () => ({ getStripe: vi.fn() }));
+vi.mock("@/lib/auth/config", () => ({ getCurrentUser: vi.fn() }));
+vi.mock("@/lib/twilio/client", () => ({ trySendSms: vi.fn(() => Promise.resolve()) }));
+vi.mock("@/lib/email", () => ({
+  sendSessionScheduledEmail: vi.fn(() => Promise.resolve()),
+  sendCustomRequestReceivedEmail: vi.fn(() => Promise.resolve()),
+}));
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStripe } from "@/lib/stripe/client";
+import { getCurrentUser } from "@/lib/auth/config";
 import { POST as submitRequest } from "@/app/api/custom-requests/route";
 import { POST as createDeposit } from "@/app/api/custom-requests/[id]/deposit/route";
+import { PATCH as scheduleRequest } from "@/app/api/custom-requests/[id]/schedule/route";
 
 let sb: SupabaseMock;
 let ipCounter = 0;
@@ -184,5 +192,61 @@ describe("POST /api/custom-requests/[id]/deposit", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.url).toContain("checkout.stripe.com");
+  });
+});
+
+describe("PATCH /api/custom-requests/[id]/schedule — monthly booking cap", () => {
+  const params = { params: { id: "req-1" } };
+
+  function scheduleReq(body: unknown) {
+    return new NextRequest("http://localhost/api/custom-requests/req-1/schedule", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  const STUDIO = { id: "studio-1", name: "Ink & Iron", subdomain: "ink-iron", owner_id: "owner-1" };
+  const CUSTOM_REQUEST = {
+    id: "req-1", studio_id: "studio-1", artist_id: "artist-1", booking_id: "bk-1",
+    client_name: "Alex Client", client_email: "alex@example.com", client_phone: "5551234567",
+    status: "accepted", deposit_amount: 150, quote_amount: 600,
+  };
+  const BOOKING = { id: "bk-1", status: "awaiting_schedule", artist_id: "artist-1" };
+
+  beforeEach(() => {
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: "owner-1" } as never);
+  });
+
+  it("rejects scheduling when the artist is already at capacity for that month (same check as assignSchedule)", async () => {
+    sb.queueFrom("studios", STUDIO);
+    sb.queueFrom("custom_requests", CUSTOM_REQUEST);
+    sb.queueFrom("bookings", BOOKING);
+    sb.queueFrom("bookings", []); // conflict check — no conflict
+    sb.queueFrom("artists", { name: "Jane Artist", monthly_booking_cap: 2 });
+    sb.queueFrom("bookings", [{ id: "bk-x" }, { id: "bk-y" }]); // monthly count — at cap
+
+    const res = await scheduleRequest(scheduleReq({ date: "2099-09-01", time: "14:00" }), params);
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.error).toMatch(/already at capacity for that month/);
+  });
+
+  it("schedules successfully when the artist is under their monthly cap", async () => {
+    sb.queueFrom("studios", STUDIO);
+    sb.queueFrom("custom_requests", CUSTOM_REQUEST);
+    sb.queueFrom("bookings", BOOKING);
+    sb.queueFrom("bookings", []); // conflict check — no conflict
+    sb.queueFrom("artists", { name: "Jane Artist", monthly_booking_cap: 5 });
+    sb.queueFrom("bookings", [{ id: "bk-x" }]); // monthly count — under cap
+    sb.queueFrom("bookings", { success: true }); // update
+    sb.queueFrom("custom_requests", { success: true }); // update
+    sb.queueFrom("artists", { name: "Jane Artist" }); // notification lookup
+    sb.queueFrom("studios", { address: "123 Main St" }); // notification lookup
+
+    const res = await scheduleRequest(scheduleReq({ date: "2099-09-01", time: "14:00" }), params);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
   });
 });

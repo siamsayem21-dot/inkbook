@@ -28,6 +28,19 @@ describe("getArtistBookingCountForMonth", () => {
     expect(chain.gte).toHaveBeenCalledWith("date", "2028-02-01");
     expect(chain.lte).toHaveBeenCalledWith("date", "2028-02-29"); // 2028 is a leap year
   });
+
+  it("counts not-yet-expired pending_deposit bookings alongside confirmed/completed ones", async () => {
+    // pending_deposit bookings already occupy a real date/time slot (the
+    // classic flow inserts one upfront, before the deposit is paid) — they
+    // must count toward the cap or the cap can be exceeded by ordinary
+    // sequential use while several deposits are still outstanding.
+    sb.queueFrom("bookings", []);
+    await getArtistBookingCountForMonth(sb.client as never, "artist-1", "2026-09-15");
+    const chain = sb.getChain("bookings");
+    expect(chain.or).toHaveBeenCalledWith(
+      expect.stringMatching(/^status\.in\.\(confirmed,completed\),and\(status\.eq\.pending_deposit,deposit_expires_at\.gt\./)
+    );
+  });
 });
 
 describe("isAtMonthlyCap", () => {

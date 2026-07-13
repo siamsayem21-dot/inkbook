@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUser } from "@/lib/auth/config";
 import { trySendSms } from "@/lib/twilio/client";
 import { sendSessionScheduledEmail } from "@/lib/email";
+import { isAtMonthlyCap } from "@/lib/waitlist";
 
 // PATCH /api/custom-requests/[id]/schedule
 // Body: { date: "YYYY-MM-DD", time: "HH:MM", artist_id?: string }
@@ -143,6 +144,22 @@ export async function PATCH(
   if ((conflictRows ?? []).length > 0) {
     return NextResponse.json(
       { error: "Artist already has a booking at that date and time" },
+      { status: 409 }
+    );
+  }
+
+  // Monthly booking cap (Phase C Feature 6) — same check as assignSchedule()
+  // in app/(owner)/owner/bookings/[bookingId]/actions.ts, checked against the
+  // month of the date being assigned.
+  const { data: artistCapRow } = await supabase
+    .from("artists")
+    .select("name, monthly_booking_cap")
+    .eq("id", resolvedArtistId)
+    .maybeSingle();
+  const artistForCap = artistCapRow as { name: string; monthly_booking_cap: number } | null;
+  if (artistForCap && (await isAtMonthlyCap(supabase, resolvedArtistId, artistForCap.monthly_booking_cap, date))) {
+    return NextResponse.json(
+      { error: `${artistForCap.name} is already at capacity for that month — choose a different date.` },
       { status: 409 }
     );
   }
