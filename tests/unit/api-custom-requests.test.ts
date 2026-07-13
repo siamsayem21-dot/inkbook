@@ -195,6 +195,22 @@ describe("POST /api/custom-requests/[id]/deposit", () => {
     const body = await res.json();
     expect(body.url).toContain("checkout.stripe.com");
   });
+
+  it("403s and never creates a Stripe session when the client is blacklisted", async () => {
+    sb.queueFrom("custom_requests", {
+      id: "req-1", studio_id: "s1", artist_id: "artist-1",
+      client_email: "blocked@example.com", client_phone: "+15550000000",
+      deposit_amount: 150, status: "quoted",
+    });
+    sb.queueRpc(true); // is_client_blacklisted -> blocked
+
+    const res = await createDeposit(depositReq({ studioSlug: "ink-iron" }), params);
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.error).toMatch(/contact the studio directly/i);
+    expect(sb.fromCalls).not.toContain("studios");
+    expect(sb.fromCalls).not.toContain("artists");
+  });
 });
 
 describe("PATCH /api/custom-requests/[id]/schedule — monthly booking cap", () => {

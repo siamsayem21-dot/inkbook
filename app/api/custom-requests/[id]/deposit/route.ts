@@ -32,7 +32,7 @@ export async function POST(
 
   const { data: reqData } = await supabase
     .from("custom_requests")
-    .select("id, studio_id, artist_id, client_name, client_email, deposit_amount, status, stripe_payment_intent_id")
+    .select("id, studio_id, artist_id, client_name, client_email, client_phone, deposit_amount, status, stripe_payment_intent_id")
     .eq("id", params.id)
     .single();
 
@@ -44,6 +44,7 @@ export async function POST(
     artist_id: string | null;
     client_name: string;
     client_email: string;
+    client_phone: string | null;
     deposit_amount: number | null;
     status: string;
     stripe_payment_intent_id: string | null;
@@ -55,6 +56,22 @@ export async function POST(
 
   if (!cr.deposit_amount || cr.deposit_amount <= 0) {
     return NextResponse.json({ error: "No deposit amount set on this request" }, { status: 400 });
+  }
+
+  // Blacklist check — same is_client_blacklisted() RPC continueToDeposit()
+  // (the consultation-flow equivalent) is backed by. Gated here at deposit
+  // time, not at initial custom-request submission — matches that same
+  // precedent (see app/portal/[studio]/projects/[id]/actions.ts).
+  const { data: isBlacklisted } = await supabase.rpc("is_client_blacklisted" as never, {
+    p_studio_id: cr.studio_id,
+    p_email: cr.client_email,
+    p_phone: cr.client_phone,
+  } as never);
+  if (isBlacklisted) {
+    return NextResponse.json(
+      { error: "This request cannot be completed. Please contact the studio directly." },
+      { status: 403 }
+    );
   }
 
   const [{ data: studioData }, { data: artistData }] = await Promise.all([

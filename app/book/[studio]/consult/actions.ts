@@ -212,6 +212,20 @@ export async function bookConsultation(
   if (!studio) return { error: "Studio not found." };
   const s = studio as { id: string; deposit_amount_cents: number };
 
+  // Blacklist check — same is_client_blacklisted() RPC continueToDeposit()
+  // (app/portal/[studio]/projects/[id]/actions.ts) is backed by.
+  // bookConsultation() is the owner-driven twin of continueToDeposit() —
+  // both convert a consultations row into a real bookings row, so both
+  // need the gate.
+  const { data: isBlacklisted } = await supabase.rpc("is_client_blacklisted" as never, {
+    p_studio_id: c.studio_id,
+    p_email: c.client_email,
+    p_phone: c.client_phone,
+  } as never);
+  if (isBlacklisted) {
+    return { error: "This client is blacklisted at this studio and cannot be booked." };
+  }
+
   // Monthly booking cap (Phase C Feature 6) — checked against the month of
   // the requested date. Unlike the client-facing self-serve flow, this is
   // owner-driven: the owner already has a relationship with this client, so
