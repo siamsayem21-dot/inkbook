@@ -5,10 +5,10 @@ import { getStudioId } from "@/lib/auth/config";
 import { getStripe } from "@/lib/stripe/client";
 import { revalidatePath } from "next/cache";
 import { buildSmsMessage, trySendSms } from "@/lib/twilio/client";
-import { sendSessionScheduledEmail, sendBookingCancelledEmail, sendRemainderRequestEmail } from "@/lib/email";
-import { getOrCreateDepositCheckoutSession } from "@/lib/stripe/deposit-checkout";
+import { sendSessionScheduledEmail, sendBookingCancelledEmail } from "@/lib/email";
 import { isReadyToConfirm, bookingHasConsent } from "@/lib/booking-lifecycle";
 import { getBookingTotalCents, getBalanceDueCents } from "@/lib/booking-balance";
+import { sendRemainderPaymentRequest } from "@/lib/remainder-payment";
 
 export async function cancelBooking(bookingId: string): Promise<{ error?: string }> {
   const studioId = await getStudioId();
@@ -484,40 +484,15 @@ export async function requestRemainderPayment(
   const { data: studioRaw } = await supabase.from("studios").select("name").eq("id", studioId).single();
   const studioName = (studioRaw as { name: string } | null)?.name ?? "Studio";
   const artistName = booking.artists?.name ?? "Artist";
-  const clientEmail = booking.clients?.email;
-  const clientPhone = booking.clients?.phone;
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL ??
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
-
-  const result = await getOrCreateDepositCheckoutSession({
+  return sendRemainderPaymentRequest({
     bookingId,
-    depositAmountCents: balanceDueCents,
     artistId: booking.artist_id,
     artistName,
     studioName,
-    clientEmail,
-    paymentType: "remainder",
-    successUrl: `${baseUrl}/owner/bookings/${bookingId}?remainder=paid`,
-    cancelUrl: `${baseUrl}/owner/bookings/${bookingId}?remainder=cancelled`,
+    balanceDueCents,
+    clientEmail: booking.clients?.email,
+    clientName: booking.clients?.full_name,
+    clientPhone: booking.clients?.phone,
   });
-
-  if (result.error) return { error: result.error };
-
-  if (clientEmail && result.checkoutUrl) {
-    void sendRemainderRequestEmail({
-      to: clientEmail,
-      clientName: booking.clients?.full_name ?? "there",
-      studioName,
-      artistName,
-      balanceDueCents,
-      checkoutUrl: result.checkoutUrl,
-    });
-  }
-  if (clientPhone) {
-    void trySendSms(clientPhone, buildSmsMessage("remainder_pending", studioName));
-  }
-
-  return { checkoutUrl: result.checkoutUrl };
 }
