@@ -269,6 +269,7 @@ describe("POST /api/stripe/webhook — Branch C (legacy booking deposit)", () =>
       data: { object: { id: "cs_C", payment_intent: "pi_C", metadata: { bookingId: "bk_legacy" } } },
       created: 1700000000,
     });
+    sb.queueFrom("bookings", { deposit_paid: false }); // idempotency check — not yet paid
     sb.queueFrom("bookings", ok()); // update confirmed
     sb.queueFrom("deposits", ok()); // update paid
     sb.queueFrom("bookings", {
@@ -282,6 +283,20 @@ describe("POST /api/stripe/webhook — Branch C (legacy booking deposit)", () =>
     const res = await POST(makeRequest("{}"));
     expect(res.status).toBe(200);
     expect(trySendSms).toHaveBeenCalledWith("5551234567", "sms body");
+  });
+
+  it("is idempotent — a retried event for an already-confirmed booking is skipped without re-notifying", async () => {
+    mockConstructEvent({
+      type: "checkout.session.completed",
+      data: { object: { id: "cs_C", payment_intent: "pi_C", metadata: { bookingId: "bk_legacy" } } },
+      created: 1700000000,
+    });
+    sb.queueFrom("bookings", { deposit_paid: true }); // idempotency check — already processed
+
+    const res = await POST(makeRequest("{}"));
+    expect(res.status).toBe(200);
+    expect(sb.fromCalls).not.toContain("deposits");
+    expect(trySendSms).not.toHaveBeenCalled();
   });
 });
 

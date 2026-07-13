@@ -446,6 +446,20 @@ async function handleLegacyBookingDeposit(
   const supabase = createAdminClient();
   const now = new Date().toISOString();
 
+  // Idempotency guard — same pattern as handleDepositPayment (Branch A):
+  // a Stripe webhook retry must not re-confirm an already-confirmed booking
+  // and re-send the "booking confirmed" SMS/email a second time.
+  const { data: existingBooking } = await supabase
+    .from("bookings")
+    .select("deposit_paid")
+    .eq("id", bookingId)
+    .maybeSingle();
+
+  if ((existingBooking as { deposit_paid: boolean } | null)?.deposit_paid) {
+    console.log("[stripe/webhook] Branch C: already processed — booking:", bookingId);
+    return NextResponse.json({ received: true });
+  }
+
   await Promise.all([
     supabase
       .from("bookings")

@@ -73,6 +73,7 @@ describe("POST /api/billing/webhook — checkout.session.completed", () => {
       type: "checkout.session.completed",
       data: { object: { payment_intent: "pi_1", metadata: { bookingId: "bk_legacy" } } },
     });
+    sb.queueFrom("bookings", { deposit_paid: false }); // idempotency check — not yet paid
     sb.queueFrom("bookings", { success: true }); // update confirmed
     sb.queueFrom("deposits", { success: true }); // update paid
     sb.queueFrom("bookings", {
@@ -86,6 +87,19 @@ describe("POST /api/billing/webhook — checkout.session.completed", () => {
     const res = await POST(makeRequest());
     expect(res.status).toBe(200);
     expect(trySendSms).toHaveBeenCalledWith("5551234567", "sms body");
+  });
+
+  it("is idempotent — a retried event for an already-confirmed legacy booking is skipped without re-notifying", async () => {
+    constructEvent.mockReturnValue({
+      type: "checkout.session.completed",
+      data: { object: { payment_intent: "pi_1", metadata: { bookingId: "bk_legacy" } } },
+    });
+    sb.queueFrom("bookings", { deposit_paid: true }); // idempotency check — already processed
+
+    const res = await POST(makeRequest());
+    expect(res.status).toBe(200);
+    expect(sb.fromCalls).not.toContain("deposits");
+    expect(trySendSms).not.toHaveBeenCalled();
   });
 
   it("skips the subscription branch when no userId is present in metadata", async () => {

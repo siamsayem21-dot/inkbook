@@ -74,6 +74,22 @@ export async function POST(req: Request) {
         // Legacy booking deposit (sessions created before deposit_payments was introduced).
         // These sessions have bookingId but no depositPaymentId in metadata.
         const now = new Date().toISOString();
+
+        // Idempotency guard — a Stripe webhook retry must not re-confirm an
+        // already-confirmed booking and re-send the "booking confirmed"
+        // SMS/email a second time (same pattern as /api/stripe/webhook's
+        // handleDepositPayment / handleLegacyBookingDeposit).
+        const { data: existingBooking } = await supabase
+          .from("bookings")
+          .select("deposit_paid")
+          .eq("id", bookingId)
+          .maybeSingle();
+
+        if ((existingBooking as { deposit_paid: boolean } | null)?.deposit_paid) {
+          console.log("[billing/webhook] legacy booking deposit already processed — booking:", bookingId);
+          break;
+        }
+
         await Promise.all([
           supabase
             .from("bookings")
