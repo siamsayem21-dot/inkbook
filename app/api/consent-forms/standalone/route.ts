@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  const rl = checkRateLimit(`consent-forms-standalone:${getClientIp(request)}`, 5, 10 * 60_000);
+  if (!rl.allowed) return rateLimitedResponse(rl.retryAfter);
+
   const body = await request.json();
   const {
     studioSlug,

@@ -33,6 +33,7 @@ const routes = {
   'bookings':                'app/api/bookings/route.ts',
   'waitlist':                'app/api/waitlist/route.ts',
   'consent-forms':           'app/api/consent-forms/route.ts',
+  'consent-forms-standalone': 'app/api/consent-forms/standalone/route.ts',
 };
 
 const sources = {};
@@ -82,6 +83,7 @@ const keyPatterns = {
   'bookings':               /`bookings:\$/,
   'waitlist':               /`waitlist:\$/,
   'consent-forms':          /`consent-forms:\$/,
+  'consent-forms-standalone': /`consent-forms-standalone:\$/,
 };
 
 for (const [name, pattern] of Object.entries(keyPatterns)) {
