@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudioId } from "@/lib/auth/config";
 import { revalidatePath } from "next/cache";
 import { sendArtistInviteEmail } from "@/lib/email";
+import { isAtArtistLimit } from "@/lib/plan-limits";
 
 export async function inviteArtist(data: {
   name: string;
@@ -43,15 +44,22 @@ export async function inviteArtist(data: {
     return { error: "Email already invited to this studio" };
   }
 
-  // Look up studio name and owner_id
+  // Look up studio name, owner_id, and plan
   const { data: studioRaw } = await supabase
     .from("studios")
-    .select("name, owner_id")
+    .select("name, owner_id, plan")
     .eq("id", data.studioId)
     .single();
 
-  const studio = studioRaw as { name: string; owner_id: string } | null;
+  const studio = studioRaw as { name: string; owner_id: string; plan: string } | null;
   if (!studio) return { error: "Studio not found" };
+
+  const { atLimit, limit } = await isAtArtistLimit(supabase, data.studioId, studio.plan);
+  if (atLimit) {
+    return {
+      error: `Your current plan allows up to ${limit} artist${limit === 1 ? "" : "s"}. Upgrade your plan to invite more.`,
+    };
+  }
 
   // Insert invite — Postgres generates the token UUID automatically
   const { data: inviteRaw, error: insertError } = await supabase
