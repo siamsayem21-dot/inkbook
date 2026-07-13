@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { findOrCreateClient } from "@/lib/clients";
+import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
 
 // Public, unauthenticated endpoint — same trust model as POST /api/bookings.
 // Reached when a client hits an artist's monthly booking cap there and
 // chooses to join the waitlist instead (Phase C Feature 6).
 export async function POST(request: NextRequest) {
+  const rl = checkRateLimit(`waitlist:${getClientIp(request)}`, 5, 10 * 60_000);
+  if (!rl.allowed) return rateLimitedResponse(rl.retryAfter);
+
   const body = await request.json();
   const { artistId, clientName, clientEmail, clientPhone, style, notes } = body;
 

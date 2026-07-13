@@ -31,6 +31,7 @@ const routes = {
   'consultation-questions':  'app/api/ai/consultation-questions/route.ts',
   'quote-generate':          'app/api/ai/quote-generate/route.ts',
   'bookings':                'app/api/bookings/route.ts',
+  'waitlist':                'app/api/waitlist/route.ts',
 };
 
 const sources = {};
@@ -74,6 +75,7 @@ const keyPatterns = {
   'consultation-questions': /`consult-q:\$/,
   'quote-generate':         /`quote:\$/,
   'bookings':               /`bookings:\$/,
+  'waitlist':               /`waitlist:\$/,
 };
 
 for (const [name, pattern] of Object.entries(keyPatterns)) {

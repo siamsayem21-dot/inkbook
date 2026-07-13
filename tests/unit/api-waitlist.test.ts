@@ -9,11 +9,15 @@ import { POST } from "@/app/api/waitlist/route";
 
 const ARTIST = { id: "artist-1", studio_id: "studio-1" };
 
-function makeRequest(body: unknown) {
+// Each call defaults to its own IP so the shared rate-limit store (a
+// module-level singleton in lib/rate-limit.ts) doesn't let one test's
+// requests count against another's budget.
+let ipCounter = 0;
+function makeRequest(body: unknown, ip = `10.0.1.${++ipCounter}`) {
   return new NextRequest("http://localhost/api/waitlist", {
     method: "POST",
     body: JSON.stringify(body),
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", "x-forwarded-for": ip },
   });
 }
 
@@ -84,5 +88,36 @@ describe("POST /api/waitlist", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.alreadyOnWaitlist).toBe(true);
+  });
+});
+
+describe("POST /api/waitlist — rate limiting", () => {
+  it("blocks the 6th request within the window from the same IP", async () => {
+    const ip = "203.0.113.20";
+    for (let i = 0; i < 5; i++) {
+      const res = await POST(makeRequest({}, ip)); // missing fields -> 400, but under the rate limit
+      expect(res.status).toBe(400);
+    }
+    const blocked = await POST(makeRequest({}, ip));
+    expect(blocked.status).toBe(429);
+    expect(blocked.headers.get("Retry-After")).toBeTruthy();
+  });
+
+  it("never reaches Supabase once a request is rate-limited", async () => {
+    const ip = "203.0.113.21";
+    for (let i = 0; i < 5; i++) await POST(makeRequest({}, ip));
+    sb.fromCalls.length = 0;
+
+    const res = await POST(makeRequest(VALID_BODY, ip));
+    expect(res.status).toBe(429);
+    expect(sb.fromCalls).toHaveLength(0);
+  });
+
+  it("tracks a different IP independently of one that's already at its limit", async () => {
+    const exhaustedIp = "203.0.113.22";
+    for (let i = 0; i < 5; i++) await POST(makeRequest({}, exhaustedIp));
+
+    const res = await POST(makeRequest({}, "203.0.113.23"));
+    expect(res.status).toBe(400); // missing fields, not rate-limited
   });
 });
