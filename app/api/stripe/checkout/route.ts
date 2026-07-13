@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe/client";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
 
+// Public, unauthenticated endpoint — same trust model as POST /api/bookings.
+// Creates a real Stripe checkout session per call, so an unlimited request
+// rate here isn't just DB spam, it's billable Stripe API abuse.
 export async function POST(request: NextRequest) {
+  const rl = checkRateLimit(`stripe-checkout:${getClientIp(request)}`, 5, 10 * 60_000);
+  if (!rl.allowed) return rateLimitedResponse(rl.retryAfter);
+
   const body = await request.json();
   const { bookingId, studioSlug, artistId } = body as {
     bookingId?: string;
