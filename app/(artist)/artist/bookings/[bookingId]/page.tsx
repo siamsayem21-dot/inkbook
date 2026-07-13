@@ -1,10 +1,10 @@
 export const dynamic = "force-dynamic";
 
+import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentUser } from "@/lib/auth/config";
 import { getBalanceDueCents } from "@/lib/booking-balance";
 import Link from "next/link";
-
-const ARTIST_ID = "fa2900bc-f613-4f75-8f64-e1e0d7e32a79";
 
 type BookingDetail = {
   id: string;
@@ -66,7 +66,19 @@ interface Props {
 }
 
 export default async function ArtistBookingDetailPage({ params }: Props) {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
   const supabase = createAdminClient();
+
+  const { data: artistRaw } = await supabase
+    .from("artists")
+    .select("id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const artist = artistRaw as { id: string } | null;
+  if (!artist) redirect("/artist/dashboard");
 
   const { data: bookingRaw, error: bookingError } = await supabase
     .from("bookings")
@@ -75,7 +87,7 @@ export default async function ArtistBookingDetailPage({ params }: Props) {
         "total_amount_cents, quote_amount_cents, remainder_collected, completed_at, clients(full_name, email, phone)"
     )
     .eq("id", params.bookingId)
-    .eq("artist_id", ARTIST_ID)
+    .eq("artist_id", artist.id)
     .maybeSingle();
 
   if (bookingError) {
