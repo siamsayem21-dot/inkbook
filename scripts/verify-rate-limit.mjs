@@ -32,6 +32,7 @@ const routes = {
   'quote-generate':          'app/api/ai/quote-generate/route.ts',
   'bookings':                'app/api/bookings/route.ts',
   'waitlist':                'app/api/waitlist/route.ts',
+  'consent-forms':           'app/api/consent-forms/route.ts',
 };
 
 const sources = {};
@@ -47,14 +48,18 @@ for (const [name, path] of Object.entries(routes)) {
 HEAD('TEST 2 — Rate limit check fires before body parse in each route');
 
 for (const [name, src] of Object.entries(sources)) {
-  // checkRateLimit must appear before the request body is parsed
-  // (param is named `req` in the AI routes, `request` in /api/bookings).
-  const rlIdx   = src.indexOf('checkRateLimit(');
-  const jsonIdx = src.indexOf('req.json()') !== -1 ? src.indexOf('req.json()') : src.indexOf('request.json()');
-  if (rlIdx !== -1 && jsonIdx !== -1 && rlIdx < jsonIdx) {
+  // checkRateLimit must appear before the request body is parsed (param is
+  // named `req` in the AI routes, `request` elsewhere; consent-forms reads
+  // formData() since it's a file upload, not json()).
+  const rlIdx = src.indexOf('checkRateLimit(');
+  const bodyParseIdx = ['req.json()', 'request.json()', 'request.formData()']
+    .map((needle) => src.indexOf(needle))
+    .filter((i) => i !== -1)
+    .sort((a, b) => a - b)[0] ?? -1;
+  if (rlIdx !== -1 && bodyParseIdx !== -1 && rlIdx < bodyParseIdx) {
     PASS(`${name}: checkRateLimit called before the body is parsed`);
   } else {
-    FAIL(`${name}: checkRateLimit must come before the body is parsed — found at index ${rlIdx} vs ${jsonIdx}`);
+    FAIL(`${name}: checkRateLimit must come before the body is parsed — found at index ${rlIdx} vs ${bodyParseIdx}`);
   }
 }
 
@@ -76,6 +81,7 @@ const keyPatterns = {
   'quote-generate':         /`quote:\$/,
   'bookings':               /`bookings:\$/,
   'waitlist':               /`waitlist:\$/,
+  'consent-forms':          /`consent-forms:\$/,
 };
 
 for (const [name, pattern] of Object.entries(keyPatterns)) {

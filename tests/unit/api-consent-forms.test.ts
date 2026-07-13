@@ -34,8 +34,16 @@ function buildForm(overrides: Partial<Record<string, string | File>> = {}) {
   return fd;
 }
 
-function req(fd: FormData) {
-  return new NextRequest("http://localhost/api/consent-forms", { method: "POST", body: fd });
+// Each call defaults to its own IP so the shared rate-limit store (a
+// module-level singleton in lib/rate-limit.ts) doesn't let one test's
+// requests count against another's budget.
+let ipCounter = 0;
+function req(fd: FormData, ip = `10.0.2.${++ipCounter}`) {
+  return new NextRequest("http://localhost/api/consent-forms", {
+    method: "POST",
+    body: fd,
+    headers: { "x-forwarded-for": ip },
+  });
 }
 
 beforeEach(() => {
@@ -190,5 +198,37 @@ describe("POST /api/consent-forms", () => {
       req(buildForm({ isMinor: "true", guardianName: "Pat Guardian", guardianSignature: "sig" }))
     );
     expect(res.status).toBe(200);
+  });
+});
+
+describe("POST /api/consent-forms — rate limiting", () => {
+  it("blocks the 6th request within the window from the same IP", async () => {
+    const ip = "203.0.113.30";
+    for (let i = 0; i < 5; i++) {
+      // missing fullName -> 400, but under the rate limit
+      const res = await POST(req(buildForm({ fullName: undefined }), ip));
+      expect(res.status).toBe(400);
+    }
+    const blocked = await POST(req(buildForm({ fullName: undefined }), ip));
+    expect(blocked.status).toBe(429);
+    expect(blocked.headers.get("Retry-After")).toBeTruthy();
+  });
+
+  it("never reaches Supabase once a request is rate-limited", async () => {
+    const ip = "203.0.113.31";
+    for (let i = 0; i < 5; i++) await POST(req(buildForm({ fullName: undefined }), ip));
+    sb.fromCalls.length = 0;
+
+    const res = await POST(req(buildForm(), ip));
+    expect(res.status).toBe(429);
+    expect(sb.fromCalls).toHaveLength(0);
+  });
+
+  it("tracks a different IP independently of one that's already at its limit", async () => {
+    const exhaustedIp = "203.0.113.32";
+    for (let i = 0; i < 5; i++) await POST(req(buildForm({ fullName: undefined }), exhaustedIp));
+
+    const res = await POST(req(buildForm({ fullName: undefined }), "203.0.113.33"));
+    expect(res.status).toBe(400); // missing fields, not rate-limited
   });
 });

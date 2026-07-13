@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe/client";
 import { validateImageFile } from "@/lib/file-validation";
 import { isReadyToConfirm } from "@/lib/booking-lifecycle";
+import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -27,6 +28,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const rl = checkRateLimit(`consent-forms:${getClientIp(request)}`, 5, 10 * 60_000);
+  if (!rl.allowed) return rateLimitedResponse(rl.retryAfter);
+
   const formData = await request.formData();
 
   const bookingId = formData.get("bookingId") as string;
