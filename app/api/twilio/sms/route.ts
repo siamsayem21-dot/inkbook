@@ -10,8 +10,11 @@ const VALID_TYPES: SmsMessageType[] = [
 ];
 
 export async function POST(request: NextRequest) {
+  // Fail closed: if CRON_SECRET is ever unset/misconfigured, reject rather
+  // than silently allowing every request through (same fix as
+  // app/api/send-sms/route.ts's already-correct check).
   const authHeader = request.headers.get("authorization");
-  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
