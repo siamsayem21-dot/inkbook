@@ -29,6 +29,7 @@ export default async function DashboardPage() {
 
   if (artists && artists.length > 0) redirect("/artist/dashboard");
 
-  // New user — no studio, no artist profile yet
-  redirect("/onboarding");
+  // New user — no studio, no artist profile yet.
+  // /register + POST /api/studios is the single studio-creation flow.
+  redirect("/register");
 }

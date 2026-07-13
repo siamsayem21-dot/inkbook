@@ -27,8 +27,9 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
     console.error("[OwnerLayout] studio query failed:", studioError.message, "| user:", user.id);
   }
 
-  // Only redirect when we're certain there are 0 rows — not on query error
-  if (!studioError && (!studios || studios.length === 0)) redirect("/onboarding");
+  // Only redirect when we're certain there are 0 rows — not on query error.
+  // /register + POST /api/studios is the single studio-creation flow.
+  if (!studioError && (!studios || studios.length === 0)) redirect("/register");
 
   // Gate on subscription status — canceled/unpaid studios cannot access the dashboard
   const studio = studios?.[0] as { id: string; subscription_status?: string; name?: string } | undefined;
