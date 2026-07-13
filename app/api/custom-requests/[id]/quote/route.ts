@@ -101,6 +101,24 @@ export async function POST(
     );
   }
 
+  // Owner-set floor per artist — "Owner sets minimum rate per artist,
+  // artist cannot go below it" (CLAUDE.md). Applies regardless of whether
+  // the artist or the studio owner submitted this quote.
+  const { data: rateArtistRow } = await supabase
+    .from("artists")
+    .select("name, minimum_rate_cents")
+    .eq("id", resolvedArtistId)
+    .maybeSingle();
+  const rateArtist = rateArtistRow as { name: string; minimum_rate_cents: number } | null;
+  if (rateArtist && Math.round(quote_amount * 100) < rateArtist.minimum_rate_cents) {
+    return NextResponse.json(
+      {
+        error: `Quote must be at least $${(rateArtist.minimum_rate_cents / 100).toFixed(2)} — ${rateArtist.name}'s minimum rate.`,
+      },
+      { status: 400 }
+    );
+  }
+
   // Resolve studio name/subdomain for the quote email
   let resolvedStudioName = studio?.name ?? "";
   let resolvedStudioSlug = studio?.subdomain ?? "";

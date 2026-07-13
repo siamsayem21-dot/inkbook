@@ -9,6 +9,7 @@ vi.mock("@/lib/twilio/client", () => ({ trySendSms: vi.fn(() => Promise.resolve(
 vi.mock("@/lib/email", () => ({
   sendSessionScheduledEmail: vi.fn(() => Promise.resolve()),
   sendCustomRequestReceivedEmail: vi.fn(() => Promise.resolve()),
+  sendCustomRequestQuoteEmail: vi.fn(() => Promise.resolve()),
 }));
 
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -17,6 +18,7 @@ import { getCurrentUser } from "@/lib/auth/config";
 import { POST as submitRequest } from "@/app/api/custom-requests/route";
 import { POST as createDeposit } from "@/app/api/custom-requests/[id]/deposit/route";
 import { PATCH as scheduleRequest } from "@/app/api/custom-requests/[id]/schedule/route";
+import { POST as sendQuote } from "@/app/api/custom-requests/[id]/quote/route";
 
 let sb: SupabaseMock;
 let ipCounter = 0;
@@ -248,5 +250,67 @@ describe("PATCH /api/custom-requests/[id]/schedule — monthly booking cap", () 
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
+  });
+});
+
+describe("POST /api/custom-requests/[id]/quote — owner-set minimum rate floor", () => {
+  const params = { params: { id: "req-1" } };
+
+  function quoteReq(body: unknown) {
+    return new NextRequest("http://localhost/api/custom-requests/req-1/quote", {
+      method: "POST",
+      body: JSON.stringify(body),
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  it("rejects an artist's quote below their own minimum rate", async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: "artist-user-1" } as never);
+    sb.queueFrom("custom_requests", {
+      id: "req-1", studio_id: "studio-1", artist_id: null,
+      client_name: "Alex Client", client_email: "alex@example.com", status: "pending",
+    });
+    sb.queueFrom("artists", { id: "artist-1", name: "Jane Artist", studio_id: "studio-1" }); // artistRow (self)
+    sb.queueFrom("studios", null); // studioRow — this user isn't an owner
+    sb.queueFrom("artists", { name: "Jane Artist", minimum_rate_cents: 15000 }); // rate floor lookup
+
+    const res = await sendQuote(quoteReq({ quote_amount: 100, deposit_amount: 50 }), params);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatch(/at least \$150\.00.*Jane Artist's minimum rate/);
+  });
+
+  it("accepts an artist's quote at or above their minimum rate", async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: "artist-user-1" } as never);
+    sb.queueFrom("custom_requests", {
+      id: "req-1", studio_id: "studio-1", artist_id: null,
+      client_name: "Alex Client", client_email: "alex@example.com", status: "pending",
+    });
+    sb.queueFrom("artists", { id: "artist-1", name: "Jane Artist", studio_id: "studio-1" }); // artistRow (self)
+    sb.queueFrom("studios", null); // studioRow — this user isn't an owner
+    sb.queueFrom("artists", { name: "Jane Artist", minimum_rate_cents: 15000 }); // rate floor lookup
+    sb.queueFrom("studios", { name: "Ink & Iron", subdomain: "ink-iron" }); // resolve studio name for email
+    sb.queueFrom("custom_requests", { success: true }); // update
+
+    const res = await sendQuote(quoteReq({ quote_amount: 200, deposit_amount: 50 }), params);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+  });
+
+  it("rejects an owner's quote for an assigned artist below that artist's minimum rate", async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: "owner-1" } as never);
+    sb.queueFrom("custom_requests", {
+      id: "req-1", studio_id: "studio-1", artist_id: "artist-1",
+      client_name: "Alex Client", client_email: "alex@example.com", status: "pending",
+    });
+    sb.queueFrom("artists", null); // artistRow — this user isn't an artist
+    sb.queueFrom("studios", { id: "studio-1", name: "Ink & Iron", subdomain: "ink-iron", owner_id: "owner-1" }); // studioRow
+    sb.queueFrom("artists", { name: "Jane Artist", minimum_rate_cents: 20000 }); // rate floor lookup
+
+    const res = await sendQuote(quoteReq({ quote_amount: 100, deposit_amount: 50 }), params);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatch(/at least \$200\.00.*Jane Artist's minimum rate/);
   });
 });
