@@ -20,7 +20,8 @@ export type SmsMessageType =
   | "booking_confirmed"
   | "no_show"
   | "remainder_pending"
-  | "remainder_received";
+  | "remainder_received"
+  | "aftercare";
 
 export function buildSmsMessage(type: SmsMessageType, studioName: string): string {
   const templates: Record<SmsMessageType, string> = {
@@ -32,6 +33,7 @@ export function buildSmsMessage(type: SmsMessageType, studioName: string): strin
     no_show: `You were marked as a no-show for your appointment at ${studioName}. Your deposit has been kept. Contact the studio to rebook.`,
     remainder_pending: `${studioName} is requesting your remaining balance. Check your email for the payment link.`,
     remainder_received: `Thanks! Your remaining balance at ${studioName} has been received in full.`,
+    aftercare: `Thanks for your session at ${studioName}! Keep the area clean and moisturized, and avoid sun/swimming for 2 weeks. Full instructions emailed to you.`,
   };
   return templates[type];
 }

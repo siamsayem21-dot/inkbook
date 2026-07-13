@@ -160,6 +160,16 @@ export default async function ClientBookingDetailPage({ params }: Props) {
               {booking.hasConsentForm ? "✓ Signed" : booking.depositPaid ? "Required — not yet signed" : "Sign after your deposit is paid"}
             </p>
           </div>
+          {booking.status === "completed" && (
+            <div className="col-span-2">
+              <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Aftercare Instructions</p>
+              <p className="text-sm text-zinc-200">
+                {booking.completedAt
+                  ? `✓ Sent to your email (${new Date(booking.completedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })})`
+                  : "✓ Sent to your email"}
+              </p>
+            </div>
+          )}
         </div>
 
         <BookingDetailActions

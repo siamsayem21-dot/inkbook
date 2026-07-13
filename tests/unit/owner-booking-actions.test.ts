@@ -12,6 +12,7 @@ vi.mock("@/lib/email", () => ({
   sendSessionScheduledEmail: vi.fn(() => Promise.resolve()),
   sendBookingCancelledEmail: vi.fn(() => Promise.resolve()),
   sendRemainderRequestEmail: vi.fn(() => Promise.resolve()),
+  sendAftercareEmail: vi.fn(() => Promise.resolve()),
 }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
@@ -19,7 +20,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudioId } from "@/lib/auth/config";
 import { getStripe } from "@/lib/stripe/client";
 import { trySendSms } from "@/lib/twilio/client";
-import { sendSessionScheduledEmail, sendBookingCancelledEmail, sendRemainderRequestEmail } from "@/lib/email";
+import { sendSessionScheduledEmail, sendBookingCancelledEmail, sendRemainderRequestEmail, sendAftercareEmail } from "@/lib/email";
 import { assignSchedule, markCompleted, cancelBooking, requestRemainderPayment } from "@/app/(owner)/owner/bookings/[bookingId]/actions";
 
 let sb: SupabaseMock;
@@ -32,6 +33,7 @@ beforeEach(() => {
   vi.mocked(sendSessionScheduledEmail).mockClear();
   vi.mocked(sendBookingCancelledEmail).mockClear();
   vi.mocked(sendRemainderRequestEmail).mockClear();
+  vi.mocked(sendAftercareEmail).mockClear();
 });
 
 describe("assignSchedule — Phase C Feature 1 gate", () => {
@@ -127,10 +129,13 @@ describe("markCompleted — Phase C Feature 1 rules 1 & 2", () => {
     expect(result.error).toMatch(/Consent form must be signed/);
   });
 
-  it("completes a confirmed booking with signed consent", async () => {
-    sb.queueFrom("bookings", { studio_id: "studio-1", status: "confirmed" });
+  it("completes a confirmed booking with signed consent and sets completed_at", async () => {
+    sb.queueFrom("bookings", { studio_id: "studio-1", status: "confirmed", client_id: "c1", artist_id: "art-1" });
     sb.queueFrom("consent_forms", { id: "cf-1" }); // bookingHasConsent -> true
     sb.queueFrom("bookings", { success: true }); // final update
+    sb.queueFrom("clients", { full_name: "Jane Client", email: "jane@example.com", phone: "+15551234567" });
+    sb.queueFrom("artists", { name: "Artist X" });
+    sb.queueFrom("studios", { name: "Studio Y" });
 
     const result = await markCompleted("bk-1");
     expect(result.error).toBeUndefined();
@@ -138,6 +143,37 @@ describe("markCompleted — Phase C Feature 1 rules 1 & 2", () => {
     const finalUpdate = sb.getChain("bookings", 2);
     const updateArg = (finalUpdate as { update: { mock: { calls: unknown[][] } } }).update.mock.calls[0][0] as Record<string, unknown>;
     expect(updateArg.status).toBe("completed");
+    expect(typeof updateArg.completed_at).toBe("string");
+  });
+
+  it("fires the aftercare SMS and email (Phase C Feature 4) after completion", async () => {
+    sb.queueFrom("bookings", { studio_id: "studio-1", status: "confirmed", client_id: "c1", artist_id: "art-1" });
+    sb.queueFrom("consent_forms", { id: "cf-1" });
+    sb.queueFrom("bookings", { success: true });
+    sb.queueFrom("clients", { full_name: "Jane Client", email: "jane@example.com", phone: "+15551234567" });
+    sb.queueFrom("artists", { name: "Artist X" });
+    sb.queueFrom("studios", { name: "Studio Y" });
+
+    await markCompleted("bk-1");
+
+    expect(trySendSms).toHaveBeenCalledWith("+15551234567", "sms:aftercare");
+    expect(sendAftercareEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ to: "jane@example.com", clientName: "Jane Client", studioName: "Studio Y", artistName: "Artist X" })
+    );
+  });
+
+  it("does not send aftercare notifications when the client has no email/phone on file", async () => {
+    sb.queueFrom("bookings", { studio_id: "studio-1", status: "confirmed", client_id: "c1", artist_id: "art-1" });
+    sb.queueFrom("consent_forms", { id: "cf-1" });
+    sb.queueFrom("bookings", { success: true });
+    sb.queueFrom("clients", { full_name: "Jane Client", email: null, phone: null });
+    sb.queueFrom("artists", { name: "Artist X" });
+    sb.queueFrom("studios", { name: "Studio Y" });
+
+    const result = await markCompleted("bk-1");
+    expect(result.error).toBeUndefined();
+    expect(trySendSms).not.toHaveBeenCalled();
+    expect(sendAftercareEmail).not.toHaveBeenCalled();
   });
 });
 

@@ -32,6 +32,7 @@ type BookingDetail = {
   quote_amount_cents: number | null;
   remainder_collected: boolean;
   remainder_collected_at: string | null;
+  completed_at: string | null;
   clients: { full_name: string; email: string; phone: string } | null;
   artists: { name: string } | null;
 };
@@ -83,7 +84,7 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
     .from("bookings")
     .select(
       "id, date, time, style, description, status, deposit_amount_cents, deposit_paid, deposit_kept, " +
-        "total_amount_cents, quote_amount_cents, remainder_collected, remainder_collected_at, " +
+        "total_amount_cents, quote_amount_cents, remainder_collected, remainder_collected_at, completed_at, " +
         "clients(full_name, email, phone), artists(name)"
     )
     .eq("id", params.bookingId)
@@ -194,6 +195,12 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
         }]
       : []),
     { label: "Consent form",  value: hasConsent ? "✓ Signed" : "Not submitted" },
+    {
+      label: "Aftercare",
+      value: b.status === "completed" && b.completed_at
+        ? `✓ Sent (${new Date(b.completed_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })})`
+        : "Sent when session is marked completed",
+    },
     { label: "Client email",  value: b.clients?.email ?? "—" },
     { label: "Client phone",  value: b.clients?.phone ?? "—" },
     { label: "Description",   value: b.description ?? "—", wide: true },

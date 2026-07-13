@@ -84,14 +84,16 @@ async function signConsent(bookingId) {
   return after.status;
 }
 
-// Mirrors markCompleted()'s guard
+// Mirrors markCompleted()'s guard — now also sets completed_at
+// (Phase C Feature 4: Aftercare, added alongside the aftercare notification).
 async function markCompleted(bookingId) {
   const { data: bookingRow } = await sb.from('bookings').select('status').eq('id', bookingId).single();
   if (bookingRow.status !== 'confirmed') return { error: 'not confirmed' };
   const consent = await hasConsent(bookingId);
   if (!consent) return { error: 'no consent' };
-  await sb.from('bookings').update({ status: 'completed' }).eq('id', bookingId).eq('status', 'confirmed');
-  return {};
+  const completedAt = new Date().toISOString();
+  await sb.from('bookings').update({ status: 'completed', completed_at: completedAt }).eq('id', bookingId).eq('status', 'confirmed');
+  return { completedAt };
 }
 
 async function makeBooking(status, { date = null, time = null } = {}) {
@@ -256,8 +258,9 @@ try {
     const r = await markCompleted(bookingId);
     if (r.error) { FAIL('expected success, got error: ' + r.error); }
     else {
-      const { data: row } = await sb.from('bookings').select('status').eq('id', bookingId).single();
+      const { data: row } = await sb.from('bookings').select('status, completed_at').eq('id', bookingId).single();
       row.status === 'completed' ? PASS('booking correctly marked completed') : FAIL('status did not update to completed: ' + row.status);
+      row.completed_at ? PASS('completed_at correctly set (Phase C Feature 4)') : FAIL('completed_at was not set');
     }
   }
 

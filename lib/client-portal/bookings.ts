@@ -24,6 +24,7 @@ export type ClientBookingDetail = ClientBooking & {
   balanceDueCents: number | null;
   remainderCollected: boolean;
   remainderCollectedAt: string | null;
+  completedAt: string | null;
 };
 
 type BookingRow = {
@@ -43,12 +44,13 @@ type BookingRow = {
   quote_amount_cents: number | null;
   remainder_collected: boolean;
   remainder_collected_at: string | null;
+  completed_at: string | null;
 };
 
 const BOOKING_COLUMNS =
   "id, artist_id, date, time, style, description, status, deposit_amount_cents, " +
   "deposit_paid, deposit_paid_at, deposit_kept, deposit_expires_at, total_amount_cents, " +
-  "quote_amount_cents, remainder_collected, remainder_collected_at";
+  "quote_amount_cents, remainder_collected, remainder_collected_at, completed_at";
 
 function deriveTitle(description: string, style: string | null): string {
   const base = (style ? `${style} Tattoo` : description) || "Tattoo Project";
@@ -195,5 +197,6 @@ export async function getClientBookingDetail(
     balanceDueCents: getBalanceDueCents(b),
     remainderCollected: b.remainder_collected,
     remainderCollectedAt: b.remainder_collected_at,
+    completedAt: b.completed_at,
   };
 }

@@ -5,7 +5,7 @@ import { getStudioId } from "@/lib/auth/config";
 import { getStripe } from "@/lib/stripe/client";
 import { revalidatePath } from "next/cache";
 import { buildSmsMessage, trySendSms } from "@/lib/twilio/client";
-import { sendSessionScheduledEmail, sendBookingCancelledEmail } from "@/lib/email";
+import { sendSessionScheduledEmail, sendBookingCancelledEmail, sendAftercareEmail } from "@/lib/email";
 import { isReadyToConfirm, bookingHasConsent } from "@/lib/booking-lifecycle";
 import { getBookingTotalCents, getBalanceDueCents } from "@/lib/booking-balance";
 import { sendRemainderPaymentRequest } from "@/lib/remainder-payment";
@@ -211,11 +211,11 @@ export async function markCompleted(bookingId: string): Promise<{ error?: string
 
   const { data: bookingCheck } = await supabase
     .from("bookings")
-    .select("studio_id, status")
+    .select("studio_id, status, client_id, artist_id")
     .eq("id", bookingId)
     .maybeSingle();
 
-  const check = bookingCheck as { studio_id: string; status: string } | null;
+  const check = bookingCheck as { studio_id: string; status: string; client_id: string; artist_id: string } | null;
   if (!check) return { error: "Booking not found" };
   if (check.studio_id !== studioId) return { error: "Unauthorized" };
   if (check.status !== "confirmed") {
@@ -227,9 +227,10 @@ export async function markCompleted(bookingId: string): Promise<{ error?: string
     return { error: "Consent form must be signed before this session can be marked completed" };
   }
 
+  const completedAt = new Date().toISOString();
   const { error } = await supabase
     .from("bookings")
-    .update({ status: "completed" } as never)
+    .update({ status: "completed", completed_at: completedAt } as never)
     .eq("id", bookingId)
     .eq("status", "confirmed");
 
@@ -240,6 +241,29 @@ export async function markCompleted(bookingId: string): Promise<{ error?: string
 
   revalidatePath("/owner/bookings");
   revalidatePath(`/owner/bookings/${bookingId}`);
+
+  // Aftercare notification (Phase C Feature 4) — fire-and-forget, same
+  // convention as every other notification in this file. The completed
+  // transition above is guaranteed single-fire (the .eq("status","confirmed")
+  // optimistic lock is the only place in the codebase that ever writes
+  // status: "completed"), so no separate dedupe flag is needed here.
+  const [{ data: clientData }, { data: artistData }, { data: studioData }] = await Promise.all([
+    supabase.from("clients").select("full_name, email, phone").eq("id", check.client_id).maybeSingle(),
+    supabase.from("artists").select("name").eq("id", check.artist_id).maybeSingle(),
+    supabase.from("studios").select("name").eq("id", studioId).maybeSingle(),
+  ]);
+
+  const client = clientData as { full_name: string; email: string; phone: string } | null;
+  const artistName = (artistData as { name: string } | null)?.name ?? "your artist";
+  const studioName = (studioData as { name: string } | null)?.name ?? "the studio";
+
+  if (client?.phone) {
+    void trySendSms(client.phone, buildSmsMessage("aftercare", studioName));
+  }
+  if (client?.email) {
+    void sendAftercareEmail({ to: client.email, clientName: client.full_name, studioName, artistName });
+  }
+
   return {};
 }
 

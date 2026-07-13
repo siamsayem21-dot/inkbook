@@ -637,6 +637,56 @@ Your remaining balance of <strong style="color:#c9a84c;">${balanceDisplay}</stro
   await sendEmail(to, subject, html);
 }
 
+export async function sendAftercareEmail({
+  to,
+  clientName,
+  studioName,
+  artistName,
+}: {
+  to: string;
+  clientName: string;
+  studioName: string;
+  artistName: string;
+}) {
+  const subject = `Aftercare instructions — ${studioName}`;
+
+  const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0A0A0A;font-family:sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0A0A;padding:40px 16px;">
+<tr><td align="center">
+<table width="520" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1E1E1E;border-radius:16px;padding:40px;">
+<tr><td>
+<p style="color:#c9a84c;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 24px;">Aftercare Instructions</p>
+<h1 style="color:#E8E8E8;font-size:22px;font-weight:700;margin:0 0 8px;">Thanks for coming in, ${clientName}.</h1>
+<p style="color:#A0A0A0;font-size:15px;margin:0 0 28px;">
+Here's how to take care of your new tattoo from <strong style="color:#c9a84c;">${artistName}</strong> at ${studioName}.
+</p>
+<table width="100%" cellpadding="10" cellspacing="0" style="background:#0d0d0d;border:1px solid #1E1E1E;border-radius:10px;margin:0 0 28px;">
+  <tr>
+    <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;width:140px;vertical-align:top;">First 24 hours</td>
+    <td style="color:#E8E8E8;font-size:14px;">Leave the bandage on for 2–4 hours, then gently wash with fragrance-free soap and lukewarm water. Pat dry — do not rub.</td>
+  </tr>
+  <tr>
+    <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;vertical-align:top;">Next 2 weeks</td>
+    <td style="color:#E8E8E8;font-size:14px;">Apply a thin layer of fragrance-free moisturizer 2–3 times a day. Keep the area clean and avoid picking at any scabbing.</td>
+  </tr>
+  <tr>
+    <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;vertical-align:top;">Avoid</td>
+    <td style="color:#E8E8E8;font-size:14px;">Direct sun, swimming, baths, saunas, and tight clothing over the area until fully healed (typically 2–4 weeks).</td>
+  </tr>
+</table>
+<p style="color:#A0A0A0;font-size:14px;margin:0 0 28px;">
+If you notice excessive redness, swelling, or discharge, contact ${studioName} or your doctor — this can happen occasionally and is easy to treat early.
+</p>
+<p style="color:#555;font-size:12px;margin:0;text-align:center;">Powered by InkBook &middot; inkbook.tech</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+
+  await sendEmail(to, subject, html);
+}
+
 export async function sendArtistInviteEmail({
   to,
   inviteeName,
