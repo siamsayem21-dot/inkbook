@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 
 function adminClient() {
   return createClient(
@@ -26,10 +27,20 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const body = await request.json();
-  const { userId, name, subdomain } = body as { userId?: string; name?: string; subdomain?: string };
+  // This creates a studio owned by a given user and force-confirms that
+  // user's email — both privileged actions — so the caller must be
+  // authenticated as that same user. The signUp() call on the register
+  // page (app/(auth)/register/page.tsx) establishes a session cookie via
+  // the browser client's SSR cookie sync, which this request-scoped server
+  // client reads here. Never trust a client-supplied user id for this.
+  const serverClient = createServerClient();
+  const { data: { user } } = await serverClient.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (!userId || !name || !subdomain) {
+  const body = await request.json();
+  const { name, subdomain } = body as { name?: string; subdomain?: string };
+
+  if (!name || !subdomain) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
@@ -41,7 +52,7 @@ export async function POST(request: NextRequest) {
 
   const { data, error } = await supabase
     .from("studios")
-    .insert({ name, subdomain, owner_id: userId })
+    .insert({ name, subdomain, owner_id: user.id })
     .select("id, name, subdomain")
     .single();
 
@@ -52,7 +63,7 @@ export async function POST(request: NextRequest) {
 
   // Auto-confirm the owner's email so they can sign in with password immediately
   // (Supabase blocks signInWithPassword until email_confirm is true)
-  await supabase.auth.admin.updateUserById(userId, { email_confirm: true });
+  await supabase.auth.admin.updateUserById(user.id, { email_confirm: true });
 
   return NextResponse.json({ studio: data }, { status: 201 });
 }

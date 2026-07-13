@@ -41,17 +41,19 @@ export default function RegisterPage() {
       return;
     }
 
-    const userId = authData.user?.id;
-    if (!userId) {
+    if (!authData.user?.id) {
       setError("Sign-up succeeded but no user was returned. Please check your email to confirm your account.");
       setLoading(false);
       return;
     }
 
+    // /api/studios derives the owner from the authenticated session (the
+    // signUp() call above already established it) — it never trusts a
+    // client-supplied user id.
     const studioRes = await fetch("/api/studios", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, name: studioName.trim(), subdomain: subdomain.trim() }),
+      body: JSON.stringify({ name: studioName.trim(), subdomain: subdomain.trim() }),
     });
     const studioJson = await studioRes.json();
 
