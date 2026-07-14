@@ -33,7 +33,12 @@ export async function POST(request: NextRequest) {
   const rl = checkRateLimit(`bookings:${getClientIp(request)}`, 5, 10 * 60_000);
   if (!rl.allowed) return rateLimitedResponse(rl.retryAfter);
 
-  const body = await request.json();
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
   const { artistId, clientName, clientEmail, clientPhone, date, time, style, description } = body;
 
   if (!artistId || !clientName || !clientEmail || !clientPhone || !date || !time || !style) {

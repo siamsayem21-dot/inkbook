@@ -142,10 +142,11 @@ function InviteModal({ studioId, onClose, onSuccess }: InviteModalProps) {
             )}
 
             <div>
-              <label className="text-sm text-zinc-400 block mb-1.5">
+              <label htmlFor="invite-artist-name" className="text-sm text-zinc-400 block mb-1.5">
                 Full Name <span className="text-[#c9a84c]">*</span>
               </label>
               <input
+                id="invite-artist-name"
                 type="text"
                 value={name}
                 onChange={(e) => { setName(e.target.value); setErrors((v) => ({ ...v, name: undefined })); }}
@@ -156,10 +157,11 @@ function InviteModal({ studioId, onClose, onSuccess }: InviteModalProps) {
             </div>
 
             <div>
-              <label className="text-sm text-zinc-400 block mb-1.5">
+              <label htmlFor="invite-artist-email" className="text-sm text-zinc-400 block mb-1.5">
                 Email <span className="text-[#c9a84c]">*</span>
               </label>
               <input
+                id="invite-artist-email"
                 type="email"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setErrors((v) => ({ ...v, email: undefined })); }}

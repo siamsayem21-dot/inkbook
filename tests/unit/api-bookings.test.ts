@@ -66,6 +66,19 @@ describe("POST /api/bookings", () => {
     expect(res.status).toBe(400);
   });
 
+  it("400s (not a 500 crash) when the request body is malformed JSON", async () => {
+    const ip = `10.0.0.${++ipCounter}`;
+    const req = new NextRequest("http://localhost/api/bookings", {
+      method: "POST",
+      body: "{not valid json",
+      headers: { "content-type": "application/json", "x-forwarded-for": ip },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatch(/invalid json/i);
+  });
+
   it("404s when the artist does not exist", async () => {
     sb.queueFrom("artists", null);
     const res = await POST(makeRequest(VALID_BODY));
