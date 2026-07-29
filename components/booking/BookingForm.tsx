@@ -122,7 +122,7 @@ export default function BookingForm({ studioSlug, artistId }: Props) {
   const labelClass = "block text-xs font-medium text-white/50 mb-2 uppercase tracking-wide";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} noValidate className="space-y-5">
       {error && (
         <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-xl px-4 py-3 space-y-3">
           <p>{error}</p>
