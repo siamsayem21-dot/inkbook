@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
 interface Props {
   studioSlug: string;
@@ -254,9 +255,16 @@ export default function BookingForm({ studioSlug, artistId }: Props) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-gold text-black font-bold py-3.5 rounded-full hover:bg-gold-light disabled:opacity-50 transition-colors text-sm"
+        className="w-full bg-gold text-black font-bold py-3.5 rounded-full hover:bg-gold-light disabled:opacity-50 transition-colors text-sm flex items-center justify-center gap-2"
       >
-        {loading ? "Creating booking…" : "Continue to deposit →"}
+        {loading ? (
+          <>
+            <LoadingSpinner size="sm" />
+            Creating booking…
+          </>
+        ) : (
+          "Continue to deposit →"
+        )}
       </button>
     </form>
   );
