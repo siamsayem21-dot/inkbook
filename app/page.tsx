@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import CapabilityActivationCard from "@/components/landing/CapabilityActivationCard";
+import Copyright from "@/components/shared/Copyright";
 
 /* ─── Base Icons ─── */
 const IconMsg = () => (
@@ -2185,7 +2186,7 @@ export default function HomePage() {
           </nav>
           <p className="text-sm text-gray-500">© 2025 InkBook. All rights reserved.</p>
         </div>
-        <p className="text-center text-xs text-gray-600 mt-6">Copyright © 2026 InkBook</p>
+        <Copyright className="text-xs text-gray-600 mt-6" />
       </footer>
 
     </div>

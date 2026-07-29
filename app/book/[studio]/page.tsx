@@ -10,6 +10,7 @@ import ArtistCard from "@/components/booking/ArtistCard";
 import FlashSection, { type FlashCard } from "@/components/booking/FlashSection";
 import PortfolioSection, { type PortfolioCard } from "@/components/booking/PortfolioSection";
 import ReviewsSection from "@/components/booking/ReviewsSection";
+import Copyright from "@/components/shared/Copyright";
 
 interface Props {
   params: { studio: string };
@@ -307,7 +308,7 @@ export default async function StudioLandingPage({ params }: Props) {
           <span className="text-zinc-700" aria-hidden>·</span>
           <span className="text-[10px] uppercase tracking-widest text-zinc-700">Powered by InkBook</span>
         </div>
-        <p className="text-[10px] text-zinc-800 text-center mt-3">Copyright © 2026 InkBook</p>
+        <Copyright className="text-[10px] text-zinc-800 mt-3" />
       </footer>
     </div>
   );
