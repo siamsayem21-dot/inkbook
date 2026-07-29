@@ -34,6 +34,7 @@ export default function BookingForm({ studioSlug, artistId }: Props) {
   const [style, setStyle] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [waitlistEligible, setWaitlistEligible] = useState(false);
   const [waitlistJoining, setWaitlistJoining] = useState(false);
@@ -46,6 +47,12 @@ export default function BookingForm({ studioSlug, artistId }: Props) {
     setError(null);
     setWaitlistEligible(false);
     setWaitlistJoined(false);
+
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailError("Enter a valid email address");
+      return;
+    }
+    setEmailError(null);
     setLoading(true);
 
     try {
@@ -115,7 +122,7 @@ export default function BookingForm({ studioSlug, artistId }: Props) {
   const labelClass = "block text-xs font-medium text-white/50 mb-2 uppercase tracking-wide";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} noValidate className="space-y-5">
       {error && (
         <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-xl px-4 py-3 space-y-3">
           <p>{error}</p>
@@ -156,10 +163,14 @@ export default function BookingForm({ studioSlug, artistId }: Props) {
             required
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (emailError) setEmailError(null);
+            }}
             className={inputClass}
             placeholder="you@example.com"
           />
+          {emailError && <p className="text-red-400 text-xs mt-1.5">{emailError}</p>}
         </div>
       </div>
 
