@@ -66,6 +66,19 @@ export default function Footer() {
             © 2025 InkBook. All rights reserved.
           </span>
         </div>
+
+        {/* Row 3 */}
+        <div className="text-center mt-2">
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: "11px",
+              color: "#3D3D3D",
+            }}
+          >
+            Copyright © 2026 InkBook
+          </span>
+        </div>
       </div>
     </footer>
   );
