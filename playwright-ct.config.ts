@@ -15,6 +15,7 @@ export default defineConfig({
         alias: {
           "@": path.resolve(__dirname),
           "next/link": path.resolve(__dirname, "tests/ct/mocks/next-link.mock.tsx"),
+          "next/navigation": path.resolve(__dirname, "tests/ct/mocks/next-navigation.mock.tsx"),
           "./actions": path.resolve(__dirname, "tests/ct/mocks/shared-actions.mock.ts"),
         },
       },
