@@ -2185,6 +2185,7 @@ export default function HomePage() {
           </nav>
           <p className="text-sm text-gray-500">© 2025 InkBook. All rights reserved.</p>
         </div>
+        <p className="text-sm text-gray-500 max-w-6xl mx-auto text-center mt-4">Copyright © 2026 InkBook</p>
       </footer>
 
     </div>

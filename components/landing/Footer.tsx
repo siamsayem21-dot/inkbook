@@ -61,9 +61,21 @@ export default function Footer() {
               fontFamily: "var(--font-sans)",
               fontSize: "13px",
               color: "#3D3D3D",
+              display: "block",
             }}
           >
             © 2025 InkBook. All rights reserved.
+          </span>
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: "13px",
+              color: "#3D3D3D",
+              display: "block",
+              marginTop: "6px",
+            }}
+          >
+            Copyright © 2026 InkBook
           </span>
         </div>
       </div>

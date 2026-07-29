@@ -307,6 +307,7 @@ export default async function StudioLandingPage({ params }: Props) {
           <span className="text-zinc-700" aria-hidden>·</span>
           <span className="text-[10px] uppercase tracking-widest text-zinc-700">Powered by InkBook</span>
         </div>
+        <p className="text-[10px] text-zinc-800 text-center mt-3">Copyright © 2026 InkBook</p>
       </footer>
     </div>
   );
