@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Copyright from "@/components/shared/Copyright";
 
 const LINKS = ["Product", "Pricing", "Privacy", "Terms"];
 
@@ -64,12 +63,9 @@ export default function Footer() {
               color: "#3D3D3D",
             }}
           >
-            © 2025 InkBook. All rights reserved.
+            Copyright © 2026 InkBook
           </span>
         </div>
-
-        {/* Row 3 */}
-        <Copyright className="text-[11px] text-[#3D3D3D] mt-2" />
       </div>
     </footer>
   );
