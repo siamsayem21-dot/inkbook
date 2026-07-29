@@ -2183,8 +2183,9 @@ export default function HomePage() {
                 className="text-sm text-gray-400 hover:text-white transition-colors">{link}</a>
             ))}
           </nav>
-          <p className="text-sm text-gray-500">Copyright © 2026 InkBook</p>
+          <p className="text-sm text-gray-500">© 2025 InkBook. All rights reserved.</p>
         </div>
+        <p className="text-sm text-gray-500 max-w-6xl mx-auto text-center mt-4">Copyright © 2026 InkBook</p>
       </footer>
 
     </div>
