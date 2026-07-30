@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
+import { nodeRealtimeTransport } from "@/lib/supabase/realtime-transport";
 
 /** Unique-per-run identifier so parallel/repeat CI runs never collide on unique columns. */
 export function e2eTag(): string {
@@ -43,6 +44,7 @@ export async function payWithStripeTestCard(page: Page) {
 export function e2eAdminClient() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
     auth: { autoRefreshToken: false, persistSession: false },
+    realtime: { transport: nodeRealtimeTransport },
   });
 }
 
