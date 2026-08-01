@@ -99,7 +99,7 @@ describe("Unique constraints exist", () => {
   it.each(UNIQUE_COLUMNS)("$table ($columns)", async ({ table, columns }) => {
     const { rows } = await pool.query(
       `
-      SELECT array_agg(a.attname ORDER BY a.attname) AS cols
+      SELECT array_agg(a.attname::text ORDER BY a.attname) AS cols
       FROM pg_constraint c
       JOIN pg_class t ON t.oid = c.conrelid
       JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY (c.conkey)
