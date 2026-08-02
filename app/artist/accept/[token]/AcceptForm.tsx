@@ -78,8 +78,9 @@ export default function AcceptForm({
 
       {/* Email — read-only, shows what they're joining as */}
       <div>
-        <label className="text-sm text-zinc-400 block mb-1.5">Email</label>
+        <label htmlFor="accept-email" className="text-sm text-zinc-400 block mb-1.5">Email</label>
         <input
+          id="accept-email"
           type="email"
           value={email}
           readOnly
@@ -88,10 +89,11 @@ export default function AcceptForm({
       </div>
 
       <div>
-        <label className="text-sm text-zinc-400 block mb-1.5">
+        <label htmlFor="accept-name" className="text-sm text-zinc-400 block mb-1.5">
           Your name <span className="text-[#c9a84c]">*</span>
         </label>
         <input
+          id="accept-name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -101,10 +103,11 @@ export default function AcceptForm({
       </div>
 
       <div>
-        <label className="text-sm text-zinc-400 block mb-1.5">
+        <label htmlFor="accept-password" className="text-sm text-zinc-400 block mb-1.5">
           Set a password <span className="text-[#c9a84c]">*</span>
         </label>
         <input
+          id="accept-password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -114,10 +117,11 @@ export default function AcceptForm({
       </div>
 
       <div>
-        <label className="text-sm text-zinc-400 block mb-1.5">
+        <label htmlFor="accept-confirm-password" className="text-sm text-zinc-400 block mb-1.5">
           Confirm password <span className="text-[#c9a84c]">*</span>
         </label>
         <input
+          id="accept-confirm-password"
           type="password"
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
