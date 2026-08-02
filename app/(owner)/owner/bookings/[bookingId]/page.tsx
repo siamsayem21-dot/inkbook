@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudioId } from "@/lib/auth/config";
 import { getBalanceDueCents } from "@/lib/booking-balance";
+import { formatRatingStars } from "@/lib/booking-review";
 import BookingActions from "./BookingActions";
 
 type BookingStatus = "pending_deposit" | "awaiting_schedule" | "confirmed" | "completed" | "cancelled" | "no_show";
@@ -102,7 +103,7 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
 
   const b = bookingRaw as unknown as BookingDetail;
 
-  const [{ data: consentRaw }, depositPaymentResult, legacyDepositResult, remainderPaymentResult] = await Promise.all([
+  const [{ data: consentRaw }, depositPaymentResult, legacyDepositResult, remainderPaymentResult, { data: reviewRaw }] = await Promise.all([
     supabase
       .from("consent_forms")
       .select("id, signed_at, state_template, is_minor, guardian_name, id_photo_url")
@@ -138,6 +139,11 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
       .maybeSingle()) as unknown as Promise<{
         data: { payment_status: string } | null;
       }>,
+    supabase
+      .from("reviews")
+      .select("rating, quote")
+      .eq("booking_id", params.bookingId)
+      .maybeSingle(),
   ]);
 
   // Prefer deposit_payments (owner-initiated flow); fall back to deposits (self-serve).
@@ -160,6 +166,8 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
 
   const remainderPaymentStatus = (remainderPaymentResult.data?.payment_status ?? "none") as
     "none" | "pending" | "paid" | "refunded" | "kept";
+
+  const review = reviewRaw as { rating: number; quote: string } | null;
 
   const statusInfo = STATUS_LABELS[b.status] ?? { label: b.status, className: "bg-zinc-800 text-zinc-400 border-zinc-700" };
   const depositParam = searchParams.deposit === "paid" || searchParams.deposit === "cancelled"
@@ -203,6 +211,11 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
     },
     { label: "Client email",  value: b.clients?.email ?? "—" },
     { label: "Client phone",  value: b.clients?.phone ?? "—" },
+    {
+      label: "Client feedback",
+      value: review ? formatRatingStars(review.rating) : b.status === "completed" ? "Not yet submitted" : "—",
+    },
+    ...(review?.quote ? [{ label: "Client review", value: review.quote, wide: true }] : []),
     { label: "Description",   value: b.description ?? "—", wide: true },
   ];
 
