@@ -687,6 +687,74 @@ If you notice excessive redness, swelling, or discharge, contact ${studioName} o
   await sendEmail(to, subject, html);
 }
 
+export async function sendAppointmentReminderEmail({
+  to,
+  clientName,
+  artistName,
+  studioName,
+  studioAddress,
+  date,
+  time,
+  reminderType,
+}: {
+  to: string;
+  clientName: string;
+  artistName: string;
+  studioName: string;
+  studioAddress: string | null;
+  date: string;
+  time: string;
+  reminderType: "48hr" | "day_of";
+}) {
+  const subject =
+    reminderType === "48hr"
+      ? `Reminder: your appointment is in 2 days — ${studioName}`
+      : `Reminder: your appointment is today — ${studioName}`;
+  const headline =
+    reminderType === "48hr"
+      ? `See you soon, ${clientName}.`
+      : `Today's the day, ${clientName}!`;
+  const intro =
+    reminderType === "48hr"
+      ? `Your appointment with <strong style="color:#c9a84c;">${artistName}</strong> at ${studioName} is coming up in 2 days.`
+      : `Your appointment with <strong style="color:#c9a84c;">${artistName}</strong> at ${studioName} is today.`;
+
+  const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0A0A0A;font-family:sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0A0A;padding:40px 16px;">
+<tr><td align="center">
+<table width="520" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1E1E1E;border-radius:16px;padding:40px;">
+<tr><td>
+<p style="color:#c9a84c;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 24px;">Appointment Reminder</p>
+<h1 style="color:#E8E8E8;font-size:22px;font-weight:700;margin:0 0 8px;">${headline}</h1>
+<p style="color:#A0A0A0;font-size:15px;margin:0 0 28px;">${intro}</p>
+<table width="100%" cellpadding="10" cellspacing="0" style="background:#0d0d0d;border:1px solid #1E1E1E;border-radius:10px;margin:0 0 28px;">
+  <tr>
+    <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;width:110px;">Artist</td>
+    <td style="color:#E8E8E8;font-size:14px;">${artistName}</td>
+  </tr>
+  <tr>
+    <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;">Date</td>
+    <td style="color:#E8E8E8;font-size:14px;">${date}</td>
+  </tr>
+  <tr>
+    <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;">Time</td>
+    <td style="color:#E8E8E8;font-size:14px;">${time}</td>
+  </tr>
+  ${studioAddress ? `<tr>
+    <td style="color:#666;font-size:12px;text-transform:uppercase;letter-spacing:2px;vertical-align:top;">Location</td>
+    <td style="color:#A0A0A0;font-size:14px;">${studioAddress}</td>
+  </tr>` : ""}
+</table>
+<p style="color:#555;font-size:12px;margin:0;text-align:center;">Powered by InkBook &middot; inkbook.tech</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+
+  await sendEmail(to, subject, html);
+}
+
 export async function sendReviewRequestEmail({
   to,
   clientName,

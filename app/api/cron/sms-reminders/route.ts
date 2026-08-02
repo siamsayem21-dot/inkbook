@@ -1,8 +1,91 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildSmsMessage, trySendSms } from "@/lib/twilio/client";
+import { sendAppointmentReminderEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
+
+type ReminderBookingRow = {
+  id: string;
+  client_id: string;
+  artist_id: string;
+  studio_id: string;
+  date: string;
+  time: string;
+  sms_sent: boolean;
+  email_sent: boolean;
+};
+
+type ClientRow = { full_name: string; email: string; phone: string };
+type ArtistRow = { name: string };
+type StudioRow = { name: string; address: string | null };
+
+// Shared by both the 48hr and day-of passes below. SMS and email are
+// dispatched and deduped independently (sms_48hr_sent/email_48hr_sent,
+// sms_day_of_sent/email_day_of_sent) so a missing phone or email — or a
+// failure on one channel — never blocks the other. Blacklisted clients
+// (is_client_blacklisted RPC, same one used at booking/deposit time — see
+// app/portal/[studio]/projects/[id]/actions.ts) are skipped on both
+// channels and left unmarked, matching the existing "missing contact info"
+// behavior of just re-checking on the next run.
+async function sendReminderPass(
+  supabase: ReturnType<typeof createAdminClient>,
+  rows: ReminderBookingRow[],
+  reminderType: "48hr" | "day_of"
+): Promise<number> {
+  const smsFlag = reminderType === "48hr" ? "sms_48hr_sent" : "sms_day_of_sent";
+  const emailFlag = reminderType === "48hr" ? "email_48hr_sent" : "email_day_of_sent";
+  const smsMessageType = reminderType === "48hr" ? "48hr_reminder" : "day_of_reminder";
+
+  let sent = 0;
+
+  for (const row of rows) {
+    const [{ data: clientData }, { data: artistData }, { data: studioData }] = await Promise.all([
+      supabase.from("clients").select("full_name, email, phone").eq("id", row.client_id).maybeSingle(),
+      supabase.from("artists").select("name").eq("id", row.artist_id).maybeSingle(),
+      supabase.from("studios").select("name, address").eq("id", row.studio_id).maybeSingle(),
+    ]);
+    const client = clientData as ClientRow | null;
+    const artistName = (artistData as ArtistRow | null)?.name ?? "your artist";
+    const studio = studioData as StudioRow | null;
+
+    if (!client || !studio) continue;
+
+    const { data: isBlacklisted } = await supabase.rpc("is_client_blacklisted" as never, {
+      p_studio_id: row.studio_id,
+      p_email: client.email,
+      p_phone: client.phone,
+    } as never);
+    if (isBlacklisted) continue;
+
+    let notified = false;
+
+    if (client.phone && !row.sms_sent) {
+      await trySendSms(client.phone, buildSmsMessage(smsMessageType, studio.name));
+      await supabase.from("bookings").update({ [smsFlag]: true } as never).eq("id", row.id);
+      notified = true;
+    }
+
+    if (client.email && !row.email_sent) {
+      await sendAppointmentReminderEmail({
+        to: client.email,
+        clientName: client.full_name,
+        artistName,
+        studioName: studio.name,
+        studioAddress: studio.address,
+        date: row.date,
+        time: row.time,
+        reminderType,
+      });
+      await supabase.from("bookings").update({ [emailFlag]: true } as never).eq("id", row.id);
+      notified = true;
+    }
+
+    if (notified) sent++;
+  }
+
+  return sent;
+}
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
@@ -17,65 +100,30 @@ export async function GET(request: NextRequest) {
   twoDaysOut.setDate(twoDaysOut.getDate() + 2);
   const twoDaysOutStr = twoDaysOut.toISOString().split("T")[0];
 
-  let sent48hr = 0;
-  let sentDayOf = 0;
-
   // 48-hour reminders.
   // .not("date", "is", null) excludes awaiting_schedule bookings — those have
   // a null date and must never be matched by date comparisons.
   const { data: reminders48hr } = await supabase
     .from("bookings")
-    .select("id, client_id, studio_id")
+    .select("id, client_id, artist_id, studio_id, date, time, sms_sent:sms_48hr_sent, email_sent:email_48hr_sent" as never)
     .eq("status", "confirmed")
-    .eq("sms_48hr_sent" as never, false)
     .not("date", "is", null)
-    .eq("date", twoDaysOutStr);
+    .eq("date", twoDaysOutStr)
+    .or("sms_48hr_sent.eq.false,email_48hr_sent.eq.false");
 
-  for (const row of (reminders48hr ?? []) as { id: string; client_id: string; studio_id: string }[]) {
-    const [{ data: clientData }, { data: studioData }] = await Promise.all([
-      supabase.from("clients").select("phone").eq("id", row.client_id).single(),
-      supabase.from("studios").select("name").eq("id", row.studio_id).single(),
-    ]);
-    const phone = (clientData as { phone: string } | null)?.phone;
-    const studioName = (studioData as { name: string } | null)?.name;
-
-    if (phone && studioName) {
-      await trySendSms(phone, buildSmsMessage("48hr_reminder", studioName));
-      await supabase
-        .from("bookings")
-        .update({ sms_48hr_sent: true } as never)
-        .eq("id", row.id);
-      sent48hr++;
-    }
-  }
+  const sent48hr = await sendReminderPass(supabase, (reminders48hr ?? []) as ReminderBookingRow[], "48hr");
 
   // Day-of reminders.
   // Same null-date guard — awaiting_schedule bookings have no date.
   const { data: dayOfBookings } = await supabase
     .from("bookings")
-    .select("id, client_id, studio_id")
+    .select("id, client_id, artist_id, studio_id, date, time, sms_sent:sms_day_of_sent, email_sent:email_day_of_sent" as never)
     .eq("status", "confirmed")
-    .eq("sms_day_of_sent" as never, false)
     .not("date", "is", null)
-    .eq("date", today);
+    .eq("date", today)
+    .or("sms_day_of_sent.eq.false,email_day_of_sent.eq.false");
 
-  for (const row of (dayOfBookings ?? []) as { id: string; client_id: string; studio_id: string }[]) {
-    const [{ data: clientData }, { data: studioData }] = await Promise.all([
-      supabase.from("clients").select("phone").eq("id", row.client_id).single(),
-      supabase.from("studios").select("name").eq("id", row.studio_id).single(),
-    ]);
-    const phone = (clientData as { phone: string } | null)?.phone;
-    const studioName = (studioData as { name: string } | null)?.name;
-
-    if (phone && studioName) {
-      await trySendSms(phone, buildSmsMessage("day_of_reminder", studioName));
-      await supabase
-        .from("bookings")
-        .update({ sms_day_of_sent: true } as never)
-        .eq("id", row.id);
-      sentDayOf++;
-    }
-  }
+  const sentDayOf = await sendReminderPass(supabase, (dayOfBookings ?? []) as ReminderBookingRow[], "day_of");
 
   return NextResponse.json({ sent48hr, sentDayOf });
 }
