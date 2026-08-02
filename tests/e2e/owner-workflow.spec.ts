@@ -111,7 +111,6 @@ test.describe("Full owner workflow", () => {
     });
 
     // ── 5. Owner: quote + book the appointment ─────────────────────────────
-    let depositUrl = "";
     await test.step("Owner reviews, quotes, and books the appointment", async () => {
       await ownerPage.goto("/owner/consultations");
       await ownerPage.getByText(clientName).first().click();
@@ -128,14 +127,20 @@ test.describe("Full owner workflow", () => {
       await ownerPage.locator('input[type="time"]').fill("14:00");
       await ownerPage.getByRole("button", { name: /confirm appointment/i }).click();
       await expect(ownerPage.getByText(/deposit collection/i)).toBeVisible({ timeout: 10_000 });
+    });
 
+    // Generating a deposit link calls the real Stripe API server-side (same
+    // requirement as the payment/consent/dashboard steps below) — without
+    // test keys configured, this call fails with "Stripe is not configured."
+    test.skip(!hasStripeKeys(), "STRIPE_SECRET_KEY / NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY not configured — skipping deposit link generation, live deposit payment, consent, and dashboard confirmation steps");
+
+    let depositUrl = "";
+    await test.step("Owner generates the deposit link", async () => {
       await ownerPage.getByRole("button", { name: /generate deposit link/i }).click();
       const linkInput = ownerPage.locator("input[readonly]");
       await expect(linkInput).toHaveValue(/checkout\.stripe\.com|http/, { timeout: 15_000 });
       depositUrl = await linkInput.inputValue();
     });
-
-    test.skip(!hasStripeKeys(), "STRIPE_SECRET_KEY / NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY not configured — skipping live deposit payment, consent, and dashboard confirmation steps");
 
     // ── 6. Client pays the deposit (real Stripe test-mode checkout) ────────
     const clientContext = await browser.newContext();
