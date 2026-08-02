@@ -1,5 +1,11 @@
 import { Pool } from "pg";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient, type RealtimeClientOptions } from "@supabase/supabase-js";
+import WebSocket from "ws";
+
+// Node 20 (used in CI) has no native WebSocket global, which @supabase/realtime-js
+// requires even though these tests never open a realtime channel. Node 22+ would
+// not need this. See: https://github.com/supabase/realtime-js#nodejs
+const REALTIME_OPTIONS: RealtimeClientOptions = { transport: WebSocket as unknown as RealtimeClientOptions["transport"] };
 
 /**
  * Required env vars (set by CI after `supabase start`, or by hand for local
@@ -36,6 +42,7 @@ export function getPool(): Pool {
 export function getAdminClient(): SupabaseClient {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
     auth: { autoRefreshToken: false, persistSession: false },
+    realtime: REALTIME_OPTIONS,
   });
 }
 
@@ -43,6 +50,7 @@ export function getAdminClient(): SupabaseClient {
 export function getAnonClient(accessToken?: string): SupabaseClient {
   const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     auth: { autoRefreshToken: false, persistSession: false },
+    realtime: REALTIME_OPTIONS,
     ...(accessToken
       ? { global: { headers: { Authorization: `Bearer ${accessToken}` } } }
       : {}),
