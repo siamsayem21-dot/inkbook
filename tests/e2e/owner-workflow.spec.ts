@@ -61,7 +61,11 @@ test.describe("Full owner workflow", () => {
       await ownerPage.getByLabel(/name/i).first().fill(artistName);
       await ownerPage.getByLabel(/email/i).first().fill(artistEmail);
       await ownerPage.getByRole("button", { name: /send invite/i }).click();
-      await expect(ownerPage.getByText(artistEmail)).toBeVisible({ timeout: 10_000 });
+      // Bare email text also matches the artist's row, which re-renders in
+      // the DOM (desktop table + mobile card) as soon as onSuccess() fires —
+      // scope to the modal's own confirmation message to keep this a
+      // single-element match.
+      await expect(ownerPage.getByText(`Invite sent to ${artistEmail}`)).toBeVisible({ timeout: 10_000 });
 
       const token = await fetchLatestInviteToken(studioId, artistEmail);
 
