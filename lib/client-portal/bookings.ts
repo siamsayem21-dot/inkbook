@@ -26,6 +26,7 @@ export type ClientBookingDetail = ClientBooking & {
   remainderCollectedAt: string | null;
   completedAt: string | null;
   hasReview: boolean;
+  feedbackRating: number | null;
 };
 
 type BookingRow = {
@@ -46,12 +47,13 @@ type BookingRow = {
   remainder_collected: boolean;
   remainder_collected_at: string | null;
   completed_at: string | null;
+  feedback_rating: number | null;
 };
 
 const BOOKING_COLUMNS =
   "id, artist_id, date, time, style, description, status, deposit_amount_cents, " +
   "deposit_paid, deposit_paid_at, deposit_kept, deposit_expires_at, total_amount_cents, " +
-  "quote_amount_cents, remainder_collected, remainder_collected_at, completed_at";
+  "quote_amount_cents, remainder_collected, remainder_collected_at, completed_at, feedback_rating";
 
 function deriveTitle(description: string, style: string | null): string {
   const base = (style ? `${style} Tattoo` : description) || "Tattoo Project";
@@ -201,5 +203,6 @@ export async function getClientBookingDetail(
     remainderCollectedAt: b.remainder_collected_at,
     completedAt: b.completed_at,
     hasReview: Boolean(reviewResult.data),
+    feedbackRating: b.feedback_rating,
   };
 }

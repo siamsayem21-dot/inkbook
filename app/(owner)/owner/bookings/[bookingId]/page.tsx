@@ -33,6 +33,7 @@ type BookingDetail = {
   remainder_collected: boolean;
   remainder_collected_at: string | null;
   completed_at: string | null;
+  feedback_rating: number | null;
   clients: { full_name: string; email: string; phone: string } | null;
   artists: { name: string } | null;
 };
@@ -85,7 +86,7 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
     .select(
       "id, date, time, style, description, status, deposit_amount_cents, deposit_paid, deposit_kept, " +
         "total_amount_cents, quote_amount_cents, remainder_collected, remainder_collected_at, completed_at, " +
-        "clients(full_name, email, phone), artists(name)"
+        "feedback_rating, clients(full_name, email, phone), artists(name)"
     )
     .eq("id", params.bookingId)
     .eq("studio_id", studioId)
@@ -200,6 +201,12 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
       value: b.status === "completed" && b.completed_at
         ? `✓ Sent (${new Date(b.completed_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })})`
         : "Sent when session is marked completed",
+    },
+    {
+      label: "Client feedback",
+      value: b.feedback_rating
+        ? `${"★".repeat(b.feedback_rating)}${"☆".repeat(5 - b.feedback_rating)}`
+        : b.status === "completed" ? "Not yet rated" : "—",
     },
     { label: "Client email",  value: b.clients?.email ?? "—" },
     { label: "Client phone",  value: b.clients?.phone ?? "—" },
