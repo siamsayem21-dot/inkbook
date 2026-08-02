@@ -5,52 +5,114 @@ import { sendAppointmentReminderEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 
-type ReminderBookingRow = {
+type CandidateBookingRow = {
   id: string;
   client_id: string;
   artist_id: string;
   studio_id: string;
   date: string;
   time: string;
-  sms_sent: boolean;
-  email_sent: boolean;
+  sms_48hr_sent: boolean;
+  email_48hr_sent: boolean;
+  sms_day_of_sent: boolean;
+  email_day_of_sent: boolean;
 };
 
 type ClientRow = { full_name: string; email: string; phone: string };
 type ArtistRow = { name: string };
-type StudioRow = { name: string; address: string | null };
+type StudioRow = { name: string; address: string | null; timezone: string };
 
-// Shared by both the 48hr and day-of passes below. SMS and email are
-// dispatched and deduped independently (sms_48hr_sent/email_48hr_sent,
-// sms_day_of_sent/email_day_of_sent) so a missing phone or email — or a
-// failure on one channel — never blocks the other. Blacklisted clients
-// (is_client_blacklisted RPC, same one used at booking/deposit time — see
-// app/portal/[studio]/projects/[id]/actions.ts) are skipped on both
-// channels and left unmarked, matching the existing "missing contact info"
-// behavior of just re-checking on the next run.
-async function sendReminderPass(
-  supabase: ReturnType<typeof createAdminClient>,
-  rows: ReminderBookingRow[],
-  reminderType: "48hr" | "day_of"
-): Promise<number> {
-  const smsFlag = reminderType === "48hr" ? "sms_48hr_sent" : "sms_day_of_sent";
-  const emailFlag = reminderType === "48hr" ? "email_48hr_sent" : "email_day_of_sent";
-  const smsMessageType = reminderType === "48hr" ? "48hr_reminder" : "day_of_reminder";
+// Studio-local calendar date (YYYY-MM-DD) for `when` — "today" and "48
+// hours out" must be judged against each studio's own timezone, not the
+// server's (UTC) clock, or a studio far enough from UTC gets its day-of
+// reminder on the wrong calendar day. en-CA formats as YYYY-MM-DD directly.
+function localDateString(when: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(when);
+}
 
-  let sent = 0;
+export async function GET(request: NextRequest) {
+  const authHeader = request.headers.get("authorization");
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  for (const row of rows) {
-    const [{ data: clientData }, { data: artistData }, { data: studioData }] = await Promise.all([
+  const supabase = createAdminClient();
+  const now = new Date();
+
+  // Over-fetch a window wide enough to contain every studio's local
+  // "today" and "48 hours out" regardless of timezone offset (a day of
+  // slack on each side comfortably covers every real-world UTC offset).
+  // Each candidate's exact target date is then decided per-row below,
+  // once we know that booking's studio's timezone.
+  const rangeStart = new Date(now);
+  rangeStart.setUTCDate(rangeStart.getUTCDate() - 1);
+  const rangeEnd = new Date(now);
+  rangeEnd.setUTCDate(rangeEnd.getUTCDate() + 3);
+
+  // Business rule: reminders only go out for bookings with a paid deposit.
+  // status = 'confirmed' already implies deposit_paid = true in every code
+  // path that sets it (Stripe/billing webhooks, consent-forms route), but
+  // it's checked explicitly here so the rule holds in code, not just by
+  // convention.
+  const { data: candidates } = await supabase
+    .from("bookings")
+    .select(
+      "id, client_id, artist_id, studio_id, date, time, sms_48hr_sent, email_48hr_sent, sms_day_of_sent, email_day_of_sent" as never
+    )
+    .eq("status", "confirmed")
+    .eq("deposit_paid", true)
+    .not("date", "is", null)
+    .gte("date", rangeStart.toISOString().split("T")[0])
+    .lte("date", rangeEnd.toISOString().split("T")[0])
+    .or("sms_48hr_sent.eq.false,email_48hr_sent.eq.false,sms_day_of_sent.eq.false,email_day_of_sent.eq.false");
+
+  let sent48hr = 0;
+  let sentDayOf = 0;
+
+  for (const row of (candidates ?? []) as CandidateBookingRow[]) {
+    const { data: studioData } = await supabase
+      .from("studios")
+      .select("name, address, timezone" as never)
+      .eq("id", row.studio_id)
+      .maybeSingle();
+    const studio = studioData as StudioRow | null;
+    if (!studio) continue;
+
+    const todayLocal = localDateString(now, studio.timezone);
+    const twoDaysOutLocal = localDateString(new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000), studio.timezone);
+
+    const reminderType: "48hr" | "day_of" | null =
+      row.date === twoDaysOutLocal ? "48hr" : row.date === todayLocal ? "day_of" : null;
+    // Outside this studio's local target window for today's run — still
+    // eligible on a future run, so it's simply skipped, not marked.
+    if (!reminderType) continue;
+
+    const smsAlreadySent = reminderType === "48hr" ? row.sms_48hr_sent : row.sms_day_of_sent;
+    const emailAlreadySent = reminderType === "48hr" ? row.email_48hr_sent : row.email_day_of_sent;
+    if (smsAlreadySent && emailAlreadySent) continue;
+
+    const smsFlag = reminderType === "48hr" ? "sms_48hr_sent" : "sms_day_of_sent";
+    const emailFlag = reminderType === "48hr" ? "email_48hr_sent" : "email_day_of_sent";
+    const smsMessageType = reminderType === "48hr" ? "48hr_reminder" : "day_of_reminder";
+
+    const [{ data: clientData }, { data: artistData }] = await Promise.all([
       supabase.from("clients").select("full_name, email, phone").eq("id", row.client_id).maybeSingle(),
       supabase.from("artists").select("name").eq("id", row.artist_id).maybeSingle(),
-      supabase.from("studios").select("name, address").eq("id", row.studio_id).maybeSingle(),
     ]);
     const client = clientData as ClientRow | null;
     const artistName = (artistData as ArtistRow | null)?.name ?? "your artist";
-    const studio = studioData as StudioRow | null;
 
-    if (!client || !studio) continue;
+    if (!client) continue;
 
+    // Blacklist check — same is_client_blacklisted() RPC used at
+    // booking/deposit time (see app/portal/[studio]/projects/[id]/actions.ts).
+    // Skipped and left unmarked, same as "missing contact info" below, so a
+    // client removed from the blacklist later still gets reminded.
     const { data: isBlacklisted } = await supabase.rpc("is_client_blacklisted" as never, {
       p_studio_id: row.studio_id,
       p_email: client.email,
@@ -60,13 +122,13 @@ async function sendReminderPass(
 
     let notified = false;
 
-    if (client.phone && !row.sms_sent) {
+    if (client.phone && !smsAlreadySent) {
       await trySendSms(client.phone, buildSmsMessage(smsMessageType, studio.name));
       await supabase.from("bookings").update({ [smsFlag]: true } as never).eq("id", row.id);
       notified = true;
     }
 
-    if (client.email && !row.email_sent) {
+    if (client.email && !emailAlreadySent) {
       await sendAppointmentReminderEmail({
         to: client.email,
         clientName: client.full_name,
@@ -81,49 +143,11 @@ async function sendReminderPass(
       notified = true;
     }
 
-    if (notified) sent++;
+    if (notified) {
+      if (reminderType === "48hr") sent48hr++;
+      else sentDayOf++;
+    }
   }
-
-  return sent;
-}
-
-export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const supabase = createAdminClient();
-
-  const today = new Date().toISOString().split("T")[0];
-  const twoDaysOut = new Date();
-  twoDaysOut.setDate(twoDaysOut.getDate() + 2);
-  const twoDaysOutStr = twoDaysOut.toISOString().split("T")[0];
-
-  // 48-hour reminders.
-  // .not("date", "is", null) excludes awaiting_schedule bookings — those have
-  // a null date and must never be matched by date comparisons.
-  const { data: reminders48hr } = await supabase
-    .from("bookings")
-    .select("id, client_id, artist_id, studio_id, date, time, sms_sent:sms_48hr_sent, email_sent:email_48hr_sent" as never)
-    .eq("status", "confirmed")
-    .not("date", "is", null)
-    .eq("date", twoDaysOutStr)
-    .or("sms_48hr_sent.eq.false,email_48hr_sent.eq.false");
-
-  const sent48hr = await sendReminderPass(supabase, (reminders48hr ?? []) as ReminderBookingRow[], "48hr");
-
-  // Day-of reminders.
-  // Same null-date guard — awaiting_schedule bookings have no date.
-  const { data: dayOfBookings } = await supabase
-    .from("bookings")
-    .select("id, client_id, artist_id, studio_id, date, time, sms_sent:sms_day_of_sent, email_sent:email_day_of_sent" as never)
-    .eq("status", "confirmed")
-    .not("date", "is", null)
-    .eq("date", today)
-    .or("sms_day_of_sent.eq.false,email_day_of_sent.eq.false");
-
-  const sentDayOf = await sendReminderPass(supabase, (dayOfBookings ?? []) as ReminderBookingRow[], "day_of");
 
   return NextResponse.json({ sent48hr, sentDayOf });
 }
