@@ -1,20 +1,28 @@
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.inkbook.tech";
 
-async function sendEmail(to: string, subject: string, html: string) {
+/** Returns whether the email was actually delivered (or, in local/dev without a configured provider, logged) — never throws. */
+async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
   if (!process.env.RESEND_API_KEY) {
     console.log(`[email — no RESEND_API_KEY] To: ${to} | Subject: ${subject}`);
-    return;
+    return true;
   }
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ from: "InkBook <noreply@inkbook.tech>", to: [to], subject, html }),
-  });
-  if (!res.ok) {
-    console.error("[sendEmail] Resend error:", res.status, await res.text());
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ from: "InkBook <noreply@inkbook.tech>", to: [to], subject, html }),
+    });
+    if (!res.ok) {
+      console.error("[sendEmail] Resend error:", res.status, await res.text());
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("[sendEmail] Resend request failed:", err instanceof Error ? err.message : err);
+    return false;
   }
 }
 
@@ -705,7 +713,7 @@ export async function sendAppointmentReminderEmail({
   date: string;
   time: string;
   reminderType: "48hr" | "day_of";
-}) {
+}): Promise<boolean> {
   const subject =
     reminderType === "48hr"
       ? `Reminder: your appointment is in 2 days — ${studioName}`
@@ -752,7 +760,7 @@ export async function sendAppointmentReminderEmail({
 </table>
 </body></html>`;
 
-  await sendEmail(to, subject, html);
+  return sendEmail(to, subject, html);
 }
 
 export async function sendReviewRequestEmail({

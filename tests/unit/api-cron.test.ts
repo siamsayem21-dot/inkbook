@@ -8,7 +8,7 @@ vi.mock("@/lib/twilio/client", () => ({
   buildSmsMessage: vi.fn((type: string) => `sms:${type}`),
 }));
 vi.mock("@/lib/email", () => ({
-  sendAppointmentReminderEmail: vi.fn(() => Promise.resolve()),
+  sendAppointmentReminderEmail: vi.fn(() => Promise.resolve(true)),
 }));
 
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -249,5 +249,54 @@ describe("GET /api/cron/sms-reminders", () => {
     expect(sendAppointmentReminderEmail).toHaveBeenCalledWith(
       expect.objectContaining({ to: "jane@example.com" })
     );
+  });
+
+  it("does not mark email_*_sent when the email fails to deliver", async () => {
+    sb.queueFrom("bookings", [candidateRow()]);
+    sb.queueFrom("studios", { name: "Ink & Iron", address: "123 Main St", timezone: "UTC" });
+    sb.queueFrom("clients", { full_name: "Jane Doe", email: "jane@example.com", phone: "5551110000" });
+    sb.queueFrom("artists", { name: "Alex" });
+    sb.queueRpc(false);
+    sb.queueFrom("bookings", { success: true }); // mark sms_48hr_sent
+    // No further "bookings" result queued for email — asserting below that
+    // no update is attempted when delivery fails means nothing should
+    // consume it anyway.
+    vi.mocked(sendAppointmentReminderEmail).mockResolvedValueOnce(false);
+
+    const res = await remindersGET(cronRequest("http://localhost/api/cron/sms-reminders"));
+    const body = await res.json();
+    expect(body).toEqual({ sent48hr: 1, sentDayOf: 0 }); // notified via SMS only
+    expect(trySendSms).toHaveBeenCalledWith("5551110000", "sms:48hr_reminder");
+    // Only the initial select + the SMS mark — no third "bookings" call for email.
+    expect(sb.fromCalls.filter((t) => t === "bookings")).toHaveLength(2);
+  });
+
+  it("keeps processing later bookings when an earlier one's email send throws", async () => {
+    sb.queueFrom("bookings", [
+      candidateRow({ id: "bk-fail", client_id: "c1", date: "2026-08-04" }), // 48hr
+      candidateRow({ id: "bk-ok", client_id: "c2", date: "2026-08-02" }), // day_of
+    ]);
+
+    sb.queueFrom("studios", { name: "Ink & Iron", address: "123 Main St", timezone: "UTC" });
+    sb.queueFrom("clients", { full_name: "Jane Doe", email: "jane@example.com", phone: null });
+    sb.queueFrom("artists", { name: "Alex" });
+    sb.queueRpc(false);
+    // sendAppointmentReminderEmail throws for this booking — no phone, so no
+    // SMS fallback and no "bookings" update should be queued/consumed for it.
+
+    sb.queueFrom("studios", { name: "Ink & Iron", address: "123 Main St", timezone: "UTC" });
+    sb.queueFrom("clients", { full_name: "John Smith", email: "john@example.com", phone: null });
+    sb.queueFrom("artists", { name: "Sam" });
+    sb.queueRpc(false);
+    sb.queueFrom("bookings", { success: true }); // mark email_day_of_sent for bk-ok
+
+    vi.mocked(sendAppointmentReminderEmail)
+      .mockRejectedValueOnce(new Error("Resend is down"))
+      .mockResolvedValueOnce(true);
+
+    const res = await remindersGET(cronRequest("http://localhost/api/cron/sms-reminders"));
+    const body = await res.json();
+    expect(body).toEqual({ sent48hr: 0, sentDayOf: 1 });
+    expect(sendAppointmentReminderEmail).toHaveBeenCalledTimes(2);
   });
 });

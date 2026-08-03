@@ -129,18 +129,27 @@ export async function GET(request: NextRequest) {
     }
 
     if (client.email && !emailAlreadySent) {
-      await sendAppointmentReminderEmail({
-        to: client.email,
-        clientName: client.full_name,
-        artistName,
-        studioName: studio.name,
-        studioAddress: studio.address,
-        date: row.date,
-        time: row.time,
-        reminderType,
-      });
-      await supabase.from("bookings").update({ [emailFlag]: true } as never).eq("id", row.id);
-      notified = true;
+      try {
+        const delivered = await sendAppointmentReminderEmail({
+          to: client.email,
+          clientName: client.full_name,
+          artistName,
+          studioName: studio.name,
+          studioAddress: studio.address,
+          date: row.date,
+          time: row.time,
+          reminderType,
+        });
+        if (delivered) {
+          await supabase.from("bookings").update({ [emailFlag]: true } as never).eq("id", row.id);
+          notified = true;
+        }
+      } catch (err) {
+        // One booking's email failure shouldn't stop the rest of the batch
+        // from getting their reminders — log and move on, unmarked, so this
+        // booking is retried on the next cron run.
+        console.error(`[sms-reminders] email send failed for booking ${row.id}:`, err instanceof Error ? err.message : err);
+      }
     }
 
     if (notified) {

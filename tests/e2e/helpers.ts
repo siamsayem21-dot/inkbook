@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
+import WebSocket from "ws";
 
 /** Unique-per-run identifier so parallel/repeat CI runs never collide on unique columns. */
 export function e2eTag(): string {
@@ -43,6 +44,11 @@ export async function payWithStripeTestCard(page: Page) {
 export function e2eAdminClient() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
     auth: { autoRefreshToken: false, persistSession: false },
+    // CI runs this Node-side client on Node 20, which has no native WebSocket —
+    // @supabase/realtime-js requires one (or an injected transport) just to
+    // construct the client, even though this helper never opens a realtime
+    // subscription. Provide `ws` as the transport per Supabase's own guidance.
+    realtime: { transport: WebSocket as unknown as typeof globalThis.WebSocket },
   });
 }
 
