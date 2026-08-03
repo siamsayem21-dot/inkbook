@@ -25,12 +25,21 @@
 -- pass regardless of trigger-firing order.
 -- =============================================================
 
+-- SECURITY DEFINER: this trigger also fires when a studio is cascaded
+-- away via auth.users -> studios (ON DELETE CASCADE), which runs as
+-- whatever limited role GoTrue uses to delete the auth.users row (not
+-- service_role/postgres). That role has no grants on public.bookings,
+-- so without DEFINER rights the DELETE inside this trigger fails with
+-- a permission error, which GoTrue surfaces as a generic 500
+-- "Database error deleting user". Run as the function owner instead,
+-- with an explicit search_path (defensive against search_path
+-- injection from the invoking session).
 CREATE OR REPLACE FUNCTION delete_studio_bookings_first() RETURNS TRIGGER AS $$
 BEGIN
   DELETE FROM bookings WHERE studio_id = OLD.id;
   RETURN OLD;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 CREATE TRIGGER studios_delete_bookings_first
   BEFORE DELETE ON studios
