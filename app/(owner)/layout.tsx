@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
-import Sidebar from "@/components/shared/Sidebar";
+import OwnerSidebar from "@/components/owner/OwnerSidebar";
 import { getCurrentUser } from "@/lib/auth/config";
 
 function adminClient() {
@@ -16,10 +16,15 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
   if (!user) redirect("/login");
 
   const supabase = adminClient();
+  // Same ordering as lib/auth/config.ts's getStudioId() — without it, this
+  // independent lookup could resolve a different studio than the one page
+  // content is actually scoped to for an owner with more than one studio row.
   const { data: studios, error: studioError } = await supabase
     .from("studios")
     .select("id, subscription_status, name")
     .eq("owner_id", user.id)
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true })
     .limit(1);
 
   if (studioError) {
@@ -40,7 +45,7 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
 
   return (
     <div className="min-h-screen bg-ink text-white flex">
-      <Sidebar role="owner" studioName={studio?.name} />
+      <OwnerSidebar studioName={studio?.name} />
       <main className="flex-1 p-4 pt-16 md:p-8 overflow-y-auto">{children}</main>
     </div>
   );

@@ -24,10 +24,18 @@ export const getStudioId = cache(async (): Promise<string | null> => {
   const supabase = createAdminClient();
 
   // .limit(1) — .maybeSingle() errors (and returns null) when multiple rows match
+  // (an owner can have more than one studio row, e.g. from repeated /register runs).
+  // Without an explicit order, Postgres doesn't guarantee which row comes back —
+  // ORDER BY created_at (oldest first, id as a tiebreaker for equal timestamps)
+  // makes this deterministic and matches app/(owner)/layout.tsx's own studio
+  // lookup, so the sidebar's studio name always agrees with the studio_id this
+  // resolves to.
   const { data: studios } = await supabase
     .from("studios")
     .select("id")
     .eq("owner_id", user.id)
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true })
     .limit(1);
 
   if (studios && studios.length > 0) return (studios[0] as { id: string }).id;

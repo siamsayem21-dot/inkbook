@@ -5,6 +5,7 @@ import { getStudioId } from "@/lib/auth/config";
 import { validateImageFile } from "@/lib/file-validation";
 import { capDepositAmountCents } from "@/lib/stripe/deposit-checkout";
 import { isAtMonthlyCap } from "@/lib/waitlist";
+import { getStage, isAllowedStatusTransition, isForwardSystemTransition, TERMINAL_STATUSES } from "@/lib/pipeline";
 
 export async function submitConsultation(
   formData: FormData
@@ -118,7 +119,14 @@ export async function saveConsultationQuote(
     .maybeSingle();
 
   const currentStatus = (current as { status: string } | null)?.status ?? "new";
-  const canAdvanceToQuoted = ["new", "reviewed"].includes(currentStatus);
+
+  // Completed/Lost consultations are terminal — the quote (and everything else
+  // on this record) is historical at that point, not an active workflow to edit.
+  if (TERMINAL_STATUSES.has(getStage(currentStatus).value)) {
+    return { error: "This consultation is closed — its quote can no longer be edited." };
+  }
+
+  const canAdvanceToQuoted = isForwardSystemTransition(currentStatus, "quoted");
 
   const { error } = await supabase
     .from("consultations")
@@ -150,6 +158,33 @@ export async function updateConsultationStatus(
   if (!callerStudioId) return { error: "Unauthorized" };
 
   const supabase = createAdminClient();
+
+  // Read current status before writing — this is the single choke point both
+  // the consultation detail page's status pills and the Pipeline board's
+  // per-card status dropdown go through, so the regression guard lives here
+  // rather than in either caller's UI.
+  const { data: current } = await supabase
+    .from("consultations")
+    .select("status")
+    .eq("id", id)
+    .eq("studio_id" as never, callerStudioId)
+    .maybeSingle();
+
+  const currentStatus = (current as { status: string } | null)?.status;
+  if (currentStatus === undefined) return { error: "Consultation not found." };
+
+  if (!isAllowedStatusTransition(currentStatus, status)) {
+    const reason =
+      getStage(status).value === "booked"
+        ? "Booked can only be set by confirming an appointment with a valid artist, date, and time."
+        : TERMINAL_STATUSES.has(getStage(currentStatus).value)
+          ? "this consultation is closed."
+          : "that would move it backward in the lifecycle.";
+    return {
+      error: `Cannot move from "${getStage(currentStatus).label}" to "${getStage(status).label}" — ${reason}`,
+    };
+  }
+
   const { error } = await supabase
     .from("consultations")
     .update({ status } as never)
@@ -160,8 +195,160 @@ export async function updateConsultationStatus(
   return {};
 }
 
-// Converts a consultation into a real booking + client record.
-// Called from the ConsultationDetail "Book Appointment" form.
+type ConsultForBooking = {
+  id: string;
+  studio_id: string;
+  client_name: string;
+  client_email: string;
+  client_phone: string;
+  detected_style: string | null;
+  status: string;
+  booking_id: string | null;
+  final_price: number | null;
+};
+
+// Shared by startConsultationDeposit() and bookConsultation()'s manual-override
+// path — same find-or-create-by-email pattern continueToDeposit() (the client
+// self-serve twin, app/portal/[studio]/projects/[id]/actions.ts) also uses.
+async function findOrCreateClient(
+  supabase: ReturnType<typeof createAdminClient>,
+  studioId: string,
+  fullName: string,
+  email: string,
+  phone: string
+): Promise<string | null> {
+  const { data: existingClient } = await supabase
+    .from("clients")
+    .select("id")
+    .eq("studio_id", studioId)
+    .eq("email", email)
+    .maybeSingle();
+  if (existingClient) return (existingClient as { id: string }).id;
+
+  const { data: newClient, error } = await supabase
+    .from("clients")
+    .insert({ studio_id: studioId, full_name: fullName, email, phone } as never)
+    .select("id")
+    .single();
+  if (error || !newClient) return null;
+  return (newClient as { id: string }).id;
+}
+
+// Blacklist check shared by startConsultationDeposit() and bookConsultation() —
+// same is_client_blacklisted() RPC continueToDeposit() is backed by.
+async function isBlacklistedClient(
+  supabase: ReturnType<typeof createAdminClient>,
+  studioId: string,
+  email: string,
+  phone: string
+): Promise<boolean> {
+  const { data } = await supabase.rpc("is_client_blacklisted" as never, {
+    p_studio_id: studioId,
+    p_email: email,
+    p_phone: phone,
+  } as never);
+  return Boolean(data);
+}
+
+// Starts Stripe deposit collection for a Quoted consultation. Creates (or, if
+// one already exists, reuses) a provisional booking with no date/time yet —
+// status "pending_deposit", same shape continueToDeposit() (the client
+// self-serve twin) already creates — purely so there's a bookings row to
+// attach the deposit payment/Stripe checkout session to. Deliberately does
+// NOT touch consultation.status: it stays "quoted" until the Stripe webhook
+// confirms payment (handleDepositPayment advances Quoted -> Deposit Paid).
+// The booking itself lands in "awaiting_schedule" once paid (no date/time
+// yet) via that same existing webhook logic — no new schema needed.
+export async function startConsultationDeposit(
+  consultId: string,
+  artistId: string
+): Promise<{ error?: string; bookingId?: string }> {
+  if (!artistId) return { error: "Select an artist first." };
+
+  const callerStudioId = await getStudioId();
+  if (!callerStudioId) return { error: "Unauthorized" };
+
+  const supabase = createAdminClient();
+
+  const { data: consult } = await supabase
+    .from("consultations")
+    .select("id, studio_id, client_name, client_email, client_phone, detected_style, status, booking_id, final_price")
+    .eq("id", consultId)
+    .eq("studio_id" as never, callerStudioId)
+    .maybeSingle();
+
+  if (!consult) return { error: "Consultation not found." };
+  const c = consult as ConsultForBooking;
+
+  // Idempotency guard — a provisional (or later) booking already exists.
+  // Reuse it rather than creating a second one.
+  if (c.booking_id) return { bookingId: c.booking_id };
+
+  if (getStage(c.status).value !== "quoted") {
+    return { error: "A deposit can only be requested once the consultation has been quoted." };
+  }
+  if (!c.final_price || c.final_price <= 0) {
+    return { error: "This consultation doesn't have a finalized quote amount yet." };
+  }
+
+  const { data: studio } = await supabase
+    .from("studios")
+    .select("id, deposit_amount_cents")
+    .eq("id", c.studio_id)
+    .maybeSingle();
+  if (!studio) return { error: "Studio not found." };
+  const s = studio as { id: string; deposit_amount_cents: number };
+
+  if (await isBlacklistedClient(supabase, c.studio_id, c.client_email, c.client_phone)) {
+    return { error: "This client is blacklisted at this studio and cannot be booked." };
+  }
+
+  const clientId = await findOrCreateClient(supabase, c.studio_id, c.client_name, c.client_email, c.client_phone);
+  if (!clientId) return { error: "Failed to create client record." };
+
+  const quoteAmountCents = Math.round(c.final_price * 100);
+  const depositAmountCents = capDepositAmountCents(s.deposit_amount_cents, quoteAmountCents);
+
+  const { data: booking, error: bookErr } = await supabase
+    .from("bookings")
+    .insert({
+      studio_id:            c.studio_id,
+      artist_id:            artistId,
+      client_id:            clientId,
+      date:                 null,
+      time:                 null,
+      style:                c.detected_style ?? "Custom",
+      status:               "pending_deposit",
+      deposit_amount_cents: depositAmountCents,
+      deposit_paid:         false,
+      quote_amount_cents:   quoteAmountCents,
+    } as never)
+    .select("id")
+    .single();
+
+  if (bookErr || !booking) return { error: "Failed to start deposit collection." };
+  const bookingId = (booking as { id: string }).id;
+
+  await supabase
+    .from("consultations")
+    .update({ artist_id: artistId, booking_id: bookingId } as never)
+    .eq("id", consultId);
+
+  return { bookingId };
+}
+
+// Finalizes an appointment once the deposit has been paid — the "Deposit Paid
+// -> Booked" step. Called from the ConsultationDetail Book/Schedule
+// Appointment form, which covers two cases:
+//   (a) a provisional booking already exists (the normal path — created by
+//       startConsultationDeposit() above while requesting the deposit): this
+//       assigns it the chosen date/time/artist and confirms it — reusing the
+//       existing booking, never creating a duplicate.
+//   (b) no booking exists yet (a manual override — the owner marked the
+//       deposit paid directly via the status pills, outside Stripe): this
+//       creates one outright, already marked deposit-paid and confirmed.
+// Either way this can only run once status is already "deposit_paid" — a
+// Quoted consultation can never reach "booked" directly through this action.
 export async function bookConsultation(
   consultId: string,
   data: {
@@ -187,49 +374,95 @@ export async function bookConsultation(
     .maybeSingle();
 
   if (!consult) return { error: "Consultation not found." };
-  const c = consult as {
-    id: string;
-    studio_id: string;
-    client_name: string;
-    client_email: string;
-    client_phone: string;
-    detected_style: string | null;
-    status: string;
-    booking_id: string | null;
-    final_price: number | null;
-  };
+  const c = consult as ConsultForBooking;
 
-  // Idempotency guard — booking already exists for this consultation.
-  // Return the existing booking ID instead of creating a duplicate.
-  if (c.booking_id) return { bookingId: c.booking_id };
+  // ── Case (a): finalize the existing provisional booking ──────────────────
+  if (c.booking_id) {
+    const { data: existingRaw } = await supabase
+      .from("bookings")
+      .select("id, date, time")
+      .eq("id", c.booking_id)
+      .maybeSingle();
+    const existing = existingRaw as { id: string; date: string | null; time: string | null } | null;
+    if (!existing) return { error: "Linked booking not found." };
+
+    // Fully idempotent regardless of status — already scheduled (Booked, or
+    // Completed/Lost after the fact) means don't re-finalize, re-notify, or
+    // duplicate. Checked before the terminal/deposit-paid gates below so a
+    // second call against an already-booked consultation just returns the
+    // existing booking instead of erroring.
+    if (existing.date && existing.time) return { bookingId: c.booking_id };
+
+    // Completed/Lost consultations are terminal — matches the read-only
+    // detail view (this form is hidden there) and stops a stale/replayed
+    // submission from finalizing a closed-out consultation.
+    if (TERMINAL_STATUSES.has(getStage(c.status).value)) {
+      return { error: "This consultation is closed and cannot be booked." };
+    }
+
+    // Only finalizable once the deposit has actually been paid — the rule
+    // that keeps a Quoted consultation from ever becoming "booked" directly.
+    if (getStage(c.status).value !== "deposit_paid") {
+      return { error: "This consultation isn't ready to be booked yet — the deposit must be paid first." };
+    }
+
+    if (await isBlacklistedClient(supabase, c.studio_id, c.client_email, c.client_phone)) {
+      return { error: "This client is blacklisted at this studio and cannot be booked." };
+    }
+
+    const { data: artistRow } = await supabase
+      .from("artists")
+      .select("name, monthly_booking_cap")
+      .eq("id", data.artistId)
+      .maybeSingle();
+    const artistForCap = artistRow as { name: string; monthly_booking_cap: number } | null;
+    if (artistForCap && (await isAtMonthlyCap(supabase, data.artistId, artistForCap.monthly_booking_cap, data.date))) {
+      return { error: `${artistForCap.name} is already at capacity for that month — choose a different date.` };
+    }
+
+    const { error: updateErr } = await supabase
+      .from("bookings")
+      .update({ artist_id: data.artistId, date: data.date, time: data.time, status: "confirmed" } as never)
+      .eq("id", c.booking_id);
+    if (updateErr) return { error: "Failed to confirm the appointment." };
+
+    await supabase
+      .from("consultations")
+      .update({ artist_id: data.artistId, status: "booked" } as never)
+      .eq("id", consultId);
+
+    return { bookingId: c.booking_id };
+  }
+
+  // ── Case (b): no booking exists — deposit was marked paid manually,
+  // outside the Stripe flow (e.g. cash/Venmo). Create one directly, already
+  // confirmed, since the deposit is already known to be paid. ─────────────
+
+  // Completed/Lost consultations are terminal — matches the read-only detail
+  // view (this form is hidden there) and stops a stale/replayed submission
+  // from booking a closed-out consultation.
+  if (TERMINAL_STATUSES.has(getStage(c.status).value)) {
+    return { error: "This consultation is closed and cannot be booked." };
+  }
+
+  // Only bookable once the deposit has actually been paid — the rule that
+  // keeps a Quoted consultation from ever becoming "booked" directly.
+  if (getStage(c.status).value !== "deposit_paid") {
+    return { error: "This consultation isn't ready to be booked yet — the deposit must be paid first." };
+  }
 
   const { data: studio } = await supabase
     .from("studios")
     .select("id, deposit_amount_cents")
     .eq("id", c.studio_id)
     .maybeSingle();
-
   if (!studio) return { error: "Studio not found." };
   const s = studio as { id: string; deposit_amount_cents: number };
 
-  // Blacklist check — same is_client_blacklisted() RPC continueToDeposit()
-  // (app/portal/[studio]/projects/[id]/actions.ts) is backed by.
-  // bookConsultation() is the owner-driven twin of continueToDeposit() —
-  // both convert a consultations row into a real bookings row, so both
-  // need the gate.
-  const { data: isBlacklisted } = await supabase.rpc("is_client_blacklisted" as never, {
-    p_studio_id: c.studio_id,
-    p_email: c.client_email,
-    p_phone: c.client_phone,
-  } as never);
-  if (isBlacklisted) {
+  if (await isBlacklistedClient(supabase, c.studio_id, c.client_email, c.client_phone)) {
     return { error: "This client is blacklisted at this studio and cannot be booked." };
   }
 
-  // Monthly booking cap (Phase C Feature 6) — checked against the month of
-  // the requested date. Unlike the client-facing self-serve flow, this is
-  // owner-driven: the owner already has a relationship with this client, so
-  // hitting the cap just means picking a different month, not a rejection.
   const { data: artistRow } = await supabase
     .from("artists")
     .select("name, monthly_booking_cap")
@@ -240,37 +473,14 @@ export async function bookConsultation(
     return { error: `${artistForCap.name} is already at capacity for that month — choose a different date.` };
   }
 
-  // Find or create client record
-  const { data: existingClient } = await supabase
-    .from("clients")
-    .select("id")
-    .eq("studio_id", c.studio_id)
-    .eq("email", c.client_email)
-    .maybeSingle();
+  const clientId = await findOrCreateClient(supabase, c.studio_id, c.client_name, c.client_email, c.client_phone);
+  if (!clientId) return { error: "Failed to create client record." };
 
-  let clientId: string;
-  if (existingClient) {
-    clientId = (existingClient as { id: string }).id;
-  } else {
-    const { data: newClient, error: clientErr } = await supabase
-      .from("clients")
-      .insert({
-        studio_id: c.studio_id,
-        full_name:  c.client_name,
-        email:      c.client_email,
-        phone:      c.client_phone,
-      } as never)
-      .select("id")
-      .single();
-    if (clientErr || !newClient) return { error: "Failed to create client record." };
-    clientId = (newClient as { id: string }).id;
-  }
-
-  // Create booking
   // final_price on the consultation is in dollars; quote_amount_cents on the
   // booking is in cents. Convert here so remainder collection has a reference.
   const quoteAmountCents = c.final_price ? c.final_price * 100 : null;
   const depositAmountCents = capDepositAmountCents(s.deposit_amount_cents, quoteAmountCents);
+  const now = new Date().toISOString();
 
   const { data: booking, error: bookErr } = await supabase
     .from("bookings")
@@ -281,9 +491,10 @@ export async function bookConsultation(
       date:                 data.date,
       time:                 data.time,
       style:                c.detected_style ?? "Custom",
-      status:               "pending_deposit",
+      status:               "confirmed", // deposit already confirmed paid (gated above)
       deposit_amount_cents: depositAmountCents,
-      deposit_paid:         false,
+      deposit_paid:         true,
+      deposit_paid_at:      now,
       ...(quoteAmountCents !== null ? { quote_amount_cents: quoteAmountCents } : {}),
     } as never)
     .select("id")
@@ -292,15 +503,9 @@ export async function bookConsultation(
   if (bookErr || !booking) return { error: "Failed to create booking." };
   const bookingId = (booking as { id: string }).id;
 
-  // Link booking to consultation and advance status to "booked".
-  // Status advances further to "deposit_paid" via Stripe webhook after client pays.
   await supabase
     .from("consultations")
-    .update({
-      artist_id:  data.artistId,
-      booking_id: bookingId,
-      status:     "booked",
-    } as never)
+    .update({ artist_id: data.artistId, booking_id: bookingId, status: "booked" } as never)
     .eq("id", consultId);
 
   return { bookingId };

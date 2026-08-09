@@ -16,7 +16,11 @@ let sb: SupabaseMock;
 const CONSULT = {
   id: "consult-1", studio_id: "studio-1", client_name: "Alex Client",
   client_email: "alex@example.com", client_phone: "+15551234567",
-  detected_style: "Traditional", status: "quoted", booking_id: null, final_price: 500,
+  // "deposit_paid" — bookConsultation() only allows booking past that point
+  // (see tests/unit/consultation-lifecycle-guards.test.ts for that guard's own
+  // coverage); these tests are specifically about blacklist enforcement, so the
+  // fixture status just needs to be a bookable one, not "quoted".
+  detected_style: "Traditional", status: "deposit_paid", booking_id: null, final_price: 500,
 };
 const STUDIO = { id: "studio-1", deposit_amount_cents: 10000 };
 const REQ = { artistId: "artist-1", date: "2099-09-01", time: "14:00" };
