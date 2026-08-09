@@ -61,6 +61,17 @@ describe("POST /api/stripe/webhook — signature handling", () => {
     expect(sb.fromCalls).toHaveLength(0);
   });
 
+  it("a failed/cancelled/expired checkout never advances a consultation to Deposit Paid", async () => {
+    // Stripe only ever sends checkout.session.completed for a SUCCESSFUL
+    // payment — an abandoned or expired checkout fires a different event type
+    // (e.g. checkout.session.expired) if it fires anything at all, which this
+    // handler doesn't recognize and must leave completely untouched.
+    mockConstructEvent({ type: "checkout.session.expired", data: { object: { id: "cs_1", metadata: {} } } });
+    const res = await POST(makeRequest("{}"));
+    expect(res.status).toBe(200);
+    expect(sb.fromCalls).toHaveLength(0);
+  });
+
   it("acknowledges (200) checkout.session.completed with no recognised metadata", async () => {
     mockConstructEvent({
       type: "checkout.session.completed",
@@ -104,6 +115,7 @@ describe("POST /api/stripe/webhook — Branch A (deposit_payments)", () => {
     sb.queueFrom("deposit_payments", ok()); // update -> paid
     sb.queueFrom("bookings", { date: "2026-08-01" }); // pre-update schedule check -> hasSchedule = true
     sb.queueFrom("bookings", ok()); // update -> confirmed
+    sb.queueFrom("consultations", { id: "consult-1", status: "quoted" }); // current-status read
     sb.queueFrom("consultations", ok()); // update -> deposit_paid
     sb.queueFrom("bookings", {
       client_id: "client-1", artist_id: "artist-1", studio_id: "studio-1",
@@ -135,6 +147,7 @@ describe("POST /api/stripe/webhook — Branch A (deposit_payments)", () => {
     sb.queueFrom("deposit_payments", ok()); // update -> paid
     sb.queueFrom("bookings", { date: null }); // pre-update schedule check -> hasSchedule = false
     sb.queueFrom("bookings", ok()); // update -> awaiting_schedule
+    sb.queueFrom("consultations", { id: "consult-1", status: "quoted" }); // current-status read
     sb.queueFrom("consultations", ok()); // update -> deposit_paid
 
     const res = await POST(makeRequest("{}"));
@@ -144,6 +157,85 @@ describe("POST /api/stripe/webhook — Branch A (deposit_payments)", () => {
     );
     // No date/time to notify with — must not contact anyone.
     expect(trySendSms).not.toHaveBeenCalled();
+  });
+
+  it("advances a linked consultation from Quoted to Deposit Paid (the normal, post-fix case)", async () => {
+    mockConstructEvent(event({ depositPaymentId: "dp_1" }));
+    sb.queueFrom("deposit_payments", [{ id: "dp_1", booking_id: "bk_1", payment_status: "pending" }]);
+    sb.queueFrom("deposit_payments", ok());
+    sb.queueFrom("bookings", { date: "2026-08-01" });
+    sb.queueFrom("bookings", ok());
+    sb.queueFrom("consultations", { id: "consult-1", status: "quoted" }); // current-status read
+    sb.queueFrom("consultations", ok()); // update -> deposit_paid
+    sb.queueFrom("bookings", {
+      client_id: "client-1", artist_id: "artist-1", studio_id: "studio-1",
+      date: "2026-08-01", time: "10:00:00", deposit_amount_cents: 5000,
+    });
+    sb.queueFrom("clients", { full_name: "Alex", email: "alex@example.com", phone: "5551234567" });
+    sb.queueFrom("artists", { name: "Jane Artist" });
+    sb.queueFrom("studios", { name: "Ink & Iron", address: "123 Main St" });
+
+    await POST(makeRequest("{}"));
+
+    const updateChain = sb.getChain("consultations", 2);
+    expect(updateChain.update).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "deposit_paid" })
+    );
+  });
+
+  it("never regresses an already-Booked consultation back to Deposit Paid (the reported bug)", async () => {
+    mockConstructEvent(event({ depositPaymentId: "dp_1" }));
+    sb.queueFrom("deposit_payments", [{ id: "dp_1", booking_id: "bk_1", payment_status: "pending" }]);
+    sb.queueFrom("deposit_payments", ok());
+    sb.queueFrom("bookings", { date: "2026-08-01" });
+    sb.queueFrom("bookings", ok());
+    // Simulates a consultation that (whether via legacy data or any other path)
+    // already reached "booked" — a real Deposit Paid webhook event for its
+    // booking must NOT drag it back to "deposit_paid".
+    sb.queueFrom("consultations", { id: "consult-1", status: "booked" });
+    sb.queueFrom("bookings", {
+      client_id: "client-1", artist_id: "artist-1", studio_id: "studio-1",
+      date: "2026-08-01", time: "10:00:00", deposit_amount_cents: 5000,
+    });
+    sb.queueFrom("clients", { full_name: "Alex", email: "alex@example.com", phone: "5551234567" });
+    sb.queueFrom("artists", { name: "Jane Artist" });
+    sb.queueFrom("studios", { name: "Ink & Iron", address: "123 Main St" });
+
+    const res = await POST(makeRequest("{}"));
+
+    expect(res.status).toBe(200);
+    // Only the status-check read happened — no second "consultations" call
+    // (the update) was made at all.
+    expect(sb.fromCalls.filter((t) => t === "consultations")).toHaveLength(1);
+    // The payment itself still fully processed — deposit_payments and bookings
+    // both got their updates regardless of the consultation being skipped.
+    expect(sb.getChain("deposit_payments", 2).update).toHaveBeenCalledWith(
+      expect.objectContaining({ payment_status: "paid" })
+    );
+    expect(sb.getChain("bookings", 2).update).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "confirmed", deposit_paid: true })
+    );
+  });
+
+  it("is a no-op for a booking with no linked consultation (the plain client-facing booking case)", async () => {
+    mockConstructEvent(event({ depositPaymentId: "dp_1" }));
+    sb.queueFrom("deposit_payments", [{ id: "dp_1", booking_id: "bk_1", payment_status: "pending" }]);
+    sb.queueFrom("deposit_payments", ok());
+    sb.queueFrom("bookings", { date: "2026-08-01" });
+    sb.queueFrom("bookings", ok());
+    sb.queueFrom("consultations", null); // no consultation linked to this booking
+    sb.queueFrom("bookings", {
+      client_id: "client-1", artist_id: "artist-1", studio_id: "studio-1",
+      date: "2026-08-01", time: "10:00:00", deposit_amount_cents: 5000,
+    });
+    sb.queueFrom("clients", { full_name: "Alex", email: "alex@example.com", phone: "5551234567" });
+    sb.queueFrom("artists", { name: "Jane Artist" });
+    sb.queueFrom("studios", { name: "Ink & Iron", address: "123 Main St" });
+
+    const res = await POST(makeRequest("{}"));
+
+    expect(res.status).toBe(200);
+    expect(sb.fromCalls.filter((t) => t === "consultations")).toHaveLength(1); // read only, no update
   });
 });
 

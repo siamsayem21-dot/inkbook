@@ -9,6 +9,7 @@ import {
   sendRemainderReceivedEmail,
 } from "@/lib/email";
 import { getBalanceDueCents } from "@/lib/booking-balance";
+import { isForwardSystemTransition } from "@/lib/pipeline";
 
 export async function POST(request: NextRequest) {
   // ── 1. Read raw body — must be text/buffer before any parsing ────────────
@@ -317,10 +318,36 @@ async function handleDepositPayment(
     return NextResponse.json({ error: "DB error" }, { status: 500 });
   }
 
-  await supabase
+  // Advance the linked consultation (if any — most bookings, e.g. the classic
+  // client-facing flow, have none) to Deposit Paid, but only if that's a
+  // legitimate forward move. bookConsultation() now caps status at "quoted"
+  // while a deposit is pending (never "booked" — see its own comment), so in
+  // the normal case this is a plain quoted -> deposit_paid step. This guard
+  // exists as defense-in-depth against any future/legacy path that still sets
+  // "booked" before payment: without it, a retried/late webhook event could
+  // regress an already-"booked" consultation back to "deposit_paid". A skip
+  // here never affects the payment itself — deposit_payments/bookings above are
+  // already updated by this point regardless of what happens next.
+  const { data: linkedConsult } = await supabase
     .from("consultations")
-    .update({ status: "deposit_paid" } as never)
-    .eq("booking_id" as never, dp.booking_id);
+    .select("id, status")
+    .eq("booking_id" as never, dp.booking_id)
+    .maybeSingle();
+  const linked = linkedConsult as { id: string; status: string } | null;
+
+  if (linked) {
+    if (isForwardSystemTransition(linked.status, "deposit_paid")) {
+      await supabase
+        .from("consultations")
+        .update({ status: "deposit_paid" } as never)
+        .eq("id" as never, linked.id);
+    } else {
+      console.log(
+        "[stripe/webhook] skipped consultation status update — current status",
+        `"${linked.status}"`, "does not allow advancing to deposit_paid | consultation:", linked.id
+      );
+    }
+  }
 
   const { data: bookingRow } = await supabase
     .from("bookings")

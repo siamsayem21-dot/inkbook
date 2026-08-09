@@ -113,3 +113,74 @@ export const QUOTED_OR_LATER: ReadonlySet<LeadStatus> = new Set<LeadStatus>(["qu
 
 // "the deposit has actually been paid" — Deposit Rate's numerator.
 export const DEPOSIT_PAID_OR_LATER: ReadonlySet<LeadStatus> = new Set<LeadStatus>(["deposit_paid", "completed"]);
+
+// Canonical lifecycle order for validating status transitions (owner consultation
+// detail page + its server actions) — deliberately independent of PIPELINE_STAGES'
+// own array order above (which drives Pipeline board / dashboard display and is
+// left untouched so those pages don't change). This order is the actual intended
+// review lifecycle: New → Reviewed → Quoted → Deposit Paid → Booked → Completed,
+// with "lost" as a same-tier exit reachable from any non-terminal stage. The
+// booking/deposit backend (bookConsultation(), the Stripe webhook) has been
+// brought in line with this order too — see actions.ts and the webhook route.
+export const LIFECYCLE_ORDER: LeadStatus[] = [
+  "new", "reviewed", "quoted", "deposit_paid", "booked", "completed",
+];
+
+// "completed" and "lost" are both terminal — no further status/quote/booking
+// changes once a consultation reaches either one.
+export const TERMINAL_STATUSES: ReadonlySet<LeadStatus> = new Set<LeadStatus>(["completed", "lost"]);
+
+// Strict rule for MANUAL, human-initiated status changes — the consultation
+// detail page's "Update Status" pills and the Pipeline board's per-card status
+// dropdown both call updateConsultationStatus(), which is the sole caller of
+// this function. Only the immediate next lifecycle stage is allowed, plus
+// "lost" as an exit from any non-terminal stage — arbitrary forward-skipping
+// (e.g. clicking "Booked" while still "Quoted") is rejected, same as any
+// backward move or a change attempted from a terminal state.
+//
+// "Booked" specifically can NEVER be reached this way, from any stage — it's
+// the one status this function refuses as a `to` value outright. Booked means
+// "a real appointment was confirmed with a valid artist/date/time," which
+// only bookConsultation() (Book/Schedule Appointment on the detail page) can
+// establish; that function writes status directly and never calls through
+// here, so this only blocks the manual pill/dropdown from faking it. Deposit
+// Paid is the only stage adjacent to Booked, so in practice this is exactly
+// "no manually clicking Deposit Paid -> Booked" — but phrased as an absolute
+// rule so it can't be bypassed via any other adjacency either.
+export function isAllowedStatusTransition(from: string, to: string): boolean {
+  const fromStage = getStage(from).value;
+  const toStage   = getStage(to).value;
+
+  if (TERMINAL_STATUSES.has(fromStage)) return false; // terminal states are read-only
+  if (toStage === "lost") return true;                // lost is reachable from any non-terminal stage
+  if (toStage === "booked") return false;              // only bookConsultation() may set this
+
+  const fromIdx = LIFECYCLE_ORDER.indexOf(fromStage);
+  const toIdx   = LIFECYCLE_ORDER.indexOf(toStage);
+  if (fromIdx === -1 || toIdx === -1) return false;
+  return toIdx === fromIdx + 1;
+}
+
+// Looser rule for legitimate AUTOMATIC/system-driven transitions, which may
+// legitimately advance more than one stage in a single step (e.g. saving a
+// quote on a brand-new consultation jumps New straight to Quoted, skipping the
+// manual "Reviewed" checkpoint) — but, like the strict rule above, must never
+// move backward or out of a terminal state. Used by:
+//   - saveConsultationQuote() advancing New/Reviewed -> Quoted
+//   - bookConsultation() capping status at Quoted while a deposit is pending
+//     (never "Booked" — that would let a not-yet-paid consultation look booked)
+//   - the Stripe webhook (handleDepositPayment) advancing to Deposit Paid once
+//     payment clears, guarding against ever regressing an already-"Booked"
+//     consultation back to Deposit Paid
+export function isForwardSystemTransition(from: string, to: string): boolean {
+  const fromStage = getStage(from).value;
+  const toStage   = getStage(to).value;
+
+  if (TERMINAL_STATUSES.has(fromStage)) return false; // terminal states are read-only
+  if (toStage === "lost") return true;                // lost is reachable from any non-terminal stage
+
+  const fromIdx = LIFECYCLE_ORDER.indexOf(fromStage);
+  const toIdx   = LIFECYCLE_ORDER.indexOf(toStage);
+  if (fromIdx === -1 || toIdx === -1) return false;
+  return toIdx >= fromIdx;
+}

@@ -16,10 +16,15 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
   if (!user) redirect("/login");
 
   const supabase = adminClient();
+  // Same ordering as lib/auth/config.ts's getStudioId() — without it, this
+  // independent lookup could resolve a different studio than the one page
+  // content is actually scoped to for an owner with more than one studio row.
   const { data: studios, error: studioError } = await supabase
     .from("studios")
     .select("id, subscription_status, name")
     .eq("owner_id", user.id)
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true })
     .limit(1);
 
   if (studioError) {
