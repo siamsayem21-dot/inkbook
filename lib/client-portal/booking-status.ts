@@ -1,8 +1,8 @@
 // Client-facing status labels for a booking (bookings.status), mirroring the
 // shape and tone of lib/client-portal/project-status.ts's PROJECT_STATUS_META.
-// "completed" is included for forward-compatibility even though no code path
-// in the app currently sets it (see the "My Bookings" plan's §7) — every
-// existing owner/artist status-badge map carries the same unreachable entry.
+// "completed" is set by the owner's markCompleted() action
+// (app/(owner)/owner/bookings/[bookingId]/actions.ts) and gates aftercare
+// email, the review-request cron, and review eligibility.
 export const BOOKING_STATUS_META: Record<string, { label: string; badge: string }> = {
   pending_deposit:   { label: "Awaiting Deposit",   badge: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
   awaiting_schedule: { label: "Deposit Paid",       badge: "bg-violet-500/10 text-violet-400 border-violet-500/20" },

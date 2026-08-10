@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUser } from "@/lib/auth/config";
 import { getBalanceDueCents } from "@/lib/booking-balance";
+import { formatRatingStars } from "@/lib/booking-review";
 import Link from "next/link";
 
 type BookingDetail = {
@@ -107,7 +108,14 @@ export default async function ArtistBookingDetailPage({ params }: Props) {
     .eq("booking_id", params.bookingId)
     .maybeSingle();
 
+  const { data: reviewRaw } = await supabase
+    .from("reviews")
+    .select("rating, quote")
+    .eq("booking_id", params.bookingId)
+    .maybeSingle();
+
   const hasConsent = !!consentRaw;
+  const review = reviewRaw as { rating: number; quote: string } | null;
   const statusInfo = STATUS_LABELS[b.status] ?? { label: b.status, className: "bg-zinc-800 text-zinc-400 border-zinc-700" };
   const balanceDueCents = getBalanceDueCents(b);
 
@@ -130,6 +138,11 @@ export default async function ArtistBookingDetailPage({ params }: Props) {
         ? `✓ Sent (${new Date(b.completed_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })})`
         : "Sent when session is marked completed",
     },
+    {
+      label: "Client feedback",
+      value: review ? formatRatingStars(review.rating) : b.status === "completed" ? "Not yet submitted" : "—",
+    },
+    ...(review?.quote ? [{ label: "Client review", value: review.quote }] : []),
     { label: "Description",  value: b.description ?? "—" },
     { label: "Client email", value: b.clients?.email ?? "—" },
     { label: "Client phone", value: b.clients?.phone ?? "—" },
@@ -151,7 +164,7 @@ export default async function ArtistBookingDetailPage({ params }: Props) {
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
         <div className="grid grid-cols-2 gap-4">
           {fields.map((f) => (
-            <div key={f.label} className={f.label === "Description" ? "col-span-2" : ""}>
+            <div key={f.label} className={f.label === "Description" || f.label === "Client review" ? "col-span-2" : ""}>
               <p className="text-zinc-400 text-xs mb-0.5">{f.label}</p>
               <p className="text-sm font-medium">{f.value}</p>
             </div>
