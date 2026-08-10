@@ -17,15 +17,21 @@ export async function inviteArtist(data: {
 
   const supabase = createAdminClient();
 
-  // Block if an active artist already has this email in this studio
+  // Block only if an artist with this email is still linked to a login
+  // (user_id IS NOT NULL) in this studio. removeArtist() nulls user_id but
+  // keeps the row (to preserve booking/portfolio history), so a *removed*
+  // artist's row must not block re-inviting the same email — that row is
+  // revived on acceptance instead of blocking or duplicating (see
+  // app/artist/accept/[token]/actions.ts).
   const { data: activeArtistRaw } = await supabase
     .from("artists")
     .select("id")
     .eq("email", data.email)
     .eq("studio_id", data.studioId)
+    .not("user_id", "is", null)
     .maybeSingle();
 
-  const activeArtist = activeArtistRaw as { id: string; is_active: boolean } | null;
+  const activeArtist = activeArtistRaw as { id: string } | null;
   if (activeArtist) {
     return { error: "Email already has an active account in this studio" };
   }

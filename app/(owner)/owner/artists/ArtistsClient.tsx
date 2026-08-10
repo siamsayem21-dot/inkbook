@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Mail, Image as ImageIcon, Zap, CalendarClock, Clock, UserPlus, X } from "lucide-react";
 import { inviteArtist, resendInvite, cancelInvite, removeArtist, getUpcomingBookingsCount } from "./actions";
 
 export type Artist = {
@@ -9,27 +10,56 @@ export type Artist = {
   user_id: string | null;
   name: string;
   email: string;
+  avatar_url: string | null;
+  bio: string | null;
+  styles: string[];
+  minimum_rate_cents: number;
   created_at: string;
   is_active: boolean;
   /** Set only for pending invites (not yet accepted). Used to call cancelInvite/resendInvite correctly. */
   invite_id?: string;
+  portfolioCount: number;
+  flashCount: number;
+  upcomingCount: number;
+  activeConsultCount: number;
+  availabilitySlots: number;
 };
+
+type Status = "active" | "invited" | "removed";
 
 // ─── Helpers ────────────────────────────────────────────────
 
+function artistStatus(a: Artist): Status {
+  if (a.invite_id) return "invited";
+  if (!a.user_id) return "removed";
+  return "active";
+}
+
 function sortArtists(list: Artist[]): Artist[] {
+  const rank: Record<Status, number> = { active: 0, invited: 1, removed: 2 };
   return [...list].sort((a, b) => {
-    if (a.is_active !== b.is_active) return a.is_active ? -1 : 1;
+    const r = rank[artistStatus(a)] - rank[artistStatus(b)];
+    if (r !== 0) return r;
     return a.name.localeCompare(b.name);
   });
 }
 
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
+  return `${parts[0]![0]}${parts[1]![0]}`.toUpperCase();
+}
+
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+// minimum_rate_cents is a floor the owner sets — the artist cannot charge
+// below it — not the artist's actual/average rate. The label must say that
+// explicitly rather than reading as if it were their rate.
+function fmtRate(cents: number) {
+  return `$${Math.round(cents / 100)}/hr studio minimum`;
 }
 
 const spinnerSvg = (
@@ -41,25 +71,50 @@ const spinnerSvg = (
 
 // ─── Sub-components ──────────────────────────────────────────
 
-function Avatar({ name }: { name: string }) {
+function Avatar({ name, avatarUrl }: { name: string; avatarUrl: string | null }) {
+  if (avatarUrl) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={avatarUrl} alt={name} className="w-11 h-11 rounded-full object-cover shrink-0" />;
+  }
   return (
-    <div className="w-9 h-9 rounded-full bg-[#c9a84c]/15 border border-[#c9a84c]/25 flex items-center justify-center shrink-0">
-      <span className="text-[#c9a84c] text-sm font-semibold">
-        {name.trim()[0]?.toUpperCase() ?? "?"}
-      </span>
-    </div>
+    <span className="w-11 h-11 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 text-white text-sm font-semibold flex items-center justify-center shrink-0">
+      {initials(name)}
+    </span>
   );
 }
 
-function StatusBadge({ artist }: { artist: Artist }) {
-  return artist.is_active ? (
-    <span className="text-xs bg-green-500/10 text-green-400 border border-green-500/20 px-2.5 py-1 rounded-full whitespace-nowrap">
-      Active
+function StatusBadge({ status }: { status: Status }) {
+  if (status === "active") {
+    return (
+      <span className="text-[11px] font-medium bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full whitespace-nowrap">
+        Active
+      </span>
+    );
+  }
+  if (status === "invited") {
+    return (
+      <span className="text-[11px] font-medium bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full whitespace-nowrap">
+        Invited
+      </span>
+    );
+  }
+  return (
+    <span className="text-[11px] font-medium bg-zinc-100 text-zinc-500 px-2.5 py-1 rounded-full whitespace-nowrap">
+      Removed
     </span>
-  ) : (
-    <span className="text-xs bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2.5 py-1 rounded-full whitespace-nowrap">
-      Invited
-    </span>
+  );
+}
+
+// Label is always visible text, not just an icon + number — an icon-only
+// count is ambiguous (what does "0" next to a camera icon mean?). Each cell
+// reads as "<Label> <value>", e.g. "Portfolio 3".
+function StatCell({ icon: Icon, value, label }: { icon: typeof ImageIcon; value: number; label: string }) {
+  return (
+    <div className="flex items-center gap-1.5 min-w-0">
+      <Icon size={12} className="text-zinc-400 shrink-0" />
+      <span className="text-[11px] text-zinc-500 truncate">{label}</span>
+      <span className="text-xs font-semibold text-zinc-700 tabular-nums ml-auto">{value}</span>
+    </div>
   );
 }
 
@@ -110,40 +165,39 @@ function InviteModal({ studioId, onClose, onSuccess }: InviteModalProps) {
     setTimeout(onClose, 2000);
   }
 
+  const inputClass = (hasError?: string) =>
+    `w-full bg-zinc-50 border rounded-xl px-3.5 py-2.5 text-sm text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-colors ${
+      hasError ? "border-red-300" : "border-zinc-200 focus:border-violet-400"
+    }`;
+
   return (
-    <div
-      className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 px-4" onClick={onClose}>
       <div
-        className="bg-[#111] border border-[#1E1E1E] rounded-2xl p-8 w-full max-w-md"
+        className="bg-white border border-zinc-200 shadow-xl rounded-2xl p-6 w-full max-w-md"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-[#E8E8E8]">Invite Artist</h2>
-          <button
-            onClick={onClose}
-            className="text-zinc-500 hover:text-white text-2xl leading-none"
-          >
-            ×
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-base font-semibold text-zinc-900">Invite Artist</h2>
+          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-700 transition-colors">
+            <X size={18} />
           </button>
         </div>
 
         {successEmail ? (
           <div className="py-8 text-center">
-            <p className="text-green-400 text-sm">Invite sent to {successEmail} ✓</p>
+            <p className="text-emerald-600 text-sm font-medium">Invite sent to {successEmail} ✓</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
+          <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
             {errors.form && (
-              <div className="bg-red-950 border border-red-800 text-red-300 text-sm rounded-lg px-4 py-3">
+              <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
                 {errors.form}
               </div>
             )}
 
             <div>
-              <label htmlFor="invite-artist-name" className="text-sm text-zinc-400 block mb-1.5">
-                Full Name <span className="text-[#c9a84c]">*</span>
+              <label htmlFor="invite-artist-name" className="text-xs text-zinc-400 block mb-1.5">
+                Full Name
               </label>
               <input
                 id="invite-artist-name"
@@ -151,14 +205,14 @@ function InviteModal({ studioId, onClose, onSuccess }: InviteModalProps) {
                 value={name}
                 onChange={(e) => { setName(e.target.value); setErrors((v) => ({ ...v, name: undefined })); }}
                 placeholder="Jane Smith"
-                className={`w-full bg-[#0A0A0A] border rounded-lg px-4 py-2.5 text-sm text-[#E8E8E8] focus:outline-none transition-colors placeholder:text-zinc-600 ${errors.name ? "border-red-700" : "border-[#2A2A2A] focus:border-[#c9a84c]"}`}
+                className={inputClass(errors.name)}
               />
-              {errors.name && <p className="text-red-400 text-xs mt-1.5">{errors.name}</p>}
+              {errors.name && <p className="text-red-600 text-xs mt-1.5">{errors.name}</p>}
             </div>
 
             <div>
-              <label htmlFor="invite-artist-email" className="text-sm text-zinc-400 block mb-1.5">
-                Email <span className="text-[#c9a84c]">*</span>
+              <label htmlFor="invite-artist-email" className="text-xs text-zinc-400 block mb-1.5">
+                Email
               </label>
               <input
                 id="invite-artist-email"
@@ -166,17 +220,17 @@ function InviteModal({ studioId, onClose, onSuccess }: InviteModalProps) {
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setErrors((v) => ({ ...v, email: undefined })); }}
                 placeholder="jane@studio.com"
-                className={`w-full bg-[#0A0A0A] border rounded-lg px-4 py-2.5 text-sm text-[#E8E8E8] focus:outline-none transition-colors placeholder:text-zinc-600 ${errors.email ? "border-red-700" : "border-[#2A2A2A] focus:border-[#c9a84c]"}`}
+                className={inputClass(errors.email)}
               />
-              {errors.email && <p className="text-red-400 text-xs mt-1.5">{errors.email}</p>}
+              {errors.email && <p className="text-red-600 text-xs mt-1.5">{errors.email}</p>}
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#c9a84c] text-black font-bold py-2.5 rounded-lg hover:bg-[#a8832e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-1"
+              className="w-full bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-1"
             >
-              {loading ? <>{spinnerSvg} Sending…</> : "Send Invite →"}
+              {loading ? <>{spinnerSvg} Sending…</> : "Send Invite"}
             </button>
           </form>
         )}
@@ -196,17 +250,15 @@ type RemoveModalProps = {
 };
 
 function RemoveModal({ artist, bookingCount, confirming, onClose, onConfirm }: RemoveModalProps) {
+  const isInvite = !!artist.invite_id;
   return (
-    <div
-      className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 px-4" onClick={onClose}>
       <div
-        className="bg-[#111] border border-[#1E1E1E] rounded-2xl p-8 w-full max-w-md"
+        className="bg-white border border-zinc-200 shadow-xl rounded-2xl p-6 w-full max-w-md"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-semibold text-[#E8E8E8] mb-4">
-          Remove {artist.name}?
+        <h2 className="text-base font-semibold text-zinc-900 mb-4">
+          {isInvite ? `Cancel invite for ${artist.name}?` : `Remove ${artist.name}?`}
         </h2>
 
         {bookingCount === null ? (
@@ -214,14 +266,16 @@ function RemoveModal({ artist, bookingCount, confirming, onClose, onConfirm }: R
         ) : (
           <>
             {bookingCount > 0 && (
-              <div className="bg-yellow-950 border border-yellow-800 text-yellow-300 text-sm rounded-lg px-4 py-3 mb-4">
-                This artist has {bookingCount} upcoming booking
-                {bookingCount !== 1 ? "s" : ""}.
+              <div className="bg-amber-50 border border-amber-200 text-amber-700 text-sm rounded-xl px-4 py-3 mb-4">
+                This artist has {bookingCount} upcoming booking{bookingCount !== 1 ? "s" : ""}.
               </div>
             )}
-            <p className="text-sm text-zinc-400 mb-6">
-              Remove <span className="text-[#E8E8E8]">{artist.name}</span> from studio? This
-              cannot be undone.
+            <p className="text-sm text-zinc-500 mb-6">
+              {isInvite ? (
+                <>Cancel the pending invite to <span className="text-zinc-800 font-medium">{artist.email}</span>?</>
+              ) : (
+                <>Remove <span className="text-zinc-800 font-medium">{artist.name}</span> from the studio? This revokes their login but keeps their booking history.</>
+              )}
             </p>
           </>
         )}
@@ -229,17 +283,104 @@ function RemoveModal({ artist, bookingCount, confirming, onClose, onConfirm }: R
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 border border-[#2A2A2A] text-zinc-300 text-sm py-2.5 rounded-lg hover:border-zinc-600 hover:text-white transition-colors"
+            className="flex-1 border border-zinc-200 text-zinc-600 text-sm font-medium py-2.5 rounded-xl hover:border-zinc-300 hover:text-zinc-900 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             disabled={confirming || bookingCount === null}
-            className="flex-1 bg-red-600 text-white text-sm font-semibold py-2.5 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="flex-1 bg-red-600 text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {confirming ? spinnerSvg : "Remove"}
+            {confirming ? spinnerSvg : isInvite ? "Cancel Invite" : "Remove"}
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Artist Card ────────────────────────────────────────────
+
+function ArtistCard({
+  artist,
+  rowMsg,
+  rowLoading,
+  onResend,
+  onRemove,
+}: {
+  artist: Artist;
+  rowMsg?: string;
+  rowLoading?: boolean;
+  onResend: (a: Artist) => void;
+  onRemove: (a: Artist) => void;
+}) {
+  const status = artistStatus(artist);
+
+  return (
+    <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5 flex flex-col">
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <Avatar name={artist.name} avatarUrl={artist.avatar_url} />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-zinc-900 truncate">{artist.name}</p>
+            <p className="text-xs text-zinc-400 flex items-center gap-1 truncate">
+              <Mail size={11} className="shrink-0" />
+              <span className="truncate">{artist.email}</span>
+            </p>
+          </div>
+        </div>
+        <StatusBadge status={status} />
+      </div>
+
+      {artist.styles.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {artist.styles.slice(0, 4).map((s) => (
+            <span key={s} className="text-[11px] font-medium text-violet-700 bg-violet-50 px-2 py-0.5 rounded-full">
+              {s}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {artist.bio && <p className="text-xs text-zinc-500 leading-relaxed line-clamp-2 mb-3">{artist.bio}</p>}
+
+      {status === "active" && (
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 py-3 border-t border-zinc-100 mb-3">
+          <StatCell icon={ImageIcon} value={artist.portfolioCount} label="Portfolio" />
+          <StatCell icon={Zap} value={artist.flashCount} label="Flash" />
+          <StatCell icon={CalendarClock} value={artist.upcomingCount} label="Upcoming" />
+          <StatCell icon={Clock} value={artist.availabilitySlots} label="Availability" />
+        </div>
+      )}
+
+      <div className="flex items-center justify-between mt-auto pt-3 border-t border-zinc-100">
+        <span className="text-[11px] text-zinc-400">
+          {status === "invited" ? `Invited ${fmtDate(artist.created_at)}` : status === "removed" ? `Joined ${fmtDate(artist.created_at)}` : fmtRate(artist.minimum_rate_cents)}
+        </span>
+        <div className="flex items-center gap-3">
+          {rowMsg && (
+            <span className={`text-[11px] ${rowMsg.includes("✓") ? "text-emerald-600" : "text-amber-600"}`}>
+              {rowMsg}
+            </span>
+          )}
+          {status === "invited" && (
+            <button
+              onClick={() => onResend(artist)}
+              disabled={rowLoading}
+              className="text-[11px] font-medium text-violet-600 hover:text-violet-700 transition-colors disabled:opacity-50 whitespace-nowrap"
+            >
+              {rowLoading ? "Sending…" : "Resend"}
+            </button>
+          )}
+          {status !== "removed" && (
+            <button
+              onClick={() => onRemove(artist)}
+              className="text-[11px] font-medium text-zinc-400 hover:text-red-600 transition-colors"
+            >
+              {status === "invited" ? "Cancel" : "Remove"}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -251,28 +392,32 @@ function RemoveModal({ artist, bookingCount, confirming, onClose, onConfirm }: R
 export default function ArtistsClient({
   artists,
   studioId,
+  seatsUsed,
+  seatLimit,
 }: {
   artists: Artist[];
   studioId: string;
+  seatsUsed: number;
+  seatLimit: number | null;
 }) {
   const router = useRouter();
   const sorted = sortArtists(artists);
+  const activeCount = artists.filter((a) => artistStatus(a) === "active").length;
 
   const [inviteOpen, setInviteOpen] = useState(false);
 
-  // Remove flow
   const [removeTarget, setRemoveTarget] = useState<Artist | null>(null);
   const [removeBookingCount, setRemoveBookingCount] = useState<number | null>(null);
   const [removeConfirming, setRemoveConfirming] = useState(false);
 
-  // Per-row feedback (resend)
   const [rowMsg, setRowMsg] = useState<Record<string, string>>({});
   const [rowLoading, setRowLoading] = useState<Record<string, boolean>>({});
+
+  const atSeatLimit = seatLimit !== null && seatsUsed >= seatLimit;
 
   async function openRemove(artist: Artist) {
     setRemoveTarget(artist);
     setRemoveBookingCount(null);
-    // Pending invites have no bookings — skip the async check
     if (artist.invite_id) {
       setRemoveBookingCount(0);
     } else {
@@ -284,7 +429,6 @@ export default function ArtistsClient({
   async function confirmRemove() {
     if (!removeTarget) return;
     setRemoveConfirming(true);
-    // Pending invite → cancel the invite row; active artist → deactivate
     const result = removeTarget.invite_id
       ? await cancelInvite(removeTarget.invite_id)
       : await removeArtist(removeTarget.id);
@@ -311,140 +455,79 @@ export default function ArtistsClient({
     if (!result.error) router.refresh();
   }
 
-  const rowActions = (artist: Artist) => (
-    <div className="flex items-center gap-3 justify-end">
-      {rowMsg[artist.id] && (
-        <span
-          className={`text-xs ${rowMsg[artist.id].includes("✓") ? "text-green-400" : "text-yellow-400"}`}
-        >
-          {rowMsg[artist.id]}
-        </span>
-      )}
-      {!artist.is_active && (
-        <button
-          onClick={() => handleResend(artist)}
-          disabled={!!rowLoading[artist.id]}
-          className="text-xs text-zinc-400 hover:text-[#c9a84c] transition-colors disabled:opacity-50 whitespace-nowrap"
-        >
-          {rowLoading[artist.id] ? "Sending…" : "Resend Invite"}
-        </button>
-      )}
-      <button
-        onClick={() => openRemove(artist)}
-        className="text-xs text-zinc-500 hover:text-red-400 transition-colors"
-      >
-        Remove
-      </button>
-    </div>
-  );
-
   return (
-    <>
-      {/* Page header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-[#E8E8E8]">Your Artists</h1>
-          <span className="text-xs bg-[#c9a84c]/10 text-[#c9a84c] border border-[#c9a84c]/20 rounded-full px-2.5 py-1">
-            {artists.length}
-          </span>
-        </div>
-        <button
-          onClick={() => setInviteOpen(true)}
-          className="bg-[#c9a84c] text-black text-sm font-bold px-4 py-2 rounded-lg hover:bg-[#a8832e] transition-colors"
-        >
-          + Invite Artist
-        </button>
-      </div>
+    <div className="-m-4 -mt-16 md:-m-8 min-h-[calc(100vh-3rem)] md:min-h-screen" style={{ background: "#FAF9FC" }}>
+      <div className="p-4 pt-16 md:p-8 space-y-6">
 
-      {/* Empty state */}
-      {artists.length === 0 ? (
-        <div className="bg-[#111] border border-[#1E1E1E] rounded-xl px-6 py-16 text-center">
-          <p className="text-zinc-500 text-sm mb-3">No artists yet.</p>
+        {/* Header */}
+        <div className="flex items-start justify-between flex-wrap gap-3">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-zinc-900">Artists</h1>
+            <p className="text-sm text-zinc-500 mt-1">
+              {artists.length} total · {activeCount} active
+              {seatLimit !== null && (
+                <span className={atSeatLimit ? "text-amber-600 font-medium" : ""}> · {seatsUsed} of {seatLimit} seats used</span>
+              )}
+            </p>
+          </div>
           <button
             onClick={() => setInviteOpen(true)}
-            className="text-[#c9a84c] text-sm hover:underline"
+            disabled={atSeatLimit}
+            title={atSeatLimit ? "Upgrade your plan to invite more artists" : undefined}
+            className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 shrink-0"
           >
-            Invite your first artist →
+            <UserPlus size={15} />
+            Invite Artist
           </button>
         </div>
-      ) : (
-        <>
-          {/* Desktop table */}
-          <div className="hidden md:block bg-[#111] border border-[#1E1E1E] rounded-xl overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[#1E1E1E] text-zinc-500 text-xs uppercase tracking-wider">
-                  <th className="text-left px-5 py-3.5 font-medium">Artist</th>
-                  <th className="text-left px-5 py-3.5 font-medium">Email</th>
-                  <th className="text-left px-5 py-3.5 font-medium">Status</th>
-                  <th className="text-left px-5 py-3.5 font-medium">Joined</th>
-                  <th className="px-5 py-3.5" />
-                </tr>
-              </thead>
-              <tbody>
-                {sorted.map((artist) => (
-                  <tr
-                    key={artist.id}
-                    className="border-b border-[#161616] last:border-0 hover:bg-white/[0.02] transition-colors"
-                  >
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <Avatar name={artist.name} />
-                        <span className="font-medium text-[#E8E8E8]">{artist.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 text-zinc-400">{artist.email}</td>
-                    <td className="px-5 py-4">
-                      <StatusBadge artist={artist} />
-                    </td>
-                    <td className="px-5 py-4 text-zinc-500 text-xs">{fmtDate(artist.created_at)}</td>
-                    <td className="px-5 py-4">{rowActions(artist)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
 
-          {/* Mobile card stack */}
-          <div className="flex flex-col gap-3 md:hidden">
+        {/* Empty state */}
+        {artists.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm px-6 py-16 text-center">
+            <p className="text-base font-semibold text-zinc-900 mb-2">No Artists Yet</p>
+            <p className="text-zinc-500 text-sm mb-6">Invite your first artist to start building your team on InkBook.</p>
+            <button
+              onClick={() => setInviteOpen(true)}
+              className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors inline-flex items-center gap-2"
+            >
+              <UserPlus size={15} />
+              Invite Your First Artist
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {sorted.map((artist) => (
-              <div key={artist.id} className="bg-[#111] border border-[#1E1E1E] rounded-xl p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <Avatar name={artist.name} />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-[#E8E8E8] text-sm truncate">{artist.name}</p>
-                    <p className="text-xs text-zinc-500 truncate">{artist.email}</p>
-                  </div>
-                  <StatusBadge artist={artist} />
-                </div>
-                <div className="flex items-center justify-between pt-2 border-t border-[#1A1A1A]">
-                  <span className="text-xs text-zinc-600">{fmtDate(artist.created_at)}</span>
-                  {rowActions(artist)}
-                </div>
-              </div>
+              <ArtistCard
+                key={artist.id}
+                artist={artist}
+                rowMsg={rowMsg[artist.id]}
+                rowLoading={rowLoading[artist.id]}
+                onResend={handleResend}
+                onRemove={openRemove}
+              />
             ))}
           </div>
-        </>
-      )}
+        )}
 
-      {/* Modals */}
-      {inviteOpen && (
-        <InviteModal
-          studioId={studioId}
-          onClose={() => setInviteOpen(false)}
-          onSuccess={() => router.refresh()}
-        />
-      )}
+        {/* Modals */}
+        {inviteOpen && (
+          <InviteModal
+            studioId={studioId}
+            onClose={() => setInviteOpen(false)}
+            onSuccess={() => router.refresh()}
+          />
+        )}
 
-      {removeTarget && (
-        <RemoveModal
-          artist={removeTarget}
-          bookingCount={removeBookingCount}
-          confirming={removeConfirming}
-          onClose={() => setRemoveTarget(null)}
-          onConfirm={confirmRemove}
-        />
-      )}
-    </>
+        {removeTarget && (
+          <RemoveModal
+            artist={removeTarget}
+            bookingCount={removeBookingCount}
+            confirming={removeConfirming}
+            onClose={() => setRemoveTarget(null)}
+            onConfirm={confirmRemove}
+          />
+        )}
+      </div>
+    </div>
   );
 }

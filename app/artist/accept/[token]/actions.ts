@@ -106,28 +106,66 @@ export async function acceptInvite(data: {
     createdNewUser = true;
   }
 
-  // Create the artist row
-  const { data: newArtist, error: artistError } = await supabase
+  // Revive a previously-removed artist's row instead of inserting a
+  // duplicate. removeArtist() (app/(owner)/owner/artists/actions.ts) only
+  // nulls user_id — it never deletes the row — so a prior removal at this
+  // exact studio, for this exact email, leaves a row with user_id IS NULL.
+  // Reusing it (rather than inserting a fresh one) keeps their portfolio/
+  // flash/booking/consultation history correctly attached to the same
+  // artists.id. Scoped to studio_id + email together so this can never
+  // match — or reactivate — a different studio's artist.
+  const { data: removedArtistRaw } = await supabase
     .from("artists")
-    .insert({
-      studio_id: inv.studio_id,
-      user_id: userId,
-      name: data.name,
-      email: inv.invited_email,
-      is_active: true,
-    })
     .select("id")
-    .single();
+    .eq("studio_id", inv.studio_id)
+    .eq("email", inv.invited_email)
+    .is("user_id", null)
+    .maybeSingle();
 
-  if (artistError) {
-    console.error("[acceptInvite] artist insert failed:", artistError.message);
-    if (createdNewUser) {
-      await supabase.auth.admin.deleteUser(userId);
+  const removedArtist = removedArtistRaw as { id: string } | null;
+
+  let artist: { id: string };
+
+  if (removedArtist) {
+    const { data: revivedArtist, error: reviveError } = await supabase
+      .from("artists")
+      .update({ user_id: userId, name: data.name, is_active: true })
+      .eq("id", removedArtist.id)
+      .select("id")
+      .single();
+
+    if (reviveError || !revivedArtist) {
+      console.error("[acceptInvite] artist revive failed:", reviveError?.message);
+      if (createdNewUser) {
+        await supabase.auth.admin.deleteUser(userId);
+      }
+      return { error: "Failed to reactivate artist profile — please try again" };
     }
-    return { error: "Failed to create artist profile — please try again" };
-  }
 
-  const artist = newArtist as { id: string };
+    artist = revivedArtist as { id: string };
+  } else {
+    const { data: newArtist, error: artistError } = await supabase
+      .from("artists")
+      .insert({
+        studio_id: inv.studio_id,
+        user_id: userId,
+        name: data.name,
+        email: inv.invited_email,
+        is_active: true,
+      })
+      .select("id")
+      .single();
+
+    if (artistError) {
+      console.error("[acceptInvite] artist insert failed:", artistError.message);
+      if (createdNewUser) {
+        await supabase.auth.admin.deleteUser(userId);
+      }
+      return { error: "Failed to create artist profile — please try again" };
+    }
+
+    artist = newArtist as { id: string };
+  }
 
   // Mark invite as accepted
   const { error: updateError } = await supabase
