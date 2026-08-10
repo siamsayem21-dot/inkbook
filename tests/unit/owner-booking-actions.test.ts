@@ -21,7 +21,7 @@ import { getStudioId } from "@/lib/auth/config";
 import { getStripe } from "@/lib/stripe/client";
 import { trySendSms } from "@/lib/twilio/client";
 import { sendSessionScheduledEmail, sendBookingCancelledEmail, sendRemainderRequestEmail, sendAftercareEmail } from "@/lib/email";
-import { assignSchedule, markCompleted, cancelBooking, requestRemainderPayment } from "@/app/(owner)/owner/bookings/[bookingId]/actions";
+import { assignSchedule, markCompleted, cancelBooking, sendDepositRequest, requestRemainderPayment } from "@/app/(owner)/owner/bookings/[bookingId]/actions";
 
 let sb: SupabaseMock;
 
@@ -189,6 +189,49 @@ describe("markCompleted — Phase C Feature 1 rules 1 & 2", () => {
   });
 });
 
+// Regression coverage for a real bug found during Owner Bookings detail-page
+// verification: a No-show QA booking's detail page showed an active "Cancel
+// booking" button, and cancelBooking() itself had no server-side guard
+// against cancelling a completed or no_show (both terminal, historical)
+// booking — only an already-cancelled booking was blocked, via .neq() on
+// the update. Fixed in both places: isCancellable in BookingActions.tsx
+// (client) and cancelBooking() itself (server-side backstop).
+describe("cancelBooking — terminal booking guard", () => {
+  it("rejects cancelling a completed booking", async () => {
+    sb.queueFrom("bookings", { studio_id: "studio-1", client_id: "c1", status: "completed" });
+    const result = await cancelBooking("bk-1");
+    expect(result.error).toMatch(/completed booking cannot be cancelled/);
+    // No update should even be attempted.
+    expect(sb.getChain("bookings", 1)?.update).not.toHaveBeenCalled();
+  });
+
+  it("rejects cancelling a no-show booking", async () => {
+    sb.queueFrom("bookings", { studio_id: "studio-1", client_id: "c1", status: "no_show" });
+    const result = await cancelBooking("bk-1");
+    expect(result.error).toMatch(/no-show booking cannot be cancelled/);
+    expect(sb.getChain("bookings", 1)?.update).not.toHaveBeenCalled();
+  });
+
+  it("silently no-ops (no error, no notification) when already cancelled", async () => {
+    sb.queueFrom("bookings", { studio_id: "studio-1", client_id: "c1", status: "cancelled" });
+    const result = await cancelBooking("bk-1");
+    expect(result.error).toBeUndefined();
+    expect(trySendSms).not.toHaveBeenCalled();
+    expect(sendBookingCancelledEmail).not.toHaveBeenCalled();
+  });
+
+  it("still allows cancelling a pending_deposit/awaiting_schedule/confirmed booking", async () => {
+    sb.queueFrom("bookings", { studio_id: "studio-1", client_id: "c1", status: "confirmed" });
+    sb.queueFrom("bookings", [{ id: "bk-1" }]); // update matched one row
+    sb.queueFrom("clients", { full_name: "Jane Client", email: "jane@example.com", phone: "+15551234567" });
+    sb.queueFrom("studios", { name: "Studio Y" });
+
+    const result = await cancelBooking("bk-1");
+    expect(result.error).toBeUndefined();
+    expect(trySendSms).toHaveBeenCalledWith("+15551234567", "sms:cancellation");
+  });
+});
+
 describe("cancelBooking — client notifications", () => {
   it("does not notify when the booking was already cancelled", async () => {
     sb.queueFrom("bookings", { studio_id: "studio-1", client_id: "c1" }); // ownership check
@@ -215,6 +258,87 @@ describe("cancelBooking — client notifications", () => {
   });
 });
 
+// sendDepositRequest() had zero prior test coverage. Added alongside the new
+// status guard found during Owner Bookings detail-page verification: nothing
+// previously stopped a deposit request from being generated for a booking
+// that wasn't actually pending_deposit (confirmed/completed/cancelled/
+// no_show) — only the client's canSendDeposit gate hid the button.
+describe("sendDepositRequest — status guard + no-duplicate-session reuse", () => {
+  it("rejects a booking that is not pending_deposit", async () => {
+    sb.queueFrom("bookings", {
+      id: "bk-1", deposit_amount_cents: 10000, status: "confirmed", studio_id: "studio-1", artist_id: "art-1",
+      clients: { email: "jane@example.com", full_name: "Jane" }, artists: { name: "Artist X" },
+    });
+    const result = await sendDepositRequest("bk-1");
+    expect(result.error).toMatch(/not applicable to this booking's current status/);
+  });
+
+  it("rejects when the booking belongs to a different studio", async () => {
+    sb.queueFrom("bookings", {
+      id: "bk-1", deposit_amount_cents: 10000, status: "pending_deposit", studio_id: "studio-OTHER", artist_id: "art-1",
+      clients: { email: "jane@example.com", full_name: "Jane" }, artists: { name: "Artist X" },
+    });
+    const result = await sendDepositRequest("bk-1");
+    expect(result.error).toBe("Booking not found");
+  });
+
+  it("creates a fresh Stripe Checkout session for a pending_deposit booking", async () => {
+    sb.queueFrom("bookings", {
+      id: "bk-1", deposit_amount_cents: 10000, status: "pending_deposit", studio_id: "studio-1", artist_id: "art-1",
+      clients: { email: "jane@example.com", full_name: "Jane" }, artists: { name: "Artist X" },
+    });
+    sb.queueFrom("studios", { name: "Studio Y", subdomain: "studio-y" });
+    sb.queueFrom("deposit_payments", []); // no existing open session
+    sb.queueFrom("deposit_payments", []); // no existing pending row either
+    sb.queueFrom("deposit_payments", { id: "dp-new" }); // insert
+    sb.queueFrom("deposit_payments", { success: true }); // save session id
+
+    vi.mocked(getStripe).mockReturnValue({
+      checkout: {
+        sessions: {
+          create: vi.fn(() => Promise.resolve({ id: "cs_new_1", url: "https://stripe.test/deposit" })),
+          retrieve: vi.fn(),
+        },
+      },
+    } as unknown as ReturnType<typeof getStripe>);
+
+    const result = await sendDepositRequest("bk-1");
+    expect(result.error).toBeUndefined();
+    expect(result.checkoutUrl).toBe("https://stripe.test/deposit");
+
+    const insertArg = (sb.getChain("deposit_payments", 3) as { insert: { mock: { calls: unknown[][] } } })
+      .insert.mock.calls[0][0] as Record<string, unknown>;
+    expect(insertArg.amount_cents).toBe(10000);
+  });
+
+  it("reuses an already-open Stripe session instead of creating a duplicate", async () => {
+    // "No duplicate payment links created by repeated actions" — clicking
+    // Generate Deposit Link twice must not create a second Checkout session
+    // or a second deposit_payments row while the first is still open.
+    sb.queueFrom("bookings", {
+      id: "bk-1", deposit_amount_cents: 10000, status: "pending_deposit", studio_id: "studio-1", artist_id: "art-1",
+      clients: { email: "jane@example.com", full_name: "Jane" }, artists: { name: "Artist X" },
+    });
+    sb.queueFrom("studios", { name: "Studio Y", subdomain: "studio-y" });
+    sb.queueFrom("deposit_payments", [{ id: "dp-existing", stripe_checkout_session_id: "cs_existing_1" }]);
+
+    const retrieve = vi.fn(() => Promise.resolve({ url: "https://stripe.test/existing", status: "open" }));
+    const create = vi.fn();
+    vi.mocked(getStripe).mockReturnValue({
+      checkout: { sessions: { create, retrieve } },
+    } as unknown as ReturnType<typeof getStripe>);
+
+    const result = await sendDepositRequest("bk-1");
+    expect(result.error).toBeUndefined();
+    expect(result.checkoutUrl).toBe("https://stripe.test/existing");
+    expect(create).not.toHaveBeenCalled();
+
+    // Only the one lookup query — no insert chain should even have run.
+    const dpChains = sb.fromCalls.filter((t) => t === "deposit_payments").length;
+    expect(dpChains).toBe(1);
+  });
+});
+
 describe("requestRemainderPayment — Phase C Feature 2", () => {
   it("errors when not signed in", async () => {
     vi.mocked(getStudioId).mockResolvedValue(null);
@@ -222,9 +346,46 @@ describe("requestRemainderPayment — Phase C Feature 2", () => {
     expect(result.error).toBe("Unauthorized");
   });
 
+  it("rejects a booking that is not confirmed or completed (e.g. pending_deposit)", async () => {
+    sb.queueFrom("bookings", {
+      id: "bk-1", studio_id: "studio-1", artist_id: "art-1", status: "pending_deposit",
+      deposit_amount_cents: 10000, total_amount_cents: 50000, quote_amount_cents: null,
+      remainder_collected: false, clients: { email: "jane@example.com", full_name: "Jane", phone: "+15551234567" },
+      artists: { name: "Artist X" },
+    });
+    const result = await requestRemainderPayment("bk-1");
+    expect(result.error).toMatch(/can only be requested for a confirmed or completed booking/);
+  });
+
+  it("allows a completed booking (not just confirmed) to request its remainder", async () => {
+    sb.queueFrom("bookings", {
+      id: "bk-1", studio_id: "studio-1", artist_id: "art-1", status: "completed",
+      deposit_amount_cents: 10000, total_amount_cents: 50000, quote_amount_cents: null,
+      remainder_collected: false, clients: { email: "jane@example.com", full_name: "Jane", phone: "+15551234567" },
+      artists: { name: "Artist X" },
+    });
+    sb.queueFrom("studios", { name: "Studio Y" });
+    sb.queueFrom("deposit_payments", []);
+    sb.queueFrom("deposit_payments", []);
+    sb.queueFrom("deposit_payments", { id: "dp-new" });
+    sb.queueFrom("deposit_payments", { success: true });
+
+    vi.mocked(getStripe).mockReturnValue({
+      checkout: {
+        sessions: {
+          create: vi.fn(() => Promise.resolve({ id: "cs_r2", url: "https://stripe.test/remainder2" })),
+        },
+      },
+    } as unknown as ReturnType<typeof getStripe>);
+
+    const result = await requestRemainderPayment("bk-1");
+    expect(result.error).toBeUndefined();
+    expect(result.checkoutUrl).toBe("https://stripe.test/remainder2");
+  });
+
   it("errors when the remainder was already collected", async () => {
     sb.queueFrom("bookings", {
-      id: "bk-1", studio_id: "studio-1", artist_id: "art-1",
+      id: "bk-1", studio_id: "studio-1", artist_id: "art-1", status: "confirmed",
       deposit_amount_cents: 10000, total_amount_cents: 50000, quote_amount_cents: null,
       remainder_collected: true, clients: { email: "jane@example.com", full_name: "Jane", phone: "+15551234567" },
       artists: { name: "Artist X" },
@@ -235,7 +396,7 @@ describe("requestRemainderPayment — Phase C Feature 2", () => {
 
   it("errors when the booking has no agreed total price (classic self-serve booking)", async () => {
     sb.queueFrom("bookings", {
-      id: "bk-1", studio_id: "studio-1", artist_id: "art-1",
+      id: "bk-1", studio_id: "studio-1", artist_id: "art-1", status: "confirmed",
       deposit_amount_cents: 10000, total_amount_cents: null, quote_amount_cents: null,
       remainder_collected: false, clients: { email: "jane@example.com", full_name: "Jane", phone: "+15551234567" },
       artists: { name: "Artist X" },
@@ -246,7 +407,7 @@ describe("requestRemainderPayment — Phase C Feature 2", () => {
 
   it("errors when there is no remaining balance (deposit already covers the total)", async () => {
     sb.queueFrom("bookings", {
-      id: "bk-1", studio_id: "studio-1", artist_id: "art-1",
+      id: "bk-1", studio_id: "studio-1", artist_id: "art-1", status: "confirmed",
       deposit_amount_cents: 10000, total_amount_cents: 10000, quote_amount_cents: null,
       remainder_collected: false, clients: { email: "jane@example.com", full_name: "Jane", phone: "+15551234567" },
       artists: { name: "Artist X" },
@@ -257,7 +418,7 @@ describe("requestRemainderPayment — Phase C Feature 2", () => {
 
   it("creates a remainder checkout session and notifies the client", async () => {
     sb.queueFrom("bookings", {
-      id: "bk-1", studio_id: "studio-1", artist_id: "art-1",
+      id: "bk-1", studio_id: "studio-1", artist_id: "art-1", status: "confirmed",
       deposit_amount_cents: 10000, total_amount_cents: 50000, quote_amount_cents: null,
       remainder_collected: false, clients: { email: "jane@example.com", full_name: "Jane", phone: "+15551234567" },
       artists: { name: "Artist X" },

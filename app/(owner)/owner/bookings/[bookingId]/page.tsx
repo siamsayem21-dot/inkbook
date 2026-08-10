@@ -4,18 +4,18 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudioId } from "@/lib/auth/config";
-import { getBalanceDueCents } from "@/lib/booking-balance";
+import { getOutstandingBalanceCents } from "@/lib/booking-balance";
 import BookingActions from "./BookingActions";
 
 type BookingStatus = "pending_deposit" | "awaiting_schedule" | "confirmed" | "completed" | "cancelled" | "no_show";
 
-const STATUS_LABELS: Record<BookingStatus, { label: string; className: string }> = {
-  confirmed:         { label: "Confirmed",        className: "bg-[#c9a84c]/10 text-[#c9a84c] border-[#c9a84c]/20" },
-  pending_deposit:   { label: "Awaiting deposit", className: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
-  awaiting_schedule: { label: "Awaiting schedule",className: "bg-violet-500/10 text-violet-400 border-violet-500/20" },
-  completed:         { label: "Completed",        className: "bg-green-500/10 text-green-400 border-green-500/20" },
-  cancelled:         { label: "Cancelled",        className: "bg-white/5 text-white/30 border-white/10" },
-  no_show:           { label: "No-show",          className: "bg-red-500/10 text-red-400 border-red-500/20" },
+const STATUS_META: Record<BookingStatus, { label: string; badge: string }> = {
+  confirmed:         { label: "Confirmed",         badge: "bg-emerald-50 text-emerald-700" },
+  pending_deposit:   { label: "Awaiting Deposit",  badge: "bg-amber-50 text-amber-700" },
+  awaiting_schedule: { label: "Awaiting Schedule", badge: "bg-violet-50 text-violet-700" },
+  completed:         { label: "Completed",         badge: "bg-green-50 text-green-700" },
+  cancelled:         { label: "Cancelled",         badge: "bg-zinc-100 text-zinc-500" },
+  no_show:           { label: "No-show",           badge: "bg-red-50 text-red-700" },
 };
 
 type BookingDetail = {
@@ -54,16 +54,18 @@ function fmt12h(time: string | null) {
 
 function ErrorCard({ message }: { message: string }) {
   return (
-    <div className="max-w-2xl space-y-6">
-      <Link href="/owner/bookings" className="text-zinc-500 hover:text-white text-sm transition-colors">
-        ← All bookings
-      </Link>
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center space-y-3">
-        <p className="text-zinc-300 font-medium">Booking unavailable</p>
-        <p className="text-zinc-500 text-sm">{message}</p>
-        <Link href="/owner/bookings" className="inline-block mt-2 text-sm text-[#c9a84c] hover:underline">
-          Return to bookings →
+    <div className="-m-4 -mt-16 md:-m-8 min-h-[calc(100vh-3rem)] md:min-h-screen" style={{ background: "#FAF9FC" }}>
+      <div className="p-4 pt-16 md:p-8 max-w-2xl space-y-6">
+        <Link href="/owner/bookings" className="text-zinc-500 hover:text-zinc-900 text-sm transition-colors">
+          ← All bookings
         </Link>
+        <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl p-8 text-center space-y-3">
+          <p className="text-zinc-800 font-medium">Booking unavailable</p>
+          <p className="text-zinc-500 text-sm">{message}</p>
+          <Link href="/owner/bookings" className="inline-block mt-2 text-sm text-violet-600 hover:underline">
+            Return to bookings →
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -161,11 +163,11 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
   const remainderPaymentStatus = (remainderPaymentResult.data?.payment_status ?? "none") as
     "none" | "pending" | "paid" | "refunded" | "kept";
 
-  const statusInfo = STATUS_LABELS[b.status] ?? { label: b.status, className: "bg-zinc-800 text-zinc-400 border-zinc-700" };
+  const statusInfo = STATUS_META[b.status] ?? { label: b.status, badge: "bg-zinc-100 text-zinc-500" };
   const depositParam = searchParams.deposit === "paid" || searchParams.deposit === "cancelled"
     ? searchParams.deposit
     : null;
-  const balanceDueCents = getBalanceDueCents(b);
+  const balanceDueCents = getOutstandingBalanceCents(b);
   const remainderParam = searchParams.remainder === "paid" || searchParams.remainder === "cancelled"
     ? searchParams.remainder
     : null;
@@ -179,7 +181,7 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
     {
       label: "Deposit",
       value: b.deposit_paid
-        ? `$${(b.deposit_amount_cents / 100).toFixed(2)} — ✓ Paid`
+        ? `$${(b.deposit_amount_cents / 100).toFixed(2)} — Paid`
         : depositPaymentStatus === "pending"
         ? `$${(b.deposit_amount_cents / 100).toFixed(2)} — Request sent`
         : `$${(b.deposit_amount_cents / 100).toFixed(2)} — Not requested`,
@@ -188,17 +190,17 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
       ? [{
           label: "Remaining balance",
           value: b.remainder_collected
-            ? `$${(balanceDueCents / 100).toFixed(2)} — ✓ Collected`
+            ? `$${(balanceDueCents / 100).toFixed(2)} — Collected`
             : remainderPaymentStatus === "pending"
             ? `$${(balanceDueCents / 100).toFixed(2)} — Request sent`
             : `$${(balanceDueCents / 100).toFixed(2)} — Not requested`,
         }]
       : []),
-    { label: "Consent form",  value: hasConsent ? "✓ Signed" : "Not submitted" },
+    { label: "Consent form",  value: hasConsent ? "Signed" : "Not submitted" },
     {
       label: "Aftercare",
       value: b.status === "completed" && b.completed_at
-        ? `✓ Sent (${new Date(b.completed_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })})`
+        ? `Sent (${new Date(b.completed_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })})`
         : "Sent when session is marked completed",
     },
     { label: "Client email",  value: b.clients?.email ?? "—" },
@@ -207,48 +209,50 @@ export default async function BookingDetailPage({ params, searchParams }: Props)
   ];
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <Link href="/owner/bookings" className="text-zinc-500 hover:text-white text-sm transition-colors">
-        ← All bookings
-      </Link>
+    <div className="-m-4 -mt-16 md:-m-8 min-h-[calc(100vh-3rem)] md:min-h-screen" style={{ background: "#FAF9FC" }}>
+      <div className="p-4 pt-16 md:p-8 max-w-2xl space-y-6">
+        <Link href="/owner/bookings" className="text-zinc-500 hover:text-zinc-900 text-sm transition-colors">
+          ← All bookings
+        </Link>
 
-      <div className="flex items-start justify-between">
-        <h1 className="text-2xl font-bold">Booking detail</h1>
-        <span className={`text-xs border px-2.5 py-1 rounded-full ${statusInfo.className}`}>
-          {statusInfo.label}
-        </span>
-      </div>
-
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
-        {b.deposit_kept && (
-          <div className="bg-red-950 border border-red-800 text-red-300 text-sm rounded-lg px-4 py-3">
-            Deposit was kept — client no-showed.
-          </div>
-        )}
-        <div className="grid grid-cols-2 gap-4">
-          {fields.map((f) => (
-            <div key={f.label} className={f.wide ? "col-span-2" : ""}>
-              <p className="text-zinc-400 text-xs mb-0.5">{f.label}</p>
-              <p className="text-sm font-medium">{f.value}</p>
-            </div>
-          ))}
+        <div className="flex items-start justify-between flex-wrap gap-3">
+          <h1 className="text-2xl font-bold text-zinc-900">Booking Detail</h1>
+          <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusInfo.badge}`}>
+            {statusInfo.label}
+          </span>
         </div>
-      </div>
 
-      <BookingActions
-        bookingId={params.bookingId}
-        status={b.status}
-        date={b.date}
-        depositAmountCents={b.deposit_amount_cents}
-        hasConsent={hasConsent}
-        consentForm={consentForm}
-        depositParam={depositParam}
-        depositPaymentStatus={depositPaymentStatus}
-        balanceDueCents={balanceDueCents}
-        remainderCollected={b.remainder_collected}
-        remainderPaymentStatus={remainderPaymentStatus}
-        remainderParam={remainderParam}
-      />
+        <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6 space-y-4">
+          {b.deposit_kept && (
+            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
+              Deposit was kept — client no-showed.
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-4">
+            {fields.map((f) => (
+              <div key={f.label} className={f.wide ? "col-span-2" : ""}>
+                <p className="text-zinc-400 text-xs mb-0.5">{f.label}</p>
+                <p className="text-sm font-medium text-zinc-800">{f.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <BookingActions
+          bookingId={params.bookingId}
+          status={b.status}
+          date={b.date}
+          depositAmountCents={b.deposit_amount_cents}
+          hasConsent={hasConsent}
+          consentForm={consentForm}
+          depositParam={depositParam}
+          depositPaymentStatus={depositPaymentStatus}
+          balanceDueCents={balanceDueCents}
+          remainderCollected={b.remainder_collected}
+          remainderPaymentStatus={remainderPaymentStatus}
+          remainderParam={remainderParam}
+        />
+      </div>
     </div>
   );
 }

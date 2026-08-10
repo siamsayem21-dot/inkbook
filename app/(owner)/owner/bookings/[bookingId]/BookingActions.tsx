@@ -59,7 +59,10 @@ export default function BookingActions({
   const [remainderError, setRemainderError] = useState<string | null>(null);
   const router = useRouter();
 
-  const isCancellable      = status !== "cancelled" && status !== "completed";
+  // cancelled, completed, and no_show are all terminal, historical outcomes —
+  // none of them can be reverted by cancelling. Matches cancelBooking()'s own
+  // server-side guard (app/(owner)/owner/bookings/[bookingId]/actions.ts).
+  const isCancellable      = status !== "cancelled" && status !== "completed" && status !== "no_show";
   const canSendDeposit     = status === "pending_deposit";
   const depositRequestSent = depositPaymentStatus === "pending";
   const needsSchedule      = status === "awaiting_schedule" && !date;
@@ -155,34 +158,34 @@ export default function BookingActions({
     <div className="space-y-4">
       {/* Return banners after Stripe redirect */}
       {depositParam === "paid" && (
-        <div className="bg-green-950 border border-green-800 text-green-300 text-sm rounded-xl px-4 py-3 flex items-center gap-2">
-          <span className="text-green-400">✓</span>
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-xl px-4 py-3 flex items-center gap-2">
+          <span className="text-emerald-600">✓</span>
           Payment complete. Webhook will confirm the booking once processed.
         </div>
       )}
       {depositParam === "cancelled" && (
-        <div className="bg-zinc-900 border border-zinc-700 text-zinc-400 text-sm rounded-xl px-4 py-3">
+        <div className="bg-zinc-50 border border-zinc-200 text-zinc-500 text-sm rounded-xl px-4 py-3">
           Payment was cancelled. The deposit request is still pending.
         </div>
       )}
       {remainderParam === "paid" && (
-        <div className="bg-green-950 border border-green-800 text-green-300 text-sm rounded-xl px-4 py-3 flex items-center gap-2">
-          <span className="text-green-400">✓</span>
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-xl px-4 py-3 flex items-center gap-2">
+          <span className="text-emerald-600">✓</span>
           Payment complete. Webhook will mark the balance collected once processed.
         </div>
       )}
       {remainderParam === "cancelled" && (
-        <div className="bg-zinc-900 border border-zinc-700 text-zinc-400 text-sm rounded-xl px-4 py-3">
+        <div className="bg-zinc-50 border border-zinc-200 text-zinc-500 text-sm rounded-xl px-4 py-3">
           Payment was cancelled. The remainder request is still pending.
         </div>
       )}
 
       {/* Deposit request block — shown for all pending_deposit bookings */}
       {canSendDeposit && (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+        <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold text-white">Deposit request</p>
+              <p className="text-sm font-semibold text-zinc-900">Deposit request</p>
               <p className="text-xs text-zinc-500 mt-0.5">
                 {depositRequestSent
                   ? "Awaiting client payment"
@@ -192,8 +195,8 @@ export default function BookingActions({
 
             {depositRequestSent && !depositLink ? (
               /* Request already sent, no fresh link — show pending indicator */
-              <div className="shrink-0 flex items-center gap-2 text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-4 py-2 rounded-full cursor-default select-none">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+              <div className="shrink-0 flex items-center gap-2 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-4 py-2 rounded-full cursor-default select-none">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
                 Deposit Request Sent
               </div>
             ) : !depositLink ? (
@@ -201,7 +204,7 @@ export default function BookingActions({
               <button
                 onClick={handleSendDeposit}
                 disabled={isPending}
-                className="shrink-0 text-sm font-semibold bg-[#c9a84c] hover:bg-[#b8973b] text-black px-4 py-2 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="shrink-0 text-sm font-semibold bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isPending ? "Generating link…" : "Generate Deposit Link"}
               </button>
@@ -215,20 +218,20 @@ export default function BookingActions({
                 <input
                   readOnly
                   value={depositLink}
-                  className="flex-1 min-w-0 bg-[#0a0a0a] border border-zinc-700 text-zinc-400 text-xs rounded-xl px-3 py-2.5 focus:outline-none truncate"
+                  className="flex-1 min-w-0 bg-zinc-50 border border-zinc-200 text-zinc-600 text-xs rounded-xl px-3 py-2.5 focus:outline-none truncate"
                 />
                 <button
                   onClick={handleCopyLink}
                   className={`shrink-0 px-4 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
                     copied
-                      ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                      : "bg-[#c9a84c] hover:bg-[#b8973b] text-black"
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : "bg-violet-600 hover:bg-violet-700 text-white"
                   }`}
                 >
                   {copied ? "Copied!" : "Copy"}
                 </button>
               </div>
-              <p className="text-[10px] text-zinc-600">
+              <p className="text-[10px] text-zinc-400">
                 Send this link to the client via text or email. Do not open it yourself.
               </p>
             </div>
@@ -238,10 +241,10 @@ export default function BookingActions({
 
       {/* Remainder request block — shown once a balance is owed and not yet collected */}
       {canRequestRemainder && (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+        <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold text-white">Remaining balance</p>
+              <p className="text-sm font-semibold text-zinc-900">Remaining balance</p>
               <p className="text-xs text-zinc-500 mt-0.5">
                 {remainderRequestSent
                   ? "Awaiting client payment"
@@ -250,15 +253,15 @@ export default function BookingActions({
             </div>
 
             {remainderRequestSent && !remainderLink ? (
-              <div className="shrink-0 flex items-center gap-2 text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-4 py-2 rounded-full cursor-default select-none">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+              <div className="shrink-0 flex items-center gap-2 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-4 py-2 rounded-full cursor-default select-none">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
                 Remainder Request Sent
               </div>
             ) : !remainderLink ? (
               <button
                 onClick={handleRequestRemainder}
                 disabled={isPending}
-                className="shrink-0 text-sm font-semibold bg-[#c9a84c] hover:bg-[#b8973b] text-black px-4 py-2 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="shrink-0 text-sm font-semibold bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isPending ? "Generating link…" : "Request Remainder Payment"}
               </button>
@@ -271,33 +274,33 @@ export default function BookingActions({
                 <input
                   readOnly
                   value={remainderLink}
-                  className="flex-1 min-w-0 bg-[#0a0a0a] border border-zinc-700 text-zinc-400 text-xs rounded-xl px-3 py-2.5 focus:outline-none truncate"
+                  className="flex-1 min-w-0 bg-zinc-50 border border-zinc-200 text-zinc-600 text-xs rounded-xl px-3 py-2.5 focus:outline-none truncate"
                 />
                 <button
                   onClick={handleCopyRemainderLink}
                   className={`shrink-0 px-4 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
                     remainderCopied
-                      ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                      : "bg-[#c9a84c] hover:bg-[#b8973b] text-black"
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : "bg-violet-600 hover:bg-violet-700 text-white"
                   }`}
                 >
                   {remainderCopied ? "Copied!" : "Copy"}
                 </button>
               </div>
-              <p className="text-[10px] text-zinc-600">
+              <p className="text-[10px] text-zinc-400">
                 Send this link to the client via text or email. Do not open it yourself.
               </p>
             </div>
           )}
-          {remainderError && <p className="text-sm text-red-400 mt-3">{remainderError}</p>}
+          {remainderError && <p className="text-sm text-red-600 mt-3">{remainderError}</p>}
         </div>
       )}
 
       {/* Assign schedule — awaiting_schedule bookings with no date/time yet */}
       {needsSchedule && (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
+        <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5 space-y-4">
           <div>
-            <p className="text-sm font-semibold text-white">Assign schedule</p>
+            <p className="text-sm font-semibold text-zinc-900">Assign schedule</p>
             <p className="text-xs text-zinc-500 mt-0.5">
               Deposit is paid — set a date and time to move this booking forward.
             </p>
@@ -307,35 +310,35 @@ export default function BookingActions({
               type="date"
               value={scheduleDate}
               onChange={(e) => setScheduleDate(e.target.value)}
-              className="bg-zinc-950 border border-zinc-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-zinc-500"
+              className="bg-zinc-50 border border-zinc-200 text-zinc-800 text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
             />
             <input
               type="time"
               value={scheduleTime}
               onChange={(e) => setScheduleTime(e.target.value)}
-              className="bg-zinc-950 border border-zinc-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-zinc-500"
+              className="bg-zinc-50 border border-zinc-200 text-zinc-800 text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
             />
             <button
               onClick={handleAssignSchedule}
               disabled={isPending || !scheduleDate || !scheduleTime}
-              className="text-sm font-semibold bg-[#c9a84c] hover:bg-[#b8973b] text-black px-4 py-2 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-sm font-semibold bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isPending ? "Assigning…" : "Assign Schedule"}
             </button>
           </div>
           {!hasConsent && (
-            <p className="text-[10px] text-zinc-600">
+            <p className="text-[10px] text-zinc-400">
               This booking will stay &quot;Awaiting schedule&quot; until the client also signs their consent form — it only
               moves to Confirmed once both are done.
             </p>
           )}
-          {scheduleError && <p className="text-sm text-red-400">{scheduleError}</p>}
+          {scheduleError && <p className="text-sm text-red-600">{scheduleError}</p>}
         </div>
       )}
 
       {/* Waiting on consent — schedule already assigned, consent is the only thing left */}
       {waitingOnConsent && (
-        <div className="bg-violet-950/40 border border-violet-800/40 text-violet-300 text-sm rounded-xl px-4 py-3">
+        <div className="bg-violet-50 border border-violet-200 text-violet-700 text-sm rounded-xl px-4 py-3">
           Schedule assigned — waiting on the client to sign their consent form before this booking can be confirmed.
         </div>
       )}
@@ -347,30 +350,30 @@ export default function BookingActions({
             <button
               onClick={handleMarkCompleted}
               disabled={isPending}
-              className="text-sm font-semibold bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full transition-colors disabled:opacity-50"
+              className="text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl transition-colors disabled:opacity-50"
             >
               {isPending ? "Marking…" : "Mark Session Completed"}
             </button>
           ) : (
-            <span className="text-sm text-zinc-500 bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-full">
+            <span className="text-sm text-zinc-500 bg-zinc-50 border border-zinc-200 px-4 py-2 rounded-xl">
               Consent form required before this session can be marked completed
             </span>
           )}
         </div>
       )}
-      {completedError && <p className="text-sm text-red-400">{completedError}</p>}
+      {completedError && <p className="text-sm text-red-600">{completedError}</p>}
 
       {/* Consent + cancel row */}
       <div className="flex flex-wrap items-center gap-3">
         {hasConsent ? (
           <button
             onClick={() => setShowConsent((v) => !v)}
-            className="text-sm bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-full transition-colors"
+            className="text-sm bg-zinc-100 hover:bg-zinc-200 text-zinc-700 px-4 py-2 rounded-xl transition-colors"
           >
             {showConsent ? "Hide consent form" : "View consent form"}
           </button>
         ) : (
-          <span className="text-sm text-zinc-500 bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-full">
+          <span className="text-sm text-zinc-500 bg-zinc-50 border border-zinc-200 px-4 py-2 rounded-xl">
             No consent form submitted
           </span>
         )}
@@ -378,25 +381,25 @@ export default function BookingActions({
         {isCancellable && !showConfirm && (
           <button
             onClick={() => setShowConfirm(true)}
-            className="text-sm text-red-400 hover:text-red-300 transition-colors"
+            className="text-sm text-red-600 hover:text-red-700 transition-colors"
           >
             Cancel booking
           </button>
         )}
 
         {isCancellable && showConfirm && (
-          <div className="flex items-center gap-3 bg-red-950 border border-red-800 rounded-xl px-4 py-2.5">
-            <span className="text-sm text-red-300">Cancel this booking?</span>
+          <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
+            <span className="text-sm text-red-700">Cancel this booking?</span>
             <button
               onClick={handleCancel}
               disabled={isPending}
-              className="text-sm font-semibold text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
+              className="text-sm font-semibold text-red-600 hover:text-red-700 transition-colors disabled:opacity-50"
             >
               {isPending ? "Cancelling…" : "Yes, cancel"}
             </button>
             <button
               onClick={() => setShowConfirm(false)}
-              className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
+              className="text-sm text-zinc-500 hover:text-zinc-700 transition-colors"
             >
               Keep it
             </button>
@@ -404,33 +407,33 @@ export default function BookingActions({
         )}
       </div>
 
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && <p className="text-sm text-red-600">{error}</p>}
 
       {showConsent && consentForm && (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
-          <h3 className="text-sm font-semibold text-white">Consent Form</h3>
+        <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5 space-y-4">
+          <h3 className="text-sm font-semibold text-zinc-900">Consent Form</h3>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-zinc-400 text-xs mb-0.5">Signed at</p>
-              <p className="font-medium">{new Date(consentForm.signed_at).toLocaleString("en-US")}</p>
+              <p className="font-medium text-zinc-800">{new Date(consentForm.signed_at).toLocaleString("en-US")}</p>
             </div>
             <div>
               <p className="text-zinc-400 text-xs mb-0.5">State template</p>
-              <p className="font-medium">{consentForm.state_template}</p>
+              <p className="font-medium text-zinc-800">{consentForm.state_template}</p>
             </div>
             <div>
               <p className="text-zinc-400 text-xs mb-0.5">Minor</p>
-              <p className="font-medium">{consentForm.is_minor ? "Yes" : "No"}</p>
+              <p className="font-medium text-zinc-800">{consentForm.is_minor ? "Yes" : "No"}</p>
             </div>
             {consentForm.is_minor && consentForm.guardian_name && (
               <div>
                 <p className="text-zinc-400 text-xs mb-0.5">Guardian</p>
-                <p className="font-medium">{consentForm.guardian_name}</p>
+                <p className="font-medium text-zinc-800">{consentForm.guardian_name}</p>
               </div>
             )}
             <div>
               <p className="text-zinc-400 text-xs mb-0.5">Client signature</p>
-              <p className="font-medium text-green-400">✓ Signed</p>
+              <p className="font-medium text-emerald-600">✓ Signed</p>
             </div>
             {consentForm.id_photo_url && (
               <div>
@@ -439,7 +442,7 @@ export default function BookingActions({
                   href={consentForm.id_photo_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#c9a84c] hover:underline text-sm"
+                  className="text-violet-600 hover:underline text-sm"
                 >
                   View ID →
                 </a>

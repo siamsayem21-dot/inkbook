@@ -20,13 +20,26 @@ export async function cancelBooking(bookingId: string): Promise<{ error?: string
   // Verify the booking belongs to the authenticated user's studio before mutating
   const { data: bookingCheck } = await supabase
     .from("bookings")
-    .select("studio_id, client_id")
+    .select("studio_id, client_id, status")
     .eq("id", bookingId)
     .maybeSingle();
 
-  const check = bookingCheck as { studio_id: string; client_id: string } | null;
+  const check = bookingCheck as { studio_id: string; client_id: string; status: string } | null;
   if (!check) return { error: "Booking not found" };
   if (check.studio_id !== studioId) return { error: "Unauthorized" };
+
+  // Already cancelled — silent no-op (idempotent double-submit), same as before.
+  if (check.status === "cancelled") return {};
+
+  // Completed and no-show are terminal, historical outcomes — cancelling
+  // them after the fact would misrepresent what actually happened (a
+  // finished session, or a no-show whose deposit was already kept, is not
+  // "undone" by this action). The client already hides the Cancel button
+  // for these statuses (isCancellable in BookingActions.tsx); this is the
+  // server-side backstop so the mutation can't be triggered any other way.
+  if (check.status === "completed" || check.status === "no_show") {
+    return { error: `A ${check.status === "no_show" ? "no-show" : "completed"} booking cannot be cancelled` };
+  }
 
   const { data: updatedRows, error } = await supabase
     .from("bookings")
@@ -328,6 +341,15 @@ export async function sendDepositRequest(
   // booking ID is valid for a different studio.
   if (booking.studio_id !== studioId) return { error: "Booking not found" };
 
+  // A deposit can only be requested while the booking is actually waiting on
+  // one — matches the client's own canSendDeposit gate (status ===
+  // "pending_deposit"). Without this, a stale page or a direct call could
+  // generate a brand-new Stripe Checkout session for a booking whose deposit
+  // was already paid, or that's confirmed/completed/cancelled/no-show.
+  if (booking.status !== "pending_deposit") {
+    return { error: "A deposit request is not applicable to this booking's current status" };
+  }
+
   const { data: studioRaw } = await supabase
     .from("studios")
     .select("name, subdomain")
@@ -488,7 +510,7 @@ export async function requestRemainderPayment(
   const { data: bookingRaw, error: bookingError } = await supabase
     .from("bookings")
     .select(
-      "id, studio_id, artist_id, deposit_amount_cents, total_amount_cents, quote_amount_cents, " +
+      "id, studio_id, artist_id, status, deposit_amount_cents, total_amount_cents, quote_amount_cents, " +
         "remainder_collected, clients(email, full_name, phone), artists(name)"
     )
     .eq("id", bookingId)
@@ -500,6 +522,7 @@ export async function requestRemainderPayment(
     id: string;
     studio_id: string;
     artist_id: string;
+    status: string;
     deposit_amount_cents: number;
     total_amount_cents: number | null;
     quote_amount_cents: number | null;
@@ -510,6 +533,16 @@ export async function requestRemainderPayment(
 
   // Same "return not-found rather than unauthorized" reasoning as sendDepositRequest.
   if (booking.studio_id !== studioId) return { error: "Booking not found" };
+
+  // A remaining balance only makes sense once the appointment is actually
+  // confirmed or already happened — matches the client's own
+  // canRequestRemainder gate (status === "confirmed" || "completed").
+  // Without this, a stale page or a direct call could generate a Stripe
+  // Checkout session against a pending_deposit/awaiting_schedule/cancelled/
+  // no_show booking.
+  if (booking.status !== "confirmed" && booking.status !== "completed") {
+    return { error: "A remaining balance can only be requested for a confirmed or completed booking" };
+  }
   if (booking.remainder_collected) return { error: "Remaining balance has already been collected" };
 
   const balanceDueCents = getBalanceDueCents(booking);
