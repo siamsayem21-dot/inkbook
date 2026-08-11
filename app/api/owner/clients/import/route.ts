@@ -32,17 +32,45 @@ export async function POST(req: NextRequest) {
   const skipped = rows.length - valid.length;
 
   if (valid.length === 0) {
-    return NextResponse.json({ imported: 0, skipped });
+    return NextResponse.json({ imported: 0, skipped, duplicates: 0 });
   }
 
-  const records = valid.map((r) => ({
-    studio_id: studioId,
-    full_name: r.name!.trim(),
-    email:     r.email!.trim().toLowerCase(),
-    phone:     r.phone!.trim(),
-  }));
-
   const supabase = createAdminClient();
+
+  // Dedup against clients already on file for this studio (matches the
+  // studio_id + email semantics used by findOrCreateClient() in lib/clients.ts).
+  const { data: existingRaw } = await supabase
+    .from("clients")
+    .select("email")
+    .eq("studio_id", studioId);
+  const existingEmails = new Set(
+    ((existingRaw ?? []) as { email: string }[]).map((c) => c.email.toLowerCase())
+  );
+
+  // Dedup within the CSV itself (a row can repeat, e.g. exported twice).
+  const seenInBatch = new Set<string>();
+  const records: { studio_id: string; full_name: string; email: string; phone: string }[] = [];
+  let duplicates = 0;
+
+  for (const r of valid) {
+    const email = r.email!.trim().toLowerCase();
+    if (existingEmails.has(email) || seenInBatch.has(email)) {
+      duplicates++;
+      continue;
+    }
+    seenInBatch.add(email);
+    records.push({
+      studio_id: studioId,
+      full_name: r.name!.trim(),
+      email,
+      phone: r.phone!.trim(),
+    });
+  }
+
+  if (records.length === 0) {
+    return NextResponse.json({ imported: 0, skipped, duplicates });
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await supabase.from("clients").insert(records as any);
 
@@ -50,5 +78,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ imported: valid.length, skipped });
+  return NextResponse.json({ imported: records.length, skipped, duplicates });
 }
