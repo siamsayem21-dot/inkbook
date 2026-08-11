@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudioId } from "@/lib/auth/config";
 import RevenueChart, { type MonthRevenue } from "@/components/owner/RevenueChart";
+import { aggregateRevenueByMonth, sumKeptDepositCents } from "@/lib/revenue";
 
 export const dynamic = "force-dynamic";
 
@@ -9,18 +10,10 @@ function fmtMoney(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(cents / 100);
 }
 
-function monthRange(offsetMonths: number) {
+function monthLabel(offsetFromNow: number) {
   const now = new Date();
-  const y = now.getFullYear();
-  const m = now.getMonth() + offsetMonths;
-  const first = new Date(y, m, 1);
-  const last = new Date(y, m + 1, 0);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return {
-    first: `${first.getFullYear()}-${pad(first.getMonth() + 1)}-01`,
-    last:  `${last.getFullYear()}-${pad(last.getMonth() + 1)}-${pad(last.getDate())}`,
-    label: first.toLocaleDateString("en-US", { month: "short" }),
-  };
+  const d = new Date(now.getFullYear(), now.getMonth() + offsetFromNow, 1);
+  return { key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, label: d.toLocaleDateString("en-US", { month: "short" }) };
 }
 
 export default async function RevenuePage() {
@@ -29,59 +22,51 @@ export default async function RevenuePage() {
 
   const supabase = createAdminClient();
 
-  const thisMonth = monthRange(0);
-  const lastMonth = monthRange(-1);
+  const { data: bookingsRaw } = await supabase
+    .from("bookings")
+    .select("id, deposit_amount_cents, deposit_paid, deposit_paid_at, deposit_kept, created_at")
+    .eq("studio_id", studioId);
+  const bookings = (bookingsRaw ?? []) as {
+    id: string; deposit_amount_cents: number; deposit_paid: boolean;
+    deposit_paid_at: string | null; deposit_kept: boolean; created_at: string;
+  }[];
 
-  const fetchBookingRevenueCents = async (first: string, last: string) => {
-    const { data } = await supabase
-      .from("bookings")
-      .select("deposit_amount_cents")
-      .eq("studio_id", studioId)
-      .eq("deposit_paid", true)
-      .gte("date", first)
-      .lte("date", last);
-    return ((data ?? []) as { deposit_amount_cents: number }[])
-      .reduce((s, b) => s + (b.deposit_amount_cents ?? 0), 0);
-  };
+  const bookingIds = bookings.map((b) => b.id);
 
-  // Bucket custom request revenue by deposit_paid_at (set by webhook when client pays).
-  // Prerequisite: run migration 20260622000006 to add the column.
-  const fetchCustomRequestRevenueCents = async (first: string, last: string) => {
-    const { data, error } = await supabase
-      .from("custom_requests")
-      .select("deposit_amount")
-      .eq("studio_id", studioId)
-      .eq("status", "accepted")
-      .gte("deposit_paid_at", `${first}T00:00:00`)
-      .lte("deposit_paid_at", `${last}T23:59:59`);
-    if (error) console.error("[revenue] custom_requests query:", error.code, error.message);
-    return Math.round(
-      ((data ?? []) as { deposit_amount: number | null }[])
-        .reduce((s, r) => s + (r.deposit_amount ?? 0), 0) * 100
-    );
-  };
+  // Remainder payments have no dollar amount stored on `bookings` itself —
+  // deposit_payments is the only source (and, unlike deposits, remainder
+  // collection has no legacy pre-ledger path, so this is complete). Fetched
+  // unfiltered by status/type — aggregateRevenueByMonth() does that filtering
+  // itself, so pending/refunded rows and deposit-type rows are excluded there.
+  const { data: depositPaymentsRaw } = bookingIds.length
+    ? await supabase
+        .from("deposit_payments")
+        .select("amount_cents, payment_status, payment_type, paid_at")
+        .in("booking_id", bookingIds)
+    : { data: [] as { amount_cents: number; payment_status: string; payment_type: string; paid_at: string | null }[] };
+  const depositPayments = (depositPaymentsRaw ?? []) as { amount_cents: number; payment_status: string; payment_type: string; paid_at: string | null }[];
 
-  const fetchRevenueCents = async (first: string, last: string) => {
-    const [bookings, custom] = await Promise.all([
-      fetchBookingRevenueCents(first, last),
-      fetchCustomRequestRevenueCents(first, last),
-    ]);
-    return bookings + custom;
-  };
+  // custom_requests' deposit-paid lifecycle continues past "accepted" into
+  // "scheduled" and "completed" (see 20260623000004_custom_requests_booking_link.sql) —
+  // filtering to "accepted" alone silently drops revenue the moment a request
+  // progresses, which is every request that isn't still brand new. Fetched
+  // unfiltered by status — aggregateRevenueByMonth() applies the eligible-status
+  // check itself (declined/pending/quoted excluded there).
+  const { data: customRequestsRaw, error: crError } = await supabase
+    .from("custom_requests")
+    .select("deposit_amount, deposit_paid_at, status")
+    .eq("studio_id", studioId)
+    .not("deposit_paid_at", "is", null);
+  if (crError) console.error("[revenue] custom_requests query:", crError.code, crError.message);
+  const customRequests = (customRequestsRaw ?? []) as { deposit_amount: number | null; deposit_paid_at: string; status: string }[];
 
-  const [thisMonthCents, lastMonthCents, keptCents] = await Promise.all([
-    fetchRevenueCents(thisMonth.first, thisMonth.last),
-    fetchRevenueCents(lastMonth.first, lastMonth.last),
-    (async () => {
-      const { data } = await supabase
-        .from("bookings")
-        .select("deposit_amount_cents")
-        .eq("studio_id", studioId)
-        .eq("deposit_kept", true);
-      return ((data ?? []) as { deposit_amount_cents: number }[])
-        .reduce((s, b) => s + (b.deposit_amount_cents ?? 0), 0);
-    })(),
-  ]);
+  const revenueByMonth = aggregateRevenueByMonth(bookings, depositPayments, customRequests);
+  const keptCents = sumKeptDepositCents(bookings);
+
+  const thisMonth = monthLabel(0);
+  const lastMonth = monthLabel(-1);
+  const thisMonthCents = revenueByMonth[thisMonth.key] ?? 0;
+  const lastMonthCents = revenueByMonth[lastMonth.key] ?? 0;
 
   const statCards = [
     { label: "This month",               value: fmtMoney(thisMonthCents) },
@@ -90,26 +75,30 @@ export default async function RevenuePage() {
   ];
 
   // Revenue chart — last 6 months
-  const ranges = Array.from({ length: 6 }, (_, i) => monthRange(i - 5));
-  const monthData: MonthRevenue[] = await Promise.all(
-    ranges.map(async ({ first, last, label }) => ({
-      label,
-      amount: (await fetchRevenueCents(first, last)) / 100,
-    }))
-  );
+  const monthData: MonthRevenue[] = Array.from({ length: 6 }, (_, i) => {
+    const { key, label } = monthLabel(i - 5);
+    return { label, amount: (revenueByMonth[key] ?? 0) / 100 };
+  });
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Revenue</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {statCards.map((s) => (
-          <div key={s.label} className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-            <p className="text-zinc-400 text-xs mb-1">{s.label}</p>
-            <p className="text-2xl font-bold">{s.value}</p>
-          </div>
-        ))}
+    <div className="-m-4 -mt-16 md:-m-8 min-h-[calc(100vh-3rem)] md:min-h-screen" style={{ background: "#FAF9FC" }}>
+      <div className="p-4 pt-16 md:p-8 space-y-6">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-zinc-900">Revenue</h1>
+          <p className="text-sm text-zinc-500 mt-1">Deposits and remainder payments collected through InkBook.</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {statCards.map((s) => (
+            <div key={s.label} className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5">
+              <p className="text-zinc-500 text-xs mb-1">{s.label}</p>
+              <p className="text-2xl font-bold text-zinc-900">{s.value}</p>
+            </div>
+          ))}
+        </div>
+
+        <RevenueChart months={monthData} />
       </div>
-      <RevenueChart months={monthData} />
     </div>
   );
 }
