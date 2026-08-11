@@ -14,7 +14,9 @@ export default async function OwnerRequestsPage() {
   const { data: reqsRaw, error: reqsError } = await supabase
     .from("custom_requests")
     .select(
-      "id, artist_id, client_name, client_email, client_phone, style, placement, size, budget_range, preferred_dates, design_description, reference_photos, status, quote_amount, deposit_amount, artist_note, declined_reason, created_at"
+      "id, artist_id, client_name, client_email, client_phone, style, placement, size, budget_range, " +
+      "preferred_dates, design_description, reference_photos, status, quote_amount, deposit_amount, " +
+      "artist_note, declined_reason, created_at"
     )
     .eq("studio_id", studioId)
     .order("created_at", { ascending: false });
@@ -23,27 +25,24 @@ export default async function OwnerRequestsPage() {
 
   const requests = (reqsRaw ?? []) as OwnerRequest[];
 
-  const artistIds = Array.from(new Set(requests.map((r) => r.artist_id).filter(Boolean))) as string[];
-  const { data: artistsRaw } = artistIds.length
-    ? await supabase.from("artists").select("id, name").in("id", artistIds)
-    : { data: [] };
+  // Full studio artist list (not just ones already linked to a request) —
+  // needed so the approve flow can assign an artist to a request that was
+  // submitted without one (client submission leaves artist_id null when no
+  // preference was given; see app/book/[studio]/custom/actions.ts).
+  const { data: allArtistsRaw } = await supabase
+    .from("artists")
+    .select("id, name")
+    .eq("studio_id", studioId)
+    .order("name");
 
-  const allArtists = (artistsRaw ?? []) as { id: string; name: string }[];
+  const allArtists = (allArtistsRaw ?? []) as { id: string; name: string }[];
   const artistMap = Object.fromEntries(allArtists.map((a) => [a.id, a.name]));
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <h1 className="text-2xl font-bold">Custom Requests</h1>
-        <span className="text-xs bg-[#c9a84c]/10 text-[#c9a84c] border border-[#c9a84c]/20 rounded-full px-2.5 py-1">
-          {requests.length}
-        </span>
-      </div>
-      <OwnerRequestsClient
-        requests={requests}
-        artistMap={artistMap}
-        artists={allArtists}
-      />
-    </div>
+    <OwnerRequestsClient
+      requests={requests}
+      artistMap={artistMap}
+      artists={allArtists}
+    />
   );
 }

@@ -39,10 +39,15 @@ export async function POST(
     return NextResponse.json({ error: "Request cannot be declined in its current state" }, { status: 409 });
   }
 
-  // Verify this user belongs to the studio
+  // Verify this user belongs to the studio. Scoped to cr.studio_id (the
+  // request's own studio), not just user.id — an owner with more than one
+  // studio row would otherwise make .maybeSingle() match multiple rows,
+  // which returns null (silently, error discarded by the destructure) and
+  // incorrectly rejected every real multi-studio owner with 403. Same fix
+  // as app/api/custom-requests/[id]/quote/route.ts.
   const [{ data: artistRow }, { data: studioRow }] = await Promise.all([
-    supabase.from("artists").select("studio_id").eq("user_id", user.id).maybeSingle(),
-    supabase.from("studios").select("id, name, subdomain").eq("owner_id", user.id).maybeSingle(),
+    supabase.from("artists").select("studio_id").eq("user_id", user.id).eq("studio_id", cr.studio_id).maybeSingle(),
+    supabase.from("studios").select("id, name, subdomain").eq("owner_id", user.id).eq("id", cr.studio_id).maybeSingle(),
   ]);
 
   const isArtist = (artistRow as { studio_id: string } | null)?.studio_id === cr.studio_id;

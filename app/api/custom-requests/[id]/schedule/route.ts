@@ -37,25 +37,28 @@ export async function PATCH(
 
   const supabase = createAdminClient();
 
-  // Owner-only: verify caller owns this studio
-  const { data: studioRow } = await supabase
+  // Owner-only: fetch every studio this user owns — not .maybeSingle(),
+  // which errors (returned as null, silently, since the destructure
+  // discards it) whenever an owner has more than one studio row, incorrectly
+  // 403ing every real multi-studio owner. Membership is confirmed below,
+  // once we know which studio the request actually belongs to.
+  const { data: ownedStudiosRaw } = await supabase
     .from("studios")
     .select("id, name, subdomain, owner_id")
-    .eq("owner_id", user.id)
-    .maybeSingle();
+    .eq("owner_id", user.id);
 
-  const studio = studioRow as {
+  const ownedStudios = (ownedStudiosRaw ?? []) as {
     id: string;
     name: string;
     subdomain: string;
     owner_id: string;
-  } | null;
+  }[];
 
-  if (!studio) {
+  if (ownedStudios.length === 0) {
     return NextResponse.json({ error: "Forbidden — studio owners only" }, { status: 403 });
   }
 
-  // Fetch the custom request and verify it belongs to this studio
+  // Fetch the custom request and verify it belongs to one of this owner's studios
   const { data: crRaw } = await supabase
     .from("custom_requests")
     .select("id, studio_id, artist_id, booking_id, client_name, client_email, client_phone, status, deposit_amount, quote_amount")
@@ -77,7 +80,9 @@ export async function PATCH(
     quote_amount: number | null;
   };
 
-  if (cr.studio_id !== studio.id) {
+  const studio = ownedStudios.find((s) => s.id === cr.studio_id) ?? null;
+
+  if (!studio) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

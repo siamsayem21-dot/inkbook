@@ -55,10 +55,14 @@ export async function POST(
     return NextResponse.json({ error: "Request cannot be quoted in its current state" }, { status: 409 });
   }
 
-  // Verify this user is the artist or studio owner
+  // Verify this user is the artist or studio owner. Scoped to cr.studio_id
+  // (the request's own studio), not just user.id — an owner with more than
+  // one studio row would otherwise make .maybeSingle() match multiple rows,
+  // which returns null (silently, error discarded by the destructure) and
+  // was incorrectly rejecting every real multi-studio owner with 403.
   const [{ data: artistRow }, { data: studioRow }] = await Promise.all([
-    supabase.from("artists").select("id, name, studio_id").eq("user_id", user.id).maybeSingle(),
-    supabase.from("studios").select("id, name, subdomain").eq("owner_id", user.id).maybeSingle(),
+    supabase.from("artists").select("id, name, studio_id").eq("user_id", user.id).eq("studio_id", cr.studio_id).maybeSingle(),
+    supabase.from("studios").select("id, name, subdomain").eq("owner_id", user.id).eq("id", cr.studio_id).maybeSingle(),
   ]);
 
   const artist = artistRow as { id: string; name: string; studio_id: string } | null;

@@ -237,7 +237,7 @@ describe("PATCH /api/custom-requests/[id]/schedule — monthly booking cap", () 
   });
 
   it("rejects scheduling when the artist is already at capacity for that month (same check as assignSchedule)", async () => {
-    sb.queueFrom("studios", STUDIO);
+    sb.queueFrom("studios", [STUDIO]);
     sb.queueFrom("custom_requests", CUSTOM_REQUEST);
     sb.queueFrom("bookings", BOOKING);
     sb.queueFrom("bookings", []); // conflict check — no conflict
@@ -251,7 +251,7 @@ describe("PATCH /api/custom-requests/[id]/schedule — monthly booking cap", () 
   });
 
   it("schedules successfully when the artist is under their monthly cap", async () => {
-    sb.queueFrom("studios", STUDIO);
+    sb.queueFrom("studios", [STUDIO]);
     sb.queueFrom("custom_requests", CUSTOM_REQUEST);
     sb.queueFrom("bookings", BOOKING);
     sb.queueFrom("bookings", []); // conflict check — no conflict
@@ -266,6 +266,92 @@ describe("PATCH /api/custom-requests/[id]/schedule — monthly booking cap", () 
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
+  });
+});
+
+// Regression coverage for the same real bug class found and fixed in
+// app/api/custom-requests/[id]/quote/route.ts and .../decline/route.ts: the
+// owner-lookup query was `.eq("owner_id", user.id).maybeSingle()` with no
+// studio filter, which silently returns null for any owner who owns more
+// than one studio (confirmed live against production — the real test owner
+// has 3). Fixed here by fetching every studio the user owns (not
+// .maybeSingle()) and matching against the request's own studio_id once
+// it's known, rather than assuming a single owned studio.
+//
+// This route has no UI (dead code — nothing in the app calls it; scheduling
+// is handled by the approved Bookings module's assignSchedule() instead),
+// so this bug was invisible in practice, but the endpoint itself was still
+// broken for any real multi-studio owner who might call it directly.
+describe("PATCH /api/custom-requests/[id]/schedule — multi-studio owner scoping", () => {
+  const params = { params: { id: "req-1" } };
+
+  function scheduleReq(body: unknown) {
+    return new NextRequest("http://localhost/api/custom-requests/req-1/schedule", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  const CUSTOM_REQUEST = {
+    id: "req-1", studio_id: "studio-B", artist_id: "artist-1", booking_id: "bk-1",
+    client_name: "Alex Client", client_email: "alex@example.com", client_phone: "5551234567",
+    status: "accepted", deposit_amount: 150, quote_amount: 600,
+  };
+  const BOOKING = { id: "bk-1", status: "awaiting_schedule", artist_id: "artist-1" };
+
+  beforeEach(() => {
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: "owner-multi-1" } as never);
+  });
+
+  it("succeeds for an owner who owns multiple studios, scheduling a request in one of them", async () => {
+    // Three studios owned by the same user — studio-B (where this request
+    // actually lives) is deliberately not first, to prove this isn't
+    // accidentally working via "pick the first row" luck.
+    sb.queueFrom("studios", [
+      { id: "studio-A", name: "Studio A", subdomain: "studio-a", owner_id: "owner-multi-1" },
+      { id: "studio-B", name: "Studio B", subdomain: "studio-b", owner_id: "owner-multi-1" },
+      { id: "studio-C", name: "Studio C", subdomain: "studio-c", owner_id: "owner-multi-1" },
+    ]);
+    sb.queueFrom("custom_requests", CUSTOM_REQUEST);
+    sb.queueFrom("bookings", BOOKING);
+    sb.queueFrom("bookings", []); // conflict check — no conflict
+    sb.queueFrom("artists", { name: "Jane Artist", monthly_booking_cap: 5 });
+    sb.queueFrom("bookings", []); // monthly count — under cap
+    sb.queueFrom("bookings", { success: true }); // update
+    sb.queueFrom("custom_requests", { success: true }); // update
+    sb.queueFrom("artists", { name: "Jane Artist" }); // notification lookup
+    sb.queueFrom("studios", { address: "123 Main St" }); // notification lookup
+
+    const res = await scheduleRequest(scheduleReq({ date: "2099-09-01", time: "14:00" }), params);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+
+    const studiosChain = sb.getChain("studios", 1);
+    expect(studiosChain.eq).toHaveBeenCalledWith("owner_id", "owner-multi-1");
+  });
+
+  it("403s when none of the owner's studios match the request's studio", async () => {
+    sb.queueFrom("studios", [
+      { id: "studio-A", name: "Studio A", subdomain: "studio-a", owner_id: "owner-multi-1" },
+      { id: "studio-C", name: "Studio C", subdomain: "studio-c", owner_id: "owner-multi-1" },
+    ]);
+    sb.queueFrom("custom_requests", CUSTOM_REQUEST); // studio_id: "studio-B" — not owned by this user
+
+    const res = await scheduleRequest(scheduleReq({ date: "2099-09-01", time: "14:00" }), params);
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.error).toBe("Forbidden");
+  });
+
+  it("403s with a distinct message when the user owns no studio at all", async () => {
+    sb.queueFrom("studios", []);
+
+    const res = await scheduleRequest(scheduleReq({ date: "2099-09-01", time: "14:00" }), params);
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.error).toBe("Forbidden — studio owners only");
   });
 });
 
@@ -328,5 +414,69 @@ describe("POST /api/custom-requests/[id]/quote — owner-set minimum rate floor"
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body.error).toMatch(/at least \$200\.00.*Jane Artist's minimum rate/);
+  });
+});
+
+// Regression coverage for a real bug found during Owner Requests approve-flow
+// verification: the owner-lookup query was `.eq("owner_id", user.id)` with no
+// studio_id filter, then `.maybeSingle()`. For any owner who owns more than
+// one studio (a real, common case — confirmed live against production, where
+// the test owner has 3 studios), Supabase's .maybeSingle() returns null
+// (silently — the error is discarded by the destructure) whenever more than
+// one row matches, which made isOwner false and every approval attempt
+// 403 "Forbidden" for that owner, with no client-visible explanation.
+// Fixed by scoping both the artists and studios lookups to
+// cr.studio_id — the request's own studio — not just user.id, so exactly
+// one row can ever match regardless of how many studios the owner has.
+describe("POST /api/custom-requests/[id]/quote — owner scoping (multi-studio owner)", () => {
+  const params = { params: { id: "req-1" } };
+
+  function quoteReq(body: unknown) {
+    return new NextRequest("http://localhost/api/custom-requests/req-1/quote", {
+      method: "POST",
+      body: JSON.stringify(body),
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  it("succeeds for an owner who owns multiple studios, approving a request in one of them", async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: "owner-multi-1" } as never);
+    sb.queueFrom("custom_requests", {
+      id: "req-1", studio_id: "studio-A", artist_id: "artist-1",
+      client_name: "Alex Client", client_email: "alex@example.com", status: "pending",
+    });
+    // Scoped to studio-A specifically — this is what makes the lookup safe
+    // even though owner-multi-1 also owns studio-B and studio-C in reality.
+    sb.queueFrom("artists", null); // artistRow — this user isn't an artist
+    sb.queueFrom("studios", { id: "studio-A", name: "Studio A", subdomain: "studio-a", owner_id: "owner-multi-1" });
+    sb.queueFrom("artists", { name: "Jane Artist", minimum_rate_cents: 15000 }); // rate floor lookup
+    sb.queueFrom("studios", { name: "Studio A", subdomain: "studio-a" }); // resolve studio name for email
+    sb.queueFrom("custom_requests", { success: true }); // update
+
+    const res = await sendQuote(quoteReq({ quote_amount: 500, deposit_amount: 100 }), params);
+    expect(res.status).toBe(200);
+
+    const artistChain = sb.getChain("artists", 1);
+    expect(artistChain.eq).toHaveBeenCalledWith("user_id", "owner-multi-1");
+    expect(artistChain.eq).toHaveBeenCalledWith("studio_id", "studio-A");
+
+    const studioChain = sb.getChain("studios", 1);
+    expect(studioChain.eq).toHaveBeenCalledWith("owner_id", "owner-multi-1");
+    expect(studioChain.eq).toHaveBeenCalledWith("id", "studio-A");
+  });
+
+  it("still 403s a real stranger who owns no studio and is no artist here", async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: "stranger-1" } as never);
+    sb.queueFrom("custom_requests", {
+      id: "req-1", studio_id: "studio-A", artist_id: "artist-1",
+      client_name: "Alex Client", client_email: "alex@example.com", status: "pending",
+    });
+    sb.queueFrom("artists", null); // not an artist anywhere relevant
+    sb.queueFrom("studios", null); // owns no studio matching studio-A
+
+    const res = await sendQuote(quoteReq({ quote_amount: 500, deposit_amount: 100 }), params);
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.error).toBe("Forbidden");
   });
 });
