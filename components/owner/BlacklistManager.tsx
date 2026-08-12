@@ -4,13 +4,57 @@ import { useState, useTransition } from "react";
 import { addToBlacklist, removeFromBlacklist, type BlacklistEntry } from "@/app/(owner)/owner/blacklist/actions";
 
 const inputCls =
-  "w-full bg-zinc-900 border border-zinc-800 text-white text-sm rounded-lg px-4 py-2.5 " +
-  "placeholder-zinc-600 focus:outline-none focus:border-zinc-600 transition-colors";
+  "w-full bg-zinc-50 border border-zinc-200 text-zinc-800 text-sm rounded-xl px-3.5 py-2.5 " +
+  "placeholder-zinc-400 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-colors";
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", {
     month: "short", day: "numeric", year: "numeric",
   });
+}
+
+function BlacklistCard({
+  entry, isPending, removing, onRemove,
+}: {
+  entry: BlacklistEntry;
+  isPending: boolean;
+  removing: boolean;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-red-200 shadow-sm p-5">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="min-w-0 space-y-0.5">
+          {entry.client_email && (
+            <p className="font-semibold text-zinc-900 truncate">{entry.client_email}</p>
+          )}
+          {entry.client_phone && (
+            <p className="text-sm text-zinc-500">{entry.client_phone}</p>
+          )}
+        </div>
+        <p className="text-[11px] text-zinc-400 shrink-0">{fmtDate(entry.created_at)}</p>
+      </div>
+
+      <p className="text-sm text-zinc-600 mt-3 pt-3 border-t border-zinc-100 leading-relaxed">
+        {entry.reason ?? <span className="text-zinc-400">No reason given</span>}
+      </p>
+
+      <div className="flex items-center justify-between mt-3">
+        <p className="text-xs text-zinc-400">
+          Blocked by {entry.blocked_by_email ?? "—"}
+        </p>
+        <button
+          onClick={onRemove}
+          disabled={isPending}
+          className={`text-xs font-medium transition-colors disabled:opacity-40 ${
+            removing ? "text-red-600" : "text-zinc-400 hover:text-red-600"
+          }`}
+        >
+          {removing ? "Confirm remove" : "Remove"}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export default function BlacklistManager({
@@ -70,7 +114,7 @@ export default function BlacklistManager({
       {!showForm && (
         <button
           onClick={() => setShowForm(true)}
-          className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm px-4 py-2 rounded-full hover:bg-red-500/20 transition-colors"
+          className="text-sm font-semibold px-4 py-2.5 rounded-xl border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition-colors"
         >
           + Block client
         </button>
@@ -78,13 +122,11 @@ export default function BlacklistManager({
 
       {/* Add form */}
       {showForm && (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 max-w-md space-y-4">
-          <p className="text-sm font-semibold text-zinc-200">Block a client</p>
+        <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5 max-w-md space-y-4">
+          <p className="text-sm font-semibold text-zinc-900">Block a client</p>
 
           <div>
-            <label className="text-xs uppercase tracking-widest text-zinc-500 block mb-1.5">
-              Email address
-            </label>
+            <label className="text-xs text-zinc-500 block mb-1.5">Email address</label>
             <input
               type="email"
               value={clientEmail}
@@ -95,9 +137,7 @@ export default function BlacklistManager({
           </div>
 
           <div>
-            <label className="text-xs uppercase tracking-widest text-zinc-500 block mb-1.5">
-              Phone number
-            </label>
+            <label className="text-xs text-zinc-500 block mb-1.5">Phone number</label>
             <input
               type="tel"
               value={clientPhone}
@@ -105,14 +145,14 @@ export default function BlacklistManager({
               placeholder="+1 (555) 000-0000"
               className={inputCls}
             />
-            <p className="text-[10px] text-zinc-600 mt-1">
+            <p className="text-[11px] text-zinc-400 mt-1">
               Provide at least one. Booking is blocked if either matches.
             </p>
           </div>
 
           <div>
-            <label className="text-xs uppercase tracking-widest text-zinc-500 block mb-1.5">
-              Reason <span className="normal-case text-zinc-600">(internal only)</span>
+            <label className="text-xs text-zinc-500 block mb-1.5">
+              Reason <span className="text-zinc-400">(internal only)</span>
             </label>
             <input
               type="text"
@@ -123,21 +163,19 @@ export default function BlacklistManager({
             />
           </div>
 
-          {formError && (
-            <p className="text-red-400 text-xs">{formError}</p>
-          )}
+          {formError && <p className="text-red-600 text-xs">{formError}</p>}
 
           <div className="flex gap-3">
             <button
               onClick={handleAdd}
               disabled={isPending || (!clientEmail.trim() && !clientPhone.trim())}
-              className="bg-red-600 hover:bg-red-700 disabled:opacity-40 text-white text-sm px-5 py-2 rounded-full font-semibold transition-colors"
+              className="bg-red-600 hover:bg-red-700 disabled:opacity-40 text-white text-sm px-5 py-2.5 rounded-xl font-semibold transition-colors"
             >
               {isPending ? "Blocking…" : "Block client"}
             </button>
             <button
               onClick={() => { resetForm(); setShowForm(false); }}
-              className="text-sm text-zinc-400 hover:text-white px-4 py-2 transition-colors"
+              className="text-sm text-zinc-500 hover:text-zinc-700 px-4 py-2.5 transition-colors"
             >
               Cancel
             </button>
@@ -145,73 +183,24 @@ export default function BlacklistManager({
         </div>
       )}
 
-      {/* Table */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
-        {entries.length === 0 ? (
-          <div className="px-6 py-12 text-center">
-            <p className="text-zinc-500 text-sm">No clients blocked.</p>
-            <p className="text-zinc-700 text-xs mt-1">
-              Blocked clients are prevented from booking any artist at this studio.
-            </p>
-          </div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-zinc-800">
-                {["Client", "Blocked by", "Date", "Reason", ""].map((h) => (
-                  <th
-                    key={h}
-                    className="text-left text-zinc-500 text-[10px] uppercase tracking-widest font-medium px-6 py-3.5"
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((entry, i) => (
-                <tr
-                  key={entry.id}
-                  className={i < entries.length - 1 ? "border-b border-zinc-800/60" : ""}
-                >
-                  <td className="px-6 py-4">
-                    <div className="space-y-0.5">
-                      {entry.client_email && (
-                        <p className="text-zinc-200 text-sm">{entry.client_email}</p>
-                      )}
-                      {entry.client_phone && (
-                        <p className="text-zinc-400 text-xs">{entry.client_phone}</p>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-zinc-500 text-xs">
-                    {entry.blocked_by_email ?? "—"}
-                  </td>
-                  <td className="px-6 py-4 text-zinc-500 text-xs whitespace-nowrap">
-                    {fmtDate(entry.created_at)}
-                  </td>
-                  <td className="px-6 py-4 text-zinc-400 text-xs max-w-xs truncate">
-                    {entry.reason ?? <span className="text-zinc-700">No reason given</span>}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => handleRemove(entry.id)}
-                      disabled={isPending}
-                      className={`text-xs transition-colors disabled:opacity-40 ${
-                        removing === entry.id
-                          ? "text-red-400 font-semibold"
-                          : "text-zinc-600 hover:text-red-400"
-                      }`}
-                    >
-                      {removing === entry.id ? "Confirm remove" : "Remove"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {entries.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm px-6 py-16 text-center">
+          <p className="text-base font-semibold text-zinc-900 mb-2">No Clients Blocked</p>
+          <p className="text-zinc-500 text-sm">Blocked clients are prevented from booking any artist at this studio.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {entries.map((entry) => (
+            <BlacklistCard
+              key={entry.id}
+              entry={entry}
+              isPending={isPending}
+              removing={removing === entry.id}
+              onRemove={() => handleRemove(entry.id)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
