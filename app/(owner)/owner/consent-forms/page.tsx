@@ -64,60 +64,44 @@ export default async function OwnerConsentFormsPage() {
   }
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-1">Consent Forms</h1>
-        <p className="text-white/40 text-sm">
-          {forms.length} form{forms.length !== 1 ? "s" : ""} submitted
-        </p>
-      </div>
-
-      {forms.length === 0 ? (
-        <div className="bg-zinc-900 border border-white/10 rounded-2xl px-5 py-16 text-center">
-          <p className="text-white/40 text-sm">No consent forms yet.</p>
-          <p className="text-white/25 text-xs mt-1">
-            Forms signed during client bookings will appear here.
+    <div className="-m-4 -mt-16 md:-m-8 min-h-[calc(100vh-3rem)] md:min-h-screen" style={{ background: "#FAF9FC" }}>
+      <div className="p-4 pt-16 md:p-8 space-y-6">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-zinc-900">Consent Forms</h1>
+          <p className="text-sm text-zinc-500 mt-1">
+            {forms.length} form{forms.length !== 1 ? "s" : ""} submitted
           </p>
         </div>
-      ) : (
-        <div className="bg-zinc-900 border border-white/10 rounded-2xl overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-white/10">
-                {["Client", "Artist", "Appointment", "Signed", ""].map((h) => (
-                  <th
-                    key={h}
-                    className="text-left text-white/30 text-xs font-medium px-5 py-3.5 uppercase tracking-wide"
+
+        {forms.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm px-6 py-16 text-center">
+            <p className="text-base font-semibold text-zinc-900 mb-2">No Consent Forms Yet</p>
+            <p className="text-zinc-500 text-sm">Forms signed during client bookings will appear here.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {forms.map((f) => (
+              <div key={f.id} className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5">
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <p className="font-semibold text-zinc-900">{f.clientName}</p>
+                  <p className="text-[11px] text-zinc-400 shrink-0">Signed {f.signedAt}</p>
+                </div>
+                <p className="text-sm text-zinc-500 mt-1">
+                  {f.artistName} · Appointment {f.bookingDate}
+                </p>
+                <div className="mt-3 pt-3 border-t border-zinc-100">
+                  <a
+                    href={`/owner/bookings/${f.bookingId}`}
+                    className="text-xs font-medium text-violet-600 hover:text-violet-700 transition-colors"
                   >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {forms.map((f, i) => (
-                <tr
-                  key={f.id}
-                  className={i < forms.length - 1 ? "border-b border-white/5" : ""}
-                >
-                  <td className="px-5 py-4 font-medium">{f.clientName}</td>
-                  <td className="px-5 py-4 text-white/50">{f.artistName}</td>
-                  <td className="px-5 py-4 text-white/50">{f.bookingDate}</td>
-                  <td className="px-5 py-4 text-white/50">{f.signedAt}</td>
-                  <td className="px-5 py-4 text-right">
-                    <a
-                      href={`/owner/bookings/${f.bookingId}`}
-                      className="text-xs text-gold hover:underline"
-                    >
-                      View booking
-                    </a>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+                    View booking →
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

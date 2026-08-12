@@ -6,6 +6,38 @@ import { validateImageFile } from "@/lib/file-validation";
 import { isReadyToConfirm } from "@/lib/booking-lifecycle";
 import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
 
+// Mirrors the RLS truth for this table (supabase/migrations/20260527000001_rls.sql):
+// an owner may read any consent form whose booking belongs to a studio they
+// own; an artist may read only a form for a booking they're personally
+// assigned to (not studio-wide — RLS's "artist can select own" policy is
+// scoped to my_artist_id(), not my_artist_studio_id()). Clients have no
+// SELECT policy on consent_forms at all — the client portal never reads this
+// table directly, it computes a signed/not-signed boolean from its own
+// already-scoped query (lib/client-portal/projects.ts) — so no client path
+// is authorized here.
+async function isAuthorizedForBooking(
+  supabase: ReturnType<typeof createAdminClient>,
+  userId: string,
+  booking: { studio_id: string; artist_id: string }
+): Promise<boolean> {
+  const { data: ownedStudio } = await supabase
+    .from("studios")
+    .select("id")
+    .eq("owner_id" as never, userId)
+    .eq("id", booking.studio_id)
+    .maybeSingle();
+  if (ownedStudio) return true;
+
+  const { data: assignedArtist } = await supabase
+    .from("artists")
+    .select("id")
+    .eq("user_id" as never, userId)
+    .eq("id", booking.artist_id)
+    .maybeSingle();
+
+  return Boolean(assignedArtist);
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const bookingId = searchParams.get("bookingId");
@@ -18,6 +50,24 @@ export async function GET(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const supabase = createAdminClient();
+
+  // Authorization must be derived server-side from the authenticated user +
+  // the booking's real studio/artist ownership — never from a studio_id the
+  // caller could supply. Resolve the booking first so it can be checked.
+  const { data: bookingRow } = await supabase
+    .from("bookings")
+    .select("id, studio_id, artist_id")
+    .eq("id", bookingId)
+    .maybeSingle();
+
+  // Same 404 for "booking doesn't exist" and "exists but you're not
+  // authorized" — doesn't confirm to a prober which bookingIds are real.
+  if (!bookingRow) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const booking = bookingRow as { id: string; studio_id: string; artist_id: string };
+  const authorized = await isAuthorizedForBooking(supabase, user.id, booking);
+  if (!authorized) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   const { data } = await supabase
     .from("consent_forms")
     .select("*")

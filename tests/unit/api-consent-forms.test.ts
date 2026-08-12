@@ -8,9 +8,10 @@ vi.mock("@/lib/stripe/client", () => ({ getStripe: vi.fn() }));
 vi.mock("@/lib/file-validation", () => ({ validateImageFile: vi.fn() }));
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe/client";
 import { validateImageFile } from "@/lib/file-validation";
-import { POST } from "@/app/api/consent-forms/route";
+import { GET, POST } from "@/app/api/consent-forms/route";
 
 let sb: SupabaseMock;
 
@@ -49,6 +50,7 @@ function req(fd: FormData, ip = `10.0.2.${++ipCounter}`) {
 beforeEach(() => {
   sb = createSupabaseMock();
   vi.mocked(createAdminClient).mockReturnValue(sb.client as unknown as ReturnType<typeof createAdminClient>);
+  vi.mocked(createClient).mockReturnValue(sb.client as unknown as ReturnType<typeof createClient>);
   vi.mocked(validateImageFile).mockResolvedValue({ valid: true });
 });
 
@@ -230,5 +232,126 @@ describe("POST /api/consent-forms — rate limiting", () => {
 
     const res = await POST(req(buildForm({ fullName: undefined }), "203.0.113.33"));
     expect(res.status).toBe(400); // missing fields, not rate-limited
+  });
+});
+
+// ── GET /api/consent-forms — authorization ──────────────────────────────────
+// Regression coverage for the fix closing the cross-studio data-exposure gap:
+// the endpoint used to return any bookingId's consent form (signature,
+// guardian info, ID-photo path) to any authenticated user. Authorization is
+// now derived entirely server-side from the caller's identity + the real
+// booking/studio/artist relationships — never from client-supplied input.
+const BOOKING = { id: "bk-1", studio_id: "studio-1", artist_id: "artist-1" };
+const CONSENT = {
+  id: "consent-1", booking_id: "bk-1", client_id: "client-1",
+  client_signature: "Alex Client", guardian_name: null, guardian_signature: null,
+  id_photo_url: "client-1/bk-1.jpg", is_minor: false, state_template: "CA",
+  signed_at: "2026-01-01T00:00:00Z",
+};
+
+function getReq(bookingId: string | null) {
+  const url = bookingId
+    ? `http://localhost/api/consent-forms?bookingId=${bookingId}`
+    : "http://localhost/api/consent-forms";
+  return new NextRequest(url);
+}
+
+function authAs(userId: string) {
+  sb.getUser.mockResolvedValue({ data: { user: { id: userId, email: `${userId}@example.com` } as never }, error: null });
+}
+
+describe("GET /api/consent-forms — authorization", () => {
+  it("400s when bookingId is missing", async () => {
+    authAs("owner-1");
+    const res = await GET(getReq(null));
+    expect(res.status).toBe(400);
+  });
+
+  it("401s when there is no authenticated session", async () => {
+    // sb.getUser defaults to { user: null } — no auth wired for this test.
+    const res = await GET(getReq("bk-1"));
+    expect(res.status).toBe(401);
+  });
+
+  it("404s when the booking does not exist", async () => {
+    authAs("owner-1");
+    sb.queueFrom("bookings", null);
+    const res = await GET(getReq("bk-1"));
+    expect(res.status).toBe(404);
+  });
+
+  it("allows the owner of the booking's studio and returns the consent form", async () => {
+    authAs("owner-1");
+    sb.queueFrom("bookings", BOOKING);
+    sb.queueFrom("studios", { id: "studio-1" }); // owner_id=owner-1 AND id=studio-1 matches
+    sb.queueFrom("consent_forms", CONSENT);
+
+    const res = await GET(getReq("bk-1"));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.consentForm).toEqual(CONSENT);
+  });
+
+  it("blocks an owner of a DIFFERENT studio from another studio's booking (cross-studio, no bookingId guessing)", async () => {
+    authAs("owner-2"); // owns some other studio, not studio-1
+    sb.queueFrom("bookings", BOOKING);
+    sb.queueFrom("studios", null);  // owner-2 does not own studio-1
+    sb.queueFrom("artists", null);  // owner-2 is not the assigned artist either
+    const res = await GET(getReq("bk-1"));
+    expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body.consentForm).toBeUndefined();
+    expect(JSON.stringify(body)).not.toMatch(/signature|guardian|photo/i);
+  });
+
+  it("blocks a completely unrelated authenticated user (not owner, not the assigned artist)", async () => {
+    authAs("random-user");
+    sb.queueFrom("bookings", BOOKING);
+    sb.queueFrom("studios", null);
+    sb.queueFrom("artists", null);
+    const res = await GET(getReq("bk-1"));
+    expect(res.status).toBe(404);
+  });
+
+  it("allows the artist assigned to the booking", async () => {
+    authAs("artist-user-1");
+    sb.queueFrom("bookings", BOOKING);
+    sb.queueFrom("studios", null); // not the owner
+    sb.queueFrom("artists", { id: "artist-1" }); // user_id=artist-user-1 AND id=booking.artist_id (artist-1) matches
+    sb.queueFrom("consent_forms", CONSENT);
+
+    const res = await GET(getReq("bk-1"));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.consentForm).toEqual(CONSENT);
+  });
+
+  it("blocks a different artist at the SAME studio who isn't assigned to this booking (tighter than studio-wide, matches RLS)", async () => {
+    authAs("artist-user-2");
+    sb.queueFrom("bookings", BOOKING); // assigned artist is artist-1, not this artist
+    sb.queueFrom("studios", null);
+    sb.queueFrom("artists", null); // this artist's id != booking.artist_id, so no match
+    const res = await GET(getReq("bk-1"));
+    expect(res.status).toBe(404);
+  });
+
+  it("blocks a client account — no client SELECT policy exists for consent_forms", async () => {
+    authAs("client-account-1");
+    sb.queueFrom("bookings", BOOKING);
+    sb.queueFrom("studios", null);
+    sb.queueFrom("artists", null);
+    const res = await GET(getReq("bk-1"));
+    expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body.consentForm).toBeUndefined();
+  });
+
+  it("never queries consent_forms at all once authorization fails", async () => {
+    authAs("random-user");
+    sb.queueFrom("bookings", BOOKING);
+    sb.queueFrom("studios", null);
+    sb.queueFrom("artists", null);
+    await GET(getReq("bk-1"));
+    expect(sb.fromCalls).not.toContain("consent_forms");
   });
 });
