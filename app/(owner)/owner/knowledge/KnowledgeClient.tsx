@@ -19,14 +19,16 @@ const CATEGORIES: { value: KnowledgeCategory; label: string; description: string
 ];
 
 const CATEGORY_COLOR: Record<KnowledgeCategory, string> = {
-  policy:  "bg-red-500/10 text-red-300 border-red-500/20",
-  faq:     "bg-blue-500/10 text-blue-300 border-blue-500/20",
-  style:   "bg-purple-500/10 text-purple-300 border-purple-500/20",
-  pricing: "bg-[#c9a84c]/10 text-[#c9a84c] border-[#c9a84c]/20",
-  general: "bg-zinc-800 text-zinc-400 border-zinc-700",
+  policy:  "bg-red-50 text-red-700 border-red-200",
+  faq:     "bg-sky-50 text-sky-700 border-sky-200",
+  style:   "bg-violet-50 text-violet-700 border-violet-200",
+  pricing: "bg-amber-50 text-amber-700 border-amber-200",
+  general: "bg-zinc-100 text-zinc-500 border-zinc-200",
 };
 
-const inputCls = "w-full bg-zinc-900 border border-zinc-800 text-white text-sm rounded-lg px-4 py-2.5 placeholder-zinc-600 focus:outline-none focus:border-zinc-600 transition-colors";
+const inputCls =
+  "w-full bg-zinc-50 border border-zinc-200 text-zinc-800 text-sm rounded-xl px-3.5 py-2.5 " +
+  "placeholder-zinc-400 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-colors";
 const textareaCls = `${inputCls} resize-none`;
 
 function AddEntryForm({
@@ -69,7 +71,7 @@ function AddEntryForm({
     return (
       <button
         onClick={() => setOpen(true)}
-        className="w-full border border-dashed border-zinc-800 hover:border-zinc-600 text-zinc-600 hover:text-zinc-300 text-sm py-4 rounded-xl transition-all"
+        className="w-full border border-dashed border-zinc-300 hover:border-violet-300 text-zinc-500 hover:text-violet-700 text-sm py-4 rounded-2xl transition-all"
       >
         + Add knowledge entry
       </button>
@@ -77,22 +79,22 @@ function AddEntryForm({
   }
 
   return (
-    <div className="bg-[#111] border border-[#1E1E1E] rounded-xl p-5 space-y-4">
-      <h3 className="text-sm font-semibold text-zinc-200">New Entry</h3>
+    <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl p-5 space-y-4">
+      <h3 className="text-sm font-semibold text-zinc-900">New Entry</h3>
 
       {/* Category */}
       <div>
-        <label className="text-xs uppercase tracking-widest text-zinc-500 block mb-2">Category</label>
+        <label className="text-xs text-zinc-500 block mb-2">Category</label>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {CATEGORIES.map((c) => (
             <button
               key={c.value}
               type="button"
               onClick={() => setCategory(c.value)}
-              className={`text-left px-3 py-2.5 rounded-lg border text-xs transition-all ${
+              className={`text-left px-3 py-2.5 rounded-xl border text-xs transition-all ${
                 category === c.value
-                  ? "border-white/20 bg-white/[0.06] text-white"
-                  : "border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
+                  ? "border-violet-300 bg-violet-50 text-violet-900"
+                  : "border-zinc-200 text-zinc-500 hover:border-zinc-300 hover:text-zinc-700"
               }`}
             >
               <p className="font-semibold mb-0.5">{c.label}</p>
@@ -104,7 +106,7 @@ function AddEntryForm({
 
       {/* Title */}
       <div>
-        <label className="text-xs uppercase tracking-widest text-zinc-500 block mb-1.5">Title</label>
+        <label className="text-xs text-zinc-500 block mb-1.5">Title</label>
         <input
           type="text"
           value={title}
@@ -123,7 +125,7 @@ function AddEntryForm({
 
       {/* Content */}
       <div>
-        <label className="text-xs uppercase tracking-widest text-zinc-500 block mb-1.5">Content</label>
+        <label className="text-xs text-zinc-500 block mb-1.5">Content</label>
         <textarea
           rows={4}
           value={content}
@@ -143,28 +145,28 @@ function AddEntryForm({
       <label className="flex items-center gap-3 cursor-pointer select-none">
         <div
           onClick={() => setIsPublic((v) => !v)}
-          className={`w-9 h-5 rounded-full transition-colors relative shrink-0 ${isPublic ? "bg-[#c9a84c]" : "bg-zinc-700"}`}
+          className={`w-9 h-5 rounded-full transition-colors relative shrink-0 ${isPublic ? "bg-violet-600" : "bg-zinc-300"}`}
         >
           <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${isPublic ? "translate-x-4" : ""}`} />
         </div>
-        <span className="text-xs text-zinc-400">
+        <span className="text-xs text-zinc-500">
           Show on public booking page{category === "faq" ? "" : " (recommended for FAQ only)"}
         </span>
       </label>
 
-      {error && <p className="text-red-400 text-xs">{error}</p>}
+      {error && <p className="text-red-600 text-xs">{error}</p>}
 
       <div className="flex gap-3">
         <button
           onClick={handleSave}
           disabled={isPending || !title.trim() || !content.trim()}
-          className="bg-white text-black text-xs font-bold px-5 py-2.5 rounded-full hover:bg-zinc-200 transition-colors disabled:opacity-40"
+          className="bg-violet-600 hover:bg-violet-700 disabled:opacity-40 text-white text-sm px-5 py-2.5 rounded-xl font-semibold transition-colors"
         >
           {isPending ? "Saving…" : "Save entry"}
         </button>
         <button
           onClick={() => { reset(); setOpen(false); }}
-          className="text-xs text-zinc-500 hover:text-zinc-300 px-4 py-2.5 transition-colors"
+          className="text-sm text-zinc-500 hover:text-zinc-700 px-4 py-2.5 transition-colors"
         >
           Cancel
         </button>
@@ -224,45 +226,49 @@ function EntryCard({
   const colorCls = CATEGORY_COLOR[entry.category];
 
   return (
-    <div className={`bg-[#111] border border-[#1E1E1E] rounded-xl overflow-hidden transition-opacity ${!entry.is_active ? "opacity-50" : ""}`}>
+    <div className={`bg-white border border-zinc-200 shadow-sm rounded-2xl overflow-hidden transition-opacity ${!entry.is_active ? "opacity-50" : ""}`}>
       {/* Header */}
       <div className="flex items-start justify-between gap-3 px-5 py-4">
         <div className="flex items-center gap-2.5 flex-wrap min-w-0">
-          <span className={`text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full border shrink-0 ${colorCls}`}>
+          <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium shrink-0 ${colorCls}`}>
             {CATEGORIES.find((c) => c.value === entry.category)?.label ?? entry.category}
           </span>
           {entry.is_public && (
-            <span className="text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full border bg-green-500/10 text-green-400 border-green-500/20 shrink-0">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-medium shrink-0">
               Public
             </span>
           )}
-          {!entry.is_active && (
-            <span className="text-[9px] uppercase tracking-widest text-zinc-600 shrink-0">Inactive</span>
-          )}
-          <p className="font-semibold text-sm text-[#E8E8E8] truncate">{entry.title}</p>
+          <span
+            className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${
+              entry.is_active ? "bg-zinc-100 text-zinc-500" : "bg-amber-50 text-amber-700"
+            }`}
+          >
+            {entry.is_active ? "Active" : "Disabled"}
+          </span>
+          <p className="font-semibold text-sm text-zinc-900 truncate">{entry.title}</p>
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-3 shrink-0">
           <button
             onClick={handleToggleActive}
             disabled={isPending}
-            className="text-[10px] text-zinc-600 hover:text-zinc-300 transition-colors disabled:opacity-50"
-            title={entry.is_active ? "Disable (remove from AI context)" : "Enable"}
+            className="text-xs font-medium text-zinc-400 hover:text-zinc-700 transition-colors disabled:opacity-50"
+            title={entry.is_active ? "Disable (remove from AI context)" : "Enable (restore to AI context)"}
           >
             {entry.is_active ? "Disable" : "Enable"}
           </button>
           <button
             onClick={() => { setEditing((v) => !v); setConfirmDel(false); }}
             disabled={isPending}
-            className="text-[10px] text-zinc-500 hover:text-zinc-200 transition-colors disabled:opacity-50"
+            className="text-xs font-medium text-violet-600 hover:text-violet-700 transition-colors disabled:opacity-50"
           >
             {editing ? "Cancel" : "Edit"}
           </button>
           <button
             onClick={handleDelete}
             disabled={isPending}
-            className={`text-[10px] transition-colors disabled:opacity-50 ${confirmDel ? "text-red-400" : "text-zinc-700 hover:text-red-400"}`}
+            className={`text-xs font-medium transition-colors disabled:opacity-50 ${confirmDel ? "text-red-600" : "text-zinc-400 hover:text-red-600"}`}
           >
             {confirmDel ? "Sure?" : "Delete"}
           </button>
@@ -272,37 +278,37 @@ function EntryCard({
       {/* Content */}
       {!editing ? (
         <div className="px-5 pb-4">
-          <p className="text-sm text-zinc-400 leading-relaxed whitespace-pre-wrap">{entry.content}</p>
+          <p className="text-sm text-zinc-600 leading-relaxed whitespace-pre-wrap">{entry.content}</p>
         </div>
       ) : (
-        <div className="px-5 pb-5 space-y-3 border-t border-[#1A1A1A] pt-4">
+        <div className="px-5 pb-5 space-y-3 border-t border-zinc-100 pt-4">
           <div>
-            <label className="text-xs uppercase tracking-widest text-zinc-500 block mb-1.5">Title</label>
+            <label className="text-xs text-zinc-500 block mb-1.5">Title</label>
             <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className={inputCls} />
           </div>
           <div>
-            <label className="text-xs uppercase tracking-widest text-zinc-500 block mb-1.5">Content</label>
+            <label className="text-xs text-zinc-500 block mb-1.5">Content</label>
             <textarea rows={4} value={content} onChange={(e) => setContent(e.target.value)} className={textareaCls} />
           </div>
           <label className="flex items-center gap-3 cursor-pointer select-none">
             <div
               onClick={() => setIsPublic((v) => !v)}
-              className={`w-9 h-5 rounded-full transition-colors relative shrink-0 ${isPublic ? "bg-[#c9a84c]" : "bg-zinc-700"}`}
+              className={`w-9 h-5 rounded-full transition-colors relative shrink-0 ${isPublic ? "bg-violet-600" : "bg-zinc-300"}`}
             >
               <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${isPublic ? "translate-x-4" : ""}`} />
             </div>
-            <span className="text-xs text-zinc-400">Show on public booking page</span>
+            <span className="text-xs text-zinc-500">Show on public booking page</span>
           </label>
-          {error && <p className="text-red-400 text-xs">{error}</p>}
+          {error && <p className="text-red-600 text-xs">{error}</p>}
           <div className="flex gap-3">
             <button
               onClick={handleSave}
               disabled={isPending || !title.trim() || !content.trim()}
-              className="bg-white text-black text-xs font-bold px-5 py-2.5 rounded-full hover:bg-zinc-200 disabled:opacity-40 transition-colors"
+              className="bg-violet-600 hover:bg-violet-700 disabled:opacity-40 text-white text-sm px-5 py-2.5 rounded-xl font-semibold transition-colors"
             >
               {isPending ? "Saving…" : "Save changes"}
             </button>
-            <button onClick={() => { setEditing(false); setTitle(entry.title); setContent(entry.content); setIsPublic(entry.is_public); }} className="text-xs text-zinc-500 hover:text-zinc-300 px-4 py-2.5 transition-colors">
+            <button onClick={() => { setEditing(false); setTitle(entry.title); setContent(entry.content); setIsPublic(entry.is_public); }} className="text-sm text-zinc-500 hover:text-zinc-700 px-4 py-2.5 transition-colors">
               Cancel
             </button>
           </div>
@@ -333,17 +339,17 @@ export default function KnowledgeClient({
     <div className="space-y-6">
       {/* Stats */}
       <div className="grid grid-cols-3 sm:grid-cols-3 gap-3">
-        <div className="bg-[#111] border border-[#1E1E1E] rounded-xl px-4 py-3 text-center">
-          <p className="text-2xl font-semibold text-[#E8E8E8]">{entries.length}</p>
-          <p className="text-[10px] uppercase tracking-wider text-zinc-600 mt-0.5">Total</p>
+        <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl px-4 py-3 text-center">
+          <p className="text-2xl font-semibold text-zinc-900">{entries.length}</p>
+          <p className="text-[10px] uppercase tracking-wider text-zinc-400 mt-0.5">Total</p>
         </div>
-        <div className="bg-[#111] border border-[#1E1E1E] rounded-xl px-4 py-3 text-center">
-          <p className="text-2xl font-semibold text-[#c9a84c]">{activeCount}</p>
-          <p className="text-[10px] uppercase tracking-wider text-zinc-600 mt-0.5">In AI Context</p>
+        <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl px-4 py-3 text-center">
+          <p className="text-2xl font-semibold text-violet-600">{activeCount}</p>
+          <p className="text-[10px] uppercase tracking-wider text-zinc-400 mt-0.5">In AI Context</p>
         </div>
-        <div className="bg-[#111] border border-[#1E1E1E] rounded-xl px-4 py-3 text-center">
-          <p className="text-2xl font-semibold text-green-400">{publicCount}</p>
-          <p className="text-[10px] uppercase tracking-wider text-zinc-600 mt-0.5">Public FAQ</p>
+        <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl px-4 py-3 text-center">
+          <p className="text-2xl font-semibold text-emerald-600">{publicCount}</p>
+          <p className="text-[10px] uppercase tracking-wider text-zinc-400 mt-0.5">Public FAQ</p>
         </div>
       </div>
 
@@ -355,8 +361,8 @@ export default function KnowledgeClient({
             onClick={() => setFilter(c.value as KnowledgeCategory | "all")}
             className={`text-xs px-3.5 py-1.5 rounded-full border transition-colors ${
               filter === c.value
-                ? "bg-white/10 text-white border-white/20"
-                : "text-zinc-500 border-zinc-800 hover:border-zinc-600 hover:text-zinc-300"
+                ? "bg-violet-50 text-violet-700 border-violet-300"
+                : "text-zinc-500 border-zinc-200 bg-white hover:border-zinc-300 hover:text-zinc-700"
             }`}
           >
             {c.label}
@@ -370,7 +376,7 @@ export default function KnowledgeClient({
       {/* Entry list */}
       <div className="space-y-3">
         {filtered.length === 0 && entries.length > 0 && (
-          <div className="bg-[#111] border border-[#1E1E1E] rounded-xl px-6 py-10 text-center">
+          <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl px-6 py-10 text-center">
             <p className="text-zinc-500 text-sm">No entries in this category yet.</p>
           </div>
         )}

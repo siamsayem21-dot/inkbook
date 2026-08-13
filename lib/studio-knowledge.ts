@@ -20,6 +20,8 @@ const CATEGORY_LABEL: Record<KnowledgeEntry["category"], string> = {
 
 /**
  * Fetch all active knowledge entries for a studio.
+ * Used by AI consultation/quote/style-detect consumers — inactive entries
+ * must never appear in AI context, so this stays active-only.
  * Returns empty array if the table doesn't exist yet (migration pending).
  */
 export async function getStudioKnowledge(studioId: string): Promise<KnowledgeEntry[]> {
@@ -30,6 +32,28 @@ export async function getStudioKnowledge(studioId: string): Promise<KnowledgeEnt
       .select("id, category, title, content, is_active, is_public, sort_order")
       .eq("studio_id", studioId)
       .eq("is_active", true)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+    return (data ?? []) as KnowledgeEntry[];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Fetch every knowledge entry for a studio, active and disabled alike.
+ * Used only by the owner's own management page, so a disabled entry stays
+ * visible (and re-enableable) after a refresh instead of disappearing.
+ * AI/public consumers must keep using getStudioKnowledge()/getPublicFaq()
+ * above, unchanged.
+ */
+export async function getAllStudioKnowledge(studioId: string): Promise<KnowledgeEntry[]> {
+  try {
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from("studio_knowledge")
+      .select("id, category, title, content, is_active, is_public, sort_order")
+      .eq("studio_id", studioId)
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true });
     return (data ?? []) as KnowledgeEntry[];
