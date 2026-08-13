@@ -35,39 +35,90 @@ function ArtistCapRowView({ artist }: { artist: ArtistCapRow }) {
   }
 
   return (
-    <tr className="border-b border-zinc-800/60 last:border-0">
-      <td className="px-6 py-4 text-zinc-200">{artist.name}</td>
-      <td className="px-6 py-4">
-        <span className={`text-sm ${atCap ? "text-red-400 font-semibold" : "text-zinc-400"}`}>
+    <tr className="border-b border-zinc-50 last:border-0">
+      <td className="py-3 pr-4 text-sm font-medium text-zinc-900">{artist.name}</td>
+      <td className="py-3 px-4">
+        <span className={`text-sm tabular-nums ${atCap ? "text-red-600 font-semibold" : "text-zinc-500"}`}>
           {artist.bookingsThisMonth} / {artist.monthlyBookingCap}
         </span>
         {atCap && (
-          <span className="ml-2 text-[9px] uppercase tracking-widest text-red-500/70">At capacity</span>
+          <span className="ml-2 text-[10px] font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full">At capacity</span>
         )}
       </td>
-      <td className="px-6 py-4">
+      <td className="py-3 pl-4">
         <div className="flex items-center gap-2">
           <input
             type="number"
             min={1}
             value={cap}
             onChange={(e) => setCap(e.target.value)}
-            className="w-20 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-zinc-600"
+            className="w-20 bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-1.5 text-sm text-zinc-800 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-colors"
           />
           {dirty && (
             <button
               onClick={handleSave}
               disabled={isPending}
-              className="text-xs text-[#c9a84c] hover:text-[#e0bd63] transition-colors disabled:opacity-40"
+              className="text-xs font-medium text-violet-600 hover:text-violet-700 transition-colors disabled:opacity-40"
             >
               {isPending ? "Saving…" : "Save"}
             </button>
           )}
-          {saved && <span className="text-xs text-emerald-400">✓ Saved</span>}
+          {saved && <span className="text-xs text-emerald-600">✓ Saved</span>}
         </div>
-        {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
+        {error && <p className="text-red-600 text-xs mt-1">{error}</p>}
       </td>
     </tr>
+  );
+}
+
+function WaitlistCard({
+  entry, isPending, removing, onRemove,
+}: {
+  entry: WaitlistEntry;
+  isPending: boolean;
+  removing: boolean;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="font-semibold text-zinc-900">{entry.clientName}</p>
+            <span
+              className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                entry.notified ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-zinc-500"
+              }`}
+            >
+              {entry.notified ? "Notified" : "Waiting"}
+            </span>
+          </div>
+          <p className="text-sm text-zinc-500 mt-0.5">
+            {entry.artistName}
+            {entry.preferredStyle && ` · ${entry.preferredStyle}`}
+          </p>
+        </div>
+        <p className="text-[11px] text-zinc-400 shrink-0">Added {fmtDate(entry.addedAt)}</p>
+      </div>
+
+      {entry.notes && (
+        <p className="text-sm text-zinc-500 mt-3 pt-3 border-t border-zinc-100 leading-relaxed">
+          {entry.notes}
+        </p>
+      )}
+
+      <div className="flex items-center justify-end mt-3">
+        <button
+          onClick={onRemove}
+          disabled={isPending}
+          className={`text-xs font-medium transition-colors disabled:opacity-40 ${
+            removing ? "text-red-600" : "text-zinc-400 hover:text-red-600"
+          }`}
+        >
+          {removing ? "Confirm remove" : "Remove"}
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -94,20 +145,20 @@ export default function WaitlistManager({
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-xs uppercase tracking-widest text-zinc-500 mb-3">Monthly booking cap per artist</p>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
-          {initialArtists.length === 0 ? (
-            <p className="px-6 py-8 text-sm text-zinc-500 text-center">No active artists yet.</p>
-          ) : (
+      <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6">
+        <div className="mb-4">
+          <h2 className="text-base font-semibold text-zinc-900">Monthly booking cap per artist</h2>
+        </div>
+        {initialArtists.length === 0 ? (
+          <p className="text-sm text-zinc-500 text-center py-4">No active artists yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-800">
-                  {["Artist", "Booked this month", "Cap", ""].map((h) => (
-                    <th key={h} className="text-left text-zinc-500 text-[10px] uppercase tracking-widest font-medium px-6 py-3.5">
-                      {h}
-                    </th>
-                  ))}
+                <tr className="border-b border-zinc-100 text-zinc-400 text-xs uppercase tracking-wider">
+                  <th className="text-left font-medium py-2.5 pr-4">Artist</th>
+                  <th className="text-left font-medium py-2.5 px-4">Booked this month</th>
+                  <th className="text-left font-medium py-2.5 pl-4">Cap</th>
                 </tr>
               </thead>
               <tbody>
@@ -116,67 +167,32 @@ export default function WaitlistManager({
                 ))}
               </tbody>
             </table>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       <div>
-        <p className="text-xs uppercase tracking-widest text-zinc-500 mb-3">Waitlist entries</p>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
-          {entries.length === 0 ? (
-            <div className="px-6 py-12 text-center">
-              <p className="text-zinc-500 text-sm">No clients on the waitlist.</p>
-              <p className="text-zinc-700 text-xs mt-1">
-                Clients are added here automatically when they hit an artist&apos;s monthly cap while booking.
-              </p>
-            </div>
-          ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-zinc-800">
-                  {["Client", "Artist", "Style", "Notes", "Status", "Added", ""].map((h) => (
-                    <th key={h} className="text-left text-zinc-500 text-[10px] uppercase tracking-widest font-medium px-6 py-3.5">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {entries.map((entry, i) => (
-                  <tr key={entry.id} className={i < entries.length - 1 ? "border-b border-zinc-800/60" : ""}>
-                    <td className="px-6 py-4 text-zinc-200">{entry.clientName}</td>
-                    <td className="px-6 py-4 text-zinc-400">{entry.artistName}</td>
-                    <td className="px-6 py-4 text-zinc-400 text-xs">{entry.preferredStyle ?? "—"}</td>
-                    <td className="px-6 py-4 text-zinc-500 text-xs max-w-xs truncate">{entry.notes ?? "—"}</td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`text-[10px] px-2 py-0.5 rounded-full border ${
-                          entry.notified
-                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                            : "bg-zinc-800 text-zinc-500 border-zinc-700"
-                        }`}
-                      >
-                        {entry.notified ? "Notified" : "Waiting"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-zinc-500 text-xs whitespace-nowrap">{fmtDate(entry.addedAt)}</td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => handleRemove(entry.id)}
-                        disabled={isPending}
-                        className={`text-xs transition-colors disabled:opacity-40 ${
-                          removing === entry.id ? "text-red-400 font-semibold" : "text-zinc-600 hover:text-red-400"
-                        }`}
-                      >
-                        {removing === entry.id ? "Confirm remove" : "Remove"}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+        <p className="text-sm text-zinc-500 mb-3">
+          Waitlist entries {entries.length > 0 && `(${entries.length})`}
+        </p>
+        {entries.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm px-6 py-16 text-center">
+            <p className="text-base font-semibold text-zinc-900 mb-2">No Clients on the Waitlist</p>
+            <p className="text-zinc-500 text-sm">Clients are added here automatically when they hit an artist&apos;s monthly cap while booking.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {entries.map((entry) => (
+              <WaitlistCard
+                key={entry.id}
+                entry={entry}
+                isPending={isPending}
+                removing={removing === entry.id}
+                onRemove={() => handleRemove(entry.id)}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
