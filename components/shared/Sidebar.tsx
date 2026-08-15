@@ -25,7 +25,8 @@ const ownerNav = [
 ];
 
 const artistNav = [
-  { label: "Dashboard",   href: "/artist/dashboard" },
+  { label: "Dashboard",      href: "/artist/dashboard" },
+  { label: "Consultations",  href: "/artist/consultations" },
   { label: "Schedule",    href: "/artist/schedule" },
   { label: "Bookings",    href: "/artist/bookings" },
   { label: "Requests",    href: "/artist/requests" },
