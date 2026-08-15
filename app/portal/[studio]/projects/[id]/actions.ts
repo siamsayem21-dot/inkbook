@@ -484,3 +484,83 @@ export async function submitReview(
 
   return {};
 }
+
+// Private client feedback rating (1-5 stars, no text, no moderation) — the
+// opposite of submitReview() above, which writes a public, moderated
+// testimonial to the `reviews` table. This writes directly onto
+// bookings.feedback_rating for the owner/artist's eyes only. Same ownership
+// chain and "completed bookings only" rule as submitReview(); see
+// supabase/migrations/20260802000000_booking_feedback_rating.sql for why
+// there's no separate RLS policy for this column.
+export async function submitFeedbackRating(
+  bookingId: string,
+  rating: number
+): Promise<{ error?: string }> {
+  const account = await ensureClientAccount();
+  if (!account) return { error: "Not signed in." };
+
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return { error: "Rating must be between 1 and 5 stars." };
+  }
+
+  const supabase = createAdminClient();
+
+  const { data: chatRows } = await supabase
+    .from("ai_chats")
+    .select("consultation_id")
+    .eq("client_account_id", account.id)
+    .eq("status", "submitted")
+    .not("consultation_id", "is", null);
+
+  const consultationIds = Array.from(
+    new Set(
+      ((chatRows ?? []) as { consultation_id: string | null }[])
+        .map((r) => r.consultation_id)
+        .filter((id): id is string => Boolean(id))
+    )
+  );
+  if (consultationIds.length === 0) return { error: "Booking not found." };
+
+  const { data: consultRow } = await supabase
+    .from("consultations")
+    .select("id")
+    .in("id", consultationIds)
+    .eq("booking_id", bookingId)
+    .maybeSingle();
+  if (!consultRow) return { error: "Booking not found." };
+
+  const { data: bookingRow } = await supabase
+    .from("bookings")
+    .select("id, status, feedback_rating")
+    .eq("id", bookingId)
+    .maybeSingle();
+  const booking = bookingRow as { id: string; status: string; feedback_rating: number | null } | null;
+  if (!booking) return { error: "Booking not found." };
+  if (booking.status !== "completed") {
+    return { error: "Feedback can only be submitted after your session is completed." };
+  }
+  if (booking.feedback_rating !== null) {
+    return { error: "You've already submitted feedback for this booking." };
+  }
+
+  const { data: updatedRows, error } = await supabase
+    .from("bookings")
+    .update({ feedback_rating: rating, feedback_submitted_at: new Date().toISOString() } as never)
+    .eq("id", bookingId)
+    .is("feedback_rating", null)
+    .select("id");
+
+  if (error) {
+    console.error("[submitFeedbackRating]", error.message);
+    return { error: "Failed to submit your feedback — please try again." };
+  }
+
+  // .is("feedback_rating", null) is an optimistic lock against a double-submit
+  // race the pre-check above missed — empty result means someone else's
+  // request already won.
+  if ((updatedRows ?? []).length === 0) {
+    return { error: "You've already submitted feedback for this booking." };
+  }
+
+  return {};
+}

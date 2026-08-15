@@ -8,6 +8,7 @@ import { getBrand } from "@/lib/brand";
 import { getClientBookingDetail } from "@/lib/client-portal/bookings";
 import { getBookingStatusMeta } from "@/lib/client-portal/booking-status";
 import BookingDetailActions from "./BookingDetailActions";
+import FeedbackRating from "./FeedbackRating";
 
 interface Props {
   params: { studio: string; bookingId: string };
@@ -176,6 +177,11 @@ export default async function ClientBookingDetailPage({ params }: Props) {
               <p className="text-sm text-zinc-200">
                 {booking.hasReview ? "✓ Submitted — thank you!" : "Not yet submitted"}
               </p>
+            </div>
+          )}
+          {booking.status === "completed" && (
+            <div className="col-span-2">
+              <FeedbackRating bookingId={booking.id} initialRating={booking.feedbackRating} />
             </div>
           )}
         </div>
