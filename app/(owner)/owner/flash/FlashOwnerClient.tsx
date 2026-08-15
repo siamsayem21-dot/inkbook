@@ -73,7 +73,7 @@ export default function FlashOwnerClient({
         <select
           value={artistFilter}
           onChange={(e) => setArtistFilter(e.target.value)}
-          className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 focus:outline-none focus:border-zinc-600 transition-colors"
+          className="bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm text-zinc-700 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-colors"
         >
           <option value="">All Artists</option>
           {artists.map((a) => (
@@ -89,8 +89,8 @@ export default function FlashOwnerClient({
               onClick={() => setCategoryFilter(cat)}
               className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
                 categoryFilter === cat
-                  ? "bg-[#c9a84c]/10 text-[#c9a84c] border-[#c9a84c]/30"
-                  : "bg-transparent text-zinc-500 border-zinc-800 hover:border-zinc-600 hover:text-zinc-300"
+                  ? "bg-violet-50 text-violet-700 border-violet-200"
+                  : "bg-white text-zinc-500 border-zinc-200 hover:border-zinc-300 hover:text-zinc-700"
               }`}
             >
               {cat || "All"}
@@ -98,18 +98,18 @@ export default function FlashOwnerClient({
           ))}
         </div>
 
-        <span className="text-xs text-zinc-600 ml-auto">
+        <span className="text-xs text-zinc-400 ml-auto">
           {filtered.length} design{filtered.length !== 1 ? "s" : ""}
         </span>
       </div>
 
       {error && (
-        <p className="text-xs text-red-400">{error}</p>
+        <p className="text-xs text-red-600">{error}</p>
       )}
 
       {/* Grid */}
       {filtered.length === 0 ? (
-        <div className="bg-[#111] border border-[#1E1E1E] rounded-xl px-6 py-16 text-center">
+        <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm px-6 py-16 text-center">
           <p className="text-zinc-500 text-sm">
             {designs.length === 0
               ? "No flash designs yet. Artists can add designs from their Flash page."
@@ -121,16 +121,16 @@ export default function FlashOwnerClient({
           {filtered.map((d) => (
             <div
               key={d.id}
-              className="bg-[#111] border border-[#1E1E1E] rounded-xl overflow-hidden hover:border-zinc-700 transition-colors"
+              className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden hover:border-violet-200 transition-colors"
             >
               {/* Image */}
-              <div className="aspect-square overflow-hidden bg-zinc-900 relative">
+              <div className="aspect-square overflow-hidden bg-zinc-100 relative">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={d.image_url} alt={d.title} className="w-full h-full object-cover" />
                 {/* Availability overlay badge */}
                 {!d.is_available && (
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    <span className="text-[9px] uppercase tracking-widest text-zinc-400 bg-black/60 px-2 py-1 rounded">
+                    <span className="text-[9px] uppercase tracking-widest text-white bg-black/60 px-2 py-1 rounded">
                       Hidden
                     </span>
                   </div>
@@ -139,26 +139,26 @@ export default function FlashOwnerClient({
 
               {/* Info */}
               <div className="p-3 space-y-2">
-                <p className="text-sm font-medium text-[#E8E8E8] truncate">{d.title}</p>
-                <p className="text-[#c9a84c] text-xs font-semibold">{fmtPrice(d.price)}</p>
+                <p className="text-sm font-medium text-zinc-900 truncate">{d.title}</p>
+                <p className="text-violet-600 text-xs font-semibold">{fmtPrice(d.price)}</p>
 
                 {/* Artist + category */}
                 <div className="flex flex-wrap gap-1">
-                  <span className="text-[9px] uppercase tracking-wide bg-white/[0.04] text-zinc-500 px-1.5 py-0.5 border border-white/[0.06]">
+                  <span className="text-[9px] uppercase tracking-wide bg-zinc-100 text-zinc-500 px-1.5 py-0.5 rounded-full">
                     {artistMap[d.artist_id] ?? "—"}
                   </span>
                   {d.category && (
-                    <span className="text-[9px] uppercase tracking-wide bg-white/[0.04] text-zinc-500 px-1.5 py-0.5 border border-white/[0.06]">
+                    <span className="text-[9px] uppercase tracking-wide bg-zinc-100 text-zinc-500 px-1.5 py-0.5 rounded-full">
                       {d.category}
                     </span>
                   )}
                   {!d.is_repeatable && (
-                    <span className="text-[9px] uppercase tracking-wide bg-[#c9a84c]/10 text-[#c9a84c] px-1.5 py-0.5 border border-[#c9a84c]/20">
+                    <span className="text-[9px] uppercase tracking-wide bg-violet-50 text-violet-700 px-1.5 py-0.5 rounded-full">
                       1×
                     </span>
                   )}
                   {d.is_booked && (
-                    <span className="text-[9px] uppercase tracking-wide bg-green-500/10 text-green-400 px-1.5 py-0.5 border border-green-500/20">
+                    <span className="text-[9px] uppercase tracking-wide bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full">
                       Booked
                     </span>
                   )}
@@ -171,8 +171,8 @@ export default function FlashOwnerClient({
                     disabled={isPending}
                     className={`flex-1 text-xs py-1.5 px-2 rounded-lg border transition-colors disabled:opacity-50 ${
                       d.is_available
-                        ? "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
-                        : "border-[#c9a84c]/30 text-[#c9a84c] hover:bg-[#c9a84c]/10"
+                        ? "border-zinc-200 text-zinc-500 hover:border-zinc-300 hover:text-zinc-700"
+                        : "border-violet-200 text-violet-700 hover:bg-violet-50"
                     }`}
                   >
                     {d.is_available ? "Hide" : "Show"}
@@ -183,7 +183,7 @@ export default function FlashOwnerClient({
                     className={`flex-1 text-xs py-1.5 px-2 rounded-lg transition-colors disabled:opacity-50 ${
                       deleteConfirm === d.id
                         ? "bg-red-600 text-white hover:bg-red-700"
-                        : "border border-zinc-700 text-zinc-500 hover:text-red-400 hover:border-red-800"
+                        : "border border-zinc-200 text-zinc-500 hover:text-red-600 hover:border-red-200"
                     }`}
                   >
                     {deleteConfirm === d.id ? "Sure?" : "Delete"}

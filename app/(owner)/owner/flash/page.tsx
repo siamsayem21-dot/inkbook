@@ -29,17 +29,19 @@ export default async function OwnerFlashPage() {
   const artistMap = Object.fromEntries(allArtists.map((a) => [a.id, a.name]));
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <h1 className="text-2xl font-bold">Flash Designs</h1>
-        <span className="text-xs bg-[#c9a84c]/10 text-[#c9a84c] border border-[#c9a84c]/20 rounded-full px-2.5 py-1">
-          {designs.length}
-        </span>
+    <div className="-m-4 -mt-16 md:-m-8 min-h-[calc(100vh-3rem)] md:min-h-screen" style={{ background: "#FAF9FC" }}>
+      <div className="p-4 pt-16 md:p-8 space-y-6">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl md:text-3xl font-bold text-zinc-900">Flash Designs</h1>
+          <span className="text-xs font-medium bg-violet-50 text-violet-700 rounded-full px-2.5 py-1">
+            {designs.length}
+          </span>
+        </div>
+        <p className="text-sm text-zinc-500 -mt-4">
+          All flash designs across your studio. Artists manage their own designs from their Flash page.
+        </p>
+        <FlashOwnerClient designs={designs} artistMap={artistMap} artists={allArtists} />
       </div>
-      <p className="text-zinc-500 text-sm -mt-4">
-        All flash designs across your studio. Artists manage their own designs from their Flash page.
-      </p>
-      <FlashOwnerClient designs={designs} artistMap={artistMap} artists={allArtists} />
     </div>
   );
 }
