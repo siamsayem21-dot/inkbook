@@ -2,7 +2,7 @@
 
 ## CURRENT
 
-_(empty — Owner Portal redesign series is complete, 16/16 modules locked. Next task pulled from NEXT when one is queued.)_
+_(empty — all 3 safe continuous-workflow test tasks complete. Next task pulled from NEXT when one is queued.)_
 
 ## NEXT
 
@@ -28,3 +28,12 @@ _(none)_
   - Full lock sequence run and verified (2026-08-15): typecheck clean · unit tests 483/483 · component tests 12/12 · DB verification tests 80/80 (CI, real Postgres) · production build clean · committed (`c5acf66`) · pushed to `origin/master` · Vercel production deploy Ready and aliased to `www.inkbook.tech` · production smoke test confirmed all 3 routes (`/owner/settings`, `/owner/settings/studio`, `/owner/settings/billing`) live and correctly gated behind `/login`.
   - One CI job (E2E full-owner-workflow) failed during this run for a confirmed pre-existing, unrelated reason — tracked separately in `## BLOCKED`. Siam reviewed and approved locking Settings despite it.
   - Files: `app/(owner)/owner/settings/page.tsx`, `app/(owner)/owner/settings/billing/page.tsx`, `app/(owner)/owner/settings/billing/BillingClient.tsx`, `app/(owner)/owner/settings/studio/page.tsx`, `app/(owner)/owner/settings/studio/StudioSettingsClient.tsx`
+
+- **[Safe continuous-workflow test 1/3] Run TypeScript typecheck and verify the result — VERIFIED**
+  - Ran `npx tsc --noEmit -p tsconfig.json` (2026-08-15). Exit clean, zero output, zero errors. Genuine pass.
+
+- **[Safe continuous-workflow test 2/3] Run the normal unit test suite and verify the result — VERIFIED**
+  - Ran `npm run test` (2026-08-15). Vitest: 42 test files, 483/483 tests passed. Genuine pass.
+
+- **[Safe continuous-workflow test 3/3] Run lint and verify the result — VERIFIED**
+  - Ran `npm run lint` (2026-08-15). `next lint`: no warnings, no errors. Genuine pass.

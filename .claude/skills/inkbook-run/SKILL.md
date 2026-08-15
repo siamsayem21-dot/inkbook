@@ -7,6 +7,20 @@ description: Continuous InkBook execution loop. Works the CURRENT task from TASK
 
 Runs InkBook's build queue one task at a time, safely. This skill never invents work — it only executes what `TASKS.md` already says is CURRENT, and only advances the queue when a task has been actually tested and verified.
 
+## Permanent Startup Rule — queue auto-advance
+
+This rule governs every run, in addition to (not instead of) the rest of this skill:
+
+- If `## CURRENT` is empty and `## NEXT` contains one or more tasks:
+  1. Move the first `NEXT` task into `## CURRENT`.
+  2. Start executing that task.
+  3. After it is genuinely VERIFIED, move it to `## DONE`.
+  4. Promote the next `NEXT` task to `## CURRENT` and continue.
+  5. Repeat until `## NEXT` is empty, or a task becomes `BLOCKED` / `NEEDS_SIAM` / requires approval.
+- If both `## CURRENT` and `## NEXT` are empty, stop cleanly and report that there is no queued work.
+
+This is exactly the flow already described in Step 0 (pulling a task into CURRENT) and Step 2 outcome A (advancing on VERIFIED) — stated here as one explicit rule. Every guardrail, safety check, and stop condition elsewhere in this skill still applies at every step of the loop; auto-advancing to the next task never skips Step 1's full Inspect → Build → Test → Fix → Verify cycle, and any task that resolves as NEEDS_SIAM, BLOCKED, or requires Siam approval still halts the loop immediately per Step 2.
+
 ## Step 0 — Load context (every run, no exceptions)
 
 1. Read `CLAUDE.md` in full, especially the **Continuous Development Workflow** section — its rules govern this entire skill.
