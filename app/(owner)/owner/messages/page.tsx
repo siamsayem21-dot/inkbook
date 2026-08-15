@@ -4,9 +4,7 @@ import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudioId } from "@/lib/auth/config";
 import { listThreadsForStudio } from "@/lib/messaging/threads";
-import ThreadList, { type ThreadListItem } from "@/components/messaging/ThreadList";
-
-const GOLD = "#D4A853";
+import OwnerThreadList, { type ThreadListItem } from "@/components/owner/OwnerThreadList";
 
 function deriveTitle(description: string, style: string | null): string {
   const base = (style ? `${style} Tattoo` : description) || "Tattoo Project";
@@ -51,17 +49,20 @@ export default async function OwnerMessagesPage() {
   });
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold mb-1">Messages</h1>
-      <p className="text-zinc-500 text-sm mb-8">Conversations with your clients.</p>
+    <div className="-m-4 -mt-16 md:-m-8 min-h-[calc(100vh-3rem)] md:min-h-screen" style={{ background: "#FAF9FC" }}>
+      <div className="p-4 pt-16 md:p-8 space-y-6 max-w-2xl">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-zinc-900">Messages</h1>
+          <p className="text-sm text-zinc-500 mt-1">Conversations with your clients.</p>
+        </div>
 
-      <ThreadList
-        items={items}
-        basePath="/owner/messages"
-        accentColor={GOLD}
-        emptyTitle="No conversations yet"
-        emptyDescription="Client messages will show up here once they reach out from the portal."
-      />
+        <OwnerThreadList
+          items={items}
+          basePath="/owner/messages"
+          emptyTitle="No conversations yet"
+          emptyDescription="Client messages will show up here once they reach out from the portal."
+        />
+      </div>
     </div>
   );
 }
