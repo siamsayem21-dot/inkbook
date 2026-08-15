@@ -16,8 +16,8 @@ export default function CopyLinkButton({ link }: { link: string }) {
       onClick={handleCopy}
       className={`shrink-0 text-sm px-4 py-2 rounded-lg border transition-colors cursor-pointer ${
         copied
-          ? "bg-green-500/10 border-green-500/30 text-green-400"
-          : "bg-[#c9a84c]/10 border-[#c9a84c]/30 text-[#c9a84c] hover:bg-[#c9a84c]/20"
+          ? "bg-green-50 border-green-200 text-green-700"
+          : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300"
       }`}
     >
       {copied ? "Copied!" : "Copy Link"}

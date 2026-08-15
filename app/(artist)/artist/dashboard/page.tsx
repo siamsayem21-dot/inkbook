@@ -1,19 +1,20 @@
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUser } from "@/lib/auth/config";
+import { DollarSign, CalendarCheck, CalendarClock } from "lucide-react";
 import CopyLinkButton from "@/components/artist/CopyLinkButton";
 
 function NoArtistProfile() {
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="font-cinzel text-2xl font-bold tracking-wide">Your Dashboard</h1>
-      </div>
-      <div className="bg-[#111] border border-[#1E1E1E] rounded-xl p-8 text-center">
-        <p className="text-sm text-zinc-400 mb-2">Artist profile not set up yet.</p>
-        <p className="text-xs text-zinc-600">
-          Ask your studio owner to add you as an artist in the owner dashboard.
-        </p>
+    <div className="-m-4 -mt-16 md:-m-8 min-h-[calc(100vh-3rem)] md:min-h-screen" style={{ background: "#FAF9FC" }}>
+      <div className="p-4 pt-16 md:p-8 space-y-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-zinc-900">Your Dashboard</h1>
+        <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-8 text-center">
+          <p className="text-sm text-zinc-500 mb-2">Artist profile not set up yet.</p>
+          <p className="text-xs text-zinc-400">
+            Ask your studio owner to add you as an artist in the owner dashboard.
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -144,13 +145,15 @@ export default async function ArtistDashboardPage() {
   }
 
   // Query: SELECT deposit_amount FROM bookings
-  //        WHERE artist_id = $1 AND status = 'confirmed'
+  //        WHERE artist_id = $1 AND status IN ('confirmed', 'completed')
   //        AND date >= $2 AND date <= $3
+  // Same PAID_STATUSES definition as app/(artist)/artist/earnings/page.tsx —
+  // this dashboard card and that page's "This month" stat must always agree.
   const { data: monthRaw } = await supabase
     .from("bookings")
     .select("deposit_amount_cents")
     .eq("artist_id", artist.id)
-    .eq("status", "confirmed")
+    .in("status", ["confirmed", "completed"])
     .gte("date", firstOfMonth)
     .lte("date", lastOfMonth);
 
@@ -160,136 +163,144 @@ export default async function ArtistDashboardPage() {
   ) / 100;
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="font-cinzel text-2xl font-bold tracking-wide">Your Dashboard</h1>
-        <p className="text-sm text-zinc-500 mt-1">
-          {now.toLocaleDateString("en-US", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
-        </p>
-      </div>
-
-      {/* Stats row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-[#111] border border-[#1E1E1E] rounded-xl p-5">
-          <p className="text-xs text-zinc-500 uppercase tracking-widest mb-3">
-            This Month&apos;s Earnings
+    // Breaks out of ArtistLayout's dark padding (p-4 pt-16 md:p-8) to paint this
+    // page's own light canvas — same pattern as app/(owner)/owner/dashboard/page.tsx.
+    // The shared Sidebar (components/shared/Sidebar.tsx) is untouched — it's used by
+    // both Owner and Artist portals, so relighting it would also affect the locked
+    // Owner Portal.
+    <div className="-m-4 -mt-16 md:-m-8 min-h-[calc(100vh-3rem)] md:min-h-screen" style={{ background: "#FAF9FC" }}>
+      <div className="p-4 pt-16 md:p-8 space-y-8">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-zinc-900">Your Dashboard</h1>
+          <p className="text-sm text-zinc-500 mt-1">
+            {now.toLocaleDateString("en-US", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
           </p>
-          <p className="text-3xl font-semibold text-[#c9a84c]">
-            {fmtMoney(monthEarnings)}
-          </p>
-          <p className="text-xs text-zinc-600 mt-2">confirmed deposits only</p>
         </div>
 
-        <div className="bg-[#111] border border-[#1E1E1E] rounded-xl p-5">
-          <p className="text-xs text-zinc-500 uppercase tracking-widest mb-3">
-            Today&apos;s Bookings
-          </p>
-          <p className="text-3xl font-semibold text-[#c9a84c]">
-            {todayBookings.length}
-          </p>
-          <p className="text-xs text-zinc-600 mt-2">appointments today</p>
-        </div>
-
-        <div className="bg-[#111] border border-[#1E1E1E] rounded-xl p-5">
-          <p className="text-xs text-zinc-500 uppercase tracking-widest mb-3">
-            Next 7 Days
-          </p>
-          <p className="text-3xl font-semibold text-[#c9a84c]">
-            {upcomingBookings.length}
-          </p>
-          <p className="text-xs text-zinc-600 mt-2">upcoming appointments</p>
-        </div>
-      </div>
-
-      {/* Booking link */}
-      <div className="bg-[#111] border border-[#1E1E1E] rounded-xl p-5 flex items-center gap-4">
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-zinc-500 uppercase tracking-widest mb-2">
-            Your Booking Link
-          </p>
-          <p className="font-mono text-sm text-[#c9a84c] break-all">{bookingLink}</p>
-        </div>
-        <CopyLinkButton link={bookingLink} />
-      </div>
-
-      {/* Main grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {/* Today's bookings */}
-        <div className="bg-[#111] border border-[#1E1E1E] rounded-xl overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[#1A1A1A]">
-            <h2 className="text-sm font-medium text-[#BBB]">Today&apos;s Bookings</h2>
-            <span className="text-xs bg-[#c9a84c]/10 text-[#c9a84c] rounded-full px-3 py-1">
-              {todayBookings.length} total
-            </span>
+        {/* Stats row */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5">
+            <div className="w-9 h-9 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center mb-3">
+              <DollarSign size={17} />
+            </div>
+            <p className="text-2xl font-bold text-zinc-900">{fmtMoney(monthEarnings)}</p>
+            <p className="text-sm text-zinc-500 mt-0.5">This Month&apos;s Earnings</p>
+            <p className="text-xs text-zinc-400 mt-1">confirmed &amp; completed deposits</p>
           </div>
 
-          {todayBookings.length === 0 ? (
-            <p className="px-5 py-10 text-sm text-zinc-600 text-center">
-              No bookings today
-            </p>
-          ) : (
-            todayBookings.map((b) => (
-              <div
-                key={b.id}
-                className="flex items-center gap-4 px-5 py-3.5 border-b border-[#161616] last:border-0"
-              >
-                <span className="text-xs text-[#c9a84c] font-medium w-16 shrink-0">
-                  {fmt12h(b.time)}
-                </span>
-                <span className="flex-1 text-sm text-[#CCC]">
-                  {b.clients?.full_name ?? "—"}
-                </span>
-                <span className="text-sm text-zinc-400">
-                  ${(b.deposit_amount_cents / 100).toFixed(2)}
-                </span>
-              </div>
-            ))
-          )}
-        </div>
-
-        {/* Next 7 days */}
-        <div className="bg-[#111] border border-[#1E1E1E] rounded-xl overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[#1A1A1A]">
-            <h2 className="text-sm font-medium text-[#BBB]">Next 7 Days</h2>
-            <span className="text-xs bg-[#c9a84c]/10 text-[#c9a84c] rounded-full px-3 py-1">
-              {upcomingBookings.length} upcoming
-            </span>
+          <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5">
+            <div className="w-9 h-9 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center mb-3">
+              <CalendarCheck size={17} />
+            </div>
+            <p className="text-2xl font-bold text-zinc-900">{todayBookings.length}</p>
+            <p className="text-sm text-zinc-500 mt-0.5">Today&apos;s Bookings</p>
+            <p className="text-xs text-zinc-400 mt-1">appointments today</p>
           </div>
 
-          {Object.keys(byDay).length === 0 ? (
-            <p className="px-5 py-10 text-sm text-zinc-600 text-center">
-              No upcoming bookings
+          <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5">
+            <div className="w-9 h-9 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center mb-3">
+              <CalendarClock size={17} />
+            </div>
+            <p className="text-2xl font-bold text-zinc-900">{upcomingBookings.length}</p>
+            <p className="text-sm text-zinc-500 mt-0.5">Next 7 Days</p>
+            <p className="text-xs text-zinc-400 mt-1">upcoming appointments</p>
+          </div>
+        </div>
+
+        {/* Booking link */}
+        <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5 flex items-center gap-4">
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-zinc-500 uppercase tracking-widest mb-2">
+              Your Booking Link
             </p>
-          ) : (
-            Object.entries(byDay).map(([date, bookings]) => (
-              <div key={date}>
-                <div className="px-5 py-2 bg-[#0D0D0D] border-b border-[#161616]">
-                  <span className="text-xs text-zinc-500 uppercase tracking-wider">
-                    {fmtDayLabel(date)}
-                  </span>
-                </div>
-                {bookings.map((b) => (
+            <p className="font-mono text-sm text-violet-700 break-all">{bookingLink}</p>
+          </div>
+          <CopyLinkButton link={bookingLink} />
+        </div>
+
+        {/* Main grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          {/* Today's bookings */}
+          <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100">
+              <h2 className="text-base font-semibold text-zinc-900">Today&apos;s Bookings</h2>
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 shrink-0">
+                {todayBookings.length} total
+              </span>
+            </div>
+
+            {todayBookings.length === 0 ? (
+              <p className="px-5 py-10 text-sm text-zinc-400 text-center">
+                No bookings today
+              </p>
+            ) : (
+              <div className="divide-y divide-zinc-100">
+                {todayBookings.map((b) => (
                   <div
                     key={b.id}
-                    className="flex items-center gap-4 px-5 py-3 border-b border-[#161616] last:border-0"
+                    className="flex items-center gap-4 px-5 py-3.5"
                   >
-                    <span className="text-xs text-[#c9a84c] w-16 shrink-0">
+                    <span className="text-xs text-violet-600 font-medium w-16 shrink-0">
                       {fmt12h(b.time)}
                     </span>
-                    <span className="text-sm text-[#CCC]">
+                    <span className="flex-1 text-sm text-zinc-900 truncate">
                       {b.clients?.full_name ?? "—"}
+                    </span>
+                    <span className="text-sm text-zinc-500">
+                      ${(b.deposit_amount_cents / 100).toFixed(2)}
                     </span>
                   </div>
                 ))}
               </div>
-            ))
-          )}
+            )}
+          </div>
+
+          {/* Next 7 days */}
+          <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100">
+              <h2 className="text-base font-semibold text-zinc-900">Next 7 Days</h2>
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 shrink-0">
+                {upcomingBookings.length} upcoming
+              </span>
+            </div>
+
+            {Object.keys(byDay).length === 0 ? (
+              <p className="px-5 py-10 text-sm text-zinc-400 text-center">
+                No upcoming bookings
+              </p>
+            ) : (
+              Object.entries(byDay).map(([date, bookings]) => (
+                <div key={date}>
+                  <div className="px-5 py-2 bg-zinc-50 border-b border-zinc-100">
+                    <span className="text-xs text-zinc-500 uppercase tracking-wider">
+                      {fmtDayLabel(date)}
+                    </span>
+                  </div>
+                  <div className="divide-y divide-zinc-100">
+                    {bookings.map((b) => (
+                      <div
+                        key={b.id}
+                        className="flex items-center gap-4 px-5 py-3"
+                      >
+                        <span className="text-xs text-violet-600 w-16 shrink-0">
+                          {fmt12h(b.time)}
+                        </span>
+                        <span className="text-sm text-zinc-900 truncate">
+                          {b.clients?.full_name ?? "—"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>
