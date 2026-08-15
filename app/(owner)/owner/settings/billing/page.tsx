@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getStudioId } from "@/lib/auth/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import BillingClient from "./BillingClient";
 
@@ -14,15 +14,14 @@ const PLAN_INFO: Record<string, { label: string; price: string; artists: string 
 type StudioBilling = { plan: string; subscription_status: string; stripe_customer_id: string | null };
 
 export default async function BillingSettingsPage() {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const studioId = await getStudioId();
+  if (!studioId) redirect("/login");
 
   const admin = createAdminClient();
   const { data: studioRaw } = await admin
     .from("studios")
     .select("plan, subscription_status, stripe_customer_id")
-    .eq("owner_id", user.id)
+    .eq("id", studioId)
     .maybeSingle();
 
   const studio = studioRaw as StudioBilling | null;
@@ -32,15 +31,17 @@ export default async function BillingSettingsPage() {
   const planInfo = PLAN_INFO[plan] ?? PLAN_INFO.solo;
 
   return (
-    <div className="max-w-xl space-y-6">
-      <h1 className="text-2xl font-bold">Billing &amp; plan</h1>
-      <BillingClient
-        planLabel={planInfo.label}
-        planPrice={planInfo.price}
-        planArtists={planInfo.artists}
-        subscriptionStatus={subscriptionStatus}
-        hasStripeCustomer={hasStripeCustomer}
-      />
+    <div className="-m-4 -mt-16 md:-m-8 min-h-[calc(100vh-3rem)] md:min-h-screen" style={{ background: "#FAF9FC" }}>
+      <div className="p-4 pt-16 md:p-8 space-y-6 max-w-xl">
+        <h1 className="text-2xl md:text-3xl font-bold text-zinc-900">Billing &amp; plan</h1>
+        <BillingClient
+          planLabel={planInfo.label}
+          planPrice={planInfo.price}
+          planArtists={planInfo.artists}
+          subscriptionStatus={subscriptionStatus}
+          hasStripeCustomer={hasStripeCustomer}
+        />
+      </div>
     </div>
   );
 }

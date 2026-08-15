@@ -4,11 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  active:   { label: "Active",   className: "bg-green-500/10 text-green-400 border-green-500/20" },
-  trialing: { label: "Free trial", className: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
-  past_due: { label: "Past due", className: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
-  canceled: { label: "Canceled", className: "bg-red-500/10 text-red-400 border-red-500/20" },
-  unpaid:   { label: "Unpaid",   className: "bg-red-500/10 text-red-400 border-red-500/20" },
+  active:   { label: "Active",   className: "bg-green-50 text-green-700" },
+  trialing: { label: "Free trial", className: "bg-blue-50 text-blue-700" },
+  past_due: { label: "Past due", className: "bg-amber-50 text-amber-700" },
+  canceled: { label: "Canceled", className: "bg-red-50 text-red-700" },
+  unpaid:   { label: "Unpaid",   className: "bg-red-50 text-red-700" },
 };
 
 export default function BillingClient({
@@ -47,31 +47,31 @@ export default function BillingClient({
   }
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
+    <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6 space-y-4">
       {error && (
-        <div className="bg-red-950 border border-red-800 text-red-300 text-sm rounded-lg px-4 py-3">
+        <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-3">
           {error}
         </div>
       )}
 
       <div className="flex items-center justify-between">
         <div>
-          <p className="font-semibold">{planLabel} plan</p>
-          <p className="text-zinc-400 text-sm">
+          <p className="font-semibold text-zinc-900">{planLabel} plan</p>
+          <p className="text-zinc-500 text-sm">
             {planPrice} · {planArtists}
           </p>
         </div>
-        <span className={`text-xs border px-2.5 py-1 rounded-full ${badge.className}`}>
+        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${badge.className}`}>
           {badge.label}
         </span>
       </div>
 
-      <hr className="border-zinc-800" />
+      <hr className="border-zinc-100" />
 
       {subscriptionStatus === "trialing" && (
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-zinc-500">
           You&apos;re on a free trial.{" "}
-          <Link href="/pricing" className="text-[#c9a84c] hover:underline">
+          <Link href="/pricing" className="text-violet-600 hover:underline">
             Choose a plan
           </Link>{" "}
           to keep access after your trial ends.
@@ -79,15 +79,15 @@ export default function BillingClient({
       )}
 
       {subscriptionStatus === "past_due" && (
-        <p className="text-sm text-yellow-400">
+        <p className="text-sm text-amber-600">
           Your payment is past due. Update your payment method to keep your subscription active.
         </p>
       )}
 
       {(subscriptionStatus === "canceled" || subscriptionStatus === "unpaid") && (
-        <p className="text-sm text-red-400">
+        <p className="text-sm text-red-600">
           Your subscription is inactive.{" "}
-          <Link href="/pricing" className="text-[#c9a84c] hover:underline">
+          <Link href="/pricing" className="text-violet-600 hover:underline">
             Resubscribe
           </Link>{" "}
           to restore access.
@@ -99,14 +99,14 @@ export default function BillingClient({
           <button
             onClick={openPortal}
             disabled={loading}
-            className="text-sm bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-full disabled:opacity-50"
+            className="text-sm bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 px-4 py-2 rounded-full transition-colors disabled:opacity-50"
           >
             {loading ? "Opening…" : "Manage subscription"}
           </button>
           <button
             onClick={openPortal}
             disabled={loading}
-            className="text-sm bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-full disabled:opacity-50"
+            className="text-sm bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 px-4 py-2 rounded-full transition-colors disabled:opacity-50"
           >
             Update payment method
           </button>
@@ -117,7 +117,7 @@ export default function BillingClient({
         <div className="pt-2">
           <Link
             href="/pricing"
-            className="inline-block text-sm bg-[#c9a84c] text-black font-bold px-5 py-2 rounded-full hover:bg-[#a8832e] transition-colors"
+            className="inline-block text-sm bg-violet-600 text-white font-semibold px-5 py-2 rounded-full hover:bg-violet-700 transition-colors"
           >
             Subscribe now
           </Link>

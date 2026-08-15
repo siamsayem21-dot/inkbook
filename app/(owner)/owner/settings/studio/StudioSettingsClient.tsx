@@ -99,57 +99,57 @@ export default function StudioSettingsClient({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-5">
+    <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6 space-y-5">
       {error && (
-        <div className="bg-red-950 border border-red-800 text-red-300 text-sm rounded-lg px-4 py-3">
+        <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-3">
           {error}
         </div>
       )}
 
       <div>
-        <label className="text-sm text-zinc-400 block mb-1.5">Studio name</label>
+        <label className="text-sm text-zinc-500 block mb-1.5">Studio name</label>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-zinc-500 transition-colors"
+          className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-4 py-2.5 text-sm text-zinc-900 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-colors"
         />
       </div>
 
       <div>
-        <label className="text-sm text-zinc-400 block mb-1.5">Subdomain (read-only)</label>
+        <label className="text-sm text-zinc-500 block mb-1.5">Subdomain (read-only)</label>
         <div className="flex items-center">
           <input
             type="text"
             value={initialSubdomain}
             readOnly
-            className="flex-1 bg-zinc-800/50 border border-zinc-700 rounded-l-lg px-4 py-2.5 text-sm text-zinc-500 cursor-not-allowed"
+            className="flex-1 bg-zinc-100 border border-zinc-200 rounded-l-lg px-4 py-2.5 text-sm text-zinc-400 cursor-not-allowed"
           />
-          <span className="bg-zinc-700/50 border border-l-0 border-zinc-700 rounded-r-lg px-3 py-2.5 text-sm text-zinc-500">
+          <span className="bg-zinc-100 border border-l-0 border-zinc-200 rounded-r-lg px-3 py-2.5 text-sm text-zinc-400">
             .inkbook.app
           </span>
         </div>
-        <p className="text-xs text-zinc-600 mt-1">Contact support to change your subdomain.</p>
+        <p className="text-xs text-zinc-400 mt-1">Contact support to change your subdomain.</p>
       </div>
 
       <div>
-        <label className="text-sm text-zinc-400 block mb-1.5">Address</label>
+        <label className="text-sm text-zinc-500 block mb-1.5">Address</label>
         <input
           type="text"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
           placeholder="123 Main St, City"
-          className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-zinc-500 transition-colors"
+          className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-4 py-2.5 text-sm text-zinc-900 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-colors"
         />
       </div>
 
       <div>
-        <label className="text-sm text-zinc-400 block mb-1.5">State (drives consent form templates)</label>
+        <label className="text-sm text-zinc-500 block mb-1.5">State (drives consent form templates)</label>
         <select
           value={state}
           onChange={(e) => setState(e.target.value)}
-          className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-zinc-500 transition-colors"
+          className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-4 py-2.5 text-sm text-zinc-900 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-colors"
         >
           <option value="">Select state</option>
           {US_STATES.map((s) => (
@@ -159,23 +159,23 @@ export default function StudioSettingsClient({
       </div>
 
       {/* Branding */}
-      <div className="border-t border-zinc-800 pt-5 space-y-4">
-        <h3 className="text-sm font-semibold text-zinc-200">Branding</h3>
+      <div className="border-t border-zinc-100 pt-5 space-y-4">
+        <h3 className="text-sm font-semibold text-zinc-900">Branding</h3>
 
         {/* Logo upload */}
         <div>
-          <label className="text-sm text-zinc-400 block mb-1.5">Studio Logo</label>
+          <label className="text-sm text-zinc-500 block mb-1.5">Studio Logo</label>
           <div className="flex items-center gap-4">
             {logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={logoUrl}
                 alt="Studio logo"
-                className="w-14 h-14 object-cover rounded border border-zinc-700"
+                className="w-14 h-14 object-cover rounded border border-zinc-200"
               />
             ) : (
-              <div className="w-14 h-14 bg-zinc-800 border border-zinc-700 rounded flex items-center justify-center shrink-0">
-                <span className="text-zinc-600 text-xs">No logo</span>
+              <div className="w-14 h-14 bg-zinc-50 border border-zinc-200 rounded flex items-center justify-center shrink-0">
+                <span className="text-zinc-400 text-xs">No logo</span>
               </div>
             )}
             <div>
@@ -190,12 +190,12 @@ export default function StudioSettingsClient({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={logoUploading}
-                className="text-sm px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg hover:bg-zinc-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="text-sm px-4 py-2 bg-white border border-zinc-200 rounded-lg text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {logoUploading ? "Uploading…" : logoUrl ? "Change Logo" : "Upload Logo"}
               </button>
-              <p className="text-xs text-zinc-600 mt-1">JPG, PNG, WebP · max 2 MB</p>
-              {logoError && <p className="text-red-400 text-xs mt-1">{logoError}</p>}
+              <p className="text-xs text-zinc-400 mt-1">JPG, PNG, WebP · max 2 MB</p>
+              {logoError && <p className="text-red-600 text-xs mt-1">{logoError}</p>}
             </div>
           </div>
         </div>
@@ -203,7 +203,7 @@ export default function StudioSettingsClient({
         {/* Color pickers */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-sm text-zinc-400 block mb-1.5">Primary Color</label>
+            <label className="text-sm text-zinc-500 block mb-1.5">Primary Color</label>
             <div className="flex items-center gap-2">
               <input
                 type="color"
@@ -217,12 +217,12 @@ export default function StudioSettingsClient({
                 onChange={(e) => setPrimaryColor(e.target.value)}
                 placeholder="#D4AF37"
                 maxLength={7}
-                className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-zinc-500 transition-colors"
+                className="flex-1 bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm text-zinc-900 font-mono focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-colors"
               />
             </div>
           </div>
           <div>
-            <label className="text-sm text-zinc-400 block mb-1.5">Secondary Color</label>
+            <label className="text-sm text-zinc-500 block mb-1.5">Secondary Color</label>
             <div className="flex items-center gap-2">
               <input
                 type="color"
@@ -236,7 +236,7 @@ export default function StudioSettingsClient({
                 onChange={(e) => setSecondaryColor(e.target.value)}
                 placeholder="#FFFFFF"
                 maxLength={7}
-                className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-zinc-500 transition-colors"
+                className="flex-1 bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm text-zinc-900 font-mono focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-colors"
               />
             </div>
           </div>
@@ -244,11 +244,11 @@ export default function StudioSettingsClient({
 
         {/* Font selector */}
         <div>
-          <label className="text-sm text-zinc-400 block mb-1.5">Font Style</label>
+          <label className="text-sm text-zinc-500 block mb-1.5">Font Style</label>
           <select
             value={fontChoice}
             onChange={(e) => setFontChoice(e.target.value)}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-zinc-500 transition-colors"
+            className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-4 py-2.5 text-sm text-zinc-900 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-colors"
           >
             {FONT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -261,12 +261,12 @@ export default function StudioSettingsClient({
         <button
           type="submit"
           disabled={loading}
-          className="bg-white text-black text-sm px-5 py-2.5 rounded-full font-semibold hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-violet-600 text-white text-sm px-5 py-2.5 rounded-full font-semibold hover:bg-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? "Saving…" : "Save changes"}
         </button>
         {saved && (
-          <span className="text-sm text-green-400">Saved ✓</span>
+          <span className="text-sm text-green-600">Saved ✓</span>
         )}
       </div>
     </form>
