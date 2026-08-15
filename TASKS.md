@@ -2,7 +2,7 @@
 
 ## CURRENT
 
-_(empty — Artist Dashboard lock workflow in progress, see DONE once complete. Next task pulled from NEXT when one is queued.)_
+_(empty — Artist Dashboard locked, 1st of Artist Portal series. Next task pulled from NEXT when one is queued.)_
 
 ## NEXT
 
@@ -10,10 +10,10 @@ _(empty — Siam's existing ChatGPT InkBook Project will supply the next tasks)_
 
 ## BLOCKED
 
-- **CI: E2E "full owner workflow" test fails at the deposit-collection step (pre-existing, unrelated to any Owner Portal redesign)**
+- **CI: E2E "full owner workflow" test fails at the deposit-collection step (pre-existing, unrelated to any redesign work)**
   - `tests/e2e/owner-workflow.spec.ts` fails in the GitHub Actions `db-and-e2e` job because `STRIPE_TEST_SECRET_KEY` / `STRIPE_TEST_PUBLISHABLE_KEY` are not configured as GitHub repo secrets, so the deposit-payment step has nothing to pay against.
-  - Confirmed identical failure signature on 3 consecutive master pushes: Flash module redesign, Messages module redesign, and Settings module redesign — none of which touch Stripe or deposit code, confirming this is an environment/secrets gap, not a regression from any of those changes.
-  - Unit (483), component (12), and DB verification (80, against a real CI Postgres) all pass cleanly in the same CI runs; only this one Stripe-dependent E2E test is affected.
+  - Confirmed identical failure signature on 5 consecutive master pushes: Flash, Messages, and Settings module redesigns, the safe-continuous-workflow-test commit (docs-only, no app code), and now the Artist Dashboard redesign — none touch Stripe or deposit code, confirming this is purely an environment/secrets gap.
+  - Unit (483) and component (12) tests pass cleanly in every one of these CI runs; only this one Stripe-dependent E2E test is affected.
   - Needs Siam to add the two Stripe test-mode secrets to the GitHub repo before this job can go green.
 
 ## NEEDS_SIAM
@@ -30,7 +30,8 @@ _(none)_
   - **Other pre-existing bugs found and reported, still NOT fixed (out of scope for this module, Siam's call):**
     1. Stale cross-studio data row `48c5f479-7b36-452a-8a72-3aea4cbefdbc` — see the correction note in the Owner Bookings Balance Bug memory. Production data, untouched.
     2. `artists.is_active` not checked by the Dashboard's artist lookup — minor, not currently exploitable (no "deactivate artist" UI action exists anywhere in the app yet).
-  - Full lock sequence run and verified (2026-08-15): QA cleanup verified clean · typecheck clean · unit tests 483/483 · component tests 12/12 · production build clean (`/artist/dashboard` compiled with no errors). `test:db`/`test:e2e` not runnable locally (no Docker) — covered by GitHub Actions CI post-push, same known-pre-existing Stripe-secrets E2E gap tracked in `## BLOCKED` applies here too, unrelated to this module.
+  - Full lock sequence run and verified (2026-08-15): QA cleanup verified clean · typecheck clean · unit tests 483/483 · component tests 12/12 · production build clean · committed (`36aad21` + `56036ad`) · merged `feature/artist-dashboard-redesign` → `master` (fast-forward) · pushed to `origin/master` · Vercel production deploy Ready and aliased to `www.inkbook.tech` · production smoke test confirmed `/artist/dashboard` live and correctly gated behind `/login`.
+  - CI's `db-and-e2e` job failed on this push too, for the same confirmed pre-existing, unrelated reason — tracked in `## BLOCKED` (now a 5-push pattern). `Unit + Component` job passed (483/12).
   - Files: `app/(artist)/artist/dashboard/page.tsx`, `app/(artist)/artist/dashboard/loading.tsx`, `components/artist/CopyLinkButton.tsx`, `scripts/verify-artist-dashboard-data.mjs`
 
 - **Owner Settings module redesign (light/violet system) — LOCKED (16/16 Owner Portal modules complete)**
