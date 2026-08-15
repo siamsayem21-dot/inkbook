@@ -115,3 +115,26 @@ Month 3: Compliance log + ID verification + Advanced analytics
 - Already paying $300/yr JotForm + Square fees
 - One prevented no-show pays for 1 month of InkBook
 - Artists losing money every week without this system
+
+## Continuous Development Workflow
+
+- Work one small task at a time.
+- Follow: Goal → Inspect → Build → Test → Fix → Verify → Next.
+- Never mark a task DONE unless it was actually tested and verified.
+- Preserve already approved UI and working features.
+- Never overwrite or redesign unrelated working modules.
+- Always check git status before starting a task.
+- If unrelated uncommitted changes exist, do not modify those files.
+- Read TASKS.md before choosing work.
+- Only continue automatically to the next task when the current task is VERIFIED.
+- If blocked, move the task to BLOCKED and explain why.
+- If Siam needs to visually verify something or make a decision, move it to NEEDS_SIAM and stop that task.
+
+### Requires Siam approval before:
+- Production deployment
+- Destructive database/Supabase changes
+- Deleting production data
+- Stripe/payment changes
+- Authentication/security-sensitive production changes
+- Destructive git operations
+- Anything irreversible
