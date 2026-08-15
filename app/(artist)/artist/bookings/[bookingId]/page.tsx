@@ -3,8 +3,9 @@ export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUser } from "@/lib/auth/config";
-import { getBalanceDueCents } from "@/lib/booking-balance";
+import { getOutstandingBalanceCents } from "@/lib/booking-balance";
 import Link from "next/link";
+import ArtistBookingActions from "./ArtistBookingActions";
 
 type BookingDetail = {
   id: string;
@@ -36,27 +37,45 @@ function fmt12h(time: string) {
   return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${ampm}`;
 }
 
-const STATUS_LABELS: Record<string, { label: string; className: string }> = {
-  confirmed:       { label: "Confirmed",       className: "bg-green-500/10 text-green-400 border-green-500/20" },
-  pending_deposit: { label: "Deposit pending", className: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
-  completed:       { label: "Completed",       className: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20" },
-  cancelled:       { label: "Cancelled",       className: "bg-red-500/10 text-red-400 border-red-500/20" },
-  no_show:         { label: "No-show",         className: "bg-red-500/10 text-red-400 border-red-500/20" },
+const STATUS_META: Record<string, { label: string; badge: string }> = {
+  pending_deposit:   { label: "Awaiting Deposit",  badge: "bg-amber-50 text-amber-700" },
+  awaiting_schedule: { label: "Awaiting Schedule", badge: "bg-violet-50 text-violet-700" },
+  confirmed:         { label: "Confirmed",         badge: "bg-emerald-50 text-emerald-700" },
+  completed:         { label: "Completed",         badge: "bg-green-50 text-green-700" },
+  cancelled:         { label: "Cancelled",         badge: "bg-zinc-100 text-zinc-500" },
+  no_show:           { label: "No-show",           badge: "bg-red-50 text-red-700" },
 };
+
+function PageShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="-m-4 -mt-16 md:-m-8 min-h-[calc(100vh-3rem)] md:min-h-screen" style={{ background: "#FAF9FC" }}>
+      <div className="p-4 pt-16 md:p-8 space-y-6 max-w-2xl">{children}</div>
+    </div>
+  );
+}
 
 function ErrorCard({ message }: { message: string }) {
   return (
-    <div className="max-w-2xl space-y-6">
-      <Link href="/artist/bookings" className="text-zinc-500 hover:text-white text-sm transition-colors">
+    <PageShell>
+      <Link href="/artist/bookings" className="text-xs text-zinc-500 hover:text-zinc-900 transition-colors">
         ← Back to bookings
       </Link>
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center space-y-3">
-        <p className="text-zinc-300 font-medium">Booking unavailable</p>
+      <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-8 text-center space-y-3">
+        <p className="text-zinc-900 font-medium text-sm">Booking unavailable</p>
         <p className="text-zinc-500 text-sm">{message}</p>
-        <Link href="/artist/bookings" className="inline-block mt-2 text-sm text-[#c9a84c] hover:underline">
+        <Link href="/artist/bookings" className="inline-block mt-2 text-sm text-violet-600 hover:text-violet-700 font-medium">
           Return to my bookings →
         </Link>
       </div>
+    </PageShell>
+  );
+}
+
+function Detail({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-0.5">{label}</p>
+      <p className="text-sm text-zinc-700">{value}</p>
     </div>
   );
 }
@@ -101,69 +120,147 @@ export default async function ArtistBookingDetailPage({ params }: Props) {
 
   const b = bookingRaw as unknown as BookingDetail;
 
+  // Consultation/project link — a booking may have originated from a saved
+  // AI consultation (consultations.booking_id) or a custom request
+  // (custom_requests.booking_id). Neither is a column on bookings itself;
+  // both link back the other way, so this is a lightweight reverse lookup.
+  // Since this booking is already scoped to the current artist above, any
+  // linked consultation found here was assigned to this same artist too
+  // (both bookConsultation() and startConsultationDeposit() set artist_id
+  // to the same artist that ends up on the booking).
+  const [{ data: consultRaw }, { data: requestRaw }] = await Promise.all([
+    supabase.from("consultations").select("id, placement, estimated_size, budget_range").eq("booking_id", params.bookingId).maybeSingle(),
+    supabase.from("custom_requests").select("id, placement, size, budget_range").eq("booking_id", params.bookingId).maybeSingle(),
+  ]);
+  const consult = consultRaw as { id: string; placement: string; estimated_size: string; budget_range: string } | null;
+  const request = requestRaw as { id: string; placement: string; size: string; budget_range: string } | null;
+  const project = consult
+    ? { kind: "consultation" as const, id: consult.id, placement: consult.placement, size: consult.estimated_size, budget: consult.budget_range }
+    : request
+      ? { kind: "request" as const, id: request.id, placement: request.placement, size: request.size, budget: request.budget_range }
+      : null;
+
   const { data: consentRaw } = await supabase
     .from("consent_forms")
-    .select("id")
+    .select("id, signed_at")
     .eq("booking_id", params.bookingId)
     .maybeSingle();
 
-  const hasConsent = !!consentRaw;
-  const statusInfo = STATUS_LABELS[b.status] ?? { label: b.status, className: "bg-zinc-800 text-zinc-400 border-zinc-700" };
-  const balanceDueCents = getBalanceDueCents(b);
-
-  const fields = [
-    { label: "Client name",  value: b.clients?.full_name ?? "—" },
-    { label: "Date",         value: fmtDate(b.date) },
-    { label: "Time",         value: fmt12h(b.time) },
-    { label: "Style",        value: b.style },
-    { label: "Deposit",      value: `$${(b.deposit_amount_cents / 100).toFixed(2)} ${b.deposit_paid ? "✓ Paid" : "— Unpaid"}` },
-    ...(balanceDueCents !== null
-      ? [{
-          label: "Remaining balance",
-          value: `$${(balanceDueCents / 100).toFixed(2)} ${b.remainder_collected ? "✓ Collected" : "— Not yet collected"}`,
-        }]
-      : []),
-    { label: "Consent form", value: hasConsent ? "✓ Signed" : "Not submitted" },
-    {
-      label: "Aftercare",
-      value: b.status === "completed" && b.completed_at
-        ? `✓ Sent (${new Date(b.completed_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })})`
-        : "Sent when session is marked completed",
-    },
-    { label: "Description",  value: b.description ?? "—" },
-    { label: "Client email", value: b.clients?.email ?? "—" },
-    { label: "Client phone", value: b.clients?.phone ?? "—" },
-  ];
+  const consent = consentRaw as { id: string; signed_at: string } | null;
+  const statusMeta = STATUS_META[b.status] ?? { label: b.status, badge: "bg-zinc-100 text-zinc-500" };
+  // getOutstandingBalanceCents(), not getBalanceDueCents() — respects
+  // deposit_paid/remainder_collected so a fully-paid booking shows $0
+  // outstanding instead of a stale raw total-minus-deposit figure. Same fix
+  // already applied to Owner Bookings; this page had been missed until now.
+  const balanceDueCents = getOutstandingBalanceCents(b);
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <Link href="/artist/bookings" className="text-zinc-500 hover:text-white text-sm transition-colors">
+    <PageShell>
+      <Link href="/artist/bookings" className="text-xs text-zinc-500 hover:text-zinc-900 transition-colors">
         ← Bookings
       </Link>
 
-      <div className="flex items-start justify-between">
-        <h1 className="text-2xl font-bold">Booking detail</h1>
-        <span className={`text-xs border px-2.5 py-1 rounded-full ${statusInfo.className}`}>
-          {statusInfo.label}
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="text-2xl font-bold text-zinc-900">{b.clients?.full_name ?? "Booking"}</h1>
+        <span className={`text-xs px-3 py-1.5 rounded-full font-medium shrink-0 ${statusMeta.badge}`}>
+          {statusMeta.label}
         </span>
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          {fields.map((f) => (
-            <div key={f.label} className={f.label === "Description" ? "col-span-2" : ""}>
-              <p className="text-zinc-400 text-xs mb-0.5">{f.label}</p>
-              <p className="text-sm font-medium">{f.value}</p>
-            </div>
-          ))}
+      {b.deposit_kept && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
+          Deposit was kept — client no-showed.
         </div>
+      )}
 
-        {b.deposit_kept && (
-          <div className="bg-red-950 border border-red-800 text-red-300 text-sm rounded-lg px-4 py-3">
-            Deposit was kept — client no-showed.
-          </div>
-        )}
+      <div className="bg-white border border-zinc-200 shadow-sm rounded-xl overflow-hidden">
+        <div className="px-5 py-3 border-b border-zinc-100">
+          <p className="text-[10px] uppercase tracking-widest text-zinc-400">Appointment</p>
+        </div>
+        <div className="px-5 py-4 grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <Detail label="Date" value={fmtDate(b.date)} />
+          <Detail label="Time" value={fmt12h(b.time)} />
+          <Detail label="Style" value={b.style} />
+        </div>
       </div>
-    </div>
+
+      <div className="bg-white border border-zinc-200 shadow-sm rounded-xl overflow-hidden">
+        <div className="px-5 py-3 border-b border-zinc-100">
+          <p className="text-[10px] uppercase tracking-widest text-zinc-400">Client</p>
+        </div>
+        <div className="px-5 py-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Detail label="Name"  value={b.clients?.full_name ?? "—"} />
+          <Detail label="Email" value={b.clients?.email ?? "—"} />
+          <Detail label="Phone" value={b.clients?.phone ?? "—"} />
+        </div>
+      </div>
+
+      {project && (
+        <div className="bg-white border border-zinc-200 shadow-sm rounded-xl overflow-hidden">
+          <div className="px-5 py-3 border-b border-zinc-100 flex items-center justify-between gap-3">
+            <p className="text-[10px] uppercase tracking-widest text-zinc-400">Tattoo Project</p>
+            {project.kind === "consultation" && (
+              <Link href={`/artist/consultations/${project.id}`} className="text-xs text-violet-600 hover:text-violet-700 font-medium">
+                View consultation →
+              </Link>
+            )}
+          </div>
+          <div className="px-5 py-4 grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <Detail label="Placement" value={project.placement || "—"} />
+            <Detail label="Size"      value={project.size || "—"} />
+            <Detail label="Budget"    value={project.budget || "—"} />
+          </div>
+        </div>
+      )}
+
+      {b.description && (
+        <div className="bg-white border border-zinc-200 shadow-sm rounded-xl overflow-hidden">
+          <div className="px-5 py-3 border-b border-zinc-100">
+            <p className="text-[10px] uppercase tracking-widest text-zinc-400">Notes</p>
+          </div>
+          <div className="px-5 py-4">
+            <p className="text-sm text-zinc-700 leading-relaxed whitespace-pre-wrap">{b.description}</p>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white border border-zinc-200 shadow-sm rounded-xl overflow-hidden">
+        <div className="px-5 py-3 border-b border-zinc-100">
+          <p className="text-[10px] uppercase tracking-widest text-zinc-400">Payment</p>
+        </div>
+        <div className="px-5 py-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Detail
+            label="Deposit"
+            value={`$${(b.deposit_amount_cents / 100).toFixed(2)} — ${b.deposit_paid ? "Paid" : "Unpaid"}`}
+          />
+          {balanceDueCents !== null && (
+            <Detail
+              label="Remaining balance"
+              value={`$${(balanceDueCents / 100).toFixed(2)} — ${b.remainder_collected ? "Collected" : "Not yet collected"}`}
+            />
+          )}
+        </div>
+      </div>
+
+      <div className="bg-white border border-zinc-200 shadow-sm rounded-xl overflow-hidden">
+        <div className="px-5 py-3 border-b border-zinc-100">
+          <p className="text-[10px] uppercase tracking-widest text-zinc-400">Consent &amp; Session</p>
+        </div>
+        <div className="px-5 py-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Detail
+            label="Consent form"
+            value={consent ? `Signed ${new Date(consent.signed_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : "Not submitted"}
+          />
+          <Detail
+            label="Aftercare"
+            value={b.status === "completed" && b.completed_at
+              ? `Sent (${new Date(b.completed_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })})`
+              : "Sent automatically when the session is marked completed"}
+          />
+        </div>
+      </div>
+
+      <ArtistBookingActions bookingId={b.id} status={b.status} hasConsent={!!consent} />
+    </PageShell>
   );
 }
