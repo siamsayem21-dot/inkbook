@@ -2,20 +2,19 @@
 
 ## CURRENT
 
-_(empty — Timezone Fix 7/7 done, now waiting in NEEDS_SIAM)_
+_(empty — studios.timezone + SMS reminder cron fix is PRODUCTION VERIFIED + DONE. Next task pulled from NEXT when one is started.)_
 
 ## NEXT
 
-_(empty)_
+- **Product follow-up (queued, NOT started): capture a real IANA timezone per studio at onboarding/settings, before real customer onboarding**
+  - Studio timezone capture is missing from onboarding/settings. Before onboarding real customers, InkBook must explicitly capture and validate an IANA timezone for each studio instead of silently relying on `DEFAULT 'UTC'`.
+  - Context: the 2026-08-16 pre-production audit (see `## DONE`) confirmed none of the 13 existing studios has trustworthy location evidence, and neither the register flow (`app/(auth)/register/page.tsx`, `POST /api/studios`) nor Owner Settings/Studio (`app/(owner)/owner/settings/studio/*`) currently collects or exposes a timezone field at all. `DEFAULT 'UTC'` is a safe interim value for the current studios (11 of 13 confirmed internal/test/demo, the remaining 2 have zero location evidence either way) but will silently misassign any future real studio, since InkBook's actual target market (USA/Canada, per `CLAUDE.md`) is not UTC.
+  - Likely shape (not scoped/designed yet): either a timezone select field added to Owner Settings/Studio, and/or browser-side `Intl.DateTimeFormat().resolvedOptions().timeZone` auto-detection captured at signup as a suggested default the owner can override.
+  - Not started — no code, no design decisions made yet. Queued for a future cycle.
 
 ## BLOCKED
 
-- **URGENT FOLLOW-UP — PRODUCTION BUG (pre-existing, unrelated to Artist Schedule, deliberately NOT fixed during the Artist Schedule lock per Siam's explicit instruction): SMS reminder cron is silently a no-op — `studios.timezone` column doesn't exist in the live database**
-  - Discovered incidentally while verifying Artist Schedule 5/7's timezone precedent (read-only query against real prod DB). Not caused by, or in scope for, the Artist Schedule module — reporting only, nothing touched.
-  - `supabase/migrations/20260802010000_studio_timezone.sql` (adds `studios.timezone`, defaults `'UTC'`) exists in the repo but was **never applied to the live database** — confirmed live: `SELECT timezone FROM studios LIMIT 1` → `column studios.timezone does not exist`. Same untracked-drift family as the already-documented `artist_availability` table and `custom_requests.preferred_dates`, except this is the inverse case (migration file exists, was never run) rather than a table that exists live with no file.
-  - **Real production impact:** `app/api/cron/sms-reminders/route.ts` selects `"name, address, timezone"` from `studios` for every candidate reminder row and does `if (!studio) continue;` without checking the query's `error` — since the column doesn't exist, every one of those lookups errors and returns `studio: null`, so **every row is silently skipped**. As currently deployed, this cron appears to send **zero** 48hr/day-of SMS reminders for any studio, silently, with no visible failure.
-  - Also confirmed the same drift pattern on `20260809000000_client_accounts_phone_dob.sql` — `client_accounts.phone`/`client_accounts.dob` also don't exist live, while the very next migration in sequence (`20260809010000_studios_contact_fields.sql`, `studios.contact_email`) **was** applied. So this isn't "migrations never run" wholesale — it's 2 specific migrations that were skipped.
-  - Not fixed here: applying a migration is a Supabase schema change and falls under CLAUDE.md's "Requires Siam approval before: ... Destructive database/Supabase changes" gate (also unrelated-module scope per the Continuous Development Workflow rule). Needs Siam to confirm which of these two migrations should actually be applied to production, then have them run.
+- **Migration drift, second instance (unresolved, not urgent):** same untracked-drift family as the now-fixed `studios.timezone` — `20260809000000_client_accounts_phone_dob.sql` (`client_accounts.phone`/`client_accounts.dob`) also exists in the repo but was never applied to production, confirmed live during the timezone audit. Lower priority: nothing in the app currently reads either column (the My Profile page already renders their absence gracefully as "Not provided"), so there's no active production bug like the timezone one was. Needs Siam to confirm whether/when to apply it.
 
 - **CI: E2E "full owner workflow" test fails at the deposit-collection step (pre-existing, unrelated to any redesign work)**
   - `tests/e2e/owner-workflow.spec.ts` fails in the GitHub Actions `db-and-e2e` job because `STRIPE_TEST_SECRET_KEY` / `STRIPE_TEST_PUBLISHABLE_KEY` are not configured as GitHub repo secrets, so the deposit-payment step has nothing to pay against.
@@ -24,6 +23,21 @@ _(empty)_
   - Needs Siam to add the two Stripe test-mode secrets to the GitHub repo before this job can go green.
 
 ## NEEDS_SIAM
+
+_(none)_
+
+## DONE
+
+- **Studios.timezone + SMS/Email Reminder Cron Fix — PRODUCTION VERIFIED + DONE (2026-08-16)**
+  - **Production migration applied** (by Siam, via Supabase Dashboard → SQL Editor, per the established manual-migration convention this repo has always used — no automated DB credential path exists in this environment): `supabase/migrations/20260802010000_studio_timezone.sql` — `ALTER TABLE studios ADD COLUMN IF NOT EXISTS timezone TEXT NOT NULL DEFAULT 'UTC'`.
+  - **Post-migration read-only verification — PASSED:** `studios.timezone` exists; exactly 13 studio rows present (unchanged from pre-migration); all 13 read `timezone = 'UTC'`; every other field on every one of the 13 rows (`name`, `subdomain`, `address`, `state`, `phone`, `contact_email`, `about`, `owner_id`, `created_at`) matches byte-for-byte what was captured in the pre-production audit below — no unrelated mutation. Row counts across every other core table (`artists` 9, `clients` 23, `bookings` 30, `consultations` 6, `consent_forms` 14, `deposit_payments` 3, `artist_availability` 4) match the known baseline exactly.
+  - **Merge:** fast-forward, no conflicts, `fix/studios-timezone-sms-cron` → `master` (`ee58975..0b04d6d`). Pushed to `origin/master`.
+  - **Deploy:** Vercel production deployment `inkbook-9jnotg713-…` — Ready, confirmed live on `www.inkbook.tech`.
+  - **Production smoke tests (read-only, no real SMS/email sent, no real customer reminder triggered):** `GET /api/cron/sms-reminders` unauthenticated → **401** (route is live and correctly enforces its `CRON_SECRET` bearer-token gate — deliberately not called with the real secret, since no safe dry-run/test mode exists for this route and triggering it for real was explicitly out of scope). All checked locked-module routes — `/artist/schedule` (+ `?date=` nav), `/artist/bookings`, `/artist/dashboard`, `/artist/consultations`, `/owner/dashboard`, `/owner/settings`, `/owner/artists`, `/owner/bookings` — all **307**, live and correctly gated behind `/login`. No regressions.
+  - **Missing/invalid-timezone crash safety and one-bad-studio-doesn't-block-another:** verified in CI (19/19 `tests/unit/api-cron.test.ts`, including the two new defensive-path tests that were proven to genuinely fail without the fix by temporarily reverting it — see Timezone Fix 6/7 below), not re-tested live in production, since doing so would require fabricating bad data against the real cron, which was explicitly out of scope for this gate.
+  - Same pre-existing, unrelated CI job (E2E full-owner-workflow, Stripe secrets gap) — remains its own separate `## BLOCKED` item, not counted against this fix, now a 10-push pattern.
+  - **Follow-up filed under `## NEXT` (not started):** studio timezone capture is missing from onboarding/settings — must be added before real customer onboarding, since `DEFAULT 'UTC'` will silently misassign any future non-UTC studio.
+  - Files: `app/api/cron/sms-reminders/route.ts`, `tests/unit/api-cron.test.ts`, `tests/db/studio-timezone.test.ts`, `TASKS.md`.
 
 - **Studios.timezone — PRE-PRODUCTION SEMANTIC AUDIT (2026-08-16, read-only, production DB untouched)**
   - Full 13-studio evidence table, per-studio confidence, and the A/B/C strategy comparison are below. **Bottom line: no studio has evidence strong enough to justify Option C (explicit per-studio backfill) — recommend proceeding with Option A (the existing migration, unmodified).**
@@ -75,11 +89,7 @@ _(empty)_
     3. Fast-forward merge `fix/studios-timezone-sms-cron` → `master`, push, let Vercel deploy (same pattern as every locked module).
     4. Manually trigger `GET /api/cron/sms-reminders` (correct `CRON_SECRET` bearer token) once, or wait for its scheduled run, and check logs — no `[sms-reminders]` error lines expected for real studios.
   - **Rollback/recovery:** migration is purely additive — `ALTER TABLE studios DROP COLUMN IF EXISTS timezone;` would cleanly reverse it if ever needed (not pre-authored, low risk). No existing data at risk. Code change is isolated to one route file, reverts cleanly via `git revert`.
-  - **Confirmation that production DB is STILL unchanged:** re-verified live just now, after the CI run completed — `SELECT timezone FROM studios LIMIT 1` still returns `column studios.timezone does not exist`. Nothing has been applied to production at any point in this cycle.
-  - **Not merged, not deployed, no production trigger, no real SMS/email sent** — feature branch pushed only.
-  - **Waiting on:** your explicit **PRODUCTION APPROVED** instruction before (a) the migration is run against production and (b) this branch is merged/deployed.
-
-## DONE
+  - *(Historical — superseded by the "PRODUCTION VERIFIED + DONE" entry above. At the time this was written, production DB was confirmed still unchanged and nothing was merged/deployed; Siam subsequently approved and applied the migration, and the merge/deploy/smoke-test steps above completed successfully.)*
 
 - **[Timezone Fix 6/7] SMS Reminder Cron Verification — VERIFIED (2026-08-16)**
   - 3 new mocked unit tests added to `tests/unit/api-cron.test.ts` (16 → 19 tests, all in the existing `GET /api/cron/sms-reminders` suite, no real Twilio/email/DB calls — `trySendSms`/`sendAppointmentReminderEmail` remain mocked exactly as the existing suite already does):
