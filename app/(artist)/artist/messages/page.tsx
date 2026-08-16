@@ -4,9 +4,7 @@ import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUser } from "@/lib/auth/config";
 import { listThreadsForArtist } from "@/lib/messaging/threads";
-import ThreadList, { type ThreadListItem } from "@/components/messaging/ThreadList";
-
-const GOLD = "#D4A853";
+import ArtistThreadList, { type ThreadListItem } from "@/components/artist/ArtistThreadList";
 
 function deriveTitle(description: string, style: string | null): string {
   const base = (style ? `${style} Tattoo` : description) || "Tattoo Project";
@@ -55,17 +53,20 @@ export default async function ArtistMessagesPage() {
   });
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold mb-1">Messages</h1>
-      <p className="text-zinc-500 text-sm mb-8">Conversations with clients assigned to you.</p>
+    <div className="-m-4 -mt-16 md:-m-8 min-h-[calc(100vh-3rem)] md:min-h-screen" style={{ background: "#FAF9FC" }}>
+      <div className="p-4 pt-16 md:p-8 space-y-6 max-w-2xl">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-zinc-900">Messages</h1>
+          <p className="text-sm text-zinc-500 mt-1">Conversations with clients assigned to you.</p>
+        </div>
 
-      <ThreadList
-        items={items}
-        basePath="/artist/messages"
-        accentColor={GOLD}
-        emptyTitle="No conversations yet"
-        emptyDescription="Messages from clients on your assigned projects will show up here."
-      />
+        <ArtistThreadList
+          items={items}
+          basePath="/artist/messages"
+          emptyTitle="No conversations yet"
+          emptyDescription="Messages from clients on your assigned projects will show up here."
+        />
+      </div>
     </div>
   );
 }

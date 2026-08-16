@@ -5,10 +5,8 @@ import { redirect, notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUser } from "@/lib/auth/config";
 import { getThreadIfOwned, listMessages, markThreadRead } from "@/lib/messaging/threads";
-import ThreadView from "@/components/messaging/ThreadView";
+import ArtistThreadView from "@/components/artist/ArtistThreadView";
 import { sendArtistMessage } from "../actions";
-
-const GOLD = "#D4A853";
 
 interface Props {
   params: { threadId: string };
@@ -49,21 +47,21 @@ export default async function ArtistThreadPage({ params }: Props) {
   const studioName = (studioRow as { name: string } | null)?.name ?? "Studio";
 
   return (
-    <div className="max-w-2xl">
-      <Link href="/artist/messages" className="text-zinc-500 hover:text-white transition-colors text-sm">
-        ← All Messages
-      </Link>
-      <h1 className="text-2xl font-bold mt-3 mb-6">{clientLabel}</h1>
+    <div className="-m-4 -mt-16 md:-m-8 min-h-[calc(100vh-3rem)] md:min-h-screen" style={{ background: "#FAF9FC" }}>
+      <div className="p-4 pt-16 md:p-8 space-y-6 max-w-2xl">
+        <Link href="/artist/messages" className="text-xs text-zinc-500 hover:text-zinc-900 transition-colors">
+          ← All Messages
+        </Link>
+        <h1 className="text-2xl md:text-3xl font-bold text-zinc-900">{clientLabel}</h1>
 
-      <ThreadView
-        threadId={thread.id}
-        currentRole="artist"
-        initialMessages={messages}
-        labels={{ client: clientLabel, owner: studioName }}
-        sendAction={sendArtistMessage}
-        accentColor={GOLD}
-        textOnAccent="#000000"
-      />
+        <ArtistThreadView
+          threadId={thread.id}
+          currentRole="artist"
+          initialMessages={messages}
+          labels={{ client: clientLabel, owner: studioName }}
+          sendAction={sendArtistMessage}
+        />
+      </div>
     </div>
   );
 }
