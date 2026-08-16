@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudioId } from "@/lib/auth/config";
 import { revalidatePath } from "next/cache";
 import { validateImageFile } from "@/lib/file-validation";
+import { isValidIanaTimezone } from "@/lib/timezone";
 
 export async function saveStudio(data: {
   studioId: string;
@@ -13,12 +14,19 @@ export async function saveStudio(data: {
   primaryColor: string;
   secondaryColor: string;
   fontChoice: string;
+  timezone: string;
 }): Promise<{ error?: string }> {
   const callerStudioId = await getStudioId();
   if (!callerStudioId) return { error: "Unauthorized" };
   if (callerStudioId !== data.studioId) return { error: "Unauthorized" };
 
   if (!data.name.trim()) return { error: "Studio name is required" };
+
+  // Unlike colors/font below, an invalid timezone is rejected outright, not
+  // silently swapped to a default — the owner explicitly chose a value and
+  // must be told if it didn't take, not have it silently become something
+  // else (see Timezone Fix product rule: "must not silently become UTC").
+  if (!isValidIanaTimezone(data.timezone)) return { error: "Invalid timezone" };
 
   const hexPattern = /^#[0-9a-fA-F]{6}$/;
   const validFonts = ["default", "bold", "elegant"];
@@ -38,6 +46,7 @@ export async function saveStudio(data: {
       primary_color: primaryColor,
       secondary_color: secondaryColor,
       font_choice: fontChoice,
+      timezone: data.timezone,
     } as never)
     .eq("id", data.studioId);
 

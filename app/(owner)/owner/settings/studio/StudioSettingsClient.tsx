@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { saveStudio, uploadLogo } from "./actions";
+import { sortedIanaTimezones } from "@/lib/timezone";
 
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
@@ -26,6 +27,7 @@ export default function StudioSettingsClient({
   initialPrimaryColor,
   initialSecondaryColor,
   initialFontChoice,
+  initialTimezone,
 }: {
   studioId: string;
   initialName: string;
@@ -36,6 +38,7 @@ export default function StudioSettingsClient({
   initialPrimaryColor: string;
   initialSecondaryColor: string;
   initialFontChoice: string;
+  initialTimezone: string;
 }) {
   const [name, setName]               = useState(initialName);
   const [address, setAddress]         = useState(initialAddress);
@@ -44,6 +47,17 @@ export default function StudioSettingsClient({
   const [secondaryColor, setSecondaryColor] = useState(initialSecondaryColor);
   const [fontChoice, setFontChoice]   = useState(initialFontChoice);
   const [logoUrl, setLogoUrl]         = useState(initialLogoUrl);
+  const [timezone, setTimezone]       = useState(initialTimezone);
+  // Starts as just the already-saved value so server and client render
+  // identical markup on first paint (Intl.supportedValuesOf('timeZone') can
+  // differ between server/client ICU — see the same fix in the onboarding
+  // register page). The full list is populated client-side, after mount.
+  const [timezoneOptions, setTimezoneOptions] = useState<string[]>([initialTimezone]);
+
+  useEffect(() => {
+    const full = sortedIanaTimezones();
+    setTimezoneOptions(full.includes(initialTimezone) ? full : [initialTimezone].concat(full));
+  }, [initialTimezone]);
 
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState<string | null>(null);
@@ -66,6 +80,7 @@ export default function StudioSettingsClient({
       primaryColor,
       secondaryColor,
       fontChoice,
+      timezone,
     });
 
     setLoading(false);
@@ -156,6 +171,20 @@ export default function StudioSettingsClient({
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
+      </div>
+
+      <div>
+        <label className="text-sm text-zinc-500 block mb-1.5">Timezone</label>
+        <select
+          value={timezone}
+          onChange={(e) => setTimezone(e.target.value)}
+          className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-4 py-2.5 text-sm text-zinc-900 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-colors"
+        >
+          {timezoneOptions.map((tz) => (
+            <option key={tz} value={tz}>{tz}</option>
+          ))}
+        </select>
+        <p className="text-xs text-zinc-400 mt-1">Used to time appointment reminders correctly for your studio&apos;s local day.</p>
       </div>
 
       {/* Branding */}

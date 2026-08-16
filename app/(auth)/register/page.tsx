@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { isValidIanaTimezone, sortedIanaTimezones } from "@/lib/timezone";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -12,8 +13,29 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [subdomain, setSubdomain] = useState("");
+  const [timezone, setTimezone] = useState("UTC");
+  // Starts as just ["UTC"] so server and client render identical markup on
+  // first paint — Intl.supportedValuesOf('timeZone') can return a slightly
+  // different list between Node's ICU (server) and the browser's ICU
+  // (client), which caused a hydration mismatch when computed eagerly at
+  // module scope. The full list is only ever populated client-side, after
+  // mount, alongside browser detection below.
+  const [timezoneOptions, setTimezoneOptions] = useState<string[]>(["UTC"]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Client-only: populate the full timezone list and suggest the
+  // browser-detected zone. Falls back to the 'UTC' default already set if
+  // detection fails or returns something outside the canonical IANA list.
+  useEffect(() => {
+    setTimezoneOptions(sortedIanaTimezones());
+    try {
+      const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (isValidIanaTimezone(detected)) setTimezone(detected);
+    } catch {
+      // Detection unsupported — 'UTC' fallback already set.
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -53,7 +75,7 @@ export default function RegisterPage() {
     const studioRes = await fetch("/api/studios", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: studioName.trim(), subdomain: subdomain.trim() }),
+      body: JSON.stringify({ name: studioName.trim(), subdomain: subdomain.trim(), timezone }),
     });
     const studioJson = await studioRes.json();
 
@@ -142,6 +164,21 @@ export default function RegisterPage() {
               .inkbook.app
             </span>
           </div>
+        </div>
+        <div>
+          <label className="label-xs text-zinc-500 block mb-2">Timezone</label>
+          <select
+            value={timezone}
+            onChange={(e) => setTimezone(e.target.value)}
+            className={inputClass}
+          >
+            {timezoneOptions.map((tz) => (
+              <option key={tz} value={tz}>{tz}</option>
+            ))}
+          </select>
+          <p className="text-zinc-600 text-xs mt-1.5">
+            Detected automatically — used to time your appointment reminders correctly. Change it if this isn&apos;t right.
+          </p>
         </div>
 
         <button

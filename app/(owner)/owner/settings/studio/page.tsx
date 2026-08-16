@@ -15,6 +15,7 @@ type StudioRow = {
   primary_color: string | null;
   secondary_color: string | null;
   font_choice: string | null;
+  timezone: string;
 };
 
 export default async function StudioSettingsPage() {
@@ -24,7 +25,7 @@ export default async function StudioSettingsPage() {
   const supabase = createAdminClient();
   const { data: studioRaw } = await supabase
     .from("studios")
-    .select("id, name, subdomain, address, state, logo_url, primary_color, secondary_color, font_choice")
+    .select("id, name, subdomain, address, state, logo_url, primary_color, secondary_color, font_choice, timezone")
     .eq("id", studioId)
     .maybeSingle();
 
@@ -58,6 +59,7 @@ export default async function StudioSettingsPage() {
           initialPrimaryColor={studio.primary_color ?? "#D4AF37"}
           initialSecondaryColor={studio.secondary_color ?? "#FFFFFF"}
           initialFontChoice={studio.font_choice ?? "default"}
+          initialTimezone={studio.timezone}
         />
       </div>
     </div>

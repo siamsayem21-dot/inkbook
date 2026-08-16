@@ -91,3 +91,37 @@ describe("POST /api/studios — session authorization", () => {
     expect(updateUserById).not.toHaveBeenCalledWith("attacker-supplied-id", expect.anything());
   });
 });
+
+describe("POST /api/studios — timezone (Studio Timezone Capture 3/7)", () => {
+  it("400s on an invalid (non-IANA) timezone, before ever inserting", async () => {
+    mockSession({ id: "user-1" });
+    const res = await POST(makeRequest({ name: "Ink & Iron", subdomain: "ink-iron", timezone: "Not/A/Real/Zone" }));
+    expect(res.status).toBe(400);
+    expect(insertSpy).not.toHaveBeenCalled();
+  });
+
+  it("includes a valid timezone in the insert, not just relying on the column default", async () => {
+    mockSession({ id: "user-1" });
+    singleSpy.mockResolvedValue({ data: { id: "studio-1", name: "Ink & Iron", subdomain: "ink-iron" }, error: null });
+    const res = await POST(makeRequest({ name: "Ink & Iron", subdomain: "ink-iron", timezone: "America/Chicago" }));
+    expect(res.status).toBe(201);
+    expect(insertSpy).toHaveBeenCalledWith(expect.objectContaining({ timezone: "America/Chicago" }));
+  });
+
+  it("accepts 'UTC' as a valid timezone even though it's absent from Intl.supportedValuesOf('timeZone')", async () => {
+    mockSession({ id: "user-1" });
+    singleSpy.mockResolvedValue({ data: { id: "studio-1", name: "Ink & Iron", subdomain: "ink-iron" }, error: null });
+    const res = await POST(makeRequest({ name: "Ink & Iron", subdomain: "ink-iron", timezone: "UTC" }));
+    expect(res.status).toBe(201);
+    expect(insertSpy).toHaveBeenCalledWith(expect.objectContaining({ timezone: "UTC" }));
+  });
+
+  it("omits timezone from the insert entirely when not provided, leaving the column's own DEFAULT 'UTC' in place", async () => {
+    mockSession({ id: "user-1" });
+    singleSpy.mockResolvedValue({ data: { id: "studio-1", name: "Ink & Iron", subdomain: "ink-iron" }, error: null });
+    const res = await POST(makeRequest({ name: "Ink & Iron", subdomain: "ink-iron" }));
+    expect(res.status).toBe(201);
+    expect(insertSpy).toHaveBeenCalledTimes(1);
+    expect(insertSpy.mock.calls[0][0]).not.toHaveProperty("timezone");
+  });
+});

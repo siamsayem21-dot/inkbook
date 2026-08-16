@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createClient as createServerClient } from "@/lib/supabase/server";
+import { isValidIanaTimezone } from "@/lib/timezone";
 
 function adminClient() {
   return createClient(
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { name, subdomain } = body as { name?: string; subdomain?: string };
+  const { name, subdomain, timezone } = body as { name?: string; subdomain?: string; timezone?: string };
 
   if (!name || !subdomain) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -48,11 +49,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid subdomain format" }, { status: 400 });
   }
 
+  // Optional — omitting it leaves the column's own DEFAULT 'UTC' in place.
+  // If provided, it must be a real IANA identifier; never silently swapped
+  // to something else on a bad value.
+  if (timezone !== undefined && !isValidIanaTimezone(timezone)) {
+    return NextResponse.json({ error: "Invalid timezone" }, { status: 400 });
+  }
+
   const supabase = adminClient();
 
   const { data, error } = await supabase
     .from("studios")
-    .insert({ name, subdomain, owner_id: user.id })
+    .insert({ name, subdomain, owner_id: user.id, ...(timezone ? { timezone } : {}) })
     .select("id, name, subdomain")
     .single();
 
