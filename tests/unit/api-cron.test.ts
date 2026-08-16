@@ -299,4 +299,75 @@ describe("GET /api/cron/sms-reminders", () => {
     expect(body).toEqual({ sent48hr: 0, sentDayOf: 1 });
     expect(sendAppointmentReminderEmail).toHaveBeenCalledTimes(2);
   });
+
+  // Timezone Fix 6/7 — regressions for the defensive handling added in
+  // Timezone Fix 4/7 (app/api/cron/sms-reminders/route.ts). These cover the
+  // exact production failure mode: studios.timezone missing/invalid must not
+  // silently break every reminder, nor crash the whole cron run.
+
+  it("protects against a studio lookup error (e.g. a missing column) — skips only that booking and still processes the next one", async () => {
+    sb.queueFrom("bookings", [
+      candidateRow({ id: "bk-bad-studio", client_id: "c1", date: "2026-08-04" }), // 48hr
+      candidateRow({ id: "bk-ok", client_id: "c2", date: "2026-08-02" }), // day_of
+    ]);
+
+    // Simulates the real production failure: column doesn't exist yet.
+    sb.queueFrom("studios", null, { message: "column studios.timezone does not exist" });
+    // No client/artist/rpc calls should happen for bk-bad-studio.
+
+    sb.queueFrom("studios", { name: "Ink & Iron", address: "123 Main St", timezone: "UTC" });
+    sb.queueFrom("clients", { full_name: "John Smith", email: "john@example.com", phone: "5552220000" });
+    sb.queueFrom("artists", { name: "Sam" });
+    sb.queueRpc(false);
+    sb.queueFrom("bookings", { success: true }); // mark sms_day_of_sent
+    sb.queueFrom("bookings", { success: true }); // mark email_day_of_sent
+
+    const res = await remindersGET(cronRequest("http://localhost/api/cron/sms-reminders"));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({ sent48hr: 0, sentDayOf: 1 });
+    expect(trySendSms).toHaveBeenCalledTimes(1);
+    expect(trySendSms).toHaveBeenCalledWith("5552220000", "sms:day_of_reminder");
+  });
+
+  it("protects against an invalid (non-IANA) timezone string — skips only that booking and still processes the next one", async () => {
+    sb.queueFrom("bookings", [
+      candidateRow({ id: "bk-bad-tz", client_id: "c1", date: "2026-08-04" }), // 48hr
+      candidateRow({ id: "bk-ok", client_id: "c2", date: "2026-08-02" }), // day_of
+    ]);
+
+    // Column exists and the row is well-formed — the value itself is just
+    // not a real IANA identifier, which Intl.DateTimeFormat rejects.
+    sb.queueFrom("studios", { name: "Bad TZ Studio", address: null, timezone: "Not/A/Real/Zone" });
+
+    sb.queueFrom("studios", { name: "Ink & Iron", address: "123 Main St", timezone: "UTC" });
+    sb.queueFrom("clients", { full_name: "John Smith", email: "john@example.com", phone: "5552220000" });
+    sb.queueFrom("artists", { name: "Sam" });
+    sb.queueRpc(false);
+    sb.queueFrom("bookings", { success: true }); // mark sms_day_of_sent
+    sb.queueFrom("bookings", { success: true }); // mark email_day_of_sent
+
+    const res = await remindersGET(cronRequest("http://localhost/api/cron/sms-reminders"));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({ sent48hr: 0, sentDayOf: 1 });
+    expect(trySendSms).toHaveBeenCalledTimes(1);
+    expect(trySendSms).toHaveBeenCalledWith("5552220000", "sms:day_of_reminder");
+  });
+
+  it("falls back to UTC when a studio's timezone is an empty string, instead of failing that booking", async () => {
+    sb.queueFrom("bookings", [candidateRow({ date: "2026-08-02" })]); // day_of under UTC
+    sb.queueFrom("studios", { name: "Ink & Iron", address: "123 Main St", timezone: "" });
+    sb.queueFrom("clients", { full_name: "Jane Doe", email: "jane@example.com", phone: "5551110000" });
+    sb.queueFrom("artists", { name: "Alex" });
+    sb.queueRpc(false);
+    sb.queueFrom("bookings", { success: true }); // mark sms_day_of_sent
+    sb.queueFrom("bookings", { success: true }); // mark email_day_of_sent
+
+    const res = await remindersGET(cronRequest("http://localhost/api/cron/sms-reminders"));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({ sent48hr: 0, sentDayOf: 1 });
+    expect(trySendSms).toHaveBeenCalledWith("5551110000", "sms:day_of_reminder");
+  });
 });

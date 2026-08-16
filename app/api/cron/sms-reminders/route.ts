@@ -26,13 +26,22 @@ type StudioRow = { name: string; address: string | null; timezone: string };
 // hours out" must be judged against each studio's own timezone, not the
 // server's (UTC) clock, or a studio far enough from UTC gets its day-of
 // reminder on the wrong calendar day. en-CA formats as YYYY-MM-DD directly.
-function localDateString(when: Date, timeZone: string): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(when);
+//
+// Returns null instead of throwing for an invalid/empty IANA identifier —
+// Intl.DateTimeFormat throws a RangeError on a bad `timeZone`, and this
+// runs per-candidate inside the cron's main loop, so one studio's bad value
+// must not take down every other studio's reminders for the run.
+function localDateString(when: Date, timeZone: string): string | null {
+  try {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(when);
+  } catch {
+    return null;
+  }
 }
 
 export async function GET(request: NextRequest) {
@@ -75,16 +84,30 @@ export async function GET(request: NextRequest) {
   let sentDayOf = 0;
 
   for (const row of (candidates ?? []) as CandidateBookingRow[]) {
-    const { data: studioData } = await supabase
+    const { data: studioData, error: studioError } = await supabase
       .from("studios")
       .select("name, address, timezone" as never)
       .eq("id", row.studio_id)
       .maybeSingle();
     const studio = studioData as StudioRow | null;
-    if (!studio) continue;
+    // One studio's lookup failure (missing row, schema issue, etc.) must not
+    // stop the rest of the batch — log and move on to the next candidate.
+    if (studioError || !studio) {
+      console.error(
+        `[sms-reminders] studio lookup failed for booking ${row.id} (studio ${row.studio_id}):`,
+        studioError?.message ?? "studio not found"
+      );
+      continue;
+    }
 
-    const todayLocal = localDateString(now, studio.timezone);
-    const twoDaysOutLocal = localDateString(new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000), studio.timezone);
+    const todayLocal = localDateString(now, studio.timezone || "UTC");
+    const twoDaysOutLocal = localDateString(new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000), studio.timezone || "UTC");
+    // Missing/invalid IANA timezone on this one studio — skip just this
+    // booking (retried on a future run) rather than crashing the whole cron.
+    if (todayLocal === null || twoDaysOutLocal === null) {
+      console.error(`[sms-reminders] invalid timezone "${studio.timezone}" for studio ${row.studio_id}, booking ${row.id} — skipped`);
+      continue;
+    }
 
     const reminderType: "48hr" | "day_of" | null =
       row.date === twoDaysOutLocal ? "48hr" : row.date === todayLocal ? "day_of" : null;
