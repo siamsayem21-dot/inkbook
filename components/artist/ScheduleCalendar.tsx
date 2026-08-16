@@ -54,32 +54,32 @@ export default function ScheduleCalendar({ artistId, initial }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4">
-        <p className="text-sm text-zinc-400">
-          Click a slot to mark it <span className="text-[#c9a84c]">available</span> (gold) or unavailable (dark).
+      <div className="flex items-center gap-4 flex-wrap">
+        <p className="text-sm text-zinc-500">
+          Click a slot to mark it <span className="text-violet-600 font-medium">available</span> (violet) or unavailable.
         </p>
         <div className="ml-auto flex items-center gap-3">
-          {error && <span className="text-xs text-red-400">{error}</span>}
-          {saved && <span className="text-xs text-green-400">Saved ✓</span>}
+          {error && <span className="text-xs text-red-600">{error}</span>}
+          {saved && <span className="text-xs text-emerald-600">Saved ✓</span>}
           <button
             onClick={handleSave}
             disabled={isPending}
-            className="text-sm bg-[#c9a84c] text-black px-4 py-2 rounded-full font-bold hover:bg-[#a8832e] transition-colors disabled:opacity-50"
+            className="text-sm bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-full font-bold transition-colors disabled:opacity-50"
           >
             {isPending ? "Saving…" : "Save availability"}
           </button>
         </div>
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 overflow-x-auto">
+      <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl p-6 overflow-x-auto">
         <div className="grid grid-cols-8 gap-1 min-w-[640px]">
           <div />
           {DAYS.map((d) => (
-            <div key={d} className="text-center text-xs text-zinc-400 font-medium pb-2">{d}</div>
+            <div key={d} className="text-center text-xs text-zinc-500 font-medium pb-2">{d}</div>
           ))}
           {HOURS.map((hour) => (
             <>
-              <div key={`lbl-${hour}`} className="text-xs text-zinc-500 pr-2 pt-1.5">{fmt12h(hour)}</div>
+              <div key={`lbl-${hour}`} className="text-xs text-zinc-400 pr-2 pt-1.5">{fmt12h(hour)}</div>
               {DAYS.map((_, day) => {
                 const key: SlotKey = `${day}-${hour}`;
                 const isAvail = available.has(key);
@@ -90,8 +90,8 @@ export default function ScheduleCalendar({ artistId, initial }: Props) {
                     title={`${DAYS[day]} ${fmt12h(hour)} — click to ${isAvail ? "remove" : "mark"} available`}
                     className={`h-8 rounded border transition-colors ${
                       isAvail
-                        ? "bg-[#c9a84c]/20 border-[#c9a84c]/50 hover:bg-[#c9a84c]/30"
-                        : "border-zinc-800 hover:border-zinc-600"
+                        ? "bg-violet-50 border-violet-300 hover:bg-violet-100"
+                        : "border-zinc-200 hover:border-zinc-300"
                     }`}
                   />
                 );
@@ -101,7 +101,7 @@ export default function ScheduleCalendar({ artistId, initial }: Props) {
         </div>
       </div>
 
-      <p className="text-xs text-zinc-600">
+      <p className="text-xs text-zinc-400">
         Hours shown: 9am – 6pm. Availability is used to let clients see your open slots.
       </p>
     </div>
