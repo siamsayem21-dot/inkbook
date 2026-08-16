@@ -20,6 +20,21 @@ _(empty)_
 
 ## NEEDS_SIAM
 
+_(none)_
+
+## DONE
+
+- **Studio Timezone Capture — Onboarding + Settings — LOCKED (2026-08-16) — Siam FINAL APPROVED**
+  - **QA cleanup verified:** tag `[QA-SEED-STUDIO-TIMEZONE-CAPTURE-20260816]` — exact IDs confirmed before deletion (studio `7d77fcd9-f258-4215-8806-7fdeb424b4bc` "QA Timezone Studio A"/`qa-tz-capture-a`, owner auth user `11f5226b-d1f9-4215-a9de-867a3d468dc4`), both deleted. Interesting confirmation: the studio's saved timezone had changed to `America/Kentucky/Monticello` since the last automated check — Siam's own visual review evidently exercised the Settings save flow live, further real-world proof it works. 0 child rows existed (no artists/clients/bookings), clean deletion. Post-cleanup, all 13 real production studios reconfirmed unchanged (`timezone = 'UTC'`), all other table row counts matched the exact known baseline, QA auth user confirmed gone.
+  - **Temporary QA artifact removed from the repo:** `scripts/qa-studio-timezone-capture-check.mjs` (and its local screenshots dir, never committed). Permanent regression tests kept: `tests/unit/owner-settings-studio-actions.test.ts`, the timezone-specific additions to `tests/unit/api-studios.test.ts`, and `tests/db/studio-timezone.test.ts` (added earlier in the production migration work, still covers the column shape).
+  - **Final diff confirmed clean before commit:** exactly `lib/timezone.ts` (new), `app/(auth)/register/page.tsx`, `app/api/studios/route.ts`, `app/(owner)/owner/settings/studio/{page.tsx,StudioSettingsClient.tsx,actions.ts}`, `tests/unit/{owner-settings-studio-actions.test.ts (new),api-studios.test.ts}` — nothing under Owner Bookings/Artists/Clients/Consultations, nothing under any Artist Portal module, cron file (`app/api/cron/sms-reminders/route.ts`) untouched.
+  - **Full lock verification (2026-08-16):** typecheck clean · lint clean · unit tests 497/497 · component tests 12/12 · production build clean (`/register` 2.46 kB, `/owner/settings/studio` 2.61 kB, both compiled with no errors) · DB tests require local Docker/Supabase (unavailable here, same precedent as every prior module — will run in CI) · committed (`0b01b9c` feature + `358c10b` tasks) · feature branch `feature/studio-timezone-capture` pushed · fast-forward merged to `master` (`a9e099f..358c10b`, no conflicts) · pushed to `origin/master` · Vercel production deployment `inkbook-8fpevy6c7-…` Ready, confirmed live on `www.inkbook.tech`.
+  - **Production smoke test (read-only, no QA data created, no real SMS/email sent):** all 10 checked routes correct — `/register` live (200, public page), `/owner/settings/studio`, `/owner/dashboard`, `/owner/settings`, `/owner/artists`, `/owner/bookings`, `/artist/dashboard`, `/artist/consultations`, `/artist/bookings`, `/artist/schedule` all correctly gated behind `/login` (307).
+  - Same pre-existing, unrelated CI job (E2E full-owner-workflow, Stripe secrets gap) tracked separately under `## BLOCKED` — not treated as a failure of this module.
+  - **`client_accounts` phone/date_of_birth migration drift** remains untouched, tracked separately under `## BLOCKED` as instructed — not addressed here.
+  - **Preserved and confirmed working:** browser timezone detection (with the `Asia/Calcutta`/`Asia/Kolkata` alias nuance documented), explicit owner override before creation, valid IANA persistence, `UTC` support (despite its absence from `Intl.supportedValuesOf('timeZone')`), invalid-timezone rejection, ownership/cross-studio protection (via the existing `getStudioId() === studioId` check), and cron compatibility (`studios.timezone` remains the cron's sole, untouched read path).
+  - Files: `lib/timezone.ts`, `app/(auth)/register/page.tsx`, `app/api/studios/route.ts`, `app/(owner)/owner/settings/studio/page.tsx`, `app/(owner)/owner/settings/studio/StudioSettingsClient.tsx`, `app/(owner)/owner/settings/studio/actions.ts`, `tests/unit/owner-settings-studio-actions.test.ts`, `tests/unit/api-studios.test.ts`.
+
 - **Studio Timezone Capture — Onboarding + Settings — READY FOR VISUAL REVIEW**
   - **Local URLs:** `http://localhost:3001/register` (onboarding timezone field) and `http://localhost:3001/owner/settings/studio` (Settings timezone field, requires login below). One fresh dev server is running now.
   - **QA login (already created via the real signup flow, left in place):** `qa-timezone-capture-a-20260816@inkbook.test` / `QaTimezoneCapture20260816!` — log in at `/login`, lands on `/owner/dashboard` for "QA Timezone Studio A" (subdomain `qa-tz-capture-a`). Currently saved timezone: `America/Los_Angeles` (created as `America/Chicago`, then changed via Settings to prove persistence — see 6/7).
@@ -49,9 +64,7 @@ _(empty)_
 
   **Not committed, not merged, not pushed, not deployed** — working tree only. No production data modified — all activity scoped to the tagged QA studio/owner created via the real signup flow. No real SMS/email sent.
 
-  **Waiting on:** your visual review at the URLs above, then the exact phrase **"FINAL APPROVED — begin the lock workflow"** to start the lock sequence.
-
-## DONE
+  *(Historical — superseded by the "LOCKED" entry above. Siam subsequently approved and this went through the full lock workflow: QA cleanup, merge, deploy, and production smoke test, all completed successfully.)*
 
 - **[Studio Timezone Capture 6/7] Integration Verification — VERIFIED (real UI, headless Playwright, 2026-08-16)**
   - New QA script `scripts/qa-studio-timezone-capture-check.mjs` — drives the **real** `/register` form (not mocks, not direct DB inserts) end-to-end, tagged `[QA-SEED-STUDIO-TIMEZONE-CAPTURE-20260816]`, left in place for 7/7's visual review (not cleaned up here).
