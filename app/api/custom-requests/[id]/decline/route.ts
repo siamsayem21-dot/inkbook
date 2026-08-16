@@ -17,7 +17,7 @@ export async function POST(
 
   const { data: reqData } = await supabase
     .from("custom_requests")
-    .select("id, studio_id, client_name, client_email, status, booking_id")
+    .select("id, studio_id, artist_id, client_name, client_email, status, booking_id")
     .eq("id", params.id)
     .single();
 
@@ -26,6 +26,7 @@ export async function POST(
   const cr = reqData as {
     id: string;
     studio_id: string;
+    artist_id: string | null;
     client_name: string;
     client_email: string;
     status: string;
@@ -46,11 +47,19 @@ export async function POST(
   // incorrectly rejected every real multi-studio owner with 403. Same fix
   // as app/api/custom-requests/[id]/quote/route.ts.
   const [{ data: artistRow }, { data: studioRow }] = await Promise.all([
-    supabase.from("artists").select("studio_id").eq("user_id", user.id).eq("studio_id", cr.studio_id).maybeSingle(),
+    supabase.from("artists").select("id, studio_id").eq("user_id", user.id).eq("studio_id", cr.studio_id).maybeSingle(),
     supabase.from("studios").select("id, name, subdomain").eq("owner_id", user.id).eq("id", cr.studio_id).maybeSingle(),
   ]);
 
-  const isArtist = (artistRow as { studio_id: string } | null)?.studio_id === cr.studio_id;
+  // An artist may only decline their own studio's requests that are assigned
+  // to them or still unassigned — never a request already assigned to a
+  // *different* artist at the same studio. Same fix as
+  // app/api/custom-requests/[id]/quote/route.ts.
+  const declineArtist = artistRow as { id: string; studio_id: string } | null;
+  const isArtist =
+    declineArtist !== null &&
+    declineArtist.studio_id === cr.studio_id &&
+    (cr.artist_id === null || cr.artist_id === declineArtist.id);
   const ownerStudio = studioRow as { id: string; name: string; subdomain: string } | null;
   const isOwner = ownerStudio?.id === cr.studio_id;
 

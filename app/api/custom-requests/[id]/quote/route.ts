@@ -68,7 +68,15 @@ export async function POST(
   const artist = artistRow as { id: string; name: string; studio_id: string } | null;
   const studio = studioRow as { id: string; name: string; subdomain: string } | null;
 
-  const isArtist = artist !== null && artist.studio_id === cr.studio_id;
+  // An artist may only act on their own studio's requests that are assigned
+  // to them or still unassigned — never a request already assigned to a
+  // *different* artist at the same studio. Previously this only checked
+  // studio membership, so any artist at a studio could quote/claim a
+  // colleague's assigned request. The owner has no such restriction.
+  const isArtist =
+    artist !== null &&
+    artist.studio_id === cr.studio_id &&
+    (cr.artist_id === null || cr.artist_id === artist.id);
   const isOwner  = studio !== null && studio.id === cr.studio_id;
 
   if (!isArtist && !isOwner) {
