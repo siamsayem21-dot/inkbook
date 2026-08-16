@@ -2,7 +2,7 @@
 
 ## CURRENT
 
-_(empty — Studio Timezone Capture 7/7 done, now waiting in NEEDS_SIAM)_
+_(empty — Artist Earnings 10/10 done, now waiting in NEEDS_SIAM)_
 
 ## NEXT
 
@@ -20,9 +20,148 @@ _(empty)_
 
 ## NEEDS_SIAM
 
-_(none)_
+- **Artist Earnings — READY FOR VISUAL REVIEW (BATCH RESULT — all 10 tasks completed, no failures/blocks)**
+
+  **Local URL:** `http://localhost:3001/artist/earnings` (one fresh dev server running now). Also try `?month=2026-07` for prior-month navigation.
+  **QA login:** `qa-earnings-20260816@inkbook.test` / `QaEarnings20260816!Ink` — log in at `/login`, lands as "QA Earnings Artist A".
+
+  **DONE (all 10):**
+  - 1/10 — Inspected existing architecture: canonical earnings formula already established and cross-referenced between Artist Dashboard and the old Earnings page (`SUM(deposit_amount_cents)` for `confirmed`/`completed` bookings by appointment `date`). Owner Revenue uses a different, more complex real-payment-collection model — correctly not the one to follow here.
+  - 2/10 — Canonical rules formally defined, no genuine ambiguity found, no NEEDS_SIAM escalation needed.
+  - 3/10 — Summary UI rebuilt on light/violet: `{Month} Earnings`, `Sessions`, `Completed`, `Confirmed (upcoming)` stat cards + an All-time card. Old dead `EarningsWidget.tsx` deleted.
+  - 4/10 — Earning-sessions history list: client, style, date/time, status badge, deposit amount, outstanding-balance display (reusing the already-locked `lib/booking-balance.ts`), links into the locked Artist Bookings detail page.
+  - 5/10 — Month navigation via `?month=YYYY-MM` (Prev/Next/"Jump to current month"), same pattern as Artist Schedule's day nav.
+  - 6/10 — Booking/payment integration verified against real production data: 0 mismatches vs. Artist Dashboard across 54 real (artist, month) combinations.
+  - 7/10 — Security/isolation verified against real data: 0 cross-artist leaks across all 9 real artists; confirmed zero mutation surface exists on this page at all.
+  - 8/10 — Data correctness verified with tagged QA data via a real headless-browser pass: **21/21 checks passed**, exact totals match hand-calculated raw-row sums.
+  - 9/10 — Full regression pass: typecheck/lint/unit/component all clean and green; diff scope confirmed to touch only the Earnings page + 1 deleted dead component + new scripts — nothing under any locked module.
+  - 10/10 — This QA hand-off, below.
+
+  **FAILED/BLOCKED:** none.
+  **SKIPPED / DEPENDENCY BLOCKED:** none.
+
+  **BUGS FOUND + FIXED:** none in the product code. One test-script-only false alarm was investigated and resolved: a Playwright click on an earning row occasionally didn't register as a navigation in the QA script (the identical timing artifact already documented in the Artist Schedule module's lock history) — confirmed via a direct retry with `scrollIntoViewIfNeeded()` + an explicit `waitForURL` race that the real link/navigation works correctly; fixed the test script, not the product.
+
+  **TEST RESULTS:**
+  - Typecheck: clean.
+  - Lint: clean.
+  - Unit: **497/497**.
+  - Component: **12/12**.
+  - DB/security: `tests/db` requires local Docker/Supabase, unavailable here — same precedent as every prior module (will run in CI). No new DB-level test needed: Earnings introduced no new mutation or RLS surface; the underlying `bookings`/`deposit_payments` policies are already covered by the existing `tests/db/rls-isolation.test.ts` suite.
+  - Integration: Dashboard-consistency re-confirmed directly for the QA artist ($450, byte-for-byte match), Artist Bookings click-through confirmed, timezone/date-boundary consistency confirmed (no per-studio offset applied, matching Dashboard/Bookings/Schedule precedent).
+
+  **VISUAL REVIEW — what to inspect:**
+  - **August 2026 (default/current month):** total **$450**, **4** sessions. Cards: Completed **$300** (2 sessions), Confirmed (upcoming) **$150** (2 sessions). All-time **$630**.
+  - **4 history rows expected:** Jordan QA Client (Aug 5, Completed, $200 deposit, "Paid in full"), Riley QA Client (Aug 10, Completed, $100 deposit, "$200 outstanding"), Sam QA Client (Aug 14, Confirmed, $150 deposit), Jordan QA Client (Aug 16, Confirmed, **$0** deposit — zero-amount edge case, renders cleanly).
+  - **Not shown anywhere:** a cancelled booking ($175 deposit), a no-show ($125 kept deposit), a pending_deposit booking ($150) — all correctly excluded.
+  - **`?month=2026-07`:** total **$180**, **1** session (Neo-Traditional, Sam QA Client).
+  - **`?month=2026-06`:** empty state, "No earnings this period", $0.
+  - **Isolation:** nothing from "QA Earnings Artist B" (style "Script", same studio, same date as one of Artist A's bookings) appears anywhere in Artist A's view.
+
+  **Files changed:** `app/(artist)/artist/earnings/page.tsx`, `components/artist/EarningsWidget.tsx` (deleted). **New permanent scripts:** `scripts/verify-artist-earnings-integration.mjs`, `scripts/verify-artist-earnings-isolation.mjs`. **New QA-specific scripts (kept until cleanup, not yet run):** `scripts/qa-artist-earnings-seed.mjs`, `scripts/qa-artist-earnings-visual-check.mjs`.
+
+  **QA data left in place (per instruction, not cleaned up):** tag `[QA-SEED-ARTIST-EARNINGS-20260816]`, studio `5cdeeba0-bdb7-404c-9c9c-5c54b5634414` ("test"). Exact IDs: auth user `e8fcf0e0-ad03-49bc-925a-b53c1f67a204`; artist A `a3a47161-1bbd-4f8e-b4d8-f864b8986ccc`; artist B `d4494a81-455e-4e7d-b0ee-93c7fbe43fb2`; clients `e7740207-…` (Jordan), `70bc13de-…` (Riley), `83e1c724-…` (Sam); 9 bookings (full list in `scripts/qa-artist-earnings-seed.mjs`'s output). Confirmed real production data untouched: 13 studios / 39 total bookings (30 real + 9 QA, exactly as expected) / 26 total clients (23 real + 3 QA) / 11 total artists (9 real + 2 QA).
+
+  **Not committed, not merged, not pushed, not deployed.** Stripe CI secrets issue and `client_accounts` migration drift both left untouched, still under `## BLOCKED`. No payout/commission/payroll system created.
+
+  **Waiting on:** your visual review at the URL above, then the exact phrase **"FINAL APPROVED — begin the lock workflow"** to start the lock sequence.
 
 ## DONE
+
+- **[Artist Earnings 9/10] Focused Regression + Integration Verification — VERIFIED (2026-08-16)**
+  - `npx tsc --noEmit` clean · `npm run lint` clean · `npm run test` **497/497** · `npm run test:ct` **12/12** · `npm run test:db` requires local Docker/Supabase (unavailable here, same precedent as every prior module — the underlying `bookings`/`deposit_payments` RLS is already covered by the existing `tests/db/rls-isolation.test.ts` suite, which will run in CI; no new DB test was needed since Earnings introduced no new mutation/RLS surface, per 7/10's reasoning).
+  - **Artist Dashboard earnings consistency — directly re-confirmed for the QA artist, not just generically:** ran Dashboard's exact query shape (`.eq(artist_id).in(status,['confirmed','completed']).gte(date,first).lte(date,last)`) against QA Artist A's August data — **$450**, byte-for-byte matching what the Earnings page itself rendered. Combined with 6/10's 54-real-combination check, this is now confirmed both generically (real data) and specifically (a real completed+confirmed mix, which real data alone couldn't exercise).
+  - **Artist Bookings integration:** confirmed in 8/10 — clicking an earning row navigates into the already-locked `/artist/bookings/[bookingId]`, unmodified.
+  - **Timezone/reporting-date consistency:** confirmed in 2/10 (design) and 5/10+8/10 (verification) — no per-studio timezone applied to month boundaries, matching Dashboard/Bookings/Schedule precedent exactly.
+  - **Diff scope confirmed clean:** `git status --short` / `git diff --stat` show exactly `app/(artist)/artist/earnings/page.tsx` (modified), `components/artist/EarningsWidget.tsx` (deleted, confirmed dead code), `TASKS.md`, plus 4 new scripts — **zero files under Owner Portal, Artist Dashboard, Artist Consultations, Artist Bookings, Artist Schedule, or Studio Timezone Capture.**
+  - Files: none new beyond what's already listed in 3/10, 6/10, 7/10, 8/10.
+
+- **[Artist Earnings 8/10] Data Correctness + Edge Cases — VERIFIED (real UI, headless Playwright, 2026-08-16)**
+  - Seeded tagged QA data (`[QA-SEED-ARTIST-EARNINGS-20260816]`) in the same empty "test" studio used for Artist Schedule QA (`5cdeeba0-…`) — 3 QA clients, 2 QA artists (A with login, B for isolation-check only), 9 bookings covering every edge case this task lists. New QA script `scripts/qa-artist-earnings-visual-check.mjs` drives the **real** rendered page via headless Playwright (magic-link cookie injection, same technique as prior modules), not mocks.
+  - **Expected totals computed independently from raw QA rows first, then verified against the live rendered page — 21/21 checks passed, exact match:**
+    - August 2026 (current month): **$450 total, 4 sessions** — Completed $300 (2 sessions), Confirmed (upcoming) $150 (2 sessions), All-time $630. Matches a raw-row calculation done before ever loading the page.
+    - **Multiple bookings, different months:** July 2026 (`?month=2026-07`) correctly shows $180 / 1 session via Prev-month navigation.
+    - **Confirmed + completed mix:** both statuses render in the same list with correct distinct badges.
+    - **Cancelled/no-show exclusion:** a cancelled booking with a $175 deposit and a no-show with a $125 kept deposit both exist in the QA data and correctly do **not** appear anywhere in the list or totals.
+    - **Zero-amount edge case:** a confirmed booking with `deposit_amount_cents = 0` renders cleanly as a "$0" row — no crash, no NaN, no layout break.
+    - **Pending/non-earning state:** a `pending_deposit` booking correctly does not appear.
+    - **Empty state:** June 2026 (no QA data) correctly shows "No earnings this period" and a $0 total.
+    - **Month-boundary/timezone:** confirmed via the same server-local date-arithmetic precedent as Dashboard (see 2/10's canonical rule) — no studio-timezone-specific edge case exists to test since none is applied, by design, matching every other locked page.
+    - **Refresh persistence:** a full page reload on July's URL still shows July's $180 — the reporting period lives in the URL, not client state.
+    - **Artist/studio isolation:** Artist B's booking (same studio, overlapping date, distinctive style "Script") does **not** leak into Artist A's view — 0 occurrences found.
+    - **Click-through:** clicking an earning row correctly navigates into the already-locked `/artist/bookings/[bookingId]`.
+  - No bugs found — every check passed on the first substantive run (one earlier click-through failure was diagnosed as the identical Playwright click-timing artifact already documented in the Artist Schedule module's own lock history, confirmed via the same scroll-into-view + explicit `waitForURL` race fix, not a product bug).
+  - Files: `scripts/qa-artist-earnings-seed.mjs` (new, QA-specific), `scripts/qa-artist-earnings-visual-check.mjs` (new, QA-specific).
+
+- **[Artist Earnings 7/10] Artist/Studio Security + Isolation — VERIFIED (real-data read-only check, 2026-08-16)**
+  - New read-only verification script `scripts/verify-artist-earnings-isolation.mjs` (kept, permanent), run against real production data (9 artists, 6 studios):
+    - Simulated Earnings' exact query per real artist (`.eq("artist_id", artist.id).in("status", ["confirmed","completed"])`) — **0 cross-artist leaks** across all 9 artists.
+    - Two-different-studio and same-studio-different-artist spot checks — 0 overlapping booking ids in both.
+    - **Mutation surface:** confirmed `app/(artist)/artist/earnings/page.tsx` has zero server actions — purely read-only, so "artist cannot mutate Owner-only payment/financial state" holds trivially (nothing to mutate).
+    - **Direct URL/query manipulation:** the only URL param (`?month=YYYY-MM`) carries no artist/studio identity — the artist is always resolved server-side from the authenticated session, identical to every other locked Artist Portal page. No manipulation vector exists.
+  - **Owner Portal unaffected:** confirmed via diff scope — no Owner Portal files touched this whole module (checked again explicitly here, not just assumed).
+  - **RLS not weakened, and no redundant new DB test added on purpose:** the underlying `"bookings: artist can select own"` and `"deposit_payments: artist can select own"` policies (both pre-existing) are already directly exercised by `tests/db/rls-isolation.test.ts`'s existing "cross-studio isolation (artist)" suite (via the anon client, not the admin client — genuine RLS enforcement, not just an app-layer filter check). Since Earnings introduces no new table, no new mutation, and reads through the identical `bookings`/`deposit_payments` tables that suite already covers, adding a page-specific duplicate DB test would test the same policy twice rather than add real coverage — judged not appropriate here, unlike modules that introduced a genuinely new mutation/authorization surface (e.g. Artist Bookings' completion/cancellation actions).
+  - Files: `scripts/verify-artist-earnings-isolation.mjs` (new).
+
+- **[Artist Earnings 6/10] Booking + Payment Integration Verification — VERIFIED (real-data read-only check, 2026-08-16)**
+  - New read-only verification script `scripts/verify-artist-earnings-integration.mjs` (kept, permanent), run against real production data (9 artists, 30 bookings):
+    - **Earnings-page total vs Artist Dashboard total, independently re-derived and cross-checked across all 54 real (artist, month) combinations — 0 mismatches.** Genuine proof, not just "same code so it must agree" — the script re-implements both query shapes independently and compares results.
+    - **Cancelled/no-show exclusion confirmed by status alone, not by amount:** 28 real cancelled/no_show bookings carry a nonzero `deposit_amount_cents` and are correctly excluded — proves the filter is genuinely status-based, not accidentally relying on amount being zero.
+    - `pending_deposit`/`awaiting_schedule`: 0 such rows exist in current real data (none created since none currently sit in that state), so this specific exclusion is currently unexercised by real data — will be covered by QA data in 8/10 and 10/10.
+    - **Outstanding-balance math** (`lib/booking-balance.ts`, reused unmodified) checked against all real qualifying bookings — 0 mismatches (small real sample: only 2 confirmed/completed bookings exist at all in production right now, 1 with a known total price).
+  - **Real data status distribution note:** `confirmed: 2, cancelled: 13, no_show: 15` — **zero real bookings currently have `status = 'completed'`**, consistent with the same data-sparsity pattern already documented in multiple prior modules (Artist Dashboard earnings bug, Artist Bookings balance bug). The "Completed" stat card and status badge are implemented and typecheck/lint-clean but currently latent against real data — genuine visual/functional proof is deferred to QA data in 8/10 and 10/10, as it has been for every prior module hitting this same gap.
+  - No calculation bug found — 0 mismatches across every check.
+  - Files: `scripts/verify-artist-earnings-integration.mjs` (new).
+
+- **[Artist Earnings 5/10] Reporting Period / Date Navigation — VERIFIED (typecheck + lint + local runtime, 2026-08-16)**
+  - Implemented as part of the same continuous build as 3/10 and 4/10 (naturally one page): month navigation via `?month=YYYY-MM` — Prev/Next links, "Current month" label / "Jump to current month" link, same nav-bar pattern already established and locked in Artist Schedule's day-view (`?date=` links, same visual shape).
+  - **Calculations and history update consistently:** both the stat cards and the earning-sessions list are derived from the exact same `periodBookings` query result for the selected `monthKey` — no separate/duplicated date-range logic between the summary and the list.
+  - **Timezone/date boundaries:** deliberately uses server-local date arithmetic with no per-studio offset, per the canonical rule decided in 2/10 — matches Dashboard/Bookings/Schedule precedent exactly, keeps Earnings and Dashboard's "this month" figures structurally guaranteed to agree.
+  - **Refresh preserves the selected period:** the selected month lives entirely in the URL (`?month=`), not client-only state, so a refresh/reload/shared link always reproduces the same reporting period — no advanced analytics/broader filters added, matching the "smallest useful control" instruction.
+  - Verified: local dev server compiled `/artist/earnings` and `/artist/earnings?month=2026-07` both with no errors, both correctly redirect (307) when unauthenticated.
+  - Files: `app/(artist)/artist/earnings/page.tsx` (same file as 3/10 and 4/10).
+
+- **[Artist Earnings 4/10] Earnings History / Transaction List — VERIFIED (typecheck + lint + local runtime, 2026-08-16)**
+  - Implemented as part of the same continuous build as 3/10 (naturally one page, not a separate route) and 5/10 (the list is scoped to whichever month is selected). Each row shows: client name, style, date, time, status badge (reusing the same `STATUS_META` color tokens as Artist Bookings, restricted to just the two statuses that can appear here — `confirmed`/`completed`), deposit amount, and — reusing the already-locked `lib/booking-balance.ts` helpers rather than inventing new balance math — "Paid in full" or the exact outstanding amount when the booking has a known total (`total_amount_cents`/`quote_amount_cents`).
+  - Each row links to the artist's own already-locked `/artist/bookings/[bookingId]` detail page — reused, not duplicated.
+  - **No Owner-only financial controls exposed:** no deposit-link generation, no remainder-request trigger, no status-change controls — this is a read-only view, matching the pattern already established for every other Artist Portal financial/booking surface.
+  - **No cross-artist data exposure:** the underlying query is `.eq("artist_id", artist.id)` — same scoping mechanism as every other Artist Portal page (full authorization proof deferred to 7/10, which owns that verification explicitly).
+  - **Empty state handled:** "No earnings this period" card when the selected month has zero qualifying bookings — matches the empty-state pattern already used in Artist Schedule/Bookings.
+  - Files: `app/(artist)/artist/earnings/page.tsx`.
+
+- **[Artist Earnings 3/10] Earnings Summary UI — VERIFIED (typecheck + lint + local runtime, 2026-08-16)**
+  - Rebuilt `app/(artist)/artist/earnings/page.tsx` on the light/white + soft-violet Artist Portal system (previously old dark theme), reusing Artist Dashboard's exact stat-card shape (violet-50 icon chip, big number, label, subtitle) for visual consistency rather than inventing a new card style.
+  - **4 stat cards, all backed by real existing data, nothing invented:** `{Month} Earnings` (the canonical total from 2/10's rule), `Sessions` (qualifying booking count), `Completed` (amount + count for sessions already done), `Confirmed (upcoming)` (amount + count for sessions locked in but not yet completed) — this last pair is the genuinely-schema-supported "pending vs. actually attributable" split the product goal asked for, derived from the existing `status` column, not a new concept. Plus a secondary `All-time earnings` card (kept from the pre-existing page, always accurate regardless of the selected month).
+  - **Old `components/artist/EarningsWidget.tsx` deleted** — confirmed via repo-wide grep it was imported nowhere else once this page stopped using it; no orphaned dead code left behind.
+  - Did not touch `components/shared/Sidebar.tsx` or any other Artist Portal module.
+  - Verified: `npx tsc --noEmit` clean, `npm run lint` clean, `npm run test` 497/497 (no regression from the component deletion), local dev server compiled `/artist/earnings` with no errors.
+  - Files: `app/(artist)/artist/earnings/page.tsx`, `components/artist/EarningsWidget.tsx` (deleted).
+
+- **[Artist Earnings 2/10] Define Canonical Artist Earnings Rules — VERIFIED (2026-08-16)**
+  - Documentation only, no code changed. **No genuine ambiguity found — every rule below is directly derivable from already-existing, cross-referenced code, so this did not need to escalate to NEEDS_SIAM.**
+  - **Qualifying statuses:** `confirmed` and `completed` only — matches Artist Dashboard's `PAID_STATUSES`, an already-documented, already-locked cross-page contract. `pending_deposit`, `awaiting_schedule`, `cancelled`, `no_show` all contribute `$0`.
+  - **Monetary field counted:** `bookings.deposit_amount_cents`. Not `total_amount_cents`/`quote_amount_cents` (the full agreed price), not a computed remainder. This is deliberate, not a gap — Owner Revenue already does the fuller "actual money collected" calculation for a different audience/question; Artist Earnings answers "what's attributed to my locked-in/finished sessions," which per the task's own explicit instruction must reuse Dashboard's existing (deposit-only) semantics, not invent a broader one.
+  - **Partially-paid bookings:** there is no partial-earnings concept — a booking not yet in `confirmed`/`completed` contributes nothing regardless of any deposit state, since `deposit_paid = true` is already a precondition of reaching `confirmed` in every write path.
+  - **Completed bookings:** treated identically to confirmed — same field, same inclusion, no extra remainder-collected amount added (again, matching existing Dashboard/Earnings behavior, not Owner Revenue's).
+  - **Refunds/cancellations/no-shows:** excluded entirely (both statuses fall outside the qualifying set). Explicitly checked the no-show/kept-deposit case: even though the studio keeps the deposit on a no-show, current InkBook rules do **not** count that toward artist earnings (the booking is `no_show`, not in `{confirmed, completed}`) — following the task's own "do not count... unless existing rules explicitly say so" instruction, and none do.
+  - **Reporting-month timestamp:** `bookings.date` (the appointment date) — matches both existing surfaces' identical query shape (`.gte("date", first).lte("date", last)`), not `deposit_paid_at`/`created_at` (which is what Owner Revenue uses for a different purpose).
+  - **Timezone handling:** none applied to month-boundary math, by design-for-consistency — every other locked page that computes "this month" (Dashboard, Bookings, Schedule) uses server-local date arithmetic with no per-studio offset; `studios.timezone` remains consumed only by the SMS reminder cron (per the Studio Timezone Capture work). Introducing studio-timezone-aware month boundaries in Earnings alone would make it disagree with the very Dashboard figure it's contractually required to match — so the existing, already-established precedent is followed here too, not a new one invented.
+  - **Dashboard/Earnings consistency requirement:** same status set, same summed column, same date-range shape, same (lack of) timezone adjustment — this is not a new constraint, it's already true today and must simply be preserved through the redesign.
+  - Files: none changed (documentation only).
+
+- **[Artist Earnings 1/10] Inspect Existing Earnings Architecture + Data Model — VERIFIED (2026-08-16)**
+  - Inspection only, no code changed. Full findings:
+  - **`/artist/earnings` already exists** (`app/(artist)/artist/earnings/page.tsx` + `components/artist/EarningsWidget.tsx`), old dark theme, not yet part of any redesign cycle. Currently shows: This month / Last month / All-time totals, plus a 4-week bar breakdown for the current month.
+  - **Canonical earnings formula, already established and cross-referenced between two locked/existing surfaces:** `SUM(bookings.deposit_amount_cents) WHERE artist_id = $1 AND status IN ('confirmed','completed') AND date BETWEEN ...`. Confirmed byte-for-byte identical between the existing Earnings page and Artist Dashboard's own "This Month's Earnings" card — Dashboard's own code comment states explicitly: *"Same PAID_STATUSES definition as app/(artist)/artist/earnings/page.tsx — this dashboard card and that page's 'This month' stat must always agree."* This is not incidental — it's a deliberately documented, already-locked cross-page contract.
+  - **What "earnings" means here, precisely:** the **deposit amount attributed to a session**, not the full booking value and not a computed remainder/commission. Because `status = 'confirmed'` already implies `deposit_paid = true` in every code path that sets it (established in the earlier Timezone Fix work), summing `deposit_amount_cents` unconditionally for confirmed/completed bookings is equivalent to "amount actually collected via deposit for sessions that are locked in or done" — not a bug, a deliberate simplification.
+  - **Owner Revenue uses a *different*, more complex model — confirmed via `app/(owner)/owner/revenue/page.tsx` + `lib/revenue.ts`'s `aggregateRevenueByMonth()`:** studio-wide, keyed by *when money actually landed* (`deposit_paid_at`/`paid_at`), combining booking deposits + `deposit_payments` remainder rows (`payment_type='remainder' AND payment_status='paid'`) + `custom_requests` deposits. This answers "how much real money has the studio collected," a different question than Artist Earnings' "how much is attributed to my confirmed/completed sessions." The task's own instruction ("reuse the same earnings semantics already verified in Artist Dashboard") already resolves which model to follow — Dashboard's, not Owner Revenue's — so this is not an unresolved ambiguity.
+  - **Reusable shared helpers found, already locked into Owner Bookings/Artist Bookings:** `lib/booking-balance.ts` — `getBookingTotalCents()` (coalesces `total_amount_cents ?? quote_amount_cents ?? null`, the two mutually-exclusive "agreed total price" columns) and `getOutstandingBalanceCents()` (respects `deposit_paid`/`remainder_collected`, never re-sums payment tables). Directly reusable for Task 4's history-row "amount"/"payment state" columns instead of inventing new balance logic.
+  - **Full financial schema on `bookings`:** `deposit_amount_cents`, `deposit_paid`, `deposit_paid_at`, `deposit_kept`, `deposit_expires_at`, `remainder_collected`, `remainder_collected_at`, `total_amount_cents` (client-portal-quote-flow bookings), `quote_amount_cents` (AI-consultation-flow bookings, never both populated), `completed_at`. `deposit_payments` table: `amount_cents`, `payment_status` (`pending|paid|refunded|kept`), `payment_type` (`deposit|remainder`), `paid_at` — one row per Stripe attempt, not one-to-one with bookings.
+  - **`booking_status` enum, full and current:** `pending_deposit → awaiting_schedule → confirmed → completed`, exits `cancelled`/`no_show`. `awaiting_schedule` (deposit paid, not yet scheduled) is correctly excluded from the earnings-qualifying set already — reasonable, matches "confirmed" being the point a session is actually locked in.
+  - **No commission/payout/payroll/Stripe-Connect system exists anywhere** — confirmed via a repo-wide case-insensitive search for `commission|payout|stripe_connect|connected_account|payroll` across `supabase/migrations/`, `lib/`, `app/` — zero matches. `artists.minimum_rate_cents` exists (an owner-set floor on what an artist may charge) but is not a computed-payout mechanism. Nothing to invent around, nothing to accidentally reuse incorrectly.
+  - **RLS confirmed already in place** (defense-in-depth; app code uses the admin/service-role client and enforces scoping at the query layer, same as every other Artist Portal page): `"bookings: artist can select own"` (`artist_id = my_artist_id()`) and `"deposit_payments: artist can select own"` (joined through `bookings.artist_id = my_artist_id()`, added in `20260620000000_rls_gaps.sql`) both already exist — no new RLS policy is needed for this module.
+  - **No correctness gaps found in the existing calculation itself** — the formula is simple, consistent, and already cross-verified between two surfaces. The only gap is presentational: the page is old-dark-theme and doesn't yet show a transaction-level history list (client/booking/date/status per earning), which is exactly what Tasks 3–4 are for.
+  - Files inspected only, none changed: `app/(artist)/artist/earnings/page.tsx`, `components/artist/EarningsWidget.tsx`, `app/(artist)/artist/dashboard/page.tsx`, `app/(owner)/owner/revenue/page.tsx`, `lib/revenue.ts`, `lib/booking-balance.ts`, `supabase/migrations/{20260527000000_initial_schema,20260619000003_stripe_deposit_payments,20260623000001_booking_status_awaiting_schedule,20260715000000_remainder_payments,20260527000001_rls,20260620000000_rls_gaps}.sql`.
 
 - **Studio Timezone Capture — Onboarding + Settings — LOCKED (2026-08-16) — Siam FINAL APPROVED**
   - **QA cleanup verified:** tag `[QA-SEED-STUDIO-TIMEZONE-CAPTURE-20260816]` — exact IDs confirmed before deletion (studio `7d77fcd9-f258-4215-8806-7fdeb424b4bc` "QA Timezone Studio A"/`qa-tz-capture-a`, owner auth user `11f5226b-d1f9-4215-a9de-867a3d468dc4`), both deleted. Interesting confirmation: the studio's saved timezone had changed to `America/Kentucky/Monticello` since the last automated check — Siam's own visual review evidently exercised the Settings save flow live, further real-world proof it works. 0 child rows existed (no artists/clients/bookings), clean deletion. Post-cleanup, all 13 real production studios reconfirmed unchanged (`timezone = 'UTC'`), all other table row counts matched the exact known baseline, QA auth user confirmed gone.
