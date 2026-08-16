@@ -20,6 +20,20 @@ _(empty)_
 
 ## NEEDS_SIAM
 
+_(none)_
+
+## DONE
+
+- **Artist Earnings — LOCKED (2026-08-16) — Siam FINAL APPROVED**
+  - **QA cleanup verified:** tag `[QA-SEED-ARTIST-EARNINGS-20260816]` — exact IDs re-confirmed and tag-verified immediately before deletion: auth user `e8fcf0e0-ad03-49bc-925a-b53c1f67a204`, artists `a3a47161-…`/`d4494a81-…` (both `bio` tag-matched), 3 clients (all `notes` tag-matched), 9 bookings (all `description` tag-matched, confirmed 9/9 before delete). All deleted. Real production data reconfirmed at the exact known baseline afterward: 13 studios / 9 artists / 23 clients / 30 bookings, test studio empty again, QA auth user gone.
+  - **Temporary QA artifacts removed from the repo:** `scripts/qa-artist-earnings-seed.mjs`, `scripts/qa-artist-earnings-visual-check.mjs` (and the local screenshots dir, never committed). Permanent regression/verification scripts kept: `scripts/verify-artist-earnings-integration.mjs`, `scripts/verify-artist-earnings-isolation.mjs`.
+  - **Final diff confirmed clean before commit:** exactly `app/(artist)/artist/earnings/page.tsx` (modified), `components/artist/EarningsWidget.tsx` (deleted, confirmed dead code), the 2 permanent verify scripts (new) — nothing under Owner Portal, Artist Dashboard, Artist Consultations, Artist Bookings, Artist Schedule, or Studio Timezone Capture.
+  - **Full lock verification (2026-08-16):** typecheck clean · lint clean · unit tests 497/497 · component tests 12/12 · production build clean (`/artist/earnings` compiled with no errors, 857 B / 96.9 kB First Load JS) · DB tests require local Docker/Supabase (unavailable here, same precedent as every prior module — the underlying `bookings`/`deposit_payments` RLS is already covered by `tests/db/rls-isolation.test.ts`, will run in CI) · committed (`273de44` feature + `081d501` tasks) · feature branch `feature/artist-earnings` pushed · fast-forward merged to `master` (`62d14b4..081d501`, no conflicts) · pushed to `origin/master` · Vercel production deployment `inkbook-mm2uo32qr-…` Ready, confirmed live on `www.inkbook.tech`.
+  - **Production smoke test (read-only, no QA data created, no real SMS/email sent):** all 9 checked routes correctly gated behind `/login` (307) — `/artist/earnings`, `/artist/dashboard`, `/artist/bookings`, `/artist/consultations`, `/artist/schedule`, `/owner/dashboard`, `/owner/settings`, `/owner/artists`, `/owner/bookings`.
+  - Same pre-existing, unrelated CI job (E2E full-owner-workflow, Stripe secrets gap) and the separate `client_accounts` migration-drift issue both remain untouched, tracked under `## BLOCKED`.
+  - **Canonical earnings rules preserved and confirmed locked:** qualifying `confirmed`+`completed` bookings only; `cancelled`/`no_show`/`pending_deposit` correctly excluded regardless of deposit amount; artist/studio isolation (0 leaks across all real artists); no per-studio timezone applied to month boundaries (matches Dashboard/Bookings/Schedule precedent); Artist Dashboard and Artist Earnings byte-for-byte agree on every real and QA case checked; no payroll/payout/commission/Stripe Connect system exists or was invented.
+  - Files: `app/(artist)/artist/earnings/page.tsx`, `components/artist/EarningsWidget.tsx` (deleted), `scripts/verify-artist-earnings-integration.mjs`, `scripts/verify-artist-earnings-isolation.mjs`.
+
 - **Artist Earnings — READY FOR VISUAL REVIEW (BATCH RESULT — all 10 tasks completed, no failures/blocks)**
 
   **Local URL:** `http://localhost:3001/artist/earnings` (one fresh dev server running now). Also try `?month=2026-07` for prior-month navigation.
@@ -64,9 +78,7 @@ _(empty)_
 
   **Not committed, not merged, not pushed, not deployed.** Stripe CI secrets issue and `client_accounts` migration drift both left untouched, still under `## BLOCKED`. No payout/commission/payroll system created.
 
-  **Waiting on:** your visual review at the URL above, then the exact phrase **"FINAL APPROVED — begin the lock workflow"** to start the lock sequence.
-
-## DONE
+  *(Historical — superseded by the "LOCKED" entry above. Siam subsequently approved and this went through the full lock workflow: QA cleanup, merge, deploy, and production smoke test, all completed successfully.)*
 
 - **[Artist Earnings 9/10] Focused Regression + Integration Verification — VERIFIED (2026-08-16)**
   - `npx tsc --noEmit` clean · `npm run lint` clean · `npm run test` **497/497** · `npm run test:ct` **12/12** · `npm run test:db` requires local Docker/Supabase (unavailable here, same precedent as every prior module — the underlying `bookings`/`deposit_payments` RLS is already covered by the existing `tests/db/rls-isolation.test.ts` suite, which will run in CI; no new DB test was needed since Earnings introduced no new mutation/RLS surface, per 7/10's reasoning).
