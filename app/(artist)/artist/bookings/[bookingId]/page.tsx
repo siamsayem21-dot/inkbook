@@ -9,8 +9,8 @@ import ArtistBookingActions from "./ArtistBookingActions";
 
 type BookingDetail = {
   id: string;
-  date: string;
-  time: string;
+  date: string | null;
+  time: string | null;
   style: string;
   description: string | null;
   status: string;
@@ -24,14 +24,23 @@ type BookingDetail = {
   clients: { full_name: string; email: string; phone: string } | null;
 };
 
-function fmtDate(dateStr: string) {
+// Mirrors app/(owner)/owner/bookings/[bookingId]/page.tsx's fmtDate/fmt12h
+// exactly — an awaiting_schedule booking (date/time both null until the
+// owner assigns a schedule) is a real, reachable state, not an edge case;
+// these previously assumed a non-null string and crashed the whole page for
+// any such booking (found via the Artist Requests "Active — Deposit Paid"
+// linked-booking scenario, 2026-08-17, but reachable from any awaiting_schedule
+// booking regardless of origin).
+function fmtDate(dateStr: string | null) {
+  if (!dateStr) return "Not yet scheduled";
   const [y, m, d] = dateStr.split("-").map(Number);
   return new Date(y, m - 1, d).toLocaleDateString("en-US", {
     weekday: "long", month: "long", day: "numeric", year: "numeric",
   });
 }
 
-function fmt12h(time: string) {
+function fmt12h(time: string | null) {
+  if (!time) return "—";
   const [h, m] = time.split(":").map(Number);
   const ampm = h >= 12 ? "PM" : "AM";
   return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${ampm}`;
