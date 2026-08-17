@@ -25,8 +25,8 @@ _(mission-driven — see MASTER_PLAN.md Phase 6 for the remaining net-new work)_
   - **Not yet functional in production**: this session has no `SUPABASE_ACCESS_TOKEN`/DB credential to run DDL against the live Supabase project (confirmed via `npx supabase projects list` → `LegacyPlatformAuthRequiredError`, and a live table probe → `PGRST205`). Until the migration runs, the page will render "No events yet" for every studio (fails closed, not open — `getAuditLogEntries()` catches the missing-table error and returns an empty result rather than throwing).
   - **Action needed:** run `supabase/migrations/20260817000000_compliance_audit_log.sql` in the Supabase SQL Editor, then `node scripts/verify-audit-log.mjs` to confirm (table existence, insert, studio-scoped query isolation, and RLS-level isolation via a real owner session — all self-cleaning).
 
-- **1% Stripe platform transaction fee — awaiting Siam approval to merge (see MASTER_PLAN.md Phase 6 / DEFERRED_ISSUES.md #3)**
-  - Per CLAUDE.md, Stripe/payment changes require Siam approval before reaching production — this is being built and tested on its own branch, not on `master`, unlike the audit log above.
+- **1% Stripe platform transaction fee — bigger gap found, needs a Siam product decision (see MASTER_PLAN.md Phase 6 / DEFERRED_ISSUES.md #3)**
+  - Not built. There is no Stripe Connect integration anywhere in the codebase — every client deposit/remainder payment goes to InkBook's own central Stripe account with no mechanism to pay studios their share at all. A 1% fee can't be meaningfully added on top of nothing. Siam needs to pick a payout model (Stripe Connect / manual payouts / fee-tracking-only) before this becomes a buildable, scoped task.
 
 - **NIGHT BUILD — Portfolio + Flash + Clients + Agreements (40/40 tasks attempted) — READY FOR SIAM REVIEW (2026-08-17)**
 

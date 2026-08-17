@@ -34,7 +34,7 @@ Verified directly in code this session (PHASE1.md's "gap" list for this phase is
 ## Phase 6 — Compliance log + ID verification + Advanced analytics + Transaction fee — **IN PROGRESS (this session)**
 - **Client ID photo verification**: already satisfied by Phase 3's consent-form ID photo capture (required before a booking is considered consented/complete). No further work needed.
 - **Revenue analytics**: `RevenueChart` (6-month trend) already on `/owner/revenue`. Judged sufficient for V1 — "MRR trend" in PHASE1.md was ambiguously scoped to platform-level (Siam's own business), which is out of scope for a per-studio owner dashboard. Not treated as a gap.
-- **1% platform transaction fee** (CLAUDE.md pricing: "+1% transaction fee on all bookings"): **confirmed NOT implemented** — no `application_fee_amount` anywhere in `lib/stripe/deposit-checkout.ts` or remainder-payment checkout code. This is real, unbuilt monetization. Being built this session, but per CLAUDE.md's explicit approval gate ("Stripe/payment changes" require Siam approval before production), it will be fully built and tested but **held for Siam review before merge to master**, not auto-deployed like the non-payment modules were.
+- **1% platform transaction fee** (CLAUDE.md pricing: "+1% transaction fee on all bookings"): **investigated, not built.** Turned out to be blocked on something bigger than a fee — see DEFERRED_ISSUES.md #3. There is no Stripe Connect integration anywhere in the codebase, meaning there is currently no mechanism at all for a studio to receive its clients' deposit/remainder payments (100% goes to InkBook's own central Stripe account today, same account as subscription billing). A 1% fee is meaningless to add until Siam decides how studios actually get paid. This is a product/architecture decision, not a coding task — deferred, not attempted further this session.
 - **Compliance audit log**: confirmed not built anywhere in the codebase (no `audit_log` table/references). Being built this session as a genuinely new, low-risk, additive feature (append-only log table + owner-facing viewer). Safe to build, test, and lock autonomously — touches no payment/auth code.
 
 ## Phase 7 — Client Portal — **COMPLETE** (per prior sessions' memory, spot-verified this session)
@@ -46,8 +46,8 @@ Runs after Phase 6's buildable items land: typecheck, lint, full test suite, bui
 ---
 
 ## Net-new work this session (the only genuinely unfinished tasks)
-1. Compliance audit log — build, test, verify, lock (autonomous, no gate).
-2. 1% Stripe platform transaction fee — build, test, verify on a branch; **do not merge/deploy** without Siam sign-off (financial/production Stripe change).
+1. Compliance audit log — built, tested, committed, deployed. Migration application is the one remaining step, and needs Siam (no DB DDL credentials available in this session — see NEEDS_SIAM in TASKS.md).
+2. 1% Stripe platform transaction fee — investigated, not built. Surfaced a much bigger pre-existing gap (no Stripe Connect / studio payout mechanism at all) that is a product decision for Siam, not a coding task. See DEFERRED_ISSUES.md #3.
 3. Phase 8 final sweep + report.
 
 Everything else in the original CLAUDE.md MVP list and PHASE1.md gap list is either already built and locked, or is a non-code (legal content / DNS infra) item recorded in DEFERRED_ISSUES.md.
