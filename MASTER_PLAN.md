@@ -47,37 +47,52 @@ Method: five parallel independent audit agents re-verified prior claims against 
 | Client CRM | LOCKED | Real joined queries (booking count, consent status, blacklist status), no mock data |
 | Compliance audit log | IMPLEMENTED_NEEDS_HARDENING (blocked on migration) | Code real and wired (4/4 call sites confirmed), fails closed correctly. **Directly confirmed via live Supabase REST probe** (not just claimed): `audit_log` table genuinely does not exist in production (`PGRST205`). No DB DDL credentials in this environment — BLOCKED_NEEDS_SIAM for the migration step specifically. |
 | Revenue analytics | LOCKED | Real aggregation from `bookings`/`deposit_payments`/`custom_requests`, correctly shows empty state instead of faking data |
-| AI Consultation → Artist Match → Quote lifecycle | NOT_YET_AUDITED (Phase 2 scope) | Only confirmed the chat engine makes real Claude API calls; reference image upload, style detection, artist matching, quote assistant, human-approval gate on binding price not yet independently verified — this is Phase 2's job |
-| Calendar/availability | NOT_YET_AUDITED | Not covered by first 5 audits |
-| Payment reminders / review requests crons | NOT_YET_AUDITED | Routes exist per build output (`/api/cron/payment-reminders`, `/api/cron/review-requests`) and are referenced in vercel.json per Phase 3-4 fork, but not independently read/verified yet |
-| RLS policy depth | NOT_YET_AUDITED (flagged) | App-layer ownership/isolation checks confirmed correct (blacklist, agreements, waitlist all have real isolation tests), but several of these route through a service-role client that bypasses RLS — meaning correctness currently depends on app-layer code being right, not on RLS as a second line of defense. Needs a direct read of actual RLS policies in migrations to assess. |
+| AI reference image upload | LOCKED | Two real upload paths confirmed (`app/book/[studio]/consult/actions.ts`, `lib/ai-consultation/submit.ts`), real storage + validation, graceful per-file failure handling |
+| AI style detection | LOCKED | Real Claude API call (`app/api/ai/style-detect/route.ts`), rate-limited, validated response, genuine (non-lying) fallback when key/parsing fails |
+| AI "Artist Match" | MISSING (mislabeled) | No AI-driven matching exists — owner manually picks the artist from a plain dropdown. Real gap vs. the phase name; see DEFERRED_ISSUES.md #8. Everything else in the lifecycle is real. |
+| AI quote assistant | LOCKED | Real Claude call (`app/api/ai/quote-generate/route.ts`), sanitized/clamped output, genuine fallback. Note: a second, non-AI calculation endpoint (`/api/quote/generate`) also exists — possible dead code, flagged in DEFERRED_ISSUES.md #12, not urgent. |
+| Human quote-approval gate | LOCKED (safety-critical, verified strong) | Two-sided, both server-enforced: studio must explicitly "Save Quote" before a price is set, client must explicitly "Accept Quote" before deposit collection opens. AI numbers never reach the client as binding without a human action on both sides. |
+| Quote/consultation lifecycle status | LOCKED | Real enum (`new→reviewed→quoted→deposit_paid→booked→completed`, terminal `lost`) with enforced transitions (`lib/pipeline.ts`), not decorative |
+| Consultation edge cases | IMPLEMENTED_NEEDS_HARDENING | Authorization, malformed IDs, failed uploads, loading/error states all real and handled. One minor gap: no server-side idempotency key on submission — a retried POST could create a duplicate lead (DEFERRED_ISSUES.md #12) |
+| Calendar/availability | IMPLEMENTED_NEEDS_HARDENING | Real exact date+time collision check blocks double-booking on booking creation. No working-hours management, day-off blocking, or duration-aware overlap detection — narrower than the phase name implies. See DEFERRED_ISSUES.md #11. |
+| Artist invite/onboarding | LOCKED | `app/artist/accept/[token]/actions.ts` — real token+expiry validation, handles email-exists race, correctly revives a studio-scoped removed artist rather than duplicating |
+| White-label slug resolution (code-level) | LOCKED | Clean `.eq("subdomain", ...).single()` → `notFound()` on miss, no leak path found in code. Live walkthrough against a real DB-backed studio pending (see Phase 6). |
+| Payment-reminders / review-requests crons | IMPLEMENTED_NEEDS_HARDENING → **FIXED** | Both have real, idempotent logic. Found and fixed a real bug: `payment-reminders`' deposit-reminder window (5h) was sized for an abandoned 4-hour cadence never updated after the cron was downgraded to daily — most reminders would silently never fire. Fixed (window widened to 25h, commit `80b8613`). `review-requests` was already correct (daily-appropriate 14-day-delay logic). |
+| RLS policy depth | CONFIRMED REAL, with an important caveat | Real `CREATE POLICY`/RLS statements exist and are correctly scoped for all core tables (not a hollow "enabled with no policies" situation). **Caveat:** nearly all API routes use a service-role client, which bypasses RLS by design — so RLS is real defense-in-depth on any anon/authenticated-client path, but the majority (service-role) path's isolation depends entirely on correct manual `.eq('studio_id', ...)` scoping in app code, not on RLS as a backstop. Standard architecture, but "RLS enforces isolation" is only half-true as a blanket claim. |
 | Visual QA coverage | PARTIAL | Confirmed covers only 7 static/unauthenticated routes (landing, pricing, privacy, terms, login, register, `/book/demo-studio`). **Zero visual regression coverage on any authenticated dashboard** (owner/artist/portal) — a large majority of the actual app surface. |
-| Artist invite/onboarding | NOT_YET_AUDITED | Not covered by first 5 audits |
-| Environment/config completeness | PARTIAL | Confirmed present: Supabase, Stripe (live), Twilio, Anthropic keys. Confirmed absent: `STRIPE_TEST_*` (blocks CI E2E + local e2e), `DATABASE_URL`/direct Postgres connection (blocks autonomous DDL). Broader review (error monitoring/Sentry, rate limiting, secrets rotation) not yet done. |
+| Cron/automation inventory | LOCKED (with the one fix above) | All 6 `vercel.json` crons confirmed: real logic, `CRON_SECRET`-protected, idempotent. All run once-daily — structural Vercel Hobby-plan limit, not a bug (DEFERRED_ISSUES.md #7). |
+| Environment/config completeness | PARTIAL | All 16 vars in `.env.local.example` are used except `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (dead, unused `@stripe/stripe-js` too — server-only Checkout flow). No env var used in code is missing from the example file (no silent-misconfig risk). Confirmed absent: `STRIPE_TEST_*` (blocks CI/local e2e), `DATABASE_URL` (blocks autonomous DDL). |
+| Production error monitoring | MISSING | No Sentry/error-tracking SDK anywhere — all errors go to `console.error` only, visible solely via Vercel function logs. See DEFERRED_ISSUES.md #9. |
+| Rate limiting | IMPLEMENTED_NEEDS_HARDENING | Real limiter (`lib/rate-limit.ts`) wired into most public POST routes. Gap: OTP login + consultation-start rely only on Supabase's default limits, no app-level limiter. See DEFERRED_ISSUES.md #10. |
+| Build health (re-confirmed independently twice more) | LOCKED | `tsc`/`lint`/`test` (497/497) re-run fresh by 2 more independent agents after this session's fixes — all clean both times |
+| Test coverage characterization | LOCKED-ish | 53 test files; payment/webhook/auth-critical paths have real dedicated coverage (stripe-checkout, stripe-webhook, billing-webhook, consent-forms, cron-payment-reminders all exist as named suites) — not concentrated only on low-risk surface |
 | `client_accounts.phone`/`dob` migration drift | BLOCKED_NEEDS_SIAM (pre-existing, unchanged) | Migration file exists, never applied, nothing reads the columns yet — low priority |
 | Orphaned `app/client-portal/**` prototype | NOT_REQUIRED to fix, flagged for cleanup | Confirmed zero live references from anywhere in the app (repo-wide grep). One new finding: richer aftercare UI (`AftercareCard.tsx`) exists ONLY in this dead tree, not in the live `app/portal/**` — if "aftercare" was meant as a first-class portal feature, it's stranded in unreferenced code. |
 
-**Phase 1 will be marked COMPLETE once the 3 pending targeted audits (AI consultation/quote lifecycle, calendar/availability + onboarding + white-label edge cases, RLS depth + config completeness) return.**
+**Phase 1 — COMPLETE (2026-08-17).** All 8 targeted audit agents (5 initial + 3 supplemental) returned. Every area in the table above has a real, evidence-based status. Two real bugs found were fixed same-session (commit `80b8613`). Remaining gaps are either genuine product-scope questions for Siam (DEFERRED_ISSUES.md #7-11) or minor hardening items (#12) — none are launch-blocking on their own, but see Phase 8 for the beta-readiness synthesis.
 
 ---
 
-## Phase 2 — AI Consultation → Artist Match → Quote — **PENDING** (audit in progress, see Phase 1 row above)
+## Phase 2 — AI Consultation → Artist Match → Quote — **COMPLETE (audit)**
+Full lifecycle traced and verified real: reference upload, AI style detection, AI quote assistant, and critically a **strong, two-sided, server-enforced human-approval gate** before any price becomes binding (the single most safety-critical finding, and it holds up). One real gap: "Artist Match" doesn't exist as an AI feature, only manual artist selection (DEFERRED_ISSUES.md #8) — a product-scope question, not a bug. One minor hardening item: no submission idempotency key (#12).
 
-## Phase 3 — Booking → Stripe → Deposit — **LARGELY VERIFIED IN PHASE 1**, hardening item open
-Genuinely solid (see Phase 1 table): checkout, webhook, idempotency, no-show, remainder payment all LOCKED. One real hardening item: unpaid-deposit auto-cancel cron cadence (daily, not near-real-time) creates up to ~48h latency against the stated 24h business rule. Decision needed: tighten cron frequency (safe, cheap fix) vs. accept documented latency — leaning toward just tightening the cron, will do as a Phase 3/5 hardening task since it's a small, safe, non-destructive change (Vercel cron schedule + no schema change).
+## Phase 3 — Booking → Stripe → Deposit — **COMPLETE (audit + hardening)**
+Checkout, webhook, idempotency, no-show, remainder payment all LOCKED. Auto-cancel cadence (once-daily, structural Vercel Hobby-plan limit) documented in DEFERRED_ISSUES.md #7 — not fixable in code, needs a Siam plan/latency decision.
 
-## Phase 4 — Consent + Client Identity — **LARGELY VERIFIED IN PHASE 1**, one real bug open
-HEIC upload mismatch (see Phase 1 table) is a small, safe, non-schema fix — client accept list should match server allowlist. Will fix in this phase.
+## Phase 4 — Consent + Client Identity — **COMPLETE (audit + fix)**
+Age/minor/guardian flow, ID photo magic-byte validation, storage, and DB persistence all LOCKED. HEIC client/server mismatch found and fixed this session (commit `80b8613`). "ID verification" labeling in old docs corrected — what exists is real anti-spoofing file validation, which is what CLAUDE.md actually requires; not full identity/OCR verification (never required).
 
-## Phase 5 — Automations — **PARTIALLY VERIFIED IN PHASE 1**
-Deposit-expiry, no-show, SMS reminders, waitlist-notify all confirmed real and cron-scheduled. Payment-reminders and review-requests crons exist but not yet independently read/verified — pending.
+## Phase 5 — Automations — **COMPLETE (audit + fix)**
+All 6 crons confirmed real, `CRON_SECRET`-protected, idempotent. Deposit-expiry, no-show, SMS reminders (per-studio timezone-aware), waitlist-notify all solid. Payment-reminders had a real window/cadence bug — found and fixed this session (commit `80b8613`). Structural once-daily cadence across all crons remains a Siam decision (#7).
 
-## Phase 6 — Complete Client Journey + White-label — **PENDING**
-Needs an actual live walkthrough against a real DB-backed studio slug (not `demo-studio`, which is a static marketing page, not a real dynamic studio) — none of the 5 initial audits could do this due to lacking a known real studio subdomain/credentials.
+## Phase 6 — Complete Client Journey + White-label — **IN PROGRESS**
+Code-level white-label slug resolution confirmed clean (LOCKED). A live walkthrough against a real DB-backed studio (not the static `demo-studio` marketing page) is running now via a self-cleaning QA-tagged studio, following this repo's established `verify-*.mjs` pattern — will update when it returns.
 
-## Phase 7 — Full System Production Hardening — **PENDING**
+## Phase 7 — Full System Production Hardening — **SUBSTANTIALLY COVERED BY PHASE 1**
+RLS policy depth, rate limiting, error monitoring, and cron auth/idempotency were all covered in the Phase 1 sweep (see table). Real findings: no production error monitoring (#9), rate-limiting gaps on OTP/consultation-start (#10), RLS is real but service-role paths depend on app-layer correctness rather than RLS as a backstop. No security-severity (P0) issues found — the previously-flagged "security-definer" worktree turned out to be already-merged, stale, harmless (verified via `git merge-base --is-ancestor`).
 
-## Phase 8 — Beta Launch Readiness — **PENDING**
+## Phase 8 — Beta Launch Readiness — **PENDING FINAL SYNTHESIS**
+Will be written after Phase 6's live walkthrough returns.
 
 ---
 
