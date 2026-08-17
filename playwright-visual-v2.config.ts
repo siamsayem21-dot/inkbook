@@ -41,6 +41,11 @@ export default defineConfig({
     baseURL,
     trace: "retain-on-failure",
     screenshot: "off",
+    // Pages that auto-detect the browser's system timezone (e.g. /register's
+    // pre-selected timezone dropdown) would otherwise render a different
+    // default depending on which machine/CI runner executes the test --
+    // pinning it keeps every route deterministic regardless of environment.
+    timezoneId: "UTC",
   },
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },

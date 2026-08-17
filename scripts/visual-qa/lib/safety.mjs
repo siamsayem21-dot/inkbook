@@ -57,9 +57,30 @@ export function checkRouteSafety(route) {
  */
 export function checkFileSafety(filePath) {
   const hit = NEVER_AUTO_FIX_FILE_PATTERNS.find((pattern) => pattern.test(filePath));
-  return hit
-    ? { blocked: true, reason: `File "${filePath}" matches never-auto-fix pattern ${hit}` }
-    : { blocked: false, reason: null };
+  if (hit) return { blocked: true, reason: `File "${filePath}" matches never-auto-fix pattern ${hit}` };
+
+  // When /inkbook-run invokes the auto-fix loop while verifying a specific
+  // task, it sets VISUAL_QA_AUTO_FIX_ALLOWED_FILES to that task's own
+  // changed files (comma-separated, forward-slash paths). This keeps a task
+  // from silently "fixing" an unrelated pre-existing regression elsewhere on
+  // the page as a side effect of its own Visual QA gate -- exactly the same
+  // scope discipline the runner already applies to its own file edits. When
+  // the env var is unset (a manual/standalone run), no allowlist applies.
+  const allowlist = (process.env.VISUAL_QA_AUTO_FIX_ALLOWED_FILES ?? "")
+    .split(",")
+    .map((f) => f.trim().replace(/\\/g, "/"))
+    .filter(Boolean);
+  if (allowlist.length > 0) {
+    const normalized = filePath.replace(/\\/g, "/");
+    if (!allowlist.includes(normalized)) {
+      return {
+        blocked: true,
+        reason: `File "${filePath}" is outside the current task's changed-files scope (${allowlist.join(", ")}) -- refusing to auto-fix an unrelated file.`,
+      };
+    }
+  }
+
+  return { blocked: false, reason: null };
 }
 
 export const HIGH_CONFIDENCE_THRESHOLD = 0.8;

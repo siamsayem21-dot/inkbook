@@ -1,8 +1,9 @@
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { COVERED_ROUTES } from "../visual-routes.mjs";
 
-const routes = (process.env.VISUAL_QA_ROUTES ?? "/")
+const routes = (process.env.VISUAL_QA_ROUTES ?? COVERED_ROUTES.join(","))
   .split(",")
   .map((route) => route.trim())
   .filter(Boolean);
