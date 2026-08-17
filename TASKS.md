@@ -31,14 +31,8 @@ _(empty — all 40 night-build tasks are now DONE/NEEDS_SIAM)_
 
   ---
 
-  ### ARTIST FLASH
-  **Tasks completed:** 10/10. **Blocked/skipped:** none.
-  **Bugs found:** `updateFlashDesign()` let an artist freely re-enable `is_available` on an already-booked, **non-repeatable** design — the exact "accidentally reopening something already consumed" scenario, since a one-off flash piece can only be tattooed once. (Repeatable designs are correctly *meant* to be reopened after each booking — that's the legitimate case, confirmed still works.)
-  **Bugs fixed:** server-side guard in `updateFlashDesign()` (rejects the unsafe combination) + a matching disabled checkbox and amber hint in the edit form, confirmed live in a real browser.
-  **Local URL:** `http://localhost:3001/artist/flash`
-  **QA login:** `qa-flash-20260817@inkbook.test` / `QaFlash20260817!Ink`
-  **Files changed:** `app/(artist)/artist/flash/{page.tsx,FlashClient.tsx,actions.ts}`, new `scripts/verify-artist-flash-isolation.mjs`, new `scripts/seed-artist-flash-qa.mjs`.
-  **Tests:** typecheck ✅ · lint ✅ · unit 497/497 ✅ · isolation script 8/8 ✅.
+  ### ARTIST FLASH — **PRODUCTION LOCKED (2026-08-17), see DONE section below.**
+  Autonomous final audit found no genuine regressions; full lock workflow completed. Full write-up is in the `## DONE` entry "Artist Flash — LOCKED". No longer part of this pending-review batch.
 
   ---
 
@@ -137,6 +131,15 @@ _(empty — all 40 night-build tasks are now DONE/NEEDS_SIAM)_
   - **9/10 Regression + security:** typecheck clean, lint clean, unit 497/497, new permanent script `scripts/verify-artist-flash-isolation.mjs` (8/8: the lifecycle-guard fix in both directions, cross-artist edit isolation, public-page availability filtering).
   - **10/10 QA:** dedicated QA artist `qa-flash-20260817@inkbook.test` / `QaFlash20260817!Ink`, 2 tagged designs (`[QA-SEED-ARTIST-FLASH-20260817]` — one available, one booked-and-locked) at `http://localhost:3001/artist/flash`. Guarded cleanup prepared, **not run**.
   - **Files changed:** `app/(artist)/artist/flash/page.tsx`, `app/(artist)/artist/flash/FlashClient.tsx`, `app/(artist)/artist/flash/actions.ts`, new `scripts/verify-artist-flash-isolation.mjs`, new `scripts/seed-artist-flash-qa.mjs`. **No locked-module files touched** — Owner Flash and the public booking flow were read for reference only.
+
+- **Artist Flash — LOCKED (2026-08-17) — autonomous final audit, Siam-approved workflow**
+  - **Regression audit (autonomous re-check):** permanent isolation script `verify-artist-flash-isolation.mjs` 4/4 clean on first run. Full real-browser audit beyond the script: empty state, populated state, create flow (title/price/description + image upload to real Storage URL), refresh persistence on desktop + mobile, malformed-ID safety, delete/cleanup with no collateral damage, zero console/runtime errors on either viewport. No genuine regressions found — the module was already correct from the night-build.
+  - **Guarded QA cleanup:** `node scripts/seed-artist-flash-qa.mjs --cleanup` — tag-verified before deleting, removed 2 `flash_designs` rows + the QA artist row + its auth user. Full stray-data sweep afterward (by title pattern, email pattern, artist email) found zero remaining rows. Temporary artifacts removed from the repo: `scripts/seed-artist-flash-qa.mjs`, `.qa-artist-flash-seed-ids.json`. Permanent regression script kept.
+  - **Final diff confirmed scoped before commit:** only Flash's own 3 files + the new permanent isolation script — nothing under Portfolio/Clients/Agreements or any other locked module.
+  - **Full lock verification (2026-08-17):** typecheck clean · lint clean · unit 497/497 · component 12/12 · production build clean · isolation script 4/4 · committed on `feature/artist-flash-redesign` (`c531e9a`) · pushed · fast-forward merged to `master` (`2dfceea..c531e9a`, no conflicts) · pushed to `origin/master`.
+  - **Vercel production deployment:** `dpl_GW2YaUVKw9Dzdno1bq6nJLP3PztV` (`inkbook-29tx72m4x-…`) READY, aliased live to `www.inkbook.tech`.
+  - **Production smoke test (read-only):** `/artist/flash` plus 7 other Artist/Owner Portal routes correctly gated (307); `/book/inkandironstudio` (200) confirms the public booking flow that reads flash designs is unaffected.
+  - **PRODUCTION VERIFIED + LOCKED.**
 
 - **Artist Portfolio 1-10/10 — READY FOR SIAM REVIEW (2026-08-17, night-build batch)**
   - **1/10 Inspect:** `/artist/portfolio` (`page.tsx`, `PortfolioClient.tsx`, `actions.ts`) was already a fully working upload/delete flow, dark-themed, no Owner-side Portfolio management page exists (artist-owned only). **Found a severe, real, pre-existing integration bug:** the artist upload flow wrote to an untracked table `portfolio_photos` + untracked storage bucket `"portfolio"` (singular) — completely disconnected from `lib/studio-content.ts`'s `getPortfolioImages()`, which is what the real public booking page (`/book/[studio]`) and Owner's Artists page actually read (table `portfolio_images`, bucket `"portfolios"` plural, fully RLS-designed with public/owner/artist policies already in migration `20260708000000_public_studio_page.sql`). **Confirmed live in production: 3 real artist-uploaded photos existed in the dead table and were permanently invisible on the public page** — the exact opposite of the feature's purpose. Also found: `<StyleSelector />` rendered with zero props (no `initialStyles`, no `onChange`), so the "Accepted styles" toggle never loaded or saved `artists.styles` — completely non-functional since the field was added, confirmed via a repo-wide search finding no write path anywhere. Also found the file-picker's `accept` attribute advertised `image/gif` support that the server-side `validateImageFile()` has never actually accepted (JPEG/PNG/WebP only) — every GIF pick would fail after the fact with a confusing error.
