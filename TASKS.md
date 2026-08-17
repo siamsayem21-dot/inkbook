@@ -2,11 +2,11 @@
 
 ## CURRENT
 
-_(empty)_
+- **InkBook V1 8-Phase Autonomous Completion Mission (resumed 2026-08-17)** — MASTER_PLAN.md and DEFERRED_ISSUES.md reconstructed this session (neither existed before). Compliance Audit Log built and deployed (code live, migration pending — see NEEDS_SIAM). Next: 1% Stripe platform transaction fee (build+test only, held from merge per Stripe-change approval gate).
 
 ## NEXT
 
-_(empty — all 40 night-build tasks are now DONE/NEEDS_SIAM)_
+_(mission-driven — see MASTER_PLAN.md Phase 6 for the remaining net-new work)_
 
 ## BLOCKED
 
@@ -19,6 +19,14 @@ _(empty — all 40 night-build tasks are now DONE/NEEDS_SIAM)_
   - Needs Siam to add the two Stripe test-mode secrets to the GitHub repo before this job can go green.
 
 ## NEEDS_SIAM
+
+- **Compliance Audit Log — migration pending application (2026-08-17)**
+  - Code built, committed, and deployed (`eea0331`): `audit_log` table migration, `lib/audit-log.ts`, wired into blacklist add/remove, booking cancellation, no-show marking, consent form signing, plus a new `/owner/audit-log` owner-facing viewer. Typecheck/lint/build/full unit suite (497/497) all pass. Live smoke test confirmed the route deploys and redirects unauthenticated visitors correctly (307).
+  - **Not yet functional in production**: this session has no `SUPABASE_ACCESS_TOKEN`/DB credential to run DDL against the live Supabase project (confirmed via `npx supabase projects list` → `LegacyPlatformAuthRequiredError`, and a live table probe → `PGRST205`). Until the migration runs, the page will render "No events yet" for every studio (fails closed, not open — `getAuditLogEntries()` catches the missing-table error and returns an empty result rather than throwing).
+  - **Action needed:** run `supabase/migrations/20260817000000_compliance_audit_log.sql` in the Supabase SQL Editor, then `node scripts/verify-audit-log.mjs` to confirm (table existence, insert, studio-scoped query isolation, and RLS-level isolation via a real owner session — all self-cleaning).
+
+- **1% Stripe platform transaction fee — awaiting Siam approval to merge (see MASTER_PLAN.md Phase 6 / DEFERRED_ISSUES.md #3)**
+  - Per CLAUDE.md, Stripe/payment changes require Siam approval before reaching production — this is being built and tested on its own branch, not on `master`, unlike the audit log above.
 
 - **NIGHT BUILD — Portfolio + Flash + Clients + Agreements (40/40 tasks attempted) — READY FOR SIAM REVIEW (2026-08-17)**
 
