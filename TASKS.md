@@ -36,14 +36,8 @@ _(empty — all 40 night-build tasks are now DONE/NEEDS_SIAM)_
 
   ---
 
-  ### ARTIST CLIENTS
-  **Tasks completed:** 10/10. **Blocked/skipped:** none.
-  **Bugs found:** the entire page was a static placeholder — no data fetching at all, hardcoded "No clients yet," a dead search input. Not a bug in working code, but the starting state was 0% real.
-  **Bugs fixed:** N/A (net-new build, not a fix) — built for real on `bookings.artist_id` + `bookings.client_id` (the only direct FK between an artist's own work and the CRM `clients` table), with email-matched consultation/request links and a per-booking consent indicator.
-  **Local URL:** `http://localhost:3001/artist/clients`
-  **QA login:** `qa-clients-20260817@inkbook.test` / `QaClients20260817!Ink`
-  **Files changed:** new `app/(artist)/artist/clients/page.tsx` (rewritten), new `app/(artist)/artist/clients/[clientId]/page.tsx`, new `components/artist/ArtistClientsTable.tsx`, new `scripts/verify-artist-clients-isolation.mjs`, new `scripts/seed-artist-clients-qa.mjs`.
-  **Tests:** typecheck ✅ · lint ✅ · unit 497/497 ✅ · isolation script 9/9 ✅.
+  ### ARTIST CLIENTS — **PRODUCTION LOCKED (2026-08-17), see DONE section below.**
+  Autonomous final audit found no genuine regressions; full lock workflow completed. Full write-up is in the `## DONE` entry "Artist Clients — LOCKED". No longer part of this pending-review batch.
 
   ---
 
@@ -118,6 +112,15 @@ _(empty — all 40 night-build tasks are now DONE/NEEDS_SIAM)_
   - **9/10 Regression:** typecheck clean, lint clean, unit 497/497, new permanent script `scripts/verify-artist-clients-isolation.mjs` (9/9: own access, consultation-link integration, consent indicator, same-studio isolation, cross-studio isolation, malformed-ID safety).
   - **10/10 QA:** dedicated QA artist `qa-clients-20260817@inkbook.test` / `QaClients20260817!Ink`, 2 tagged clients (`[QA-SEED-ARTIST-CLIENTS-20260817]` — one "rich" with booking+consultation+signed consent, one "minimal" with just a single confirmed booking) at `http://localhost:3001/artist/clients`. Guarded cleanup prepared, **not run**.
   - **Files changed:** new `app/(artist)/artist/clients/page.tsx` (rewritten from placeholder), new `app/(artist)/artist/clients/[clientId]/page.tsx`, new `components/artist/ArtistClientsTable.tsx`, new `scripts/verify-artist-clients-isolation.mjs`, new `scripts/seed-artist-clients-qa.mjs`. **No locked-module files touched** — Owner Clients, Artist Bookings/Consultations/Requests detail pages were read/linked-to only.
+
+- **Artist Clients — LOCKED (2026-08-17) — autonomous final audit, Siam-approved workflow**
+  - **Full verification (autonomous):** permanent isolation script `verify-artist-clients-isolation.mjs` 9/9 clean on first run (own access, consultation-link integration, consent indicator, same-studio isolation, cross-studio isolation, malformed-ID safety). Full real-browser audit beyond the script: populated state with both real seeded clients (rich + minimal), search/filter narrowing correctly, detail page open with correct contact info, booking history rendering, consent indicator rendering, refresh persistence, desktop + mobile, zero console/runtime errors on either viewport. No genuine regressions found.
+  - **Guarded QA cleanup:** `node scripts/seed-artist-clients-qa.mjs --cleanup` — tag-verified before deleting, removed the tagged `consent_forms`/`consultations`/`bookings`/`clients` rows + the QA artist row + its auth user. Full stray-data sweep afterward (by name pattern, email pattern) found zero remaining rows. Temporary artifacts removed from the repo: `scripts/seed-artist-clients-qa.mjs`, `.qa-artist-clients-seed-ids.json`. Permanent regression script kept.
+  - **Final diff confirmed scoped before commit:** only Clients' own 4 files — nothing under Portfolio/Flash/Agreements or any other locked module.
+  - **Full lock verification (2026-08-17):** typecheck clean · lint clean · unit 497/497 · component 12/12 · production build clean · isolation script 9/9 · committed on `feature/artist-clients` (`70ba348`) · pushed · fast-forward merged to `master` (`39fd277..70ba348`, no conflicts) · pushed to `origin/master`.
+  - **Vercel production deployment:** `dpl_2HK3x4HtkeTcjV7woPTHf12yqE93` (`inkbook-6yryl19l9-…`) READY, aliased live to `www.inkbook.tech`.
+  - **Production smoke test (read-only):** `/artist/clients` plus 6 other Artist/Owner Portal routes correctly gated (307); `/book/inkandironstudio` (200) confirms the public booking flow is unaffected.
+  - **PRODUCTION VERIFIED + LOCKED.**
 
 - **Artist Flash 1-10/10 — READY FOR SIAM REVIEW (2026-08-17, night-build batch)**
   - **1/10 Inspect:** `/artist/flash` (`page.tsx`, `FlashClient.tsx`, `actions.ts`) is already a fully-built, feature-complete CRUD flow (create/edit/delete, confirm-before-delete already present, unlike Portfolio's old version), dark-themed. Table `flash_designs` (`studio_id, artist_id, title, description, image_url, price, category, is_repeatable, is_available, is_booked`) is properly integrated in generated types, consistently read by Owner Flash (`/owner/flash`, already locked light/violet reference, view + moderate) and the real public booking flow (`/book/[studio]` gallery + `/book/[studio]/flash/[flashId]/book` checkout) — **no table/bucket disconnect like Portfolio's bug**; images share the same `"portfolio"` bucket under a `flash/` subfolder, consistent between Owner's and Artist's own upload code.
