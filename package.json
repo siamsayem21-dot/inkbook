@@ -14,6 +14,8 @@
     "test:db": "vitest run -c vitest.config.db.ts",
     "test:e2e": "playwright test -c playwright-e2e.config.ts",
     "test:visual": "playwright test -c playwright-visual.config.ts",
+    "test:visual:v2": "playwright test -c playwright-visual-v2.config.ts",
+    "test:visual:v2:update-baseline": "playwright test -c playwright-visual-v2.config.ts --update-snapshots",
     "test:all": "npm run test && npm run test:ct && npm run test:db && npm run test:e2e",
     "prepare": "husky"
   },
