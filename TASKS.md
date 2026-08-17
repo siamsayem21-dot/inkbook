@@ -2,11 +2,11 @@
 
 ## CURRENT
 
-- **CORRECTED InkBook V1 8-Phase Autonomous Completion Mission (2026-08-17)** — Siam corrected course: the prior "8 phases complete" claim was against a mission structure a recovery session invented for itself, not the real mission. MASTER_PLAN.md has been rewritten with the actual 8 phases (Full MVP Gap Audit → AI Consultation/Quote → Booking/Stripe/Deposit → Consent/Identity → Automations → Client Journey/White-label → Production Hardening → Beta Launch Readiness). Phase 1 audit in progress: 5 parallel re-verification agents confirmed most prior code-level findings are actually accurate (not the framing — the underlying facts), plus found 2 new real issues (HEIC upload mismatch, deposit-expiry cron cadence vs 24h business rule) and flagged several NOT_YET_AUDITED areas (AI consultation→quote lifecycle, calendar/availability, RLS depth, artist onboarding, white-label live walkthrough). 3 more targeted audit agents dispatched for those gaps. See MASTER_PLAN.md Phase 1 table for full evidence.
+_(empty — CORRECTED InkBook V1 8-Phase Autonomous Completion Mission all 8 phases genuinely COMPLETE as of 2026-08-17. See MASTER_PLAN.md for the full evidence-based audit and the final report delivered to Siam. Remaining work lives under NEEDS_SIAM below — 5 items, all genuine product/infra/billing decisions, not open engineering work.)_
 
 ## NEXT
 
-_(mission-driven — see MASTER_PLAN.md for the authoritative 8-phase structure; populated as each phase's real gaps are identified)_
+_(empty — no further net-new work identified against the real 8-phase mission. New work enters via inkbook-queue from Siam's ChatGPT InkBook Project, or from a decision on any NEEDS_SIAM item below.)_
 
 ## BLOCKED
 
@@ -27,6 +27,15 @@ _(mission-driven — see MASTER_PLAN.md for the authoritative 8-phase structure;
 
 - **1% Stripe platform transaction fee — bigger gap found, needs a Siam product decision (see MASTER_PLAN.md Phase 6 / DEFERRED_ISSUES.md #3)**
   - Not built. There is no Stripe Connect integration anywhere in the codebase — every client deposit/remainder payment goes to InkBook's own central Stripe account with no mechanism to pay studios their share at all. A 1% fee can't be meaningfully added on top of nothing. Siam needs to pick a payout model (Stripe Connect / manual payouts / fee-tracking-only) before this becomes a buildable, scoped task.
+
+- **Automation cron cadence structurally capped at once-daily — Vercel Hobby plan (2026-08-17, see DEFERRED_ISSUES.md #7)**
+  - All 6 crons run once daily (confirmed via `vercel.json` + git history of prior forced downgrades). Unpaid-deposit auto-cancel can take up to ~48h, not the "24hrs" CLAUDE.md business rule states. One related code bug (payment-reminders window mismatch) was found and fixed this session (commit `80b8613`) — the remaining cadence ceiling itself needs Siam to decide: accept the latency, or upgrade the Vercel plan for more frequent crons.
+
+- **"AI Artist Match" doesn't exist as a feature — product-scope question (2026-08-17, see DEFERRED_ISSUES.md #8)**
+  - The AI consultation→quote lifecycle is real and solid end-to-end (including a strong two-sided human-approval gate before any price is binding — verified safety-critical), but there is no AI-driven artist-matching logic; the owner manually picks the artist from a dropdown. Siam needs to clarify whether AI artist matching was ever intended for V1, or whether manual selection (already working) is the intended design.
+
+- **No production error monitoring/alerting (2026-08-17, see DEFERRED_ISSUES.md #9)**
+  - No Sentry or equivalent anywhere — all errors only surface via `console.error`/Vercel logs, no one gets paged. Siam needs to pick a provider (e.g. Sentry free tier) before this becomes a safe, buildable task (new external service/API key = a small product/infra decision, not something to silently add).
 
 - **NIGHT BUILD — Portfolio + Flash + Clients + Agreements (40/40 tasks attempted) — READY FOR SIAM REVIEW (2026-08-17)**
 
@@ -72,7 +81,15 @@ _(mission-driven — see MASTER_PLAN.md for the authoritative 8-phase structure;
 
 ## DONE
 
-- **[CORRECTED 2026-08-17: this entry's "8-Phase Mission" framing was against a self-invented phase structure, not Siam's real mission — see the CURRENT entry above and MASTER_PLAN.md. The typecheck/lint/test/build results below are still factually true and were independently re-confirmed during the correction, so the entry is kept as evidence, not deleted.]**
+- **CORRECTED InkBook V1 8-Phase Autonomous Completion Mission — all 8 phases attempted and completed (2026-08-17)**
+  - Siam corrected course mid-session: a prior recovery session had invented its own 8-phase structure (confirmed via full git-log search — the phrase never appeared anywhere before that session) and graded itself complete against it. MASTER_PLAN.md was rewritten around the real 8 phases Siam defined: Full MVP Gap Audit → AI Consultation/Artist Match/Quote → Booking/Stripe/Deposit → Consent/Client Identity → Automations → Complete Client Journey/White-label → Full System Production Hardening → Beta Launch Readiness.
+  - **Method:** 8 independent adversarial audit agents (5 initial + 3 supplemental), each instructed not to trust prior docs, reading actual source code and testing live production (curl/WebFetch against `https://www.inkbook.tech`, a direct Supabase REST probe, and — for Phase 6 — a real self-cleaning temporary studio created via the service role to walk the actual public booking journey live).
+  - **2 real bugs found and fixed** (commit `80b8613`, verified via tsc/lint/497 unit tests/production build each time): (1) `payment-reminders` cron's reminder window was sized for an abandoned 4-hour cadence never updated after a forced downgrade to daily — most deposit reminders would silently never fire; widened window 5h→25h. (2) `ConsentForm.tsx` advertised HEIC uploads client-side that the server's real validator always rejected — removed HEIC from the client accept list to match reality.
+  - **Everything independently re-verified as genuinely real** (not stubs, not mock data): auth (3 roles), Supabase schema, Owner/Artist/Client portals, booking flow, Stripe checkout+webhook+idempotency, no-show handling, remainder payment, consent form (age/minor/guardian + real magic-byte ID validation), SMS reminders (real Twilio, per-studio timezone-aware), blacklist, waitlist, session agreements, client CRM, revenue analytics, AI consultation (real Claude API calls for style detection + quote generation), a strong two-sided human-approval gate before any AI-suggested price becomes binding, artist invite/onboarding, white-label slug resolution (confirmed live end-to-end against a real temporary studio, cleanup re-query-confirmed), all 6 cron jobs (CRON_SECRET-protected, idempotent), and RLS policies (real, though service-role paths depend on app-layer scoping rather than RLS as a backstop).
+  - **5 genuine findings deferred to Siam** (DEFERRED_ISSUES.md #7-11, also listed under NEEDS_SIAM): once-daily cron cadence ceiling (Vercel Hobby plan), "AI Artist Match" not existing as a feature (manual selection only), no production error monitoring, rate-limiting gaps on OTP login/consultation-start, and calendar/availability being narrower than full scheduling. Plus prior carryovers: audit-log migration application, 1% fee/Stripe Connect payout model decision.
+  - **Verdict:** InkBook V1 is functionally complete and genuinely working end-to-end for a controlled beta — no P0 (security/data-loss/payment-corruption) issues found. See MASTER_PLAN.md's final report for the full phase-by-phase breakdown and launch-readiness statement.
+
+- **[CORRECTED 2026-08-17: this entry's "8-Phase Mission" framing was against a self-invented phase structure, not Siam's real mission — see the entry above and MASTER_PLAN.md. The typecheck/lint/test/build results below are still factually true and were independently re-confirmed during the correction, so the entry is kept as evidence, not deleted.]**
 - **InkBook V1 8-Phase Autonomous Completion Mission — Phase 8 final QA sweep (2026-08-17)**
   - Resumed mission from prior session's stopping point (Phase 6 in progress). Re-confirmed Phase 6's audit-log build is complete/deployed and its migration + the 1% Stripe fee are both genuinely NEEDS_SIAM (no further code work possible on either — see MASTER_PLAN.md/DEFERRED_ISSUES.md).
   - Ran the Phase 8 final sweep: `npx tsc --noEmit` clean, `npm run lint` clean, `npm run test` 497/497 passed, `npm run build` succeeded (76/76 pages). No code fixes were needed — suite was already clean.

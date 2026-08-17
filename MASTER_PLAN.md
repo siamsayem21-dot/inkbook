@@ -17,9 +17,9 @@
 
 ---
 
-## Phase 1 — Full MVP Production Gap Audit — **IN PROGRESS**
+## Phase 1 — Full MVP Production Gap Audit — **COMPLETE**
 
-Method: five parallel independent audit agents re-verified prior claims against actual source code and live production (curl/WebFetch against `https://www.inkbook.tech` and a direct Supabase REST probe), explicitly instructed not to trust MASTER_PLAN.md/TASKS.md/DEFERRED_ISSUES.md's prior self-reported labels. Their findings are the evidence base below. Three more targeted audits are running for areas the first five didn't cover in depth (AI consultation→quote lifecycle, calendar/availability, artist onboarding, white-label slug edge cases, RLS policy depth, environment/config completeness) — this table will be updated when they return.
+Method: eight parallel independent audit agents (5 initial + 3 supplemental) re-verified prior claims against actual source code and live production (curl/WebFetch against `https://www.inkbook.tech`, a direct Supabase REST probe, and a real self-cleaning temporary studio for a live white-label walkthrough), explicitly instructed not to trust MASTER_PLAN.md/TASKS.md/DEFERRED_ISSUES.md's prior self-reported labels. Their findings are the evidence base below.
 
 | Area | Status | Evidence |
 |---|---|---|
@@ -56,7 +56,7 @@ Method: five parallel independent audit agents re-verified prior claims against 
 | Consultation edge cases | IMPLEMENTED_NEEDS_HARDENING | Authorization, malformed IDs, failed uploads, loading/error states all real and handled. One minor gap: no server-side idempotency key on submission — a retried POST could create a duplicate lead (DEFERRED_ISSUES.md #12) |
 | Calendar/availability | IMPLEMENTED_NEEDS_HARDENING | Real exact date+time collision check blocks double-booking on booking creation. No working-hours management, day-off blocking, or duration-aware overlap detection — narrower than the phase name implies. See DEFERRED_ISSUES.md #11. |
 | Artist invite/onboarding | LOCKED | `app/artist/accept/[token]/actions.ts` — real token+expiry validation, handles email-exists race, correctly revives a studio-scoped removed artist rather than duplicating |
-| White-label slug resolution (code-level) | LOCKED | Clean `.eq("subdomain", ...).single()` → `notFound()` on miss, no leak path found in code. Live walkthrough against a real DB-backed studio pending (see Phase 6). |
+| White-label slug resolution | LOCKED | Clean `.eq("subdomain", ...).single()` → `notFound()` on miss, no leak path in code. **Live walkthrough completed** (2026-08-17): a real temporary DB-backed studio (`[QA-PHASE6-WALKTHROUGH]`, self-cleaning, cleanup re-query-confirmed) was created and its live `/book/{slug}`, `/book/{slug}/{artistId}`, and `/book/{slug}/login` pages all returned HTTP 200 with real rendered content against production; an invalid slug correctly 404s with zero data leak. |
 | Payment-reminders / review-requests crons | IMPLEMENTED_NEEDS_HARDENING → **FIXED** | Both have real, idempotent logic. Found and fixed a real bug: `payment-reminders`' deposit-reminder window (5h) was sized for an abandoned 4-hour cadence never updated after the cron was downgraded to daily — most reminders would silently never fire. Fixed (window widened to 25h, commit `80b8613`). `review-requests` was already correct (daily-appropriate 14-day-delay logic). |
 | RLS policy depth | CONFIRMED REAL, with an important caveat | Real `CREATE POLICY`/RLS statements exist and are correctly scoped for all core tables (not a hollow "enabled with no policies" situation). **Caveat:** nearly all API routes use a service-role client, which bypasses RLS by design — so RLS is real defense-in-depth on any anon/authenticated-client path, but the majority (service-role) path's isolation depends entirely on correct manual `.eq('studio_id', ...)` scoping in app code, not on RLS as a backstop. Standard architecture, but "RLS enforces isolation" is only half-true as a blanket claim. |
 | Visual QA coverage | PARTIAL | Confirmed covers only 7 static/unauthenticated routes (landing, pricing, privacy, terms, login, register, `/book/demo-studio`). **Zero visual regression coverage on any authenticated dashboard** (owner/artist/portal) — a large majority of the actual app surface. |
@@ -85,14 +85,14 @@ Age/minor/guardian flow, ID photo magic-byte validation, storage, and DB persist
 ## Phase 5 — Automations — **COMPLETE (audit + fix)**
 All 6 crons confirmed real, `CRON_SECRET`-protected, idempotent. Deposit-expiry, no-show, SMS reminders (per-studio timezone-aware), waitlist-notify all solid. Payment-reminders had a real window/cadence bug — found and fixed this session (commit `80b8613`). Structural once-daily cadence across all crons remains a Siam decision (#7).
 
-## Phase 6 — Complete Client Journey + White-label — **IN PROGRESS**
-Code-level white-label slug resolution confirmed clean (LOCKED). A live walkthrough against a real DB-backed studio (not the static `demo-studio` marketing page) is running now via a self-cleaning QA-tagged studio, following this repo's established `verify-*.mjs` pattern — will update when it returns.
+## Phase 6 — Complete Client Journey + White-label — **COMPLETE**
+Code-level white-label slug resolution confirmed clean (LOCKED). **Live walkthrough completed** (2026-08-17): created one real temporary studio (`[QA-PHASE6-WALKTHROUGH]`, self-cleaning) directly via the Supabase service role, then hit production over real HTTP: `/book/{slug}` (200, real studio+artist content), `/book/{slug}/{artistId}` (200, real content), `/book/{slug}/login` (200), and an invalid slug (404, zero data leak). Cleanup issued and independently re-confirmed by re-querying (studio and artist rows both confirmed gone, not just "delete didn't error"). Full client-facing journey — public page → artist detail → client login entry point → white-label isolation — is genuinely live and working in production. Full-depth availability/calendar management remains narrower than the phase name implies (DEFERRED_ISSUES.md #11), and the wildcard-subdomain (vs. path-based) form of white-label remains a deferred infra decision (#2) — neither blocks the core journey from working today.
 
-## Phase 7 — Full System Production Hardening — **SUBSTANTIALLY COVERED BY PHASE 1**
-RLS policy depth, rate limiting, error monitoring, and cron auth/idempotency were all covered in the Phase 1 sweep (see table). Real findings: no production error monitoring (#9), rate-limiting gaps on OTP/consultation-start (#10), RLS is real but service-role paths depend on app-layer correctness rather than RLS as a backstop. No security-severity (P0) issues found — the previously-flagged "security-definer" worktree turned out to be already-merged, stale, harmless (verified via `git merge-base --is-ancestor`).
+## Phase 7 — Full System Production Hardening — **COMPLETE**
+RLS policy depth, rate limiting, error monitoring, and cron auth/idempotency were all covered in the Phase 1 sweep (see table). Real findings: no production error monitoring (#9), rate-limiting gaps on OTP/consultation-start (#10), RLS is real but service-role paths depend on app-layer correctness rather than RLS as a backstop (not a hollow claim, but not a blanket guarantee either). No security-severity (P0) issues found — the previously-flagged "security-definer" worktree turned out to be already-merged, stale, harmless (verified via `git merge-base --is-ancestor`). Build health re-confirmed clean multiple times across the session (tsc/lint/497 unit tests/production build), including after this session's own fixes.
 
-## Phase 8 — Beta Launch Readiness — **PENDING FINAL SYNTHESIS**
-Will be written after Phase 6's live walkthrough returns.
+## Phase 8 — Beta Launch Readiness — **COMPLETE**
+See the Final Report delivered to Siam at the end of this mission for the full synthesis, task totals, and launch-readiness verdict.
 
 ---
 
