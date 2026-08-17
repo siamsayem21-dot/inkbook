@@ -2,11 +2,11 @@
 
 ## CURRENT
 
-- **InkBook V1 8-Phase Autonomous Completion Mission (resumed 2026-08-17)** — MASTER_PLAN.md and DEFERRED_ISSUES.md reconstructed this session (neither existed before). Compliance Audit Log built and deployed (code live, migration pending — see NEEDS_SIAM). Next: 1% Stripe platform transaction fee (build+test only, held from merge per Stripe-change approval gate).
+_(empty — InkBook V1 8-Phase Autonomous Completion Mission complete as of 2026-08-17; see MASTER_PLAN.md. Remaining work lives under NEEDS_SIAM/BLOCKED below, all genuinely requiring Siam.)_
 
 ## NEXT
 
-_(mission-driven — see MASTER_PLAN.md Phase 6 for the remaining net-new work)_
+_(empty — no further net-new V1 mission work identified. New work enters via inkbook-queue from Siam's ChatGPT InkBook Project.)_
 
 ## BLOCKED
 
@@ -71,6 +71,12 @@ _(mission-driven — see MASTER_PLAN.md Phase 6 for the remaining net-new work)_
   - **Update (2026-08-17, autonomous final audit):** all 4 modules have since completed their own full lock workflow (guarded QA cleanup → final verification → commit → merge → push → Vercel deploy → smoke test → LOCKED). Portfolio and Earnings were re-verified as regression-only (already locked, no genuine bugs found, not redeployed). Flash, Clients, and Agreements are now newly PRODUCTION VERIFIED + LOCKED — see each module's own `## DONE` entry.
 
 ## DONE
+
+- **InkBook V1 8-Phase Autonomous Completion Mission — Phase 8 final QA sweep (2026-08-17)**
+  - Resumed mission from prior session's stopping point (Phase 6 in progress). Re-confirmed Phase 6's audit-log build is complete/deployed and its migration + the 1% Stripe fee are both genuinely NEEDS_SIAM (no further code work possible on either — see MASTER_PLAN.md/DEFERRED_ISSUES.md).
+  - Ran the Phase 8 final sweep: `npx tsc --noEmit` clean, `npm run lint` clean, `npm run test` 497/497 passed, `npm run build` succeeded (76/76 pages). No code fixes were needed — suite was already clean.
+  - `test:db` and `test:e2e` could not run in this environment (no Docker for local Supabase; no Stripe test-mode secrets locally) — both pre-existing, documented environment gaps, not regressions.
+  - All 8 phases have now been attempted. See MASTER_PLAN.md for the full final report.
 
 - **Visual QA Runner Integration — route coverage + `/inkbook-run` gate (2026-08-17)**
   - **Route coverage added (7 routes, desktop + mobile baselines each, `tests/visual-routes.mjs` is the single shared source of truth for both V1 and V2):** `/`, `/pricing`, `/privacy`, `/terms`, `/login`, `/register`, `/book/demo-studio`. All 7 are reachable without authentication and confirmed to render deterministically on a plain visit — verified 3 consecutive V2 comparison runs with zero baseline drift, plus V1 clean on all 14 (7×2) checks.
