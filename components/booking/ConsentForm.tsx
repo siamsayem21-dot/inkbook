@@ -119,7 +119,7 @@ export default function ConsentForm({ bookingId, studioSlug, artistId, redirectT
         <input
           required
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/heic"
+          accept="image/jpeg,image/png,image/webp"
           onChange={(e) => setIdPhoto(e.target.files?.[0] ?? null)}
           className={inputClass}
         />

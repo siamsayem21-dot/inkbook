@@ -6,10 +6,18 @@ import { sendRemainderPaymentRequest } from "@/lib/remainder-payment";
 
 export const runtime = "nodejs";
 
-// Runs every 4 hours (see vercel.json) — a narrower cadence than the other
-// daily crons, specifically so the deposit-reminder pass below can use a
-// tight eligibility window without ever missing a booking's reminder moment
-// (Phase C Feature 3, "Option B": frequent cron + narrow window).
+// Runs once daily at 13:00 UTC (see vercel.json) — downgraded from an
+// original 4-hour cadence by 7d27e72 because Vercel's Hobby plan only
+// allows daily cron jobs. That commit only changed vercel.json; the
+// deposit-reminder window below was left sized for the old 4-hour cadence
+// (5h lookahead) and was never widened to match, meaning most
+// pending-deposit bookings fell outside the one daily 5-hour slot and
+// silently never got a reminder before cron/cancel-expired auto-cancelled
+// them. Fixed here: window widened to 25h (one day + 1h safety margin) so
+// every booking is guaranteed to fall inside exactly one daily run's
+// window, on the run immediately following its creation — matching the
+// original "Option B: frequent cron + narrow window" intent, just
+// re-tuned for the cadence Vercel actually allows.
 //
 // Both passes are deduped with a one-shot boolean flag on `bookings`
 // (deposit_reminder_sent / remainder_reminder_sent — added in
@@ -27,12 +35,15 @@ export async function GET(request: NextRequest) {
   const now = new Date();
 
   // ── Pass 1: deposit-pending reminder ──────────────────────────────────────
-  // Narrow window (deposit_expires_at within the next 5 hours) matched to the
-  // 4-hour cron cadence, with a 1-hour safety margin in case a single run is
-  // delayed or skipped — every pending_deposit booking's window will overlap
-  // at least one run before it actually expires and gets auto-cancelled by
-  // cron/cancel-expired.
-  const windowEnd = new Date(now.getTime() + 5 * 60 * 60 * 1000);
+  // Window (deposit_expires_at within the next 25 hours) matched to the
+  // actual daily cron cadence, with a 1-hour safety margin in case a single
+  // run is delayed or skipped — every pending_deposit booking's ~24h expiry
+  // window is guaranteed to fall inside exactly one daily run's window (the
+  // run immediately following the booking's creation), so it always gets
+  // reminded well before it expires and gets auto-cancelled by
+  // cron/cancel-expired. (Previously 5 hours, sized for a since-abandoned
+  // 4-hour cadence — see comment above.)
+  const windowEnd = new Date(now.getTime() + 25 * 60 * 60 * 1000);
 
   let depositRemindersSent = 0;
 
