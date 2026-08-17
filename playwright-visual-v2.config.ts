@@ -13,8 +13,15 @@ export default defineConfig({
   expect: {
     timeout: 10_000,
     toHaveScreenshot: {
-      // Allowed tolerance before a diff counts as a real visual regression.
-      maxDiffPixelRatio: 0.01,
+      // Absolute pixel-count tolerance, not a ratio: these are full-page
+      // screenshots of a page that can be many thousands of pixels tall, so
+      // a ratio (e.g. 1% of all pixels) lets a small-but-real, clearly
+      // visible localized defect (a mis-colored heading, a broken card)
+      // hide under the threshold simply because the page is long. A fixed
+      // pixel budget stays meaningful regardless of page length -- enough
+      // to absorb anti-aliasing/font-rendering jitter, nowhere near enough
+      // to mask a real visible defect.
+      maxDiffPixels: 200,
       animations: "disabled",
     },
   },

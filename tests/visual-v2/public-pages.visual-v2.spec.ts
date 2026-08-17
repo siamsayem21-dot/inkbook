@@ -114,7 +114,15 @@ for (const route of routes) {
       // call ourselves would silently defeat the update-baseline command.
       const baselineExistedBefore = fs.existsSync(baselinePath);
       try {
-        await expect(page).toHaveScreenshot(snapshotName, { fullPage: true });
+        await expect(page).toHaveScreenshot(snapshotName, {
+          fullPage: true,
+          // Excludes only elements the page itself marks as genuinely
+          // dynamic/live (data-visual-qa-dynamic="true" -- the hero's
+          // periodic bookings-count flash and its rotating "AI Activity"
+          // text/highlight). Everything else on the page stays fully
+          // compared -- this is not a blanket exclusion.
+          mask: [page.locator('[data-visual-qa-dynamic="true"]')],
+        });
         diffResult = baselineExistedBefore ? "match-within-tolerance" : "baseline-created";
       } catch (diffError) {
         if (!baselineExistedBefore) {

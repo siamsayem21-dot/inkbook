@@ -16,6 +16,10 @@
     "test:visual": "playwright test -c playwright-visual.config.ts",
     "test:visual:v2": "playwright test -c playwright-visual-v2.config.ts",
     "test:visual:v2:update-baseline": "playwright test -c playwright-visual-v2.config.ts --update-snapshots",
+    "test:visual:v3:review": "node scripts/visual-qa/ai-review.mjs",
+    "test:visual:v3:dry-run": "node scripts/visual-qa/auto-fix-loop.mjs --dry-run",
+    "test:visual:v3:auto": "node scripts/visual-qa/auto-fix-loop.mjs --auto",
+    "test:visual:v3:report": "node scripts/visual-qa/final-report.mjs",
     "test:all": "npm run test && npm run test:ct && npm run test:db && npm run test:e2e",
     "prepare": "husky"
   },

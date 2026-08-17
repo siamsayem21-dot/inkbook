@@ -700,12 +700,23 @@ export default function HomePage() {
                 {heroStats.map((s) => (
                   <div key={s.label} className="px-4 py-4" style={{ background: "#111111" }}>
                     <p className="text-[10px] text-gray-600 uppercase tracking-wider">{s.label}</p>
-                    <p className={`text-2xl font-bold text-white mt-0.5${s.flash ? " stat-flash" : ""}`}>{s.value}</p>
+                    <p
+                      className={`text-2xl font-bold text-white mt-0.5${s.flash ? " stat-flash" : ""}`}
+                      data-visual-qa-dynamic={s.label === "Bookings" ? "true" : undefined}
+                    >
+                      {s.value}
+                    </p>
                   </div>
                 ))}
               </div>
               <div className="px-4 py-2.5" style={{ background: "#141414", borderTop: "1px solid #1A1A1A" }}>
-                <p className="text-[10px] text-[#D4A853] font-medium truncate" style={{ opacity: aiActivityOpacity, transition: "opacity 0.3s ease" }}>{AI_ACTIVITY[aiActivityIdx]}</p>
+                <p
+                  className="text-[10px] text-[#D4A853] font-medium truncate"
+                  style={{ opacity: aiActivityOpacity, transition: "opacity 0.3s ease" }}
+                  data-visual-qa-dynamic="true"
+                >
+                  {AI_ACTIVITY[aiActivityIdx]}
+                </p>
               </div>
             </div>
             </div>
@@ -780,7 +791,13 @@ export default function HomePage() {
                           {heroStats.map((s) => (
                             <div key={s.label} className="rounded-xl p-3" style={{ background: "#141414", border: "1px solid #1E1E1E" }}>
                               <p className="text-[10px] text-gray-600 uppercase tracking-wide">{s.label}</p>
-                              <p ref={s.ref ?? undefined} className={`text-lg font-bold text-white mt-0.5${s.flash ? " stat-flash" : ""}`}>{s.value}</p>
+                              <p
+                                ref={s.ref ?? undefined}
+                                className={`text-lg font-bold text-white mt-0.5${s.flash ? " stat-flash" : ""}`}
+                                data-visual-qa-dynamic={s.label === "Bookings" ? "true" : undefined}
+                              >
+                                {s.value}
+                              </p>
                             </div>
                           ))}
                         </div>
@@ -839,7 +856,11 @@ export default function HomePage() {
                                 <span className="text-[10px] text-[#D4A853]">🤖</span>
                                 <span className="w-1.5 h-1.5 rounded-full bg-green-400 blink ml-auto flex-shrink-0" />
                               </div>
-                              <div className="space-y-1.5" style={{ opacity: aiActivityOpacity, transition: "opacity 0.3s ease" }}>
+                              <div
+                                className="space-y-1.5"
+                                style={{ opacity: aiActivityOpacity, transition: "opacity 0.3s ease" }}
+                                data-visual-qa-dynamic="true"
+                              >
                                 {AI_ACTIVITY.map((item, idx) => (
                                   <div key={item} className="flex items-start gap-1.5" style={{ opacity: idx === aiActivityIdx ? 1 : 0.4, transition: "opacity 0.3s ease" }}>
                                     <span className="w-1 h-1 rounded-full bg-[#D4A853] mt-1 flex-shrink-0" />
