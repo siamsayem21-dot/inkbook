@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildSmsMessage, trySendSms } from "@/lib/twilio/client";
 import { sendNoShowEmail } from "@/lib/email";
+import { logAuditEvent } from "@/lib/audit-log";
 
 export const runtime = "nodejs";
 
@@ -86,6 +87,15 @@ export async function GET(request: NextRequest) {
         depositAmountCents: booking.deposit_amount_cents,
       });
     }
+    void logAuditEvent({
+      studioId: booking.studio_id,
+      actorType: "system",
+      actorLabel: "no-show cron",
+      action: "booking.no_show",
+      entityType: "booking",
+      entityId: booking.id,
+      metadata: { deposit_amount_cents: booking.deposit_amount_cents, deposit_kept: true },
+    });
   }
 
   return NextResponse.json({ updated: ids.length, bookings: ids });

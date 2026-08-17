@@ -5,6 +5,7 @@ import { getStripe } from "@/lib/stripe/client";
 import { validateImageFile } from "@/lib/file-validation";
 import { isReadyToConfirm } from "@/lib/booking-lifecycle";
 import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
+import { logAuditEvent } from "@/lib/audit-log";
 
 // Mirrors the RLS truth for this table (supabase/migrations/20260527000001_rls.sql):
 // an owner may read any consent form whose booking belongs to a studio they
@@ -269,6 +270,17 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+
+  void logAuditEvent({
+    studioId: booking.studio_id,
+    actorType: "client",
+    actorId: booking.client_id,
+    actorLabel: "Client",
+    action: "consent_form.signed",
+    entityType: "booking",
+    entityId: bookingId,
+    metadata: { is_minor: isMinor, state_template: stateTemplate },
+  });
 
   // Confirm booking only once BOTH a schedule and consent exist (Phase C
   // Feature 1 rule — see lib/booking-lifecycle.ts). Consent was just signed

@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createSupabaseMock, type SupabaseMock } from "../mocks/supabase";
 
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn() }));
-vi.mock("@/lib/auth/config", () => ({ getStudioId: vi.fn() }));
+vi.mock("@/lib/auth/config", () => ({ getStudioId: vi.fn(), getCurrentUser: vi.fn(() => Promise.resolve(null)) }));
+vi.mock("@/lib/audit-log", () => ({ logAuditEvent: vi.fn(() => Promise.resolve()) }));
 vi.mock("@/lib/stripe/client", () => ({ getStripe: vi.fn() }));
 vi.mock("@/lib/twilio/client", () => ({
   trySendSms: vi.fn(() => Promise.resolve()),

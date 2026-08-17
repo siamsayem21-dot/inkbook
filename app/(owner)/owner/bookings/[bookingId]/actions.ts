@@ -1,7 +1,8 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getStudioId } from "@/lib/auth/config";
+import { getStudioId, getCurrentUser } from "@/lib/auth/config";
+import { logAuditEvent } from "@/lib/audit-log";
 import { getStripe } from "@/lib/stripe/client";
 import { revalidatePath } from "next/cache";
 import { buildSmsMessage, trySendSms } from "@/lib/twilio/client";
@@ -73,6 +74,18 @@ export async function cancelBooking(bookingId: string): Promise<{ error?: string
     if (client?.email) {
       void sendBookingCancelledEmail({ to: client.email, clientName: client.full_name, studioName });
     }
+
+    const user = await getCurrentUser();
+    void logAuditEvent({
+      studioId,
+      actorType: "owner",
+      actorId: user?.id ?? null,
+      actorLabel: user?.email ?? "Owner",
+      action: "booking.cancelled",
+      entityType: "booking",
+      entityId: bookingId,
+      metadata: { previous_status: check.status },
+    });
   }
 
   return {};

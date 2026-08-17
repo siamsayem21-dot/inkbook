@@ -24,6 +24,7 @@ const ownerNav = [
   { label: "Blacklist",     href: "/owner/blacklist" },
   { label: "Consent Forms", href: "/owner/consent-forms" },
   { label: "Waitlist",      href: "/owner/waitlist" },
+  { label: "Audit Log",     href: "/owner/audit-log" },
   { label: "Knowledge",     href: "/owner/knowledge" },
   { label: "Settings",      href: "/owner/settings" },
 ];

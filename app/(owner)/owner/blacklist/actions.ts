@@ -3,6 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudioId, getCurrentUser } from "@/lib/auth/config";
 import { revalidatePath } from "next/cache";
+import { logAuditEvent } from "@/lib/audit-log";
 
 export type BlacklistEntry = {
   id: string;
@@ -53,7 +54,7 @@ export async function addToBlacklist(data: {
     if (existing) return { error: "This phone number is already blocked" };
   }
 
-  const { error } = await supabase
+  const { data: inserted, error } = await supabase
     .from("blacklist")
     .insert({
       studio_id:    studioId,
@@ -61,22 +62,42 @@ export async function addToBlacklist(data: {
       client_email: email || null,
       client_phone: phone || null,
       reason:       data.reason.trim() || null,
-    } as never);
+    } as never)
+    .select("id")
+    .single();
 
   if (error) {
     console.error("[addToBlacklist]", error.message);
     return { error: "Failed to block client — please try again" };
   }
 
+  void logAuditEvent({
+    studioId,
+    actorType: "owner",
+    actorId: user.id,
+    actorLabel: user.email ?? "Owner",
+    action: "blacklist.added",
+    entityType: "blacklist",
+    entityId: (inserted as { id: string } | null)?.id ?? null,
+    metadata: { client_email: email || null, client_phone: phone || null, reason: data.reason.trim() || null },
+  });
+
   revalidatePath("/owner/blacklist");
   return {};
 }
 
 export async function removeFromBlacklist(id: string): Promise<{ error?: string }> {
-  const studioId = await getStudioId();
-  if (!studioId) return { error: "Unauthorized" };
+  const [studioId, user] = await Promise.all([getStudioId(), getCurrentUser()]);
+  if (!studioId || !user) return { error: "Unauthorized" };
 
   const supabase = createAdminClient();
+
+  const { data: existing } = await supabase
+    .from("blacklist")
+    .select("client_email, client_phone")
+    .eq("id", id)
+    .eq("studio_id", studioId)
+    .maybeSingle();
 
   const { error } = await supabase
     .from("blacklist")
@@ -88,6 +109,17 @@ export async function removeFromBlacklist(id: string): Promise<{ error?: string 
     console.error("[removeFromBlacklist]", error.message);
     return { error: "Failed to remove — please try again" };
   }
+
+  void logAuditEvent({
+    studioId,
+    actorType: "owner",
+    actorId: user.id,
+    actorLabel: user.email ?? "Owner",
+    action: "blacklist.removed",
+    entityType: "blacklist",
+    entityId: id,
+    metadata: existing ? { client_email: (existing as { client_email: string | null }).client_email, client_phone: (existing as { client_phone: string | null }).client_phone } : {},
+  });
 
   revalidatePath("/owner/blacklist");
   return {};
