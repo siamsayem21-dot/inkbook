@@ -625,7 +625,7 @@ export default function HomePage() {
   ];
 
   return (
-    <div style={{ background: "#F8F8F6", color: "#111111" }}>
+    <div style={{ background: "#F8F8F6", color: "#111111", overflowX: "clip" }}>
 
       {/* ══ NAV ══ */}
       <header className="sticky top-0 z-50 bg-white border-b border-[#E5E5E3]">
