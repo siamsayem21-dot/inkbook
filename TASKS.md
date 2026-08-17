@@ -2,11 +2,11 @@
 
 ## CURRENT
 
-_(empty — InkBook V1 8-Phase Autonomous Completion Mission complete as of 2026-08-17; see MASTER_PLAN.md. Remaining work lives under NEEDS_SIAM/BLOCKED below, all genuinely requiring Siam.)_
+- **CORRECTED InkBook V1 8-Phase Autonomous Completion Mission (2026-08-17)** — Siam corrected course: the prior "8 phases complete" claim was against a mission structure a recovery session invented for itself, not the real mission. MASTER_PLAN.md has been rewritten with the actual 8 phases (Full MVP Gap Audit → AI Consultation/Quote → Booking/Stripe/Deposit → Consent/Identity → Automations → Client Journey/White-label → Production Hardening → Beta Launch Readiness). Phase 1 audit in progress: 5 parallel re-verification agents confirmed most prior code-level findings are actually accurate (not the framing — the underlying facts), plus found 2 new real issues (HEIC upload mismatch, deposit-expiry cron cadence vs 24h business rule) and flagged several NOT_YET_AUDITED areas (AI consultation→quote lifecycle, calendar/availability, RLS depth, artist onboarding, white-label live walkthrough). 3 more targeted audit agents dispatched for those gaps. See MASTER_PLAN.md Phase 1 table for full evidence.
 
 ## NEXT
 
-_(empty — no further net-new V1 mission work identified. New work enters via inkbook-queue from Siam's ChatGPT InkBook Project.)_
+_(mission-driven — see MASTER_PLAN.md for the authoritative 8-phase structure; populated as each phase's real gaps are identified)_
 
 ## BLOCKED
 
@@ -72,6 +72,7 @@ _(empty — no further net-new V1 mission work identified. New work enters via i
 
 ## DONE
 
+- **[CORRECTED 2026-08-17: this entry's "8-Phase Mission" framing was against a self-invented phase structure, not Siam's real mission — see the CURRENT entry above and MASTER_PLAN.md. The typecheck/lint/test/build results below are still factually true and were independently re-confirmed during the correction, so the entry is kept as evidence, not deleted.]**
 - **InkBook V1 8-Phase Autonomous Completion Mission — Phase 8 final QA sweep (2026-08-17)**
   - Resumed mission from prior session's stopping point (Phase 6 in progress). Re-confirmed Phase 6's audit-log build is complete/deployed and its migration + the 1% Stripe fee are both genuinely NEEDS_SIAM (no further code work possible on either — see MASTER_PLAN.md/DEFERRED_ISSUES.md).
   - Ran the Phase 8 final sweep: `npx tsc --noEmit` clean, `npm run lint` clean, `npm run test` 497/497 passed, `npm run build` succeeded (76/76 pages). No code fixes were needed — suite was already clean.
