@@ -43,6 +43,15 @@ export default function FlashClient({
   const [isPending, startTransition] = useTransition();
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const editingDesign = editingId ? designs.find((d) => d.id === editingId) ?? null : null;
+  // Once a one-off (non-repeatable) design has been booked, it's consumed —
+  // re-enabling availability would let a second client book a piece that
+  // can only be tattooed once. A repeatable design is meant to be reopened
+  // after each booking, so this only blocks the non-repeatable case. See
+  // updateFlashDesign()'s matching server-side guard (the real enforcement;
+  // this is just earlier, clearer feedback).
+  const availabilityLocked = !!editingDesign?.is_booked && !form.isRepeatable;
+
   function openCreate() {
     setForm({ ...EMPTY_FORM });
     setImageFile(null);
@@ -182,7 +191,7 @@ export default function FlashClient({
   }
 
   const inputClass =
-    "w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-zinc-500 transition-colors";
+    "w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-colors";
   const labelClass = "text-xs text-zinc-400 block mb-1.5";
 
   function FormPanel({ onSubmit }: { onSubmit: (e: React.FormEvent) => void }) {
@@ -190,23 +199,23 @@ export default function FlashClient({
     return (
       <form
         onSubmit={onSubmit}
-        className="bg-[#111] border border-[#1E1E1E] rounded-xl p-6 space-y-4"
+        className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6 space-y-4"
       >
         <div className="flex items-center justify-between mb-2">
-          <h3 className="font-semibold text-sm">
+          <h3 className="text-sm font-semibold text-zinc-900">
             {isCreate ? "New Flash Design" : "Edit Design"}
           </h3>
           <button
             type="button"
             onClick={cancelForm}
-            className="text-zinc-500 hover:text-zinc-300 text-xs transition-colors"
+            className="text-zinc-500 hover:text-zinc-900 text-xs transition-colors"
           >
             Cancel
           </button>
         </div>
 
         {error && (
-          <div className="bg-red-950 border border-red-800 text-red-300 text-sm rounded-lg px-4 py-3">
+          <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3">
             {error}
           </div>
         )}
@@ -217,14 +226,14 @@ export default function FlashClient({
             <label className={labelClass}>Design Image *</label>
             <div
               onClick={() => fileRef.current?.click()}
-              className="border border-dashed border-zinc-700 rounded-lg flex items-center justify-center cursor-pointer hover:border-zinc-500 transition-colors overflow-hidden"
+              className="border border-dashed border-zinc-300 rounded-xl flex items-center justify-center cursor-pointer hover:border-violet-300 transition-colors overflow-hidden"
               style={{ height: imagePreview ? "auto" : "120px" }}
             >
               {imagePreview ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={imagePreview} alt="Preview" className="w-full max-h-48 object-cover rounded-lg" />
+                <img src={imagePreview} alt="Preview" className="w-full max-h-48 object-cover rounded-xl" />
               ) : (
-                <span className="text-zinc-600 text-xs">Click to upload · JPG, PNG, WebP · max 5 MB</span>
+                <span className="text-zinc-400 text-xs">Click to upload · JPG, PNG, WebP · max 5 MB</span>
               )}
             </div>
             <input
@@ -267,7 +276,7 @@ export default function FlashClient({
           <div>
             <label className={labelClass}>Price (USD) *</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm">$</span>
               <input
                 required
                 type="number"
@@ -304,26 +313,32 @@ export default function FlashClient({
               type="checkbox"
               checked={form.isRepeatable}
               onChange={(e) => setForm((f) => ({ ...f, isRepeatable: e.target.checked }))}
-              className="w-4 h-4 accent-[#c9a84c]"
+              className="w-4 h-4 accent-violet-600"
             />
-            <span className="text-sm text-zinc-300">Repeatable</span>
+            <span className="text-sm text-zinc-700">Repeatable</span>
           </label>
-          <label className="flex items-center gap-2.5 cursor-pointer">
+          <label className={`flex items-center gap-2.5 ${availabilityLocked ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}>
             <input
               type="checkbox"
               checked={form.isAvailable}
+              disabled={availabilityLocked}
               onChange={(e) => setForm((f) => ({ ...f, isAvailable: e.target.checked }))}
-              className="w-4 h-4 accent-[#c9a84c]"
+              className="w-4 h-4 accent-violet-600"
             />
-            <span className="text-sm text-zinc-300">Available</span>
+            <span className="text-sm text-zinc-700">Available</span>
           </label>
         </div>
+        {availabilityLocked && (
+          <p className="text-[11px] text-amber-600 -mt-2">
+            This one-off design has already been booked. Mark it repeatable to reopen it, or leave it unavailable.
+          </p>
+        )}
 
         <div className="pt-1">
           <button
             type="submit"
             disabled={uploading || isPending}
-            className="bg-white text-black text-sm px-6 py-2.5 rounded-full font-semibold hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-violet-600 hover:bg-violet-700 text-white text-sm px-6 py-2.5 rounded-xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {uploading || isPending
               ? isCreate ? "Uploading…" : "Saving…"
@@ -342,7 +357,7 @@ export default function FlashClient({
         {mode === "idle" && (
           <button
             onClick={openCreate}
-            className="bg-white text-black text-sm px-4 py-2 rounded-full font-semibold hover:bg-zinc-200 transition-colors"
+            className="bg-violet-600 hover:bg-violet-700 text-white text-sm px-4 py-2 rounded-xl font-semibold transition-colors"
           >
             + Add Design
           </button>
@@ -354,14 +369,14 @@ export default function FlashClient({
       {mode === "edit"   && <FormPanel onSubmit={handleUpdate} />}
 
       {error && mode === "idle" && (
-        <p className="text-xs text-red-400">{error}</p>
+        <p className="text-xs text-red-600">{error}</p>
       )}
 
       {/* Grid */}
       {designs.length === 0 && mode === "idle" ? (
-        <div className="bg-[#111] border border-dashed border-[#1E1E1E] rounded-xl px-6 py-16 text-center">
-          <p className="text-zinc-500 text-sm mb-1">No flash designs yet</p>
-          <p className="text-zinc-700 text-xs">Add your first ready-made design to let clients book directly.</p>
+        <div className="bg-white rounded-2xl border border-dashed border-zinc-300 shadow-sm px-6 py-16 text-center">
+          <p className="text-zinc-900 font-semibold text-sm mb-1">No flash designs yet</p>
+          <p className="text-zinc-400 text-xs">Add your first ready-made design to let clients book directly.</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -370,12 +385,12 @@ export default function FlashClient({
             return (
               <div
                 key={d.id}
-                className={`bg-[#111] border rounded-xl overflow-hidden group transition-colors ${
-                  isEditing ? "border-[#c9a84c]/40" : "border-[#1E1E1E] hover:border-zinc-700"
+                className={`bg-white rounded-2xl border shadow-sm overflow-hidden group transition-colors ${
+                  isEditing ? "border-violet-300" : "border-zinc-200 hover:border-violet-200"
                 }`}
               >
                 {/* Image */}
-                <div className="aspect-square overflow-hidden bg-zinc-900">
+                <div className="aspect-square overflow-hidden bg-zinc-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={d.image_url}
@@ -386,28 +401,28 @@ export default function FlashClient({
 
                 {/* Info */}
                 <div className="p-3">
-                  <p className="text-sm font-medium text-[#E8E8E8] truncate mb-0.5">{d.title}</p>
-                  <p className="text-[#c9a84c] text-xs font-semibold mb-1.5">{fmtPrice(d.price)}</p>
+                  <p className="text-sm font-medium text-zinc-900 truncate mb-0.5">{d.title}</p>
+                  <p className="text-violet-600 text-xs font-semibold mb-1.5">{fmtPrice(d.price)}</p>
 
                   {/* Badges */}
                   <div className="flex flex-wrap gap-1 mb-2">
                     {d.category && (
-                      <span className="text-[9px] uppercase tracking-wide bg-white/[0.04] text-zinc-500 px-1.5 py-0.5 border border-white/[0.06]">
+                      <span className="text-[9px] uppercase tracking-wide bg-zinc-50 text-zinc-500 px-1.5 py-0.5 rounded-full border border-zinc-200">
                         {d.category}
                       </span>
                     )}
                     {!d.is_repeatable && (
-                      <span className="text-[9px] uppercase tracking-wide bg-[#c9a84c]/10 text-[#c9a84c] px-1.5 py-0.5 border border-[#c9a84c]/20">
+                      <span className="text-[9px] uppercase tracking-wide bg-violet-50 text-violet-700 px-1.5 py-0.5 rounded-full border border-violet-200">
                         One-time
                       </span>
                     )}
                     {!d.is_available && (
-                      <span className="text-[9px] uppercase tracking-wide bg-zinc-800 text-zinc-500 px-1.5 py-0.5 border border-zinc-700">
+                      <span className="text-[9px] uppercase tracking-wide bg-zinc-100 text-zinc-500 px-1.5 py-0.5 rounded-full border border-zinc-200">
                         Hidden
                       </span>
                     )}
                     {d.is_booked && (
-                      <span className="text-[9px] uppercase tracking-wide bg-green-500/10 text-green-400 px-1.5 py-0.5 border border-green-500/20">
+                      <span className="text-[9px] uppercase tracking-wide bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded-full border border-emerald-200">
                         Booked
                       </span>
                     )}
@@ -418,7 +433,7 @@ export default function FlashClient({
                     <button
                       onClick={() => openEdit(d)}
                       disabled={isPending}
-                      className="flex-1 text-xs text-zinc-500 hover:text-white bg-zinc-800 hover:bg-zinc-700 px-2 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                      className="flex-1 text-xs text-zinc-600 hover:text-zinc-900 bg-zinc-50 hover:bg-zinc-100 px-2 py-1.5 rounded-lg transition-colors disabled:opacity-50"
                     >
                       Edit
                     </button>
@@ -428,7 +443,7 @@ export default function FlashClient({
                       className={`flex-1 text-xs px-2 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${
                         deleteConfirm === d.id
                           ? "bg-red-600 text-white hover:bg-red-700"
-                          : "text-zinc-500 hover:text-red-400 bg-zinc-800 hover:bg-zinc-700"
+                          : "text-zinc-500 hover:text-red-600 bg-zinc-50 hover:bg-zinc-100"
                       }`}
                     >
                       {deleteConfirm === d.id ? "Confirm?" : "Delete"}
@@ -441,7 +456,7 @@ export default function FlashClient({
         </div>
       )}
 
-      <p className="text-xs text-zinc-700">Images are stored in your portfolio bucket · JPG, PNG, WebP · max 5 MB</p>
+      <p className="text-xs text-zinc-400">Images are stored in your portfolio bucket · JPG, PNG, WebP · max 5 MB</p>
     </div>
   );
 }

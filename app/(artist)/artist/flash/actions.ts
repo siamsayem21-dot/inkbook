@@ -129,6 +129,26 @@ export async function updateFlashDesign(data: {
   const supabase = createAdminClient();
   if (!await verifyArtistOwnership(supabase, data.artistId)) return { error: "Unauthorized" };
 
+  // markFlashAsBooked() (app/book/[studio]/flash/[flashId]/book/actions.ts)
+  // always sets is_booked: true, is_available: false on booking, regardless
+  // of is_repeatable. For a repeatable design, re-enabling availability
+  // afterward is the intended workflow (offer the same design to the next
+  // client). For a non-repeatable (one-off) design, a booked piece is
+  // consumed — re-enabling availability would let it be booked again by a
+  // second client for a design that can only be tattooed once. is_booked
+  // itself is never writable through this action (booking-only), so this
+  // check only needs to look at the design's current booked state.
+  const { data: currentRow } = await supabase
+    .from("flash_designs")
+    .select("is_booked")
+    .eq("id", data.id)
+    .eq("artist_id", data.artistId)
+    .maybeSingle();
+
+  if (currentRow && (currentRow as { is_booked: boolean }).is_booked && data.isAvailable && !data.isRepeatable) {
+    return { error: "This design has already been booked and isn't repeatable — mark it repeatable to reopen it, or leave it unavailable." };
+  }
+
   const { error } = await supabase
     .from("flash_designs")
     .update({
