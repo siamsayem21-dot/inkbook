@@ -2,7 +2,7 @@
 
 ## CURRENT
 
-_(empty — Stripe Connect payment architecture (2026-08-19) safe code preparation COMPLETE — see the NEEDS_SIAM activation checklist below for the manual steps left. STRICT ENGINEERING COMPLETION RUN (2026-08-18) also finished; all 8 phases COMPLETE against the real mission — see MASTER_PLAN.md. Remaining work lives entirely under NEEDS_SIAM, not open engineering.)_
+_(empty — Stripe Connect TEST/SANDBOX verification (2026-08-19) complete, including a real bug found via manual testing and fixed (duplicate deposit Checkout Session creation, commit `270d54d`). One CRITICAL pre-existing production bug was also discovered as a side effect — see NEEDS_SIAM #0 below, urgent. Everything else: STRICT ENGINEERING COMPLETION RUN (2026-08-18) finished, all 8 phases COMPLETE — see MASTER_PLAN.md.)_
 
 ## NEXT
 
@@ -19,6 +19,12 @@ _(empty — no further safely-buildable work identified. New work enters via ink
   - Needs Siam to add the two Stripe test-mode secrets to the GitHub repo before this job can go green.
 
 ## NEEDS_SIAM
+
+- **🔴 CRITICAL — `custom_requests.updated_at` missing in production; breaks ALL custom-request deposit reconciliation (2026-08-19, see DEFERRED_ISSUES.md #0)**
+  - Found as a side effect of Stripe Connect TEST-mode verification, but this bug is **not Connect-related and is live in production right now**: the `process_custom_request_deposit` RPC unconditionally writes to `custom_requests.updated_at`, a column that doesn't actually exist in production despite the migration file claiming it does. Confirmed two ways: a real completed TEST-mode payment never reconciled (webhook delivered, server 500'd with `column "updated_at" ... does not exist`), and a direct schema probe confirms the column is genuinely absent.
+  - **Real impact:** every client who pays a custom-request deposit through the current live platform-account flow has their payment succeed on Stripe while InkBook's own database silently never learns about it — status stays "quoted" forever, no booking gets created. This is the true root cause behind the "Pay Deposit button stays active" bug, not just a race condition.
+  - **Recommended fix:** remove the single erroneous `updated_at = NOW()` line from the RPC (one-line `CREATE OR REPLACE FUNCTION`, no schema change needed) — or add the missing column if that tracking is actually wanted. Full detail and both options in DEFERRED_ISSUES.md #0.
+  - **Action needed:** Siam reviews and approves one fix option; not applied without sign-off (production DDL/function change). Treat as urgent — real payments are affected today.
 
 - **Compliance Audit Log — migration pending application (2026-08-17)**
   - Code built, committed, and deployed (`eea0331`): `audit_log` table migration, `lib/audit-log.ts`, wired into blacklist add/remove, booking cancellation, no-show marking, consent form signing, plus a new `/owner/audit-log` owner-facing viewer. Typecheck/lint/build/full unit suite (497/497) all pass. Live smoke test confirmed the route deploys and redirects unauthenticated visitors correctly (307).
@@ -91,6 +97,12 @@ _(empty — no further safely-buildable work identified. New work enters via ink
   - **Update (2026-08-17, autonomous final audit):** all 4 modules have since completed their own full lock workflow (guarded QA cleanup → final verification → commit → merge → push → Vercel deploy → smoke test → LOCKED). Portfolio and Earnings were re-verified as regression-only (already locked, no genuine bugs found, not redeployed). Flash, Clients, and Agreements are now newly PRODUCTION VERIFIED + LOCKED — see each module's own `## DONE` entry.
 
 ## DONE
+
+- **Stripe Connect TEST/SANDBOX verification + real bug found and fixed (2026-08-19, commit `270d54d`)**
+  - Full live TEST-mode verification chain completed per `.claude/skills/inkbook-ops/SKILL.md`: real Standard connected account created and onboarded via Stripe-hosted test onboarding, real `account.updated`/`checkout.session.completed` webhook delivery confirmed via `stripe listen --forward-connect-to`, real Direct Charge Checkout Session created and independently confirmed (via `Stripe-Account` header) to belong to the connected account not the platform account, one real $50 TEST-mode payment completed end-to-end.
+  - **Real bug found during this verification** (Siam, manual testing): after a successful deposit payment, the quote page kept showing an active "Pay Deposit" button, and clicking it could create a second real Checkout Session. Root cause: `app/api/custom-requests/[id]/deposit/route.ts` had zero idempotency protection (unlike its sibling `lib/stripe/deposit-checkout.ts`), AND the shared `lib/idempotency.ts` helper itself had a genuine concurrency bug (cached only the resolved value, not the in-flight promise, leaving a race window for truly concurrent double-clicks). Both fixed; the fix was proven live — 2 concurrent calls created 2 real Stripe sessions before the fix, exactly 1 after, independently confirmed via Stripe's own API. Also added a client-side UI gate closing the post-payment redirect-vs-webhook race window. 6 new regression tests (2 in `lib/idempotency.ts`'s own suite specifically for true concurrency, 1 at the API route level reproducing the exact double-click scenario, plus already-paid rejection coverage). Verified: tsc/lint/build clean, 575/575 unit tests.
+  - **Bigger finding surfaced as a side effect, NOT fixed (production DB change, needs approval):** the real TEST payment never reconciled in Supabase even after the idempotency fix — traced to a genuine pre-existing production bug (`custom_requests.updated_at` column missing, breaking the `process_custom_request_deposit` RPC for every custom-request deposit, independent of Stripe Connect). See NEEDS_SIAM above and DEFERRED_ISSUES.md #0 — urgent, but correctly left for Siam's approval, not applied.
+  - All QA data (3 studios, 3 artists, 3 custom_requests, 6 auth users across the full session) created and fully cleaned up, re-confirmed via a final sweep query returning zero QA-tagged rows anywhere. `STRIPE_CONNECT_ENABLED` confirmed still unset in Vercel Production and Preview throughout — no live payment routing was ever switched.
 
 - **Stripe Connect payment architecture — safe code preparation (2026-08-19)**
   - Siam-approved architecture: subscription-only revenue, Stripe Connect Standard connected accounts, Direct Charges, 0% application fee — studios receive their own clients' deposit/remainder payments directly, InkBook keeps only its existing subscription revenue.

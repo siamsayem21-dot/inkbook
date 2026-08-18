@@ -4,6 +4,21 @@ Issues that cannot be safely completed autonomously, or that are intentionally o
 
 ---
 
+## 0. 🔴 CRITICAL — `custom_requests.updated_at` missing in production; breaks ALL custom-request deposit reconciliation, live, today
+**Phase:** 3 (payments). **Status:** confirmed via live TEST-mode payment + direct schema probe, 2026-08-19. **NOT a Stripe Connect bug — pre-existing, affects the current live platform-account flow too. Requires Siam approval before any fix is applied (production DDL/RPC change).**
+
+**What's broken:** `supabase/migrations/20260622000000_custom_requests.sql` defines `custom_requests.updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()` plus a trigger to auto-maintain it, and the `process_custom_request_deposit` RPC (`supabase/migrations/20260623000005_process_custom_request_deposit_rpc.sql:188`) explicitly sets `updated_at = NOW()` in its UPDATE statement. **But the live production `custom_requests` table does not actually have this column** — confirmed two independent ways:
+1. A completed real TEST-mode Stripe payment ($50, `cs_test_a1ll5T44eJGh6FP53HhZDOZOuFVadhdb4cZ9k4TzN6rHf4B1tSILKKcEBh`, `payment_status: "paid"` per Stripe's own API) never reconciled — `custom_requests.status` stayed `"quoted"`, `stripe_payment_intent_id` stayed `null`, no booking was created. The webhook was delivered (confirmed in listener logs) but the server returned `500` with `column "updated_at" of relation "custom_requests" does not exist`.
+2. Direct Supabase REST probe: `GET .../custom_requests?select=updated_at` → `42703 column custom_requests.updated_at does not exist`.
+
+**Impact — this is serious:** every real client who has ever paid (or ever pays) a custom-request deposit through the CURRENT LIVE platform-account flow (`app/api/stripe/webhook/route.ts`'s Branch B, `handleCustomRequestDeposit`, which calls this exact same RPC) hits this exact same failure. Their payment succeeds on Stripe, money is taken, but InkBook's own database never learns about it — `status` never advances past `"quoted"`, no booking is created, the client-facing page keeps showing an unpaid quote forever. This is the deep root cause behind the "button stays active after payment" bug Siam found — not a race condition, a *total, silent reconciliation failure* for this entire payment path. It is independent of Stripe Connect (`STRIPE_CONNECT_ENABLED` is false in Production and this bug still fires) — it's been present since this feature shipped.
+
+**Why not fixed automatically:** fixing this means either (a) adding the missing column via `ALTER TABLE custom_requests ADD COLUMN updated_at ...` (a production schema migration), or (b) editing the RPC function body to stop referencing a column that doesn't exist (`CREATE OR REPLACE FUNCTION` against production). Both are production DDL/function changes — a hard approval gate per both CLAUDE.md and `.claude/skills/inkbook-ops/SKILL.md`. Not applied without explicit sign-off, per this session's explicit "do not touch Production" instruction.
+
+**Recommended fix (smallest, safest option):** remove the single erroneous `updated_at = NOW()` line from the RPC's UPDATE statement (`process_custom_request_deposit`, migration `20260623000005`, line 188) — no schema change needed at all, since the column was never real to begin with and nothing else references it. This is a one-line `CREATE OR REPLACE FUNCTION` fix. (Alternative: add the missing column instead, if `updated_at` tracking on this table is actually wanted — a slightly larger, equally safe additive migration.)
+
+**Unblock:** Siam reviews and approves one of the two fix options above; either is small and low-risk, but both require Siam's explicit approval to apply to production per the standing approval-gate rules. This should be treated as urgent — real client payments are affected today.
+
 ## 1. State-specific tattoo consent legal text
 **Phase:** 3. **Status:** deferred, not started.
 US tattoo-consent law varies by state (minimum age with/without guardian consent, required disclosures, some states ban minor tattoos outright regardless of consent). The current consent form (`components/booking/ConsentForm.tsx`) uses one generic guardian-consent flow for all states.
