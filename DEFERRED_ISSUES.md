@@ -59,10 +59,9 @@ Single-commit (`410863d`) mock-data prototype for the client portal, fully super
 **Why deferred:** deleting ~30 files is a moderately destructive action outside this mission's explicit scope, even though the risk of breaking anything is effectively zero.
 **Unblock:** Siam confirms it's safe to delete (or salvage the aftercare UI first, then delete), or it's picked up as a dedicated cleanup task.
 
-## 5. Migration drift — `client_accounts.phone`/`client_accounts.dob` (carried over, pre-existing)
-**Phase:** N/A (infra). **Status:** unresolved, low priority — unchanged from before this session.
-`20260809000000_client_accounts_phone_dob.sql` exists in the repo but was never applied to production. Nothing in the app currently reads either column (My Profile renders their absence gracefully). Confirmed still true.
-**Unblock:** Siam confirms whether/when to apply the migration.
+## 5. ✅ RESOLVED (migration side) — `client_accounts.phone_number`/`date_of_birth` — columns now genuinely exist
+**Phase:** N/A (infra). **Status:** re-checked live 2026-08-19 — the columns exist in production now (previously documented as "never applied"; that was stale). Confirmed via direct Supabase REST probe (`select=phone_number,date_of_birth` returns `200 []`, not a column-missing error). No app code currently reads or writes these columns (confirmed via repo-wide grep — the only `phone_number`/`date_of_birth` writes found are to the unrelated `standalone_consent_forms` table, a different pre-existing feature). Not a launch blocker either way; noting only because a prior stale label ("never applied") is now factually wrong and this run's instructions require not trusting stale historical labels when live evidence disagrees.
+**Unblock:** none needed — this is informational. If Siam wants these columns actually used (e.g. surfaced in Client Portal My Profile), that's a small, safe, net-new feature task, not a migration-application blocker anymore.
 
 ## 6. CI Stripe secrets gap (carried over, pre-existing)
 **Phase:** N/A (infra). **Status:** unresolved, low priority — unchanged from before this session.
@@ -108,16 +107,6 @@ No Sentry/Bugsnag/Rollbar/Datadog or any error-tracking SDK anywhere in the repo
 - Unused `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` env var and unused `@stripe/stripe-js` dependency — dead weight from an entirely server-side Stripe Checkout redirect flow, not a bug.
 - Stale git worktree `.claude/worktrees/fix-studio-delete-security-definer` — confirmed fully merged into master already (`git merge-base --is-ancestor` verified 2026-08-17), just an uncleaned leftover from finished work, not an unresolved security issue. Safe to `git worktree remove` whenever convenient.
 **Unblock:** none needed — pick these up opportunistically.
-
-## 5. Migration drift — `client_accounts.phone`/`client_accounts.dob` (carried over, pre-existing)
-**Phase:** N/A (infra). **Status:** unresolved, low priority — unchanged from before this session.
-`20260809000000_client_accounts_phone_dob.sql` exists in the repo but was never applied to production. Nothing in the app currently reads either column (My Profile renders their absence gracefully). Confirmed still true.
-**Unblock:** Siam confirms whether/when to apply the migration.
-
-## 6. CI Stripe secrets gap (carried over, pre-existing)
-**Phase:** N/A (infra). **Status:** unresolved, low priority — unchanged from before this session.
-`tests/e2e/owner-workflow.spec.ts` fails in GitHub Actions because `STRIPE_TEST_SECRET_KEY`/`STRIPE_TEST_PUBLISHABLE_KEY` are not configured as repo secrets. Confirmed identical failure signature across many consecutive master pushes, unrelated to any app code.
-**Unblock:** Siam adds the two Stripe test-mode secrets to the GitHub repo.
 
 ---
 
