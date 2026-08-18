@@ -6,6 +6,7 @@ import { validateImageFile } from "@/lib/file-validation";
 import { capDepositAmountCents } from "@/lib/stripe/deposit-checkout";
 import { isAtMonthlyCap } from "@/lib/waitlist";
 import { getStage, isAllowedStatusTransition, isForwardSystemTransition, TERMINAL_STATUSES } from "@/lib/pipeline";
+import { withIdempotency } from "@/lib/idempotency";
 
 export async function submitConsultation(
   formData: FormData
@@ -39,55 +40,73 @@ export async function submitConsultation(
 
   const supabase = createAdminClient();
 
-  // Upload reference photos
-  const photoUrls: string[] = [];
-  for (const file of photoFiles) {
-    if (!file || file.size === 0) continue;
-    if (file.size > 8 * 1024 * 1024) continue;
-    const typeCheck = await validateImageFile(file);
-    if (!typeCheck.valid) continue; // skip non-image files silently
-    const ext  = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-    const path = `consultations/${studioId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const bytes = await file.arrayBuffer();
-    const { error: upErr } = await supabase.storage
-      .from("custom-requests")
-      .upload(path, bytes, { contentType: file.type, upsert: false });
-    if (!upErr) {
-      const { data } = supabase.storage.from("custom-requests").getPublicUrl(path);
-      photoUrls.push(data.publicUrl);
-    }
-  }
+  // Duplicate-submission guard (flaky network retry, accidental double
+  // form-resubmit) — a repeat call with the same studio+client+description
+  // within the TTL window returns the first call's result instead of
+  // inserting (and uploading photos for) a second consultation row.
+  // In-process only, no schema change — see lib/idempotency.ts.
+  const idempotencyKey = [
+    studioId,
+    clientEmail.toLowerCase(),
+    clientPhone.replace(/\D/g, ""),
+    description.toLowerCase(),
+  ].join("|");
 
-  const { data: row, error } = await supabase
-    .from("consultations")
-    .insert({
-      studio_id:          studioId,
-      client_name:        clientName,
-      client_email:       clientEmail,
-      client_phone:       clientPhone,
-      tattoo_description: description,
-      placement,
-      estimated_size:     size,
-      color_preference:   colorPreference,
-      budget_range:       budgetRange,
-      reference_photos:   photoUrls,
-      followup_questions: followupQuestions,
-      followup_answers:   followupAnswers,
-      detected_style:     detectedStyle || null,
-      style_confidence:   isNaN(styleConfidence) ? null : styleConfidence,
-      style_reasoning:    styleReasoning || null,
-      ai_notes:           aiNotes || null,
-      status:             "new" as const,
-    } as never)
-    .select("id")
-    .single();
+  return withIdempotency(
+    idempotencyKey,
+    async (): Promise<{ id?: string; error?: string }> => {
+      // Upload reference photos
+      const photoUrls: string[] = [];
+      for (const file of photoFiles) {
+        if (!file || file.size === 0) continue;
+        if (file.size > 8 * 1024 * 1024) continue;
+        const typeCheck = await validateImageFile(file);
+        if (!typeCheck.valid) continue; // skip non-image files silently
+        const ext  = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+        const path = `consultations/${studioId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const bytes = await file.arrayBuffer();
+        const { error: upErr } = await supabase.storage
+          .from("custom-requests")
+          .upload(path, bytes, { contentType: file.type, upsert: false });
+        if (!upErr) {
+          const { data } = supabase.storage.from("custom-requests").getPublicUrl(path);
+          photoUrls.push(data.publicUrl);
+        }
+      }
 
-  if (error || !row) {
-    console.error("[submitConsultation]", error?.message);
-    return { error: "Failed to save your consultation — please try again" };
-  }
+      const { data: row, error } = await supabase
+        .from("consultations")
+        .insert({
+          studio_id:          studioId,
+          client_name:        clientName,
+          client_email:       clientEmail,
+          client_phone:       clientPhone,
+          tattoo_description: description,
+          placement,
+          estimated_size:     size,
+          color_preference:   colorPreference,
+          budget_range:       budgetRange,
+          reference_photos:   photoUrls,
+          followup_questions: followupQuestions,
+          followup_answers:   followupAnswers,
+          detected_style:     detectedStyle || null,
+          style_confidence:   isNaN(styleConfidence) ? null : styleConfidence,
+          style_reasoning:    styleReasoning || null,
+          ai_notes:           aiNotes || null,
+          status:             "new" as const,
+        } as never)
+        .select("id")
+        .single();
 
-  return { id: (row as { id: string }).id };
+      if (error || !row) {
+        console.error("[submitConsultation]", error?.message);
+        return { error: "Failed to save your consultation — please try again" };
+      }
+
+      return { id: (row as { id: string }).id };
+    },
+    { shouldCache: (result) => Boolean(result.id) }
+  );
 }
 
 export async function saveConsultationQuote(
