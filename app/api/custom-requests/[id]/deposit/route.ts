@@ -18,7 +18,12 @@ export async function POST(
   const rl = checkRateLimit(`custom-deposit:${getClientIp(request)}:${params.id}`, 3, 60_000);
   if (!rl.allowed) return rateLimitedResponse(rl.retryAfter);
 
-  const body = await request.json();
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
   const { studioSlug } = body as { studioSlug?: string };
 
   if (!studioSlug) {

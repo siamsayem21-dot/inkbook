@@ -156,6 +156,17 @@ describe("POST /api/custom-requests/[id]/deposit", () => {
     expect(res.status).toBe(400);
   });
 
+  it("400s (not a raw 500) when the request body is missing/malformed JSON", async () => {
+    const req = new NextRequest("http://localhost/api/custom-requests/req-1/deposit", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-forwarded-for": uniqueIp() },
+    });
+    const res = await createDeposit(req, params);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toBeTruthy();
+  });
+
   it("503s when Stripe is not configured", async () => {
     vi.mocked(getStripe).mockImplementation(() => {
       throw new Error("STRIPE_SECRET_KEY is not configured");
