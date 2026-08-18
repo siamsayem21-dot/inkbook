@@ -74,11 +74,13 @@ No Sentry/Bugsnag/Rollbar/Datadog or any error-tracking SDK anywhere in the repo
 **Why deferred:** not necessarily exploitable today at V1's traffic scale, but a real gap against "protect public-facing unauthenticated routes" that should be closed before wider beta traffic.
 **Unblock:** none needed from Siam — safe to build directly (reuse the existing `lib/rate-limit.ts` pattern) as a hardening task.
 
-## 11. Calendar/availability narrower than a full scheduling feature
-**Phase:** 6. **Status:** confirmed, real but partial feature.
-Real booking-time collision check exists (`app/api/bookings/route.ts` rejects an exact date+time clash for the same artist, 409). No artist-configurable working hours, no day-off/vacation blocking, and no session-duration-aware overlap detection — two artists could still be effectively double-booked if session lengths overlap without an exact time match (e.g. 10:00-14:00 vs 11:00 start). `/artist/schedule` is a read-only calendar view, not an availability-management feature.
-**Why deferred:** a real but non-trivial feature gap, not a bug — needs product scoping (how much availability control do artists actually need for V1 beta) before it's a buildable task.
-**Unblock:** Siam scopes what availability management is actually needed for beta (may be acceptable as-is for a small first cohort of studios).
+## 11. Calendar/availability — buffer-based conflict check shipped, day-off support prepared but not applied
+**Phase:** 6. **Status:** partially resolved this session (strict completion mission, 2026-08-18) — see below for exactly what's done vs. still needs Siam.
+
+**Done, shipped, live in production (commit `9650682`):** the exact-time-only collision check was widened to a same-day buffer (`lib/booking-conflict.ts`, `BOOKING_CONFLICT_BUFFER_MINUTES = 240`) — any two active bookings for the same artist within 4 hours of each other now conflict, not just identical times. No schema change, no migration needed, deployed and tested (unit tests + full suite green). This closes the most obvious double-booking risk (overlapping session times) without any deploy risk.
+
+**Not done, needs Siam — day-off/working-hours support:** `bookings` has no duration column and there's no per-artist unavailable-date concept at all, so true duration-aware overlap and artist-configurable day-off blocking both require schema changes. A migration is now **prepared but NOT applied**: `supabase/migrations/20260818000000_artist_unavailable_dates.sql` (adds `artists.unavailable_dates DATE[]`, additive, `NOT NULL DEFAULT '{}'`, idempotent). Deliberately **not wired into any live code path yet** — the booking-creation routes already query `artists` on every single booking, so deploying code that references a column not yet in production would break booking creation entirely, which is unacceptable. The follow-up (UI to manage the dates + wiring the 3 booking-creation call sites to reject dates in that array) is a small, scoped task once the migration is confirmed applied — intentionally not built ahead of that to avoid the deploy-ordering hazard.
+**Unblock:** Siam applies `supabase/migrations/20260818000000_artist_unavailable_dates.sql` in the Supabase SQL Editor. Once confirmed, the follow-up UI+wiring task can proceed immediately.
 
 ## 12. Minor hardening/cleanup items (not launch blockers)
 **Phase:** various. **Status:** identified, safe to fix anytime, low priority.

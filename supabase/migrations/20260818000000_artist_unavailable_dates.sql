@@ -1,0 +1,40 @@
+-- =============================================================
+-- InkBook — Artist unavailable/day-off dates
+-- Run this in: Supabase Dashboard → SQL Editor
+-- =============================================================
+--
+-- PREPARED BUT NOT YET WIRED INTO ANY LIVE CODE PATH. See
+-- DEFERRED_ISSUES.md #11 and NEEDS_SIAM in TASKS.md.
+--
+-- Why prepared-not-applied: the live booking-creation paths
+-- (app/api/bookings/route.ts, assignSchedule() in
+-- app/(owner)/owner/bookings/[bookingId]/actions.ts, PATCH
+-- /api/custom-requests/[id]/schedule) already query `artists` on every
+-- booking. If this column were referenced by that code before this
+-- migration runs in production, every booking attempt would fail (column
+-- does not exist) — an unacceptable regression on a payment-critical path.
+-- So this migration + its follow-up code are deliberately NOT wired in
+-- yet; the safe, no-schema-change conflict-buffer widening
+-- (lib/booking-conflict.ts, commit 9650682) already shipped as the
+-- immediate improvement and needs no migration.
+--
+-- Once Siam applies this migration, the follow-up (a small, scoped task):
+-- 1. Add an artist-facing UI section (e.g. on /artist/schedule or
+--    /owner/settings/studio) to manage `unavailable_dates`.
+-- 2. Extend the same 3 booking-creation call sites that already use
+--    lib/booking-conflict.ts to also reject a request whose `date` is in
+--    the target artist's `unavailable_dates`.
+--
+-- DATE[] (not a date-range table) — deliberately the smallest V1
+-- representation: individual day-off dates, not recurring
+-- schedules/working-hours. Matches "the smallest practical V1 solution"
+-- scope, not a full scheduling product. NOT NULL DEFAULT '{}' means every
+-- existing artist row gets an empty array on migration, so nothing is
+-- unavailable until an artist/owner explicitly sets a date — purely
+-- additive, no behavior change for anyone until the follow-up code reads it.
+--
+-- Idempotent — safe to re-run.
+-- =============================================================
+
+ALTER TABLE artists
+  ADD COLUMN IF NOT EXISTS unavailable_dates DATE[] NOT NULL DEFAULT '{}';
