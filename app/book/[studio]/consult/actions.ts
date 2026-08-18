@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudioId } from "@/lib/auth/config";
 import { validateImageFile } from "@/lib/file-validation";
@@ -7,6 +8,7 @@ import { capDepositAmountCents } from "@/lib/stripe/deposit-checkout";
 import { isAtMonthlyCap } from "@/lib/waitlist";
 import { getStage, isAllowedStatusTransition, isForwardSystemTransition, TERMINAL_STATUSES } from "@/lib/pipeline";
 import { withIdempotency } from "@/lib/idempotency";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function submitConsultation(
   formData: FormData
@@ -31,6 +33,16 @@ export async function submitConsultation(
   if (!studioId || !clientName || !clientEmail || !clientPhone ||
       !description || !placement || !size || !colorPreference || !budgetRange) {
     return { error: "Missing required fields" };
+  }
+
+  // DEFERRED_ISSUES.md #10 (in-scope per strict completion mission):
+  // consultation creation itself previously had no app-level rate limit
+  // (only its downstream AI sub-routes did).
+  const h = headers();
+  const ip = h.get("x-forwarded-for")?.split(",")[0].trim() ?? h.get("x-real-ip") ?? "unknown";
+  const rl = checkRateLimit(`consult-submit:${ip}`, 10, 10 * 60 * 1000); // 10 per 10 min
+  if (!rl.allowed) {
+    return { error: "Too many submissions. Please wait a bit before trying again." };
   }
 
   let followupQuestions: string[] = [];

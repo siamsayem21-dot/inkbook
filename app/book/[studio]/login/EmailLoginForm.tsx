@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { checkOtpSendAllowed } from "./rate-limit-action";
 
 interface Props {
   studioSlug: string;
@@ -20,6 +21,13 @@ export default function EmailLoginForm({ studioSlug, brandColor, textOnBrand }: 
     e.preventDefault();
     setError(null);
     setLoading(true);
+
+    const rateLimit = await checkOtpSendAllowed(email);
+    if (!rateLimit.allowed) {
+      setLoading(false);
+      setError("Too many attempts. Please wait a bit before trying again.");
+      return;
+    }
 
     const supabase = createClient();
     const { error: otpError } = await supabase.auth.signInWithOtp({

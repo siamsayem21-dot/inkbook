@@ -3,6 +3,7 @@ import { createSupabaseMock, type SupabaseMock } from "../mocks/supabase";
 
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn() }));
 vi.mock("@/lib/auth/config", () => ({ getStudioId: vi.fn(), getCurrentUser: vi.fn(() => Promise.resolve(null)) }));
+vi.mock("next/headers", () => ({ headers: () => new Map<string, string>() }));
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { submitConsultation } from "@/app/book/[studio]/consult/actions";
