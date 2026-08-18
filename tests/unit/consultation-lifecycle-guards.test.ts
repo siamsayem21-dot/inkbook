@@ -401,6 +401,15 @@ describe("bookConsultation — finalizes an existing provisional (awaiting_sched
     const result = await bookConsultation("c1", REQ);
     expect(result.error).toMatch(/blacklisted/i);
   });
+
+  it("rejects an artist that doesn't belong to the caller's studio (cross-studio IDOR guard)", async () => {
+    sb.queueFrom("consultations", { ...CONSULT, status: "deposit_paid", booking_id: "bk-provisional" });
+    sb.queueFrom("bookings", { id: "bk-provisional", date: null, time: null });
+    sb.queueRpc(false); // not blacklisted
+    sb.queueFrom("artists", null); // no row matches id+studio_id together
+    const result = await bookConsultation("c1", { ...REQ, artistId: "artist-from-another-studio" });
+    expect(result.error).toMatch(/artist not found/i);
+  });
 });
 
 // ── startConsultationDeposit — the entry point into the Stripe flow ────────────
@@ -433,8 +442,17 @@ describe("startConsultationDeposit — provisional booking for deposit collectio
     expect(result.error).toMatch(/quote/i);
   });
 
+  it("rejects an artist that doesn't belong to the caller's studio (cross-studio IDOR guard)", async () => {
+    sb.queueFrom("consultations", { ...CONSULT, status: "quoted" });
+    sb.queueFrom("artists", null); // no row matches id+studio_id together
+    const result = await startConsultationDeposit("c1", "artist-from-another-studio");
+    expect(result.error).toMatch(/artist not found/i);
+    expect(sb.fromCalls).not.toContain("bookings");
+  });
+
   it("rejects a blacklisted client", async () => {
     sb.queueFrom("consultations", { ...CONSULT, status: "quoted" });
+    sb.queueFrom("artists", { id: "artist-1" }); // ownership check
     sb.queueFrom("studios", STUDIO);
     sb.queueRpc(true); // blacklisted
     const result = await startConsultationDeposit("c1", "artist-1");
@@ -444,6 +462,7 @@ describe("startConsultationDeposit — provisional booking for deposit collectio
 
   it("creates a provisional booking (no date/time) and links it WITHOUT changing consultation status", async () => {
     sb.queueFrom("consultations", { ...CONSULT, status: "quoted" });
+    sb.queueFrom("artists", { id: "artist-1" }); // ownership check
     sb.queueFrom("studios", STUDIO);
     sb.queueRpc(false);
     sb.queueFrom("clients", { id: "client-1" });

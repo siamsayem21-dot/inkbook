@@ -322,6 +322,18 @@ export async function startConsultationDeposit(
     return { error: "This consultation doesn't have a finalized quote amount yet." };
   }
 
+  // Ownership check — artistId is caller-supplied; without this, an owner
+  // could assign another studio's artist to this booking, and that artist
+  // would then see this studio's client data via their own bookings query
+  // (which filters on artist_id alone, not studio_id).
+  const { data: artistOwnership } = await supabase
+    .from("artists")
+    .select("id")
+    .eq("id", artistId)
+    .eq("studio_id", callerStudioId)
+    .maybeSingle();
+  if (!artistOwnership) return { error: "Artist not found." };
+
   const { data: studio } = await supabase
     .from("studios")
     .select("id, deposit_amount_cents")
@@ -441,13 +453,17 @@ export async function bookConsultation(
       return { error: "This client is blacklisted at this studio and cannot be booked." };
     }
 
+    // Ownership check — data.artistId is caller-supplied; see the identical
+    // comment in startConsultationDeposit() above for why this matters.
     const { data: artistRow } = await supabase
       .from("artists")
       .select("name, monthly_booking_cap")
       .eq("id", data.artistId)
+      .eq("studio_id", callerStudioId)
       .maybeSingle();
-    const artistForCap = artistRow as { name: string; monthly_booking_cap: number } | null;
-    if (artistForCap && (await isAtMonthlyCap(supabase, data.artistId, artistForCap.monthly_booking_cap, data.date))) {
+    if (!artistRow) return { error: "Artist not found." };
+    const artistForCap = artistRow as { name: string; monthly_booking_cap: number };
+    if (await isAtMonthlyCap(supabase, data.artistId, artistForCap.monthly_booking_cap, data.date)) {
       return { error: `${artistForCap.name} is already at capacity for that month — choose a different date.` };
     }
 
@@ -494,13 +510,17 @@ export async function bookConsultation(
     return { error: "This client is blacklisted at this studio and cannot be booked." };
   }
 
+  // Ownership check — data.artistId is caller-supplied; see the identical
+  // comment in startConsultationDeposit() above for why this matters.
   const { data: artistRow } = await supabase
     .from("artists")
     .select("name, monthly_booking_cap")
     .eq("id", data.artistId)
+    .eq("studio_id", callerStudioId)
     .maybeSingle();
-  const artistForCap = artistRow as { name: string; monthly_booking_cap: number } | null;
-  if (artistForCap && (await isAtMonthlyCap(supabase, data.artistId, artistForCap.monthly_booking_cap, data.date))) {
+  if (!artistRow) return { error: "Artist not found." };
+  const artistForCap = artistRow as { name: string; monthly_booking_cap: number };
+  if (await isAtMonthlyCap(supabase, data.artistId, artistForCap.monthly_booking_cap, data.date)) {
     return { error: `${artistForCap.name} is already at capacity for that month — choose a different date.` };
   }
 

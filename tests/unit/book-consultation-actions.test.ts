@@ -45,6 +45,17 @@ describe("bookConsultation — blacklist enforcement (twin path of continueToDep
     expect(sb.fromCalls).not.toContain("bookings");
   });
 
+  it("rejects an artist that doesn't belong to the caller's studio (cross-studio IDOR guard)", async () => {
+    sb.queueFrom("consultations", CONSULT);
+    sb.queueFrom("studios", STUDIO);
+    sb.queueRpc(false); // not blacklisted
+    sb.queueFrom("artists", null); // no row matches id+studio_id together
+    const result = await bookConsultation("consult-1", { ...REQ, artistId: "artist-from-another-studio" });
+    expect(result.error).toMatch(/artist not found/i);
+    expect(sb.fromCalls).not.toContain("clients");
+    expect(sb.fromCalls).not.toContain("bookings");
+  });
+
   it("proceeds to create the booking for a non-blacklisted client", async () => {
     sb.queueFrom("consultations", CONSULT);
     sb.queueFrom("studios", STUDIO);

@@ -192,12 +192,21 @@ export async function removeArtist(artistId: string): Promise<{ error?: string }
 }
 
 export async function getUpcomingBookingsCount(artistId: string): Promise<number> {
+  // This is a "use server" action, callable directly from the browser
+  // regardless of which UI element triggers it — artistId is caller-
+  // supplied, so it must be scoped to the caller's own studio, not just
+  // matched against bookings.artist_id alone (which would let any signed-in
+  // owner enumerate any other studio's upcoming-booking counts by artist).
+  const callerStudioId = await getStudioId();
+  if (!callerStudioId) return 0;
+
   const supabase = createAdminClient();
   const today = new Date().toISOString().split("T")[0];
   const { count } = await supabase
     .from("bookings")
     .select("id", { count: "exact", head: true })
     .eq("artist_id", artistId)
+    .eq("studio_id", callerStudioId)
     .gt("date", today)
     .neq("status", "cancelled")
     .neq("status", "no_show");

@@ -9,7 +9,7 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudioId } from "@/lib/auth/config";
 import { sendArtistInviteEmail } from "@/lib/email";
-import { inviteArtist, cancelInvite, removeArtist } from "@/app/(owner)/owner/artists/actions";
+import { inviteArtist, cancelInvite, removeArtist, getUpcomingBookingsCount } from "@/app/(owner)/owner/artists/actions";
 
 let sb: SupabaseMock;
 
@@ -136,5 +136,27 @@ describe("cancelInvite / removeArtist — studio-scoped mutations", () => {
     expect(chain.update).toHaveBeenCalledWith({ user_id: null });
     expect(chain.eq).toHaveBeenCalledWith("id", "artist-1");
     expect(chain.eq).toHaveBeenCalledWith("studio_id", "studio-1");
+  });
+});
+
+describe("getUpcomingBookingsCount — cross-studio IDOR guard", () => {
+  it("scopes the count to both the given artist AND the caller's own studio (not artist_id alone)", async () => {
+    vi.mocked(getStudioId).mockResolvedValue("studio-1");
+    sb.queueFrom("bookings", null);
+
+    await getUpcomingBookingsCount("artist-from-any-studio");
+
+    const chain = sb.getChain("bookings", 1);
+    expect(chain.eq).toHaveBeenCalledWith("artist_id", "artist-from-any-studio");
+    expect(chain.eq).toHaveBeenCalledWith("studio_id", "studio-1");
+  });
+
+  it("returns 0 without querying when there is no authenticated studio session", async () => {
+    vi.mocked(getStudioId).mockResolvedValue(null);
+
+    const result = await getUpcomingBookingsCount("artist-1");
+
+    expect(result).toBe(0);
+    expect(sb.fromCalls).not.toContain("bookings");
   });
 });
