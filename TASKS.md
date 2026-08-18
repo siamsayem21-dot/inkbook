@@ -94,6 +94,15 @@ _(empty — no further safely-buildable work identified. New work enters via ink
 
 ## DONE
 
+- **Overnight V1 finishing run (2026-08-19) — Artist Portal final QA sweep: 0 findings**
+  - Per Section 5(C) of the overnight autonomous run. Script: `scripts/qa-overnight-artist-sweep.mjs` (self-cleaning, QA-tagged `[QA-OVERNIGHT-ARTIST-SWEEP]`).
+  - Real authenticated Playwright session (magiclink cookie pattern) against a fresh QA studio/artist/client/booking, swept all 14 Artist Portal routes (dashboard, consultations, bookings + detail, schedule, requests, messages, portfolio, flash, earnings, clients + detail, agreements + new) on both desktop (1440×900) and mobile (390×844) — 28/28 checks passed: no non-2xx/3xx status, no horizontal overflow, no broken images, no console errors, no failed network requests.
+  - Malformed booking id and a well-formed-but-nonexistent booking id both handled gracefully (HTTP 200, no crash/500).
+  - Re-verified the booking-conflict buffer (`lib/booking-conflict.ts`) — a near-duplicate booking 60 min from an existing one was correctly rejected with `409`.
+  - Re-verified AI Artist Match (`/api/ai/artist-match`) — correctly ranked the Traditional-styled artist first with `isRecommended: true`.
+  - All QA data (2 studios, 3 artists, 1 client, 1 booking, 5 auth users) deleted and re-queried to confirm actual absence.
+  - Owner Portal, Client Portal + full lifecycle E2E, security/isolation + automations, and visual QA + CI/infra health sweeps were run in parallel as separate background tasks this same run — see their own entries once they report back.
+
 - **`process_custom_request_deposit` RPC fix — applied by Siam, full post-fix verification passed (2026-08-19, commits `71ef8a1`/`6e45e93`)**
   - Siam applied `supabase/migrations/20260819020000_fix_process_custom_request_deposit_rpc.sql` (removes the sole broken `updated_at = NOW()` reference; every other line byte-identical to the original). Full verification chain run immediately after:
     1. **Non-Connect production-path regression check** (fully automated, no payment needed): called `process_custom_request_deposit` directly with realistic parameters, exactly as the live platform-account webhook (`app/api/stripe/webhook/route.ts` Branch B) does today. Result: `outcome: "success"` (was `42703` before the fix), `custom_requests.status → "accepted"`, real `bookings` row created (`awaiting_schedule`, `deposit_paid: true`, correct cents amounts), real `deposits` row created (`status: "paid"`, correct ids). Calling the RPC again with the same session id correctly returned `"already_processed"` — no duplicate rows.
