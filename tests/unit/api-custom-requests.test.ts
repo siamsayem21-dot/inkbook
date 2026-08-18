@@ -204,6 +204,12 @@ describe("POST /api/custom-requests/[id]/deposit", () => {
       else process.env.STRIPE_CONNECT_ENABLED = originalConnectFlag;
     });
 
+    // Each test below uses its own request id (not the shared `params`/"req-1"
+    // constant) — the deposit route now has real idempotency keyed by request
+    // id (bug fix, see app/api/custom-requests/[id]/deposit/route.ts), so
+    // reusing "req-1" across tests that each expect a fresh Stripe call would
+    // have the second+ test silently receive the first test's cached result.
+
     it("creates the session as a Direct Charge on the studio's connected account when eligible", async () => {
       process.env.STRIPE_CONNECT_ENABLED = "true";
       const createSpy = vi.fn(() => Promise.resolve({ url: "https://checkout.stripe.com/session_1" }));
@@ -212,7 +218,7 @@ describe("POST /api/custom-requests/[id]/deposit", () => {
       } as unknown as ReturnType<typeof getStripe>);
 
       sb.queueFrom("custom_requests", {
-        id: "req-1", studio_id: "s1", artist_id: "artist-1", client_email: "a@b.com",
+        id: "req-connect-eligible", studio_id: "s1", artist_id: "artist-1", client_email: "a@b.com",
         deposit_amount: 150, status: "quoted",
       });
       sb.queueFrom("studios", { name: "Ink & Iron" });
@@ -224,7 +230,7 @@ describe("POST /api/custom-requests/[id]/deposit", () => {
         stripe_connect_details_submitted: true,
       });
 
-      const res = await createDeposit(depositReq({ studioSlug: "ink-iron" }), params);
+      const res = await createDeposit(depositReq({ studioSlug: "ink-iron" }), { params: { id: "req-connect-eligible" } });
       expect(res.status).toBe(200);
       expect(createSpy).toHaveBeenCalledWith(
         expect.anything(),
@@ -240,14 +246,14 @@ describe("POST /api/custom-requests/[id]/deposit", () => {
       } as unknown as ReturnType<typeof getStripe>);
 
       sb.queueFrom("custom_requests", {
-        id: "req-1", studio_id: "s1", artist_id: "artist-1", client_email: "a@b.com",
+        id: "req-connect-not-connected", studio_id: "s1", artist_id: "artist-1", client_email: "a@b.com",
         deposit_amount: 150, status: "quoted",
       });
       sb.queueFrom("studios", { name: "Ink & Iron" });
       sb.queueFrom("artists", { name: "Jane Artist" });
       sb.queueFrom("studios", null); // no connected account at all
 
-      const res = await createDeposit(depositReq({ studioSlug: "ink-iron" }), params);
+      const res = await createDeposit(depositReq({ studioSlug: "ink-iron" }), { params: { id: "req-connect-not-connected" } });
       expect(res.status).toBe(402);
       const body = await res.json();
       expect(body.error).toBe("payment_setup_required");
@@ -262,7 +268,7 @@ describe("POST /api/custom-requests/[id]/deposit", () => {
       } as unknown as ReturnType<typeof getStripe>);
 
       sb.queueFrom("custom_requests", {
-        id: "req-1", studio_id: "s1", artist_id: "artist-1", client_email: "a@b.com",
+        id: "req-connect-charges-disabled", studio_id: "s1", artist_id: "artist-1", client_email: "a@b.com",
         deposit_amount: 150, status: "quoted",
       });
       sb.queueFrom("studios", { name: "Ink & Iron" });
@@ -274,9 +280,95 @@ describe("POST /api/custom-requests/[id]/deposit", () => {
         stripe_connect_details_submitted: true,
       });
 
-      const res = await createDeposit(depositReq({ studioSlug: "ink-iron" }), params);
+      const res = await createDeposit(depositReq({ studioSlug: "ink-iron" }), { params: { id: "req-connect-charges-disabled" } });
       expect(res.status).toBe(402);
       expect(createSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("idempotency — duplicate Checkout Session prevention (bug fix)", () => {
+    it("a second call for the same request returns the SAME session instead of creating a new one", async () => {
+      const createSpy = vi.fn(() => Promise.resolve({ url: "https://checkout.stripe.com/session_dedupe" }));
+      vi.mocked(getStripe).mockReturnValue({
+        checkout: { sessions: { create: createSpy } },
+      } as unknown as ReturnType<typeof getStripe>);
+
+      const dupeParams = { params: { id: "req-dupe-click" } };
+      // Two independent calls need two independent sets of queued reads —
+      // the idempotency check happens AFTER the DB reads (status/blacklist/
+      // studio/artist lookups still run on every call), only the actual
+      // Stripe session creation is deduped.
+      for (let i = 0; i < 2; i++) {
+        sb.queueFrom("custom_requests", {
+          id: "req-dupe-click", studio_id: "s1", artist_id: "artist-1", client_email: "a@b.com",
+          deposit_amount: 150, status: "quoted",
+        });
+        sb.queueFrom("studios", { name: "Ink & Iron" });
+        sb.queueFrom("artists", { name: "Jane Artist" });
+      }
+
+      const first = await createDeposit(depositReq({ studioSlug: "ink-iron" }), dupeParams);
+      const second = await createDeposit(depositReq({ studioSlug: "ink-iron" }), dupeParams);
+
+      const firstBody = await first.json();
+      const secondBody = await second.json();
+      expect(firstBody.url).toBe("https://checkout.stripe.com/session_dedupe");
+      expect(secondBody.url).toBe("https://checkout.stripe.com/session_dedupe"); // same session, not a new one
+      expect(createSpy).toHaveBeenCalledTimes(1); // Stripe was only ever asked to create ONE session
+    });
+
+    it("rejects with 409 when the request already has a recorded stripe_payment_intent_id (already paid)", async () => {
+      const createSpy = vi.fn();
+      vi.mocked(getStripe).mockReturnValue({
+        checkout: { sessions: { create: createSpy } },
+      } as unknown as ReturnType<typeof getStripe>);
+
+      sb.queueFrom("custom_requests", {
+        id: "req-already-paid", studio_id: "s1", artist_id: "artist-1", client_email: "a@b.com",
+        deposit_amount: 150, status: "quoted", stripe_payment_intent_id: "pi_already_charged",
+      });
+
+      const res = await createDeposit(depositReq({ studioSlug: "ink-iron" }), { params: { id: "req-already-paid" } });
+      expect(res.status).toBe(409);
+      const body = await res.json();
+      expect(body.error).toMatch(/already been paid/i);
+      expect(createSpy).not.toHaveBeenCalled();
+      expect(sb.rpc).not.toHaveBeenCalled(); // returns before even the blacklist RPC check
+    });
+
+    // Regression test for the exact live bug found 2026-08-19: a real
+    // double-click fires two genuinely CONCURRENT requests (not one after
+    // the other) — a Promise.all here reproduces that, unlike an awaited
+    // sequential pair, which would have passed even before this route had
+    // any idempotency protection at all.
+    it("a true double-click (two concurrent requests) creates only ONE real Stripe session", async () => {
+      const createSpy = vi.fn(async () => {
+        await new Promise((r) => setTimeout(r, 10)); // real network latency
+        return { url: "https://checkout.stripe.com/session_concurrent" };
+      });
+      vi.mocked(getStripe).mockReturnValue({
+        checkout: { sessions: { create: createSpy } },
+      } as unknown as ReturnType<typeof getStripe>);
+
+      const dupeParams = { params: { id: "req-concurrent-dupe-click" } };
+      for (let i = 0; i < 2; i++) {
+        sb.queueFrom("custom_requests", {
+          id: "req-concurrent-dupe-click", studio_id: "s1", artist_id: "artist-1", client_email: "a@b.com",
+          deposit_amount: 150, status: "quoted",
+        });
+        sb.queueFrom("studios", { name: "Ink & Iron" });
+        sb.queueFrom("artists", { name: "Jane Artist" });
+      }
+
+      const [res1, res2] = await Promise.all([
+        createDeposit(depositReq({ studioSlug: "ink-iron" }), dupeParams),
+        createDeposit(depositReq({ studioSlug: "ink-iron" }), dupeParams),
+      ]);
+      const [body1, body2] = await Promise.all([res1.json(), res2.json()]);
+
+      expect(createSpy).toHaveBeenCalledTimes(1); // the actual bug: this was 2 before the fix
+      expect(body1.url).toBe(body2.url);
+      expect(body1.url).toBe("https://checkout.stripe.com/session_concurrent");
     });
   });
 

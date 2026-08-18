@@ -117,7 +117,16 @@ export default async function ClientRequestPage({ params, searchParams }: Props)
         </span>
       </div>
 
-      {/* Quote block */}
+      {/* Quote block — the CTA itself is additionally gated on !depositPaid
+          (not just cr.status === "quoted") because Stripe's redirect back
+          to this page and the webhook that flips status to "accepted" are
+          two independent async things; the redirect is not guaranteed to
+          land after the webhook has processed. Without this, a real race
+          window existed where a client who just paid could still see and
+          click "Pay Deposit" again before the DB caught up. The server
+          route now also has real idempotency protection (see
+          app/api/custom-requests/[id]/deposit/route.ts) as the actual
+          enforcement — this is defense in depth, not the only guard. */}
       {cr.status === "quoted" && cr.quote_amount != null && (
         <div className="bg-gold/[0.07] border border-gold/25 rounded-xl p-6 mb-6 space-y-4">
           <h2 className="font-cinzel text-lg font-bold">Your Custom Quote</h2>
@@ -139,11 +148,17 @@ export default async function ClientRequestPage({ params, searchParams }: Props)
           )}
           {cr.deposit_amount != null && (
             <div className="pt-2">
-              <AcceptDepositButton
-                requestId={params.id}
-                studioSlug={params.studio}
-                depositAmount={cr.deposit_amount}
-              />
+              {depositPaid ? (
+                <p className="text-sm text-gold text-center py-3">
+                  Payment received — confirming your appointment…
+                </p>
+              ) : (
+                <AcceptDepositButton
+                  requestId={params.id}
+                  studioSlug={params.studio}
+                  depositAmount={cr.deposit_amount}
+                />
+              )}
             </div>
           )}
         </div>
