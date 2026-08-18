@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe/client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
+import { withIdempotency } from "@/lib/idempotency";
 
 // Public, unauthenticated endpoint — same trust model as POST /api/bookings.
 // Creates a real Stripe checkout session per call, so an unlimited request
@@ -80,40 +81,61 @@ export async function POST(request: NextRequest) {
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
   const bookingBase = `${baseUrl}/book/${studioSlug}/${artistId}/book`;
 
-  let session;
-  try {
-    session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: `Tattoo appointment deposit — ${artistName}`,
-              description: `${studioName} · Non-refundable on no-show or late cancellation`,
+  // Idempotency (same bug class found and fixed tonight in
+  // app/api/custom-requests/[id]/deposit/route.ts): the "existing deposit"
+  // check above is a check-then-act read, not a lock — two genuinely
+  // concurrent requests (a real double-click firing overlapping fetches)
+  // can both pass it before either has inserted a `deposits` row, each
+  // creating its own real Stripe Checkout Session. Keyed by the
+  // server-verified bookingId (looked up from the DB above, never trusted
+  // as client-supplied), so a second concurrent call for the same booking
+  // waits on and reuses the first call's in-flight session instead of
+  // creating another one.
+  const result = await withIdempotency(
+    `stripe-checkout:${bookingId}`,
+    async (): Promise<{ url?: string; error?: string; status: number }> => {
+      let session;
+      try {
+        session = await stripe.checkout.sessions.create({
+          payment_method_types: ["card"],
+          line_items: [
+            {
+              price_data: {
+                currency: "usd",
+                product_data: {
+                  name: `Tattoo appointment deposit — ${artistName}`,
+                  description: `${studioName} · Non-refundable on no-show or late cancellation`,
+                },
+                unit_amount: booking.deposit_amount_cents,
+              },
+              quantity: 1,
             },
-            unit_amount: booking.deposit_amount_cents,
-          },
-          quantity: 1,
-        },
-      ],
-      mode: "payment",
-      success_url: `${bookingBase}/consent?booking_id=${bookingId}`,
-      cancel_url: `${bookingBase}/deposit?booking_id=${bookingId}&cancelled=1`,
-      metadata: { bookingId, studioSlug, artistId },
-    });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "Unknown Stripe error";
-    return NextResponse.json({ error: `Stripe error: ${msg}` }, { status: 502 });
-  }
+          ],
+          mode: "payment",
+          success_url: `${bookingBase}/consent?booking_id=${bookingId}`,
+          cancel_url: `${bookingBase}/deposit?booking_id=${bookingId}&cancelled=1`,
+          metadata: { bookingId, studioSlug, artistId },
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Unknown Stripe error";
+        return { error: `Stripe error: ${msg}`, status: 502 };
+      }
 
-  // Record the pending deposit
-  await supabase.from("deposits").insert({
-    booking_id: bookingId,
-    amount_cents: booking.deposit_amount_cents,
-    status: "pending",
-    stripe_checkout_session_id: session.id,
-  } as never);
+      // Record the pending deposit
+      await supabase.from("deposits").insert({
+        booking_id: bookingId,
+        amount_cents: booking.deposit_amount_cents,
+        status: "pending",
+        stripe_checkout_session_id: session.id,
+      } as never);
 
-  return NextResponse.json({ url: session.url });
+      return { url: session.url ?? undefined, status: 200 };
+    },
+    { ttlMs: 5 * 60_000, shouldCache: (r) => Boolean(r.url) }
+  );
+
+  return NextResponse.json(
+    result.url ? { url: result.url } : { error: result.error ?? "Failed to create checkout session" },
+    { status: result.status }
+  );
 }

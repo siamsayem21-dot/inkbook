@@ -66,6 +66,33 @@ describe("POST /api/stripe/checkout", () => {
   });
 });
 
+describe("POST /api/stripe/checkout — idempotency", () => {
+  it("creates exactly one Stripe session when two requests for the same booking arrive concurrently", async () => {
+    const body = { bookingId: "bk-concurrent", studioSlug: "ink-iron", artistId: "artist-1" };
+    // Every queued row is read twice (once per concurrent call) — supabase
+    // mock queues are consumed in order, so duplicate each row.
+    for (let i = 0; i < 2; i++) {
+      sb.queueFrom("bookings", { id: "bk-concurrent", deposit_amount_cents: 10000, studio_id: "s1", artist_id: "artist-1", status: "pending_deposit" });
+      sb.queueFrom("deposits", null);
+      sb.queueFrom("studios", { name: "Ink & Iron" });
+      sb.queueFrom("artists", { name: "Jane Artist" });
+    }
+
+    const createSpy = vi.mocked(getStripe)().checkout.sessions.create;
+
+    const [res1, res2] = await Promise.all([
+      POST(makeRequest(body, "10.0.9.1")),
+      POST(makeRequest(body, "10.0.9.2")),
+    ]);
+
+    expect(res1.status).toBe(200);
+    expect(res2.status).toBe(200);
+    const [body1, body2] = await Promise.all([res1.json(), res2.json()]);
+    expect(body1.url).toBe(body2.url);
+    expect(createSpy).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("POST /api/stripe/checkout — rate limiting", () => {
   it("blocks the 6th request within the window from the same IP", async () => {
     const ip = "203.0.113.50";
