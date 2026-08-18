@@ -4,8 +4,10 @@ Issues that cannot be safely completed autonomously, or that are intentionally o
 
 ---
 
-## 0. 🔴 CRITICAL — `custom_requests.updated_at` missing in production; breaks ALL custom-request deposit reconciliation, live, today
-**Phase:** 3 (payments). **Status:** confirmed via live TEST-mode payment + direct schema probe, 2026-08-19. **NOT a Stripe Connect bug — pre-existing, affects the current live platform-account flow too. Requires Siam approval before any fix is applied (production DDL/RPC change).**
+## 0. ✅ RESOLVED — `custom_requests.updated_at` missing in production; broke ALL custom-request deposit reconciliation
+**Phase:** 3 (payments). **Status:** fixed and fully verified, 2026-08-19. Was NOT a Stripe Connect bug — pre-existing, affected the live platform-account flow too.
+
+**Resolution:** Siam approved and applied `supabase/migrations/20260819020000_fix_process_custom_request_deposit_rpc.sql` (removes the sole broken `updated_at = NOW()` reference from `process_custom_request_deposit`; every other line unchanged). Post-fix verification: a direct RPC call mirroring the live platform-account webhook now succeeds (was `42703`) with correct `custom_requests`/`bookings`/`deposits` state and confirmed RPC-level idempotency; a real completed TEST-mode Stripe payment through the Connect webhook path fully reconciled end-to-end; duplicate-payment protection held both before and after payment; the connected account's PaymentIntent confirmed `succeeded` with `application_fee_amount: null`. Full detail in TASKS.md's DONE section (2026-08-19 entry).
 
 **What's broken:** `supabase/migrations/20260622000000_custom_requests.sql` defines `custom_requests.updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()` plus a trigger to auto-maintain it, and the `process_custom_request_deposit` RPC (`supabase/migrations/20260623000005_process_custom_request_deposit_rpc.sql:188`) explicitly sets `updated_at = NOW()` in its UPDATE statement. **But the live production `custom_requests` table does not actually have this column** — confirmed two independent ways:
 1. A completed real TEST-mode Stripe payment ($50, `cs_test_a1ll5T44eJGh6FP53HhZDOZOuFVadhdb4cZ9k4TzN6rHf4B1tSILKKcEBh`, `payment_status: "paid"` per Stripe's own API) never reconciled — `custom_requests.status` stayed `"quoted"`, `stripe_payment_intent_id` stayed `null`, no booking was created. The webhook was delivered (confirmed in listener logs) but the server returned `500` with `column "updated_at" of relation "custom_requests" does not exist`.
@@ -17,7 +19,7 @@ Issues that cannot be safely completed autonomously, or that are intentionally o
 
 **Recommended fix (smallest, safest option):** remove the single erroneous `updated_at = NOW()` line from the RPC's UPDATE statement (`process_custom_request_deposit`, migration `20260623000005`, line 188) — no schema change needed at all, since the column was never real to begin with and nothing else references it. This is a one-line `CREATE OR REPLACE FUNCTION` fix. (Alternative: add the missing column instead, if `updated_at` tracking on this table is actually wanted — a slightly larger, equally safe additive migration.)
 
-**Unblock:** Siam reviews and approves one of the two fix options above; either is small and low-risk, but both require Siam's explicit approval to apply to production per the standing approval-gate rules. This should be treated as urgent — real client payments are affected today.
+**(Historical — the above described the bug before the fix; kept as the evidence record, not current status. See the Resolution line at the top of this entry.)**
 
 ## 1. State-specific tattoo consent legal text
 **Phase:** 3. **Status:** deferred, not started.
