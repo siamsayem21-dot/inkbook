@@ -54,7 +54,7 @@ type ConsultRow = {
   created_at: string;
 };
 
-type ArtistOption = { id: string; name: string };
+type ArtistOption = { id: string; name: string; reason?: string; isRecommended?: boolean };
 
 type QuoteDraft = {
   priceLow:   number;
@@ -155,12 +155,31 @@ export default function ConsultationDetail({
   const [depositLinkError, setDepositError]     = useState<string | null>(null);
   const [copied, setCopied]                     = useState(false);
 
+  // AI Consultation -> Artist Match -> Quote: ranks the studio's own active
+  // artists against this consultation's detected style (real match on
+  // artists.styles, optionally AI-refined — see app/api/ai/artist-match) so
+  // the studio sees a recommendation, not just an alphabetical list. Never
+  // auto-assigns — both selects below remain plain, freely-overridable
+  // dropdowns; a human always makes the final pick.
   useEffect(() => {
-    fetch(`/api/artists?studioId=${consult.studio_id}`)
+    fetch("/api/ai/artist-match", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        studioId: consult.studio_id,
+        detectedStyle: consult.detected_style,
+        description: consult.tattoo_description,
+        placement: consult.placement,
+      }),
+    })
       .then((r) => r.json())
-      .then((d) => setArtists(d.artists ?? []))
+      .then((d) => setArtists(d.matches ?? []))
       .catch(() => {});
-  }, [consult.studio_id]);
+  }, [consult.studio_id, consult.detected_style, consult.tattoo_description, consult.placement]);
+
+  const recommendedArtists = artists.filter((a) => a.isRecommended);
+  const otherArtists       = artists.filter((a) => !a.isRecommended);
+  const selectedArtistReason = artists.find((a) => a.id === bookArtist)?.reason;
 
   async function handleBookAppointment() {
     setBookError(null);
@@ -515,10 +534,22 @@ export default function ConsultationDetail({
                   className={inputCls}
                 >
                   <option value="">Select artist…</option>
-                  {artists.map((a) => (
-                    <option key={a.id} value={a.id}>{a.name}</option>
-                  ))}
+                  {recommendedArtists.length > 0 && (
+                    <optgroup label="Recommended">
+                      {recommendedArtists.map((a) => (
+                        <option key={a.id} value={a.id}>{a.name}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  <optgroup label={recommendedArtists.length > 0 ? "Other Artists" : "Artists"}>
+                    {otherArtists.map((a) => (
+                      <option key={a.id} value={a.id}>{a.name}</option>
+                    ))}
+                  </optgroup>
                 </select>
+                {selectedArtistReason && (
+                  <p className="text-[11px] text-zinc-400 mt-1">{selectedArtistReason}</p>
+                )}
               </div>
               <div>
                 <label className={labelCls}>Date</label>
@@ -859,10 +890,22 @@ export default function ConsultationDetail({
                   className={inputCls}
                 >
                   <option value="">Select artist…</option>
-                  {artists.map((a) => (
-                    <option key={a.id} value={a.id}>{a.name}</option>
-                  ))}
+                  {recommendedArtists.length > 0 && (
+                    <optgroup label="Recommended">
+                      {recommendedArtists.map((a) => (
+                        <option key={a.id} value={a.id}>{a.name}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  <optgroup label={recommendedArtists.length > 0 ? "Other Artists" : "Artists"}>
+                    {otherArtists.map((a) => (
+                      <option key={a.id} value={a.id}>{a.name}</option>
+                    ))}
+                  </optgroup>
                 </select>
+                {selectedArtistReason && (
+                  <p className="text-[11px] text-zinc-400 mt-1">{selectedArtistReason}</p>
+                )}
               </div>
             )}
 
