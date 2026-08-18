@@ -2,11 +2,11 @@
 
 ## CURRENT
 
-_(empty — CORRECTED InkBook V1 8-Phase Autonomous Completion Mission all 8 phases genuinely COMPLETE as of 2026-08-17. See MASTER_PLAN.md for the full evidence-based audit and the final report delivered to Siam. Remaining work lives under NEEDS_SIAM below — 5 items, all genuine product/infra/billing decisions, not open engineering work.)_
+- **STRICT ENGINEERING COMPLETION RUN (2026-08-18)** — Siam corrected course a second time: the prior "8 phases complete" audit was real evidence but not itself a build mandate, so every safely-buildable MISSING/PARTIAL/IMPLEMENTED_NEEDS_HARDENING item from that audit is being actually built, not just left as a finding. Built and shipped so far: booking conflict buffer widening (`9650682`), consultation duplicate-submission idempotency (`c61b8e9`), OTP + consultation-start rate limiting (`5603ee3`), AI Artist Match (`ecc2a51` — closes the old "doesn't exist as a feature" gap entirely), 2 real cross-studio IDOR security fixes found via a full service-role scoping audit (`7978d86`), dead-code cleanup (`28eabab`), and a prepared-not-applied migration for artist day-off dates (`7e07319`). Next: deep live Phase 6 client-journey walkthrough (consultation → AI processing → artist match → quote → deposit → booking → portal → consent → completion), then Phase 8 final report.
 
 ## NEXT
 
-_(empty — no further net-new work identified against the real 8-phase mission. New work enters via inkbook-queue from Siam's ChatGPT InkBook Project, or from a decision on any NEEDS_SIAM item below.)_
+_(mission-driven — deep Phase 6 walkthrough, then Phase 8 final verification + report)_
 
 ## BLOCKED
 
@@ -31,11 +31,13 @@ _(empty — no further net-new work identified against the real 8-phase mission.
 - **Automation cron cadence structurally capped at once-daily — Vercel Hobby plan (2026-08-17, see DEFERRED_ISSUES.md #7)**
   - All 6 crons run once daily (confirmed via `vercel.json` + git history of prior forced downgrades). Unpaid-deposit auto-cancel can take up to ~48h, not the "24hrs" CLAUDE.md business rule states. One related code bug (payment-reminders window mismatch) was found and fixed this session (commit `80b8613`) — the remaining cadence ceiling itself needs Siam to decide: accept the latency, or upgrade the Vercel plan for more frequent crons.
 
-- **"AI Artist Match" doesn't exist as a feature — product-scope question (2026-08-17, see DEFERRED_ISSUES.md #8)**
-  - The AI consultation→quote lifecycle is real and solid end-to-end (including a strong two-sided human-approval gate before any price is binding — verified safety-critical), but there is no AI-driven artist-matching logic; the owner manually picks the artist from a dropdown. Siam needs to clarify whether AI artist matching was ever intended for V1, or whether manual selection (already working) is the intended design.
+- ~~"AI Artist Match" doesn't exist as a feature~~ — **BUILT 2026-08-18** (commit `ecc2a51`), see `## DONE`. No longer needs a Siam decision.
 
 - **No production error monitoring/alerting (2026-08-17, see DEFERRED_ISSUES.md #9)**
   - No Sentry or equivalent anywhere — all errors only surface via `console.error`/Vercel logs, no one gets paged. Siam needs to pick a provider (e.g. Sentry free tier) before this becomes a safe, buildable task (new external service/API key = a small product/infra decision, not something to silently add).
+
+- **Artist day-off/unavailable-dates migration — prepared, not applied (2026-08-18, see DEFERRED_ISSUES.md #11)**
+  - `supabase/migrations/20260818000000_artist_unavailable_dates.sql` adds `artists.unavailable_dates DATE[]` (additive, safe, idempotent) but is deliberately not applied or wired into any live code path yet — every booking-creation route queries `artists` on every request, so shipping code that depends on this column before the migration runs would break booking creation entirely. The no-migration-needed half of this gap (buffer-based conflict widening) already shipped separately. Once Siam applies this migration, the small follow-up (day-off UI + wiring the 3 booking routes to respect it) can proceed immediately.
 
 - **NIGHT BUILD — Portfolio + Flash + Clients + Agreements (40/40 tasks attempted) — READY FOR SIAM REVIEW (2026-08-17)**
 
@@ -80,6 +82,16 @@ _(empty — no further net-new work identified against the real 8-phase mission.
   - **Update (2026-08-17, autonomous final audit):** all 4 modules have since completed their own full lock workflow (guarded QA cleanup → final verification → commit → merge → push → Vercel deploy → smoke test → LOCKED). Portfolio and Earnings were re-verified as regression-only (already locked, no genuine bugs found, not redeployed). Flash, Clients, and Agreements are now newly PRODUCTION VERIFIED + LOCKED — see each module's own `## DONE` entry.
 
 ## DONE
+
+- **Strict Engineering Completion Run — 6 real fixes/features shipped (2026-08-18)**
+  - **Booking conflict buffer** (`9650682`): widened exact-time-only collision check to a 4-hour same-day buffer, no migration needed, all 3 booking-scheduling call sites.
+  - **Consultation idempotency** (`c61b8e9`): in-process duplicate-submission guard, prevents a retried POST from creating a duplicate lead.
+  - **Rate limiting** (`5603ee3`): OTP send/resend (pre-flight gate, auth call itself untouched) + consultation-start, both previously unprotected.
+  - **AI Artist Match** (`ecc2a51`): real feature — deterministic style-based scorer (always-available fallback) + optional Claude-refined ranking (strictly bounded to the same candidate set, any hallucinated/incomplete response rejected wholesale). Wired into ConsultationDetail.tsx as a "Recommended" optgroup on both artist-selection dropdowns; human picks, always.
+  - **2 real cross-studio IDOR security fixes** (`7978d86`): `startConsultationDeposit`/`bookConsultation` accepted a caller-supplied `artistId` with no ownership check (confirmed exploitable via the artist bookings page's `artist_id`-only filter); `getUpcomingBookingsCount` had zero auth check at all. Found via a full service-role scoping audit of every route touching `createAdminClient()`.
+  - **Dead code removed** (`28eabab`): orphaned `/api/quote/generate` (zero live references, superseded by `/api/ai/quote-generate`).
+  - **Availability migration prepared** (`7e07319`): `artists.unavailable_dates` — written, additive, NOT applied, NOT wired into any live path (would break booking creation pre-migration) — see NEEDS_SIAM.
+  - All verified independently, not just trusted from whichever agent found them: tsc clean, lint clean, production build clean, 536/536 unit tests, live production smoke tests after each deploy.
 
 - **CORRECTED InkBook V1 8-Phase Autonomous Completion Mission — all 8 phases attempted and completed (2026-08-17)**
   - Siam corrected course mid-session: a prior recovery session had invented its own 8-phase structure (confirmed via full git-log search — the phrase never appeared anywhere before that session) and graded itself complete against it. MASTER_PLAN.md was rewritten around the real 8 phases Siam defined: Full MVP Gap Audit → AI Consultation/Artist Match/Quote → Booking/Stripe/Deposit → Consent/Client Identity → Automations → Complete Client Journey/White-label → Full System Production Hardening → Beta Launch Readiness.
