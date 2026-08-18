@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { Fragment, useState, useTransition } from "react";
 import { saveAvailability } from "@/app/(artist)/artist/schedule/actions";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -78,8 +78,8 @@ export default function ScheduleCalendar({ artistId, initial }: Props) {
             <div key={d} className="text-center text-xs text-zinc-500 font-medium pb-2">{d}</div>
           ))}
           {HOURS.map((hour) => (
-            <>
-              <div key={`lbl-${hour}`} className="text-xs text-zinc-400 pr-2 pt-1.5">{fmt12h(hour)}</div>
+            <Fragment key={hour}>
+              <div className="text-xs text-zinc-400 pr-2 pt-1.5">{fmt12h(hour)}</div>
               {DAYS.map((_, day) => {
                 const key: SlotKey = `${day}-${hour}`;
                 const isAvail = available.has(key);
@@ -96,7 +96,7 @@ export default function ScheduleCalendar({ artistId, initial }: Props) {
                   />
                 );
               })}
-            </>
+            </Fragment>
           ))}
         </div>
       </div>

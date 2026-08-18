@@ -1,6 +1,16 @@
 /**
  * Overnight InkBook V1 QA sweep — Artist Portal. Read/audit only, self-cleaning.
  * Run with: node scripts/qa-overnight-artist-sweep.mjs
+ *
+ * CORRECTED 2026-08-19: originally used Supabase magiclink-cookie injection,
+ * which is broken for local dev — this project's Supabase Site URL redirects
+ * to https://www.inkbook.tech, not localhost, so the captured cookies were
+ * set against the wrong origin and every route silently landed on local
+ * /login. Because the pass/fail check only looked at final HTTP status (not
+ * final URL), this produced a false "28/28 PASS" — /login itself returns
+ * 200. Switched to a real /login UI (signInWithPassword) session, the same
+ * fix the Owner Portal sweep independently applied to itself. Re-run after
+ * the fix: still 28/28 PASS, but now genuinely URL-confirmed.
  */
 import { chromium } from "playwright";
 import { createClient } from "@supabase/supabase-js";
@@ -25,28 +35,26 @@ const FAIL = (m) => { console.log("  FAIL:", m); failures++; };
 const NOTE = (m) => console.log("  NOTE:", m);
 const HEAD = (m) => console.log("\n" + m + "\n" + "-".repeat(m.length));
 
-async function buildCookiesFor(email) {
-  const { data, error } = await sb.auth.admin.generateLink({ type: "magiclink", email });
-  if (error) throw new Error(`generateLink(${email}) failed: ${error.message}`);
+const QA_PASSWORD = "Password123!";
+
+async function buildCookiesViaRealLogin(email, password) {
   const helperBrowser = await chromium.launch({ headless: true });
   const helperPage = await helperBrowser.newPage();
-  let capturedUrl = null;
-  helperPage.on("framenavigated", (frame) => {
-    if (frame === helperPage.mainFrame()) {
-      const u = frame.url();
-      if (u.includes("access_token=")) capturedUrl = u;
-    }
-  });
-  await helperPage.goto(data.properties.action_link, { waitUntil: "domcontentloaded", timeout: 20000 }).catch(() => {});
-  await helperPage.waitForTimeout(1200);
-  if (!capturedUrl) capturedUrl = helperPage.url();
+  await helperPage.goto(`${BASE_URL}/login`);
+  await helperPage.getByPlaceholder("you@studio.com").fill(email);
+  await helperPage.getByPlaceholder("••••••••").fill(password);
+  await helperPage.getByRole("button", { name: /sign in/i }).click();
+  await helperPage.waitForURL(/\/artist\/dashboard/, { timeout: 30000 }).catch(() => {});
+  if (!helperPage.url().includes("/artist/dashboard")) {
+    throw new Error(`login did not land on /artist/dashboard — actual url: ${helperPage.url()}`);
+  }
   const cookies = await helperPage.context().cookies();
   await helperBrowser.close();
   return cookies;
 }
 
-async function mkAuthUser(email) {
-  const { data, error } = await sb.auth.admin.createUser({ email, email_confirm: true, password: crypto.randomUUID() });
+async function mkAuthUser(email, password = crypto.randomUUID()) {
+  const { data, error } = await sb.auth.admin.createUser({ email, email_confirm: true, password });
   if (error) throw new Error(error.message);
   created.auth.push(data.user.id);
   return data.user.id;
@@ -54,7 +62,7 @@ async function mkAuthUser(email) {
 
 // ── Setup: 2 studios, 2 artists (for cross-studio isolation), plus one extra artist in studio A (for cross-artist isolation) ──
 const ownerAId = await mkAuthUser(`${TAG}-owner-a-${Date.now()}@example.com`);
-const artistAId = await mkAuthUser(`${TAG}-artist-a-${Date.now()}@example.com`);
+const artistAId = await mkAuthUser(`${TAG}-artist-a-${Date.now()}@example.com`, QA_PASSWORD);
 const artistA2Id = await mkAuthUser(`${TAG}-artist-a2-${Date.now()}@example.com`);
 const ownerBId = await mkAuthUser(`${TAG}-owner-b-${Date.now()}@example.com`);
 const artistBId = await mkAuthUser(`${TAG}-artist-b-${Date.now()}@example.com`);
@@ -109,7 +117,7 @@ console.log("studioA:", studioA.id, "| artistA:", artistA.id, "| artistA2 (colle
 console.log("studioB:", studioB.id, "| artistB:", artistB.id);
 console.log("bookingA:", bookingA.id);
 
-const cookiesA = await buildCookiesFor(artistAEmailReal);
+const cookiesA = await buildCookiesViaRealLogin(artistAEmailReal, QA_PASSWORD);
 const browser = await chromium.launch({ headless: true });
 
 const ROUTES = [
@@ -144,8 +152,14 @@ for (const viewport of [{ name: "desktop", width: 1440, height: 900 }, { name: "
       Array.from(document.images).filter((img) => !img.complete || img.naturalWidth === 0).map((img) => img.src)
     ).catch(() => []);
 
+    const stillAuthenticated = page.url() === BASE_URL + route;
+    if (!stillAuthenticated) {
+      FAIL(`[${viewport.name}] ${route} → unexpectedly redirected to ${page.url()}`);
+      await page.close();
+      continue;
+    }
     if (status && status >= 200 && status < 400) {
-      let note = `[${viewport.name}] ${route} → ${status}`;
+      let note = `[${viewport.name}] ${route} → ${status}, url confirmed`;
       if (hasOverflow) note += " | HORIZONTAL OVERFLOW";
       if (brokenImgs.length) note += ` | ${brokenImgs.length} broken image(s)`;
       if (consoleErrors.length) note += ` | ${consoleErrors.length} console error(s): ${consoleErrors.slice(0, 2).join(" / ")}`;
