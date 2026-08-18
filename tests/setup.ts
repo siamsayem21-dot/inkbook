@@ -16,6 +16,7 @@ defaultEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3000");
 defaultEnv("STRIPE_SECRET_KEY", "sk_test_dummy");
 defaultEnv("STRIPE_WEBHOOK_SECRET", "whsec_billing_dummy");
 defaultEnv("STRIPE_DEPOSIT_WEBHOOK_SECRET", "whsec_deposit_dummy");
+defaultEnv("STRIPE_CONNECT_WEBHOOK_SECRET", "whsec_connect_dummy");
 defaultEnv("NEXT_PUBLIC_STRIPE_SOLO_PRICE_ID", "price_solo");
 defaultEnv("NEXT_PUBLIC_STRIPE_STUDIO_PRICE_ID", "price_studio");
 defaultEnv("NEXT_PUBLIC_STRIPE_PRO_PRICE_ID", "price_pro");

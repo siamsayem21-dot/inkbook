@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { createSupabaseMock, type SupabaseMock } from "../mocks/supabase";
 
@@ -194,6 +194,90 @@ describe("POST /api/custom-requests/[id]/deposit", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.url).toContain("checkout.stripe.com");
+  });
+
+  describe("Stripe Connect (subscription-only payment architecture)", () => {
+    const originalConnectFlag = process.env.STRIPE_CONNECT_ENABLED;
+
+    afterEach(() => {
+      if (originalConnectFlag === undefined) delete process.env.STRIPE_CONNECT_ENABLED;
+      else process.env.STRIPE_CONNECT_ENABLED = originalConnectFlag;
+    });
+
+    it("creates the session as a Direct Charge on the studio's connected account when eligible", async () => {
+      process.env.STRIPE_CONNECT_ENABLED = "true";
+      const createSpy = vi.fn(() => Promise.resolve({ url: "https://checkout.stripe.com/session_1" }));
+      vi.mocked(getStripe).mockReturnValue({
+        checkout: { sessions: { create: createSpy } },
+      } as unknown as ReturnType<typeof getStripe>);
+
+      sb.queueFrom("custom_requests", {
+        id: "req-1", studio_id: "s1", artist_id: "artist-1", client_email: "a@b.com",
+        deposit_amount: 150, status: "quoted",
+      });
+      sb.queueFrom("studios", { name: "Ink & Iron" });
+      sb.queueFrom("artists", { name: "Jane Artist" });
+      sb.queueFrom("studios", {
+        stripe_connected_account_id: "acct_123",
+        stripe_connect_charges_enabled: true,
+        stripe_connect_payouts_enabled: true,
+        stripe_connect_details_submitted: true,
+      });
+
+      const res = await createDeposit(depositReq({ studioSlug: "ink-iron" }), params);
+      expect(res.status).toBe(200);
+      expect(createSpy).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ stripeAccount: "acct_123" })
+      );
+    });
+
+    it("fails closed with 402 payment_setup_required when the studio hasn't connected Stripe — never falls back to the platform account", async () => {
+      process.env.STRIPE_CONNECT_ENABLED = "true";
+      const createSpy = vi.fn(() => Promise.resolve({ url: "https://checkout.stripe.com/session_1" }));
+      vi.mocked(getStripe).mockReturnValue({
+        checkout: { sessions: { create: createSpy } },
+      } as unknown as ReturnType<typeof getStripe>);
+
+      sb.queueFrom("custom_requests", {
+        id: "req-1", studio_id: "s1", artist_id: "artist-1", client_email: "a@b.com",
+        deposit_amount: 150, status: "quoted",
+      });
+      sb.queueFrom("studios", { name: "Ink & Iron" });
+      sb.queueFrom("artists", { name: "Jane Artist" });
+      sb.queueFrom("studios", null); // no connected account at all
+
+      const res = await createDeposit(depositReq({ studioSlug: "ink-iron" }), params);
+      expect(res.status).toBe(402);
+      const body = await res.json();
+      expect(body.error).toBe("payment_setup_required");
+      expect(createSpy).not.toHaveBeenCalled(); // never charges anyone when not eligible
+    });
+
+    it("fails closed when the studio has an account but charges are not yet enabled", async () => {
+      process.env.STRIPE_CONNECT_ENABLED = "true";
+      const createSpy = vi.fn(() => Promise.resolve({ url: "https://checkout.stripe.com/session_1" }));
+      vi.mocked(getStripe).mockReturnValue({
+        checkout: { sessions: { create: createSpy } },
+      } as unknown as ReturnType<typeof getStripe>);
+
+      sb.queueFrom("custom_requests", {
+        id: "req-1", studio_id: "s1", artist_id: "artist-1", client_email: "a@b.com",
+        deposit_amount: 150, status: "quoted",
+      });
+      sb.queueFrom("studios", { name: "Ink & Iron" });
+      sb.queueFrom("artists", { name: "Jane Artist" });
+      sb.queueFrom("studios", {
+        stripe_connected_account_id: "acct_123",
+        stripe_connect_charges_enabled: false, // onboarding incomplete
+        stripe_connect_payouts_enabled: false,
+        stripe_connect_details_submitted: true,
+      });
+
+      const res = await createDeposit(depositReq({ studioSlug: "ink-iron" }), params);
+      expect(res.status).toBe(402);
+      expect(createSpy).not.toHaveBeenCalled();
+    });
   });
 
   it("403s and never creates a Stripe session when the client is blacklisted", async () => {

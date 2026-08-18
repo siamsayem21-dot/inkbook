@@ -1,5 +1,11 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStripe } from "./client";
+import {
+  isStripeConnectEnabled,
+  getStudioConnectStatus,
+  isEligibleForDirectCharge,
+  PAYMENT_SETUP_REQUIRED_ERROR,
+} from "./connect";
 
 // Caps a deposit at the total quoted price so a booking's deposit never
 // exceeds what the client actually owes (e.g. a $100 studio-default deposit
@@ -60,12 +66,47 @@ export async function getOrCreateDepositCheckoutSession(
     return { error: "Stripe is not configured. Add STRIPE_SECRET_KEY to your environment." };
   }
 
+  // Stripe Connect (subscription-only payment architecture, Siam-approved —
+  // see MASTER_PLAN.md / DEFERRED_ISSUES.md #3): when enabled, every client
+  // deposit/remainder Checkout Session is created as a Direct Charge on the
+  // studio's own connected account, never InkBook's platform account, and
+  // never with an application fee. FAIL CLOSED, no exceptions: if the
+  // studio hasn't connected Stripe or charges aren't enabled, this returns
+  // immediately with PAYMENT_SETUP_REQUIRED_ERROR — there is no branch
+  // anywhere below that falls back to charging the platform account.
+  //
+  // Gated behind isStripeConnectEnabled() (unset/false in production today)
+  // so this entire block — including the studio lookup, which reads columns
+  // that may not exist in production yet — never runs until Siam turns the
+  // flag on, after the migration is applied and Dashboard setup is done.
+  // With the flag off, `stripeAccountOption` stays undefined and every
+  // Stripe call below behaves byte-for-byte like it did before this change.
+  let stripeAccountOption: { stripeAccount: string } | undefined;
+  if (isStripeConnectEnabled()) {
+    const { data: bookingRow } = await supabase
+      .from("bookings")
+      .select("studio_id")
+      .eq("id", bookingId)
+      .maybeSingle();
+    const studioId = (bookingRow as { studio_id: string } | null)?.studio_id;
+
+    if (!studioId) {
+      return { error: "Booking not found" };
+    }
+
+    const status = await getStudioConnectStatus(supabase, studioId);
+    if (!isEligibleForDirectCharge(status)) {
+      return { error: PAYMENT_SETUP_REQUIRED_ERROR };
+    }
+    stripeAccountOption = { stripeAccount: status.accountId! };
+  }
+
   if (existingRows && existingRows.length > 0) {
     const row = existingRows[0];
     depositPaymentId = row.id;
 
     try {
-      const session = await stripe.checkout.sessions.retrieve(row.stripe_checkout_session_id);
+      const session = await stripe.checkout.sessions.retrieve(row.stripe_checkout_session_id, undefined, stripeAccountOption);
       if (session.url && session.status === "open") {
         return { checkoutUrl: session.url };
       }
@@ -141,7 +182,12 @@ export async function getOrCreateDepositCheckoutSession(
         bookingId,
         depositPaymentId,
       },
-    });
+      // No application_fee_amount, no transfer_data — a Direct Charge on
+      // the studio's own connected account (when stripeAccountOption is
+      // set) settles 100% to the studio, InkBook takes 0%. When
+      // stripeAccountOption is undefined (Connect disabled), this is
+      // identical to today's platform-account session.
+    }, stripeAccountOption);
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
     console.error("[getOrCreateDepositCheckoutSession] Stripe session creation failed:", msg);

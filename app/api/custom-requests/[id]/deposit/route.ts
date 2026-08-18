@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe/client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
+import {
+  isStripeConnectEnabled,
+  getStudioConnectStatus,
+  isEligibleForDirectCharge,
+  PAYMENT_SETUP_REQUIRED_ERROR,
+} from "@/lib/stripe/connect";
 
 export async function POST(
   request: NextRequest,
@@ -90,6 +96,20 @@ export async function POST(
 
   const depositCents = Math.round(cr.deposit_amount * 100);
 
+  // Stripe Connect (subscription-only payment architecture) — same
+  // fail-closed contract as lib/stripe/deposit-checkout.ts: gated behind
+  // isStripeConnectEnabled() (off in production today, so this block is
+  // fully inert until Siam activates it), and when enabled, NEVER falls
+  // back to the platform account if the studio isn't eligible.
+  let stripeAccountOption: { stripeAccount: string } | undefined;
+  if (isStripeConnectEnabled()) {
+    const status = await getStudioConnectStatus(supabase, cr.studio_id);
+    if (!isEligibleForDirectCharge(status)) {
+      return NextResponse.json({ error: PAYMENT_SETUP_REQUIRED_ERROR }, { status: 402 });
+    }
+    stripeAccountOption = { stripeAccount: status.accountId! };
+  }
+
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
     customer_email: cr.client_email,
@@ -110,7 +130,7 @@ export async function POST(
     success_url: `${baseUrl}/book/${studioSlug}/request/${params.id}?deposit=paid`,
     cancel_url: `${baseUrl}/book/${studioSlug}/request/${params.id}?deposit=cancelled`,
     metadata: { customRequestId: params.id, studioSlug },
-  });
+  }, stripeAccountOption);
 
   return NextResponse.json({ url: session.url });
 }

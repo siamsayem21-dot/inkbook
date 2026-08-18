@@ -2,7 +2,7 @@
 
 ## CURRENT
 
-_(empty — STRICT ENGINEERING COMPLETION RUN (2026-08-18) finished. All 8 phases COMPLETE against the real mission — see MASTER_PLAN.md for full evidence and the Final Report delivered to Siam. Remaining work lives under NEEDS_SIAM below — every item is a genuine external/product/billing decision, not open engineering work.)_
+_(empty — Stripe Connect payment architecture (2026-08-19) safe code preparation COMPLETE — see the NEEDS_SIAM activation checklist below for the manual steps left. STRICT ENGINEERING COMPLETION RUN (2026-08-18) also finished; all 8 phases COMPLETE against the real mission — see MASTER_PLAN.md. Remaining work lives entirely under NEEDS_SIAM, not open engineering.)_
 
 ## NEXT
 
@@ -25,8 +25,17 @@ _(empty — no further safely-buildable work identified. New work enters via ink
   - **Not yet functional in production**: this session has no `SUPABASE_ACCESS_TOKEN`/DB credential to run DDL against the live Supabase project (confirmed via `npx supabase projects list` → `LegacyPlatformAuthRequiredError`, and a live table probe → `PGRST205`). Until the migration runs, the page will render "No events yet" for every studio (fails closed, not open — `getAuditLogEntries()` catches the missing-table error and returns an empty result rather than throwing).
   - **Action needed:** run `supabase/migrations/20260817000000_compliance_audit_log.sql` in the Supabase SQL Editor, then `node scripts/verify-audit-log.mjs` to confirm (table existence, insert, studio-scoped query isolation, and RLS-level isolation via a real owner session — all self-cleaning).
 
-- **1% Stripe platform transaction fee — bigger gap found, needs a Siam product decision (see MASTER_PLAN.md Phase 6 / DEFERRED_ISSUES.md #3)**
-  - Not built. There is no Stripe Connect integration anywhere in the codebase — every client deposit/remainder payment goes to InkBook's own central Stripe account with no mechanism to pay studios their share at all. A 1% fee can't be meaningfully added on top of nothing. Siam needs to pick a payout model (Stripe Connect / manual payouts / fee-tracking-only) before this becomes a buildable, scoped task.
+- **Stripe Connect payment architecture — ARCHITECTURE DECIDED, safe code prep COMPLETE, activation is a manual checklist (2026-08-19, see DEFERRED_ISSUES.md #3)**
+  - Siam approved: subscription-only, Standard connected accounts, Direct Charges, 0% application fee. All code is built, tested (33 new tests, 569/569 total), independently re-verified (tsc/lint/build), and deployed — but **completely inert** behind `STRIPE_CONNECT_ENABLED` (unset/false in production). No live payment routing has changed; no Stripe accounts created; the existing production webhook was not touched.
+  - **ACTIVATION CHECKLIST — exact manual steps Siam must do, in this order, before any of this goes live:**
+    1. **Stripe Dashboard:** enable Connect on the InkBook platform account (Settings → Connect → get started, if not already enabled).
+    2. **Supabase SQL Editor:** apply `supabase/migrations/20260819000000_studios_stripe_connect.sql` (additive, 5 new nullable/defaulted `studios` columns — safe).
+    3. **Stripe Dashboard:** register a new webhook endpoint at `https://www.inkbook.tech/api/stripe/connect-webhook`, scoped to **"Listen to events on Connected accounts"** (not an account endpoint) — subscribe to `account.updated` and `checkout.session.completed`. Copy its signing secret.
+    4. **Vercel env vars:** add `STRIPE_CONNECT_WEBHOOK_SECRET` (the secret from step 3).
+    5. **Vercel env vars:** set `STRIPE_CONNECT_ENABLED=true` — this is the single switch that turns all of the above on. Do this LAST, only after steps 1-4 are confirmed done.
+    6. **Smoke test:** connect one real (or Siam's own test) studio end-to-end, confirm a real deposit routes to that studio's own Stripe account, not InkBook's.
+  - Optional, not required for activation: GitHub repo Stripe test-mode secrets (`STRIPE_TEST_SECRET_KEY`/`STRIPE_TEST_PUBLISHABLE_KEY`) — needed for a full Connect E2E test in CI, same pre-existing gap as the unrelated E2E item above, now also blocking a Connect-specific sandbox test.
+  - Legacy/dead payment code cleanup (`/api/stripe/checkout`, `deposits` table Branch C) intentionally deferred per Siam's explicit instruction until this new architecture is fully verified and locked.
 
 - **Automation cron cadence structurally capped at once-daily — Vercel Hobby plan (2026-08-17, see DEFERRED_ISSUES.md #7)**
   - All 6 crons run once daily (confirmed via `vercel.json` + git history of prior forced downgrades). Unpaid-deposit auto-cancel can take up to ~48h, not the "24hrs" CLAUDE.md business rule states. One related code bug (payment-reminders window mismatch) was found and fixed this session (commit `80b8613`) — the remaining cadence ceiling itself needs Siam to decide: accept the latency, or upgrade the Vercel plan for more frequent crons.
@@ -82,6 +91,13 @@ _(empty — no further safely-buildable work identified. New work enters via ink
   - **Update (2026-08-17, autonomous final audit):** all 4 modules have since completed their own full lock workflow (guarded QA cleanup → final verification → commit → merge → push → Vercel deploy → smoke test → LOCKED). Portfolio and Earnings were re-verified as regression-only (already locked, no genuine bugs found, not redeployed). Flash, Clients, and Agreements are now newly PRODUCTION VERIFIED + LOCKED — see each module's own `## DONE` entry.
 
 ## DONE
+
+- **Stripe Connect payment architecture — safe code preparation (2026-08-19)**
+  - Siam-approved architecture: subscription-only revenue, Stripe Connect Standard connected accounts, Direct Charges, 0% application fee — studios receive their own clients' deposit/remainder payments directly, InkBook keeps only its existing subscription revenue.
+  - Built: `supabase/migrations/20260819000000_studios_stripe_connect.sql` (prepared, not applied); `lib/stripe/connect.ts` (the single `STRIPE_CONNECT_ENABLED` flag gating every new surface); flag-gated fail-closed Direct Charge branch in `lib/stripe/deposit-checkout.ts` and `app/api/custom-requests/[id]/deposit/route.ts`; `app/api/stripe/connect/onboard` + `login-link` routes (Stripe-hosted onboarding/management); `app/api/stripe/connect-webhook` (new, self-contained, existing live webhook untouched — studio identity always derived from Stripe's own `event.account`, never client-suppliable metadata, with an explicit cross-studio mismatch check before any reconciliation); new "Client payments" UI section on `/owner/settings/billing`, gated so it doesn't even query the new columns when the flag is off.
+  - 33 new tests across 5 files, including a dedicated regression test proving `getOrCreateDepositCheckoutSession` behaves byte-for-byte identically with the flag off (zero new DB queries), and a dedicated cross-studio-mismatch test proving a payment can never be reconciled against the wrong studio.
+  - Verified independently: `tsc` clean, lint clean, production build clean (3 new routes confirmed in output), 569/569 unit tests. Deployed — but **provably inert** in production today (flag unset). No live payment routing changed, no Stripe accounts created, no production webhook touched.
+  - Full manual activation checklist recorded in NEEDS_SIAM below.
 
 - **Strict Engineering Completion Run — Phase 6 deep live walkthrough + final gate (2026-08-18)**
   - Second, deeper live production walkthrough (first was 2026-08-17) using a new self-cleaning QA studio with 2 differently-styled artists, run AFTER all this session's fixes shipped: real `POST /api/ai/artist-match` call correctly ranked the style-matching artist #1 via a genuine Claude response; real `POST /api/bookings` calls proved the conflict-buffer widening rejects a 60-minute-apart near-duplicate with a live 409; the IDOR fix's ownership-check query pattern re-proven against real production schema; full consultation→booking→deposit_payments→consent_forms FK chain verified intact. All 11 created rows + 5 auth users cleaned up and re-queried to confirm actual absence. Zero bugs found — every shipped change holds up live, not just in vitest mocks.
