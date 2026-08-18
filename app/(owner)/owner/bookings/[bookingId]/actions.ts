@@ -11,6 +11,7 @@ import { isReadyToConfirm, bookingHasConsent } from "@/lib/booking-lifecycle";
 import { getBookingTotalCents, getBalanceDueCents } from "@/lib/booking-balance";
 import { isAtMonthlyCap } from "@/lib/waitlist";
 import { sendRemainderPaymentRequest } from "@/lib/remainder-payment";
+import { isWithinConflictBuffer } from "@/lib/booking-conflict";
 
 export async function cancelBooking(bookingId: string): Promise<{ error?: string }> {
   const studioId = await getStudioId();
@@ -135,16 +136,20 @@ export async function assignSchedule(
   if (!booking.artist_id) return { error: "No artist assigned to this booking" };
 
   // Conflict check — same shape as /api/custom-requests/[id]/schedule.
-  const { data: conflictRows } = await supabase
+  // Buffer-based (not exact-time-only) — see lib/booking-conflict.ts.
+  const { data: sameDayBookings } = await supabase
     .from("bookings")
-    .select("id")
+    .select("id, time")
     .eq("artist_id", booking.artist_id)
     .eq("date", date)
-    .eq("time", time)
     .in("status", ["confirmed", "awaiting_schedule"])
     .neq("id", bookingId);
 
-  if ((conflictRows ?? []).length > 0) {
+  const hasConflict = (sameDayBookings ?? []).some((row) =>
+    isWithinConflictBuffer((row as { time: string }).time, time)
+  );
+
+  if (hasConflict) {
     return { error: "Artist already has a booking at that date and time" };
   }
 

@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth/config";
 import { trySendSms } from "@/lib/twilio/client";
 import { sendSessionScheduledEmail } from "@/lib/email";
 import { isAtMonthlyCap } from "@/lib/waitlist";
+import { isWithinConflictBuffer } from "@/lib/booking-conflict";
 
 // PATCH /api/custom-requests/[id]/schedule
 // Body: { date: "YYYY-MM-DD", time: "HH:MM", artist_id?: string }
@@ -136,17 +137,21 @@ export async function PATCH(
     return NextResponse.json({ error: "No artist assigned — assign an artist before scheduling" }, { status: 400 });
   }
 
-  // Conflict check: artist must not have another confirmed booking at this date+time
-  const { data: conflictRows } = await supabase
+  // Conflict check: artist must not have another confirmed booking within
+  // the buffer window of this date+time — see lib/booking-conflict.ts.
+  const { data: sameDayBookings } = await supabase
     .from("bookings")
-    .select("id")
+    .select("id, time")
     .eq("artist_id", resolvedArtistId)
     .eq("date", date)
-    .eq("time", time)
     .in("status", ["confirmed", "awaiting_schedule"])
     .neq("id", cr.booking_id);
 
-  if ((conflictRows ?? []).length > 0) {
+  const hasConflict = (sameDayBookings ?? []).some((row) =>
+    isWithinConflictBuffer((row as { time: string }).time, time)
+  );
+
+  if (hasConflict) {
     return NextResponse.json(
       { error: "Artist already has a booking at that date and time" },
       { status: 409 }

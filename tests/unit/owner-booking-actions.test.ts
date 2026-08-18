@@ -57,7 +57,7 @@ describe("assignSchedule — Phase C Feature 1 gate", () => {
 
   it("rejects on artist schedule conflict", async () => {
     sb.queueFrom("bookings", { id: "bk-1", studio_id: "studio-1", artist_id: "art-1", status: "awaiting_schedule" });
-    sb.queueFrom("bookings", [{ id: "other-bk" }]); // conflict rows
+    sb.queueFrom("bookings", [{ id: "other-bk", time: "14:00" }]); // conflict rows (exact time match)
     const result = await assignSchedule("bk-1", "2099-09-01", "14:00");
     expect(result.error).toMatch(/already has a booking/);
   });

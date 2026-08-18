@@ -54,10 +54,11 @@ function queueHappyPathPrelude(overrides?: {
   sb.queueFrom("studios", STUDIO);
   sb.queueFrom("blacklist", overrides?.blockedByEmail ?? null);
   sb.queueFrom("blacklist", overrides?.blockedByPhone ?? null);
-  sb.queueFrom("bookings", overrides?.slotTaken ?? null); // slot collision check
-  if (overrides?.slotTaken === undefined) {
-    sb.queueFrom("bookings", overrides?.bookingsThisMonth ?? []); // monthly cap count (Phase C Feature 6)
-  }
+  sb.queueFrom("bookings", overrides?.slotTaken ?? null); // slot collision check (array of same-day bookings)
+  // Always queued (harmless if unconsumed when an earlier check short-circuits with a 409/403):
+  // the buffer-based conflict check may or may not find a match depending on `slotTaken`, so the
+  // route may or may not reach the monthly-cap query that consumes this second queued value.
+  sb.queueFrom("bookings", overrides?.bookingsThisMonth ?? []); // monthly cap count (Phase C Feature 6)
 }
 
 describe("POST /api/bookings", () => {
@@ -108,12 +109,31 @@ describe("POST /api/bookings", () => {
     expect(res.status).toBe(403);
   });
 
-  it("409s when the artist already has a booking at that date/time", async () => {
-    queueHappyPathPrelude({ slotTaken: { id: "existing-booking" } });
+  it("409s when the artist already has a booking at that exact date/time", async () => {
+    queueHappyPathPrelude({ slotTaken: [{ time: "10:00" }] });
     const res = await POST(makeRequest(VALID_BODY));
     expect(res.status).toBe(409);
     const body = await res.json();
     expect(body.error).toMatch(/no longer available/i);
+  });
+
+  it("409s when the artist has a booking within the conflict buffer (not an exact time match)", async () => {
+    // VALID_BODY requests 10:00; an existing 11:00 booking is only 60min
+    // away — well inside BOOKING_CONFLICT_BUFFER_MINUTES (240) — so this
+    // must be rejected even though the times don't match exactly.
+    queueHappyPathPrelude({ slotTaken: [{ time: "11:00" }] });
+    const res = await POST(makeRequest(VALID_BODY));
+    expect(res.status).toBe(409);
+  });
+
+  it("allows a booking outside the conflict buffer on the same day", async () => {
+    // An existing 16:00 booking is 360min from the requested 10:00 —
+    // outside the 240min buffer — so this should succeed all the way through.
+    queueHappyPathPrelude({ slotTaken: [{ time: "16:00" }] });
+    sb.queueFrom("clients", { id: "existing-client-1" });
+    sb.queueFrom("bookings", { id: "booking-1", deposit_amount_cents: 5000 });
+    const res = await POST(makeRequest(VALID_BODY));
+    expect(res.status).toBe(201);
   });
 
   it("reuses an existing client record instead of creating a duplicate", async () => {

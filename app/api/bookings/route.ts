@@ -5,6 +5,7 @@ import { buildSmsMessage, trySendSms } from "@/lib/twilio/client";
 import { findOrCreateClient } from "@/lib/clients";
 import { isAtMonthlyCap } from "@/lib/waitlist";
 import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
+import { isWithinConflictBuffer } from "@/lib/booking-conflict";
 
 export async function GET(request: NextRequest) {
   // Bookings contain client PII. Require a valid session.
@@ -88,15 +89,20 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Slot collision — reject if artist already has a non-cancelled booking at this date/time
-  const { data: slotTaken } = await supabase
+  // Slot collision — reject if artist already has a non-cancelled booking
+  // within BOOKING_CONFLICT_BUFFER_MINUTES of this date/time (a same-day
+  // buffer heuristic, not true duration-aware overlap — see
+  // lib/booking-conflict.ts).
+  const { data: sameDayBookings } = await supabase
     .from("bookings")
-    .select("id")
+    .select("time")
     .eq("artist_id", artistId)
     .eq("date", date)
-    .eq("time", time)
-    .neq("status", "cancelled")
-    .maybeSingle();
+    .neq("status", "cancelled");
+
+  const slotTaken = (sameDayBookings ?? []).some((row) =>
+    isWithinConflictBuffer((row as { time: string }).time, String(time))
+  );
 
   if (slotTaken) {
     return NextResponse.json(
