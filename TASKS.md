@@ -2,11 +2,11 @@
 
 ## CURRENT
 
-- **STRICT ENGINEERING COMPLETION RUN (2026-08-18)** — Siam corrected course a second time: the prior "8 phases complete" audit was real evidence but not itself a build mandate, so every safely-buildable MISSING/PARTIAL/IMPLEMENTED_NEEDS_HARDENING item from that audit is being actually built, not just left as a finding. Built and shipped so far: booking conflict buffer widening (`9650682`), consultation duplicate-submission idempotency (`c61b8e9`), OTP + consultation-start rate limiting (`5603ee3`), AI Artist Match (`ecc2a51` — closes the old "doesn't exist as a feature" gap entirely), 2 real cross-studio IDOR security fixes found via a full service-role scoping audit (`7978d86`), dead-code cleanup (`28eabab`), and a prepared-not-applied migration for artist day-off dates (`7e07319`). Next: deep live Phase 6 client-journey walkthrough (consultation → AI processing → artist match → quote → deposit → booking → portal → consent → completion), then Phase 8 final report.
+_(empty — STRICT ENGINEERING COMPLETION RUN (2026-08-18) finished. All 8 phases COMPLETE against the real mission — see MASTER_PLAN.md for full evidence and the Final Report delivered to Siam. Remaining work lives under NEEDS_SIAM below — every item is a genuine external/product/billing decision, not open engineering work.)_
 
 ## NEXT
 
-_(mission-driven — deep Phase 6 walkthrough, then Phase 8 final verification + report)_
+_(empty — no further safely-buildable work identified. New work enters via inkbook-queue from Siam's ChatGPT InkBook Project, or from a decision on any NEEDS_SIAM item below.)_
 
 ## BLOCKED
 
@@ -82,6 +82,10 @@ _(mission-driven — deep Phase 6 walkthrough, then Phase 8 final verification +
   - **Update (2026-08-17, autonomous final audit):** all 4 modules have since completed their own full lock workflow (guarded QA cleanup → final verification → commit → merge → push → Vercel deploy → smoke test → LOCKED). Portfolio and Earnings were re-verified as regression-only (already locked, no genuine bugs found, not redeployed). Flash, Clients, and Agreements are now newly PRODUCTION VERIFIED + LOCKED — see each module's own `## DONE` entry.
 
 ## DONE
+
+- **Strict Engineering Completion Run — Phase 6 deep live walkthrough + final gate (2026-08-18)**
+  - Second, deeper live production walkthrough (first was 2026-08-17) using a new self-cleaning QA studio with 2 differently-styled artists, run AFTER all this session's fixes shipped: real `POST /api/ai/artist-match` call correctly ranked the style-matching artist #1 via a genuine Claude response; real `POST /api/bookings` calls proved the conflict-buffer widening rejects a 60-minute-apart near-duplicate with a live 409; the IDOR fix's ownership-check query pattern re-proven against real production schema; full consultation→booking→deposit_payments→consent_forms FK chain verified intact. All 11 created rows + 5 auth users cleaned up and re-queried to confirm actual absence. Zero bugs found — every shipped change holds up live, not just in vitest mocks.
+  - Final Phase 8 gate re-run fresh, independently: `tsc --noEmit` clean, `npm run lint` clean, `npm run test` 536/536, `npm run build` clean, live production smoke test (homepage/pricing/audit-log auth-redirect/demo-studio all correct).
 
 - **Strict Engineering Completion Run — 6 real fixes/features shipped (2026-08-18)**
   - **Booking conflict buffer** (`9650682`): widened exact-time-only collision check to a 4-hour same-day buffer, no migration needed, all 3 booking-scheduling call sites.

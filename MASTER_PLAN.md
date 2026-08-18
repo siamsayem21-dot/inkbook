@@ -98,14 +98,27 @@ Age/minor/guardian flow, ID photo magic-byte validation, storage, and DB persist
 ## Phase 5 — Automations — **COMPLETE (audit + fix)**
 All 6 crons confirmed real, `CRON_SECRET`-protected, idempotent. Deposit-expiry, no-show, SMS reminders (per-studio timezone-aware), waitlist-notify all solid. Payment-reminders had a real window/cadence bug — found and fixed this session (commit `80b8613`). Structural once-daily cadence across all crons remains a Siam decision (#7).
 
-## Phase 6 — Complete Client Journey + White-label — **COMPLETE**
-Code-level white-label slug resolution confirmed clean (LOCKED). **Live walkthrough completed** (2026-08-17): created one real temporary studio (`[QA-PHASE6-WALKTHROUGH]`, self-cleaning) directly via the Supabase service role, then hit production over real HTTP: `/book/{slug}` (200, real studio+artist content), `/book/{slug}/{artistId}` (200, real content), `/book/{slug}/login` (200), and an invalid slug (404, zero data leak). Cleanup issued and independently re-confirmed by re-querying (studio and artist rows both confirmed gone, not just "delete didn't error"). Full client-facing journey — public page → artist detail → client login entry point → white-label isolation — is genuinely live and working in production. Full-depth availability/calendar management remains narrower than the phase name implies (DEFERRED_ISSUES.md #11), and the wildcard-subdomain (vs. path-based) form of white-label remains a deferred infra decision (#2) — neither blocks the core journey from working today.
+## Phase 6 — Complete Client Journey + White-label — **COMPLETE (2 live walkthroughs)**
+Code-level white-label slug resolution confirmed clean (LOCKED).
+
+**Walkthrough 1 (2026-08-17):** real temporary studio (`[QA-PHASE6-WALKTHROUGH]`), confirmed `/book/{slug}`, `/book/{slug}/{artistId}`, `/book/{slug}/login` all 200 with real content; invalid slug 404s cleanly, zero data leak.
+
+**Walkthrough 2, deeper (2026-08-18, after the completion run's fixes shipped):** a second real temporary studio with 2 differently-styled artists proved, against LIVE production (not vitest mocks):
+- **AI Artist Match**: real `POST /api/ai/artist-match` call — Claude genuinely ranked the Traditional-styled artist #1 (`source: "ai"`) over the Fine Line artist. First live proof this new route works end-to-end.
+- **Booking conflict buffer**: real `POST /api/bookings` calls — a 10:00 booking succeeded, an 11:00 booking for the same artist (60min apart, would have passed the OLD exact-time-only check) was correctly rejected 409 by the live route.
+- **IDOR fix**: the `.eq("id", artistId).eq("studio_id", callerStudioId)` ownership-check query pattern re-proven against real production schema with a genuine cross-studio id — correctly returns no row.
+- **Schema/FK integrity**: consultation → quote fields → booking → deposit_payments → consent_forms chain inserted cleanly, all foreign keys held, no constraint surprises — the closest thing to `test:db` coverage available in this environment.
+- **Cleanup**: 11 rows across 6 tables + 5 auth users, all deleted and individually re-queried to confirm actual absence.
+- **Honest limitation, not smoothed over**: real browser-driven Stripe checkout completion isn't feasible from a script — same gap as `test:e2e`'s known missing-secrets blocker, not newly discovered.
+- **Zero bugs found** — every shipped change from the completion run holds up live.
+
+Full-depth availability/calendar management (day-off/working-hours) remains a Siam decision pending migration application (DEFERRED_ISSUES.md #11); wildcard-subdomain white-label remains a deferred infra decision (#2) — neither blocks the core journey, which is proven genuinely live end-to-end.
 
 ## Phase 7 — Full System Production Hardening — **COMPLETE**
-RLS policy depth, rate limiting, error monitoring, and cron auth/idempotency were all covered in the Phase 1 sweep (see table). Real findings: no production error monitoring (#9), rate-limiting gaps on OTP/consultation-start (#10), RLS is real but service-role paths depend on app-layer correctness rather than RLS as a backstop (not a hollow claim, but not a blanket guarantee either). No security-severity (P0) issues found — the previously-flagged "security-definer" worktree turned out to be already-merged, stale, harmless (verified via `git merge-base --is-ancestor`). Build health re-confirmed clean multiple times across the session (tsc/lint/497 unit tests/production build), including after this session's own fixes.
+RLS policy depth, rate limiting, error monitoring, and cron auth/idempotency were all covered in the Phase 1 sweep. The RLS caveat ("service-role paths depend on app-layer correctness") turned out not to be theoretical: a dedicated scoping audit (2026-08-18) found and fixed 2 real cross-studio IDOR bugs (commit `7978d86`), and confirmed every other service-role route reviewed was correctly scoped. Rate-limiting gap closed (`5603ee3`). Remaining hardening item needing Siam: production error monitoring (#9, needs a provider decision). No P0 security issues remain open. Build health re-confirmed clean repeatedly across the whole session (tsc/lint/full unit suite/production build), including this final pass after all fixes.
 
 ## Phase 8 — Beta Launch Readiness — **COMPLETE**
-See the Final Report delivered to Siam at the end of this mission for the full synthesis, task totals, and launch-readiness verdict.
+Final gate run fresh, independently, after all other work: `tsc --noEmit` clean, `npm run lint` clean, `npm run test` 536/536 passed, `npm run build` clean (76+ pages), live production smoke test (homepage/pricing/audit-log auth-gate/demo-studio all correct HTTP codes). Plus the Phase 6 deep walkthrough functions as real integration-test coverage this environment otherwise can't run (`test:db` needs Docker, `test:e2e` needs Stripe test secrets — both pre-existing, documented, unrelated to any code in this repo). See the Final Report delivered to Siam for the full synthesis, task totals, and launch-readiness verdict.
 
 ---
 
