@@ -18,11 +18,8 @@ Everything in this document is either already done, or requires Siam personally 
 
 ## 2. Remaining human actions, in exact dependency order
 
-### 1. 🔴 Review commit `e2273d1` — decide KEEP / MODIFY / REVERT
-**Why needed:** an overnight-run fork edited and deployed this to a live Stripe payment route you had explicitly named off-limits, due to a stale "dead code" doc claim (since corrected). It's already live in Production.
-**Exact action:** read `git show e2273d1` and this document's §4 recommendation, then tell Claude your decision (or make the change yourself).
-**Expected result:** either nothing changes (KEEP), a follow-up commit adjusts the fix (MODIFY), or the commit is reverted (REVERT — note this restores the original duplicate-Checkout-Session race).
-**Verification Claude should run after:** if REVERT/MODIFY, re-run `tests/unit/api-stripe-checkout.test.ts` and a fresh live TEST-mode concurrency check against the deployed change.
+### 1. ✅ RESOLVED — commit `e2273d1` — **Siam approved KEEP (2026-08-19)**
+Siam reviewed the §4 recommendation and evidence and approved **KEEP** — no modification, no revert. The commit remains live in Production as-is. No further action needed on this item.
 
 ### 2. Compliance audit log — apply the migration
 **Why needed:** the audit-log feature is fully built and deployed but fails closed (shows "No events yet" for everyone) until its table exists in production.
@@ -78,9 +75,11 @@ Everything in this document is either already done, or requires Siam personally 
 
 No other ordinary engineering work remains. `MASTER_PLAN.md`'s 8 phases are complete; the NIGHT BUILD modules (Portfolio, Flash, Clients, Agreements) are production-locked; the overnight run's full QA sweep (Owner/Artist/Client portals, full lifecycle E2E, security/isolation, automations) found and fixed every safely-fixable bug, with live evidence for each. What's left above is exclusively Production DDL, secrets, a billing/plan decision, an external account signup, and one code-review approval decision.
 
-## 4. `e2273d1` recommendation: **KEEP**
+## 4. `e2273d1` recommendation: **KEEP** — ✅ APPROVED by Siam (2026-08-19)
 
-**Evidence:**
+**Decision: KEEP. No modification, no revert. Commit remains live in Production as-is.**
+
+**Evidence supporting the approved decision:**
 - The change is narrowly scoped: wraps the pre-existing `stripe.checkout.sessions.create()` call in the same `withIdempotency` helper already reviewed, approved, and shipped on the sibling custom-requests deposit route. It does not touch payment amount, destination account, Stripe Connect routing, or webhook logic — confirmed by reading the full current file (`app/api/stripe/checkout/route.ts`), not just the diff.
 - **Live TEST/SANDBOX proof, run fresh this session:** a real QA booking, 3 truly concurrent `POST` requests → exactly 1 real Stripe session created (`cs_test_...`, confirmed via Stripe's own API, `status: open`, correct `amount_total`) and exactly 1 `deposits` row. This is the exact bug class the fix targets, proven closed with real infrastructure, not just unit-test mocks.
 - 8/8 unit tests pass, including the true-concurrency regression test (`Promise.all`, asserts one session + matching URLs for both callers).
@@ -91,4 +90,6 @@ If you want a second pair of eyes regardless of this recommendation, that's enti
 
 ## 5. Final state
 
-**NOT READY FOR FINAL HUMAN GATES CLOSE-OUT — exact reason:** one code-review decision (`e2273d1`, §4) and up to 7 other items in §2 require Siam personally (Production DDL ×2, a secrets addition, a billing/plan decision, a monitoring-provider signup, and one product judgment call on a dead-code tree). No further *ordinary engineering* work is safely buildable without one of these. Once Siam has acted on the items in §2 (in the dependency order given), tell Claude which ones are done and it will run the paired verification for each and can then mark V1 fully closed.
+**NOT READY FOR FINAL HUMAN GATES CLOSE-OUT — exact reason:** item 1 (`e2273d1`) is now resolved — Siam approved KEEP. 7 items remain in §2 that require Siam personally (Production DDL ×2, a secrets addition, a billing/plan decision, a monitoring-provider signup, and one product judgment call on a dead-code tree). No further *ordinary engineering* work is safely buildable without one of these. Once Siam has acted on the items in §2 (in the dependency order given), tell Claude which ones are done and it will run the paired verification for each and can then mark V1 fully closed.
+
+**Next human-gated step: §2 item 2 — apply the compliance audit log migration** (`supabase/migrations/20260817000000_compliance_audit_log.sql` in the Supabase SQL Editor). It's the only item with no dependency on anything else, and Claude already has the verification script ready to run the moment it's applied.
