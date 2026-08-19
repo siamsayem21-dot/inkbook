@@ -437,6 +437,19 @@ describe("PATCH /api/custom-requests/[id]/schedule — monthly booking cap", () 
     expect(body.error).toMatch(/already at capacity for that month/);
   });
 
+  it("rejects scheduling when the requested date is one of the artist's unavailable_dates", async () => {
+    sb.queueFrom("studios", [STUDIO]);
+    sb.queueFrom("custom_requests", CUSTOM_REQUEST);
+    sb.queueFrom("bookings", BOOKING);
+    sb.queueFrom("bookings", []); // conflict check — no conflict
+    sb.queueFrom("artists", { name: "Jane Artist", monthly_booking_cap: 20, unavailable_dates: ["2099-09-01"] });
+
+    const res = await scheduleRequest(scheduleReq({ date: "2099-09-01", time: "14:00" }), params);
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.error).toMatch(/not available on that date/i);
+  });
+
   it("schedules successfully when the artist is under their monthly cap", async () => {
     sb.queueFrom("studios", [STUDIO]);
     sb.queueFrom("custom_requests", CUSTOM_REQUEST);

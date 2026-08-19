@@ -11,7 +11,7 @@ import { isReadyToConfirm, bookingHasConsent } from "@/lib/booking-lifecycle";
 import { getBookingTotalCents, getBalanceDueCents } from "@/lib/booking-balance";
 import { isAtMonthlyCap } from "@/lib/waitlist";
 import { sendRemainderPaymentRequest } from "@/lib/remainder-payment";
-import { isWithinConflictBuffer } from "@/lib/booking-conflict";
+import { isWithinConflictBuffer, isDateUnavailable } from "@/lib/booking-conflict";
 
 export async function cancelBooking(bookingId: string): Promise<{ error?: string }> {
   const studioId = await getStudioId();
@@ -159,10 +159,16 @@ export async function assignSchedule(
   // losing the booking.
   const { data: artistCapRow } = await supabase
     .from("artists")
-    .select("name, monthly_booking_cap")
+    .select("name, monthly_booking_cap, unavailable_dates")
     .eq("id", booking.artist_id)
     .maybeSingle();
-  const artistForCap = artistCapRow as { name: string; monthly_booking_cap: number } | null;
+  const artistForCap = artistCapRow as {
+    name: string; monthly_booking_cap: number; unavailable_dates: string[] | null;
+  } | null;
+
+  if (artistForCap && isDateUnavailable(artistForCap.unavailable_dates, date)) {
+    return { error: `${artistForCap.name} is not available on that date — choose a different date.` };
+  }
   if (artistForCap && (await isAtMonthlyCap(supabase, booking.artist_id, artistForCap.monthly_booking_cap, date))) {
     return { error: `${artistForCap.name} is already at capacity for that month — choose a different date.` };
   }

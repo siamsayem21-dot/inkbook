@@ -6,7 +6,7 @@ vi.mock("@/lib/auth/config", () => ({ getCurrentUser: vi.fn() }));
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUser } from "@/lib/auth/config";
-import { saveAvailability } from "@/app/(artist)/artist/schedule/actions";
+import { saveAvailability, addUnavailableDate, removeUnavailableDate } from "@/app/(artist)/artist/schedule/actions";
 
 let sb: SupabaseMock;
 
@@ -61,5 +61,67 @@ describe("saveAvailability — artist ownership check (IDOR fix)", () => {
     const result = await saveAvailability({ artistId: "artist-1", slots: [] });
     expect(result.error).toBeUndefined();
     expect(sb.fromCalls.filter((t) => t === "artist_availability")).toHaveLength(1);
+  });
+});
+
+describe("addUnavailableDate / removeUnavailableDate — artist ownership check + list management", () => {
+  it("addUnavailableDate rejects when the session's artist does not own the given artistId", async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: "user-1" } as never);
+    sb.queueFrom("artists", null);
+    const result = await addUnavailableDate("someone-elses-artist-id", "2099-01-01");
+    expect(result.error).toBe("Unauthorized");
+  });
+
+  it("addUnavailableDate rejects an invalid date format", async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: "user-1" } as never);
+    sb.queueFrom("artists", { id: "artist-1" });
+    const result = await addUnavailableDate("artist-1", "01/01/2099");
+    expect(result.error).toBe("Invalid date");
+  });
+
+  it("addUnavailableDate appends and sorts the new date into the existing list", async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: "user-1" } as never);
+    sb.queueFrom("artists", { id: "artist-1" }); // ownership check
+    sb.queueFrom("artists", { unavailable_dates: ["2099-03-01", "2099-01-01"] }); // current list fetch
+    sb.queueFrom("artists", { success: true }); // update
+
+    const result = await addUnavailableDate("artist-1", "2099-02-01");
+    expect(result.error).toBeUndefined();
+
+    const updateChain = sb.getChain("artists", 3);
+    expect(updateChain.update).toHaveBeenCalledWith({
+      unavailable_dates: ["2099-01-01", "2099-02-01", "2099-03-01"],
+    });
+  });
+
+  it("addUnavailableDate is a no-op (not an error, no duplicate) when the date is already marked", async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: "user-1" } as never);
+    sb.queueFrom("artists", { id: "artist-1" });
+    sb.queueFrom("artists", { unavailable_dates: ["2099-01-01"] });
+
+    const result = await addUnavailableDate("artist-1", "2099-01-01");
+    expect(result.error).toBeUndefined();
+    // No update call should have been made — only 2 "artists" queries (ownership + list fetch)
+    expect(sb.fromCalls.filter((t) => t === "artists")).toHaveLength(2);
+  });
+
+  it("removeUnavailableDate rejects when the session's artist does not own the given artistId", async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: "user-1" } as never);
+    sb.queueFrom("artists", null);
+    const result = await removeUnavailableDate("someone-elses-artist-id", "2099-01-01");
+    expect(result.error).toBe("Unauthorized");
+  });
+
+  it("removeUnavailableDate filters the date out of the existing list", async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: "user-1" } as never);
+    sb.queueFrom("artists", { id: "artist-1" }); // ownership check
+    sb.queueFrom("artists", { unavailable_dates: ["2099-01-01", "2099-02-01"] }); // current list fetch
+    sb.queueFrom("artists", { success: true }); // update
+
+    const result = await removeUnavailableDate("artist-1", "2099-01-01");
+    expect(result.error).toBeUndefined();
+
+    const updateChain = sb.getChain("artists", 3);
+    expect(updateChain.update).toHaveBeenCalledWith({ unavailable_dates: ["2099-02-01"] });
   });
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isWithinConflictBuffer, BOOKING_CONFLICT_BUFFER_MINUTES } from "@/lib/booking-conflict";
+import { isWithinConflictBuffer, BOOKING_CONFLICT_BUFFER_MINUTES, isDateUnavailable } from "@/lib/booking-conflict";
 
 describe("isWithinConflictBuffer", () => {
   it("flags identical times as conflicting", () => {
@@ -24,5 +24,24 @@ describe("isWithinConflictBuffer", () => {
 
   it("is symmetric regardless of argument order", () => {
     expect(isWithinConflictBuffer("10:00", "11:00")).toBe(isWithinConflictBuffer("11:00", "10:00"));
+  });
+});
+
+describe("isDateUnavailable", () => {
+  it("flags a date that's in the artist's unavailable_dates", () => {
+    expect(isDateUnavailable(["2027-01-01", "2027-01-15"], "2027-01-15")).toBe(true);
+  });
+
+  it("does not flag a date that's not in the list", () => {
+    expect(isDateUnavailable(["2027-01-01", "2027-01-15"], "2027-01-16")).toBe(false);
+  });
+
+  it("treats an empty array as fully available", () => {
+    expect(isDateUnavailable([], "2027-01-15")).toBe(false);
+  });
+
+  it("treats null/undefined as fully available (column default)", () => {
+    expect(isDateUnavailable(null, "2027-01-15")).toBe(false);
+    expect(isDateUnavailable(undefined, "2027-01-15")).toBe(false);
   });
 });

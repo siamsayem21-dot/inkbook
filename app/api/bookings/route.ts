@@ -5,7 +5,7 @@ import { buildSmsMessage, trySendSms } from "@/lib/twilio/client";
 import { findOrCreateClient } from "@/lib/clients";
 import { isAtMonthlyCap } from "@/lib/waitlist";
 import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
-import { isWithinConflictBuffer } from "@/lib/booking-conflict";
+import { isWithinConflictBuffer, isDateUnavailable } from "@/lib/booking-conflict";
 
 export async function GET(request: NextRequest) {
   // Bookings contain client PII. Require a valid session.
@@ -51,11 +51,20 @@ export async function POST(request: NextRequest) {
   // Fetch artist → studio
   const { data: artistData } = await supabase
     .from("artists")
-    .select("id, name, studio_id, monthly_booking_cap")
+    .select("id, name, studio_id, monthly_booking_cap, unavailable_dates")
     .eq("id", artistId)
     .single();
-  const artist = artistData as { id: string; name: string; studio_id: string; monthly_booking_cap: number } | null;
+  const artist = artistData as {
+    id: string; name: string; studio_id: string; monthly_booking_cap: number; unavailable_dates: string[] | null;
+  } | null;
   if (!artist) return NextResponse.json({ error: "Artist not found" }, { status: 404 });
+
+  if (isDateUnavailable(artist.unavailable_dates, date)) {
+    return NextResponse.json(
+      { error: `${artist.name} is not available on that date. Please choose a different date.` },
+      { status: 409 }
+    );
+  }
 
   const { data: studioData } = await supabase
     .from("studios")

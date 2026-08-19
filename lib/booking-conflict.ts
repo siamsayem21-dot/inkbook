@@ -18,3 +18,8 @@ function timeToMinutes(time: string): number {
 export function isWithinConflictBuffer(existingTime: string, requestedTime: string): boolean {
   return Math.abs(timeToMinutes(existingTime) - timeToMinutes(requestedTime)) < BOOKING_CONFLICT_BUFFER_MINUTES;
 }
+
+/** True if `date` (YYYY-MM-DD) is one of the artist's marked days off. */
+export function isDateUnavailable(unavailableDates: string[] | null | undefined, date: string): boolean {
+  return (unavailableDates ?? []).includes(date);
+}

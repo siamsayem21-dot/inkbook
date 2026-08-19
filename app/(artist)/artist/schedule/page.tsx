@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUser } from "@/lib/auth/config";
 import ScheduleCalendar from "@/components/artist/ScheduleCalendar";
+import UnavailableDates from "@/components/artist/UnavailableDates";
 import BookingCard from "@/components/artist/BookingCard";
 
 type BookingRow = {
@@ -62,11 +63,11 @@ export default async function SchedulePage({ searchParams }: Props) {
 
   const { data: artistRaw } = await supabase
     .from("artists")
-    .select("id")
+    .select("id, unavailable_dates")
     .eq("user_id", user.id)
     .maybeSingle();
 
-  const artist = artistRaw as { id: string } | null;
+  const artist = artistRaw as { id: string; unavailable_dates: string[] | null } | null;
   if (!artist) redirect("/artist/dashboard");
 
   const todayStr = toDateStr(new Date());
@@ -166,6 +167,11 @@ export default async function SchedulePage({ searchParams }: Props) {
         <div>
           <h2 className="text-lg font-bold text-zinc-900 mb-3">Weekly Availability</h2>
           <ScheduleCalendar artistId={artist.id} initial={initialSlots} />
+        </div>
+
+        <div>
+          <h2 className="text-lg font-bold text-zinc-900 mb-3">Days Off</h2>
+          <UnavailableDates artistId={artist.id} initial={artist.unavailable_dates ?? []} />
         </div>
       </div>
     </div>

@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth/config";
 import { trySendSms } from "@/lib/twilio/client";
 import { sendSessionScheduledEmail } from "@/lib/email";
 import { isAtMonthlyCap } from "@/lib/waitlist";
-import { isWithinConflictBuffer } from "@/lib/booking-conflict";
+import { isWithinConflictBuffer, isDateUnavailable } from "@/lib/booking-conflict";
 
 // PATCH /api/custom-requests/[id]/schedule
 // Body: { date: "YYYY-MM-DD", time: "HH:MM", artist_id?: string }
@@ -163,10 +163,19 @@ export async function PATCH(
   // month of the date being assigned.
   const { data: artistCapRow } = await supabase
     .from("artists")
-    .select("name, monthly_booking_cap")
+    .select("name, monthly_booking_cap, unavailable_dates")
     .eq("id", resolvedArtistId)
     .maybeSingle();
-  const artistForCap = artistCapRow as { name: string; monthly_booking_cap: number } | null;
+  const artistForCap = artistCapRow as {
+    name: string; monthly_booking_cap: number; unavailable_dates: string[] | null;
+  } | null;
+
+  if (artistForCap && isDateUnavailable(artistForCap.unavailable_dates, date)) {
+    return NextResponse.json(
+      { error: `${artistForCap.name} is not available on that date. Please choose a different date.` },
+      { status: 409 }
+    );
+  }
   if (artistForCap && (await isAtMonthlyCap(supabase, resolvedArtistId, artistForCap.monthly_booking_cap, date))) {
     return NextResponse.json(
       { error: `${artistForCap.name} is already at capacity for that month — choose a different date.` },

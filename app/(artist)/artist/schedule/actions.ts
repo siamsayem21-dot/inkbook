@@ -51,3 +51,59 @@ export async function saveAvailability(data: {
 
   return {};
 }
+
+// Day-off / unavailable-dates management (Artist Unavailable Dates V1).
+// Individual marked-off days, not recurring hours — see
+// supabase/migrations/20260818000000_artist_unavailable_dates.sql for why
+// this is deliberately the smallest V1 shape. Booking-creation paths reject
+// a request for any date in this list — see lib/booking-conflict.ts
+// isDateUnavailable() and its 3 call sites.
+export async function addUnavailableDate(artistId: string, date: string): Promise<{ error?: string }> {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: "Invalid date" };
+
+  const supabase = createAdminClient();
+  if (!await verifyArtistOwnership(supabase, artistId)) return { error: "Unauthorized" };
+
+  const { data: artistRow } = await supabase
+    .from("artists")
+    .select("unavailable_dates")
+    .eq("id", artistId)
+    .single();
+  const current = ((artistRow as { unavailable_dates: string[] | null } | null)?.unavailable_dates) ?? [];
+
+  if (current.includes(date)) return {};
+
+  const { error } = await supabase
+    .from("artists")
+    .update({ unavailable_dates: [...current, date].sort() } as never)
+    .eq("id", artistId);
+
+  if (error) {
+    console.error("[addUnavailableDate]", error.message);
+    return { error: "Failed to save — please try again" };
+  }
+  return {};
+}
+
+export async function removeUnavailableDate(artistId: string, date: string): Promise<{ error?: string }> {
+  const supabase = createAdminClient();
+  if (!await verifyArtistOwnership(supabase, artistId)) return { error: "Unauthorized" };
+
+  const { data: artistRow } = await supabase
+    .from("artists")
+    .select("unavailable_dates")
+    .eq("id", artistId)
+    .single();
+  const current = ((artistRow as { unavailable_dates: string[] | null } | null)?.unavailable_dates) ?? [];
+
+  const { error } = await supabase
+    .from("artists")
+    .update({ unavailable_dates: current.filter((d) => d !== date) } as never)
+    .eq("id", artistId);
+
+  if (error) {
+    console.error("[removeUnavailableDate]", error.message);
+    return { error: "Failed to save — please try again" };
+  }
+  return {};
+}

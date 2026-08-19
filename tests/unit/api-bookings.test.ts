@@ -126,6 +126,30 @@ describe("POST /api/bookings", () => {
     expect(res.status).toBe(409);
   });
 
+  it("409s when the requested date is one of the artist's unavailable_dates", async () => {
+    sb.queueFrom("artists", { ...ARTIST, unavailable_dates: [VALID_BODY.date] });
+    const res = await POST(makeRequest(VALID_BODY));
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.error).toMatch(/not available on that date/i);
+    // Should short-circuit before ever touching studios/blacklist/etc.
+    expect(sb.fromCalls).not.toContain("studios");
+  });
+
+  it("allows a booking on a date NOT in the artist's unavailable_dates", async () => {
+    sb.queueFrom("artists", { ...ARTIST, unavailable_dates: ["2099-01-01"] });
+    sb.queueFrom("studios", STUDIO);
+    sb.queueFrom("blacklist", null);
+    sb.queueFrom("blacklist", null);
+    sb.queueFrom("bookings", null); // no slot collision
+    sb.queueFrom("bookings", []); // monthly cap
+    sb.queueFrom("clients", { id: "existing-client-1" });
+    sb.queueFrom("bookings", { id: "booking-1", deposit_amount_cents: 5000 });
+
+    const res = await POST(makeRequest(VALID_BODY));
+    expect(res.status).toBe(201);
+  });
+
   it("allows a booking outside the conflict buffer on the same day", async () => {
     // An existing 16:00 booking is 360min from the requested 10:00 —
     // outside the 240min buffer — so this should succeed all the way through.
