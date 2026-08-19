@@ -9,6 +9,12 @@
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 
+// Without this, a parameter-less GET route handler defaults to static
+// caching -- confirmed live: two separate curl calls returned the
+// identical Sentry event id, meaning the second call never actually
+// re-executed the handler.
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const eventId = Sentry.captureException(
     new Error("InkBook Sentry V1 verification — safe to ignore, this is an intentional synthetic test error"),
@@ -25,7 +31,7 @@ export async function GET() {
     }
   );
 
-  const flushed = await Sentry.flush(5000);
+  const flushed = await Sentry.flush(10000);
 
   const result = {
     eventId,
