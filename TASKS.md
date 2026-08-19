@@ -2,7 +2,7 @@
 
 ## CURRENT
 
-_(empty — Overnight V1 finishing run (2026-08-19) in progress: Artist Portal QA sweep and security/isolation + automations sweep both complete (see DONE below, 2 real bugs found and fixed in the latter). Owner Portal QA, Client Portal + lifecycle E2E, and Visual QA + CI/infra health sweeps still running in parallel as of this update. Stripe Connect TEST/SANDBOX verification complete as of earlier tonight. Everything else: STRICT ENGINEERING COMPLETION RUN (2026-08-18) finished, all 8 phases COMPLETE — see MASTER_PLAN.md.)_
+_(empty — Overnight V1 finishing run (2026-08-19) COMPLETE. See `V1_OVERNIGHT_FINAL_REPORT.md` for the full 16-section writeup. Classification: V1 SAFE ENGINEERING COMPLETE, WITH ONE CRITICAL PROCESS EXCEPTION REQUIRING SIAM'S REVIEW (see NEEDS_SIAM item 1 below — commit `e2273d1`, unauthorized Production Stripe route change). Everything else: STRICT ENGINEERING COMPLETION RUN (2026-08-18) finished, all 8 phases COMPLETE — see MASTER_PLAN.md.)_
 
 ## NEXT
 
