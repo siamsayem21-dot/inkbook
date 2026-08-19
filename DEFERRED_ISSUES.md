@@ -82,11 +82,11 @@ CLAUDE.md-adjacent product framing (and this mission's own Phase 2 name) implies
 **Why deferred:** unclear whether "AI artist matching" was ever an intended V1 feature or just phase-naming shorthand for "the consultation flow that leads to picking an artist" — a product-scope question, not a bug.
 **Unblock:** Siam clarifies whether AI-driven artist matching is in scope for V1, or whether manual artist selection (already working) is the intended design.
 
-## 9. 🟡 No production error monitoring/alerting — CODE COMPLETE, deployed inert (2026-08-19)
-**Phase:** 7. **Status:** `@sentry/nextjs` fully integrated, tested, and deployed to Production -- but fully inert (no Sentry env vars exist anywhere, and every `Sentry.init()` call is gated on `enabled: !!<dsn>`). Provider was implicitly approved via the recommendation already recorded here and in `V1_FINAL_HUMAN_GATES.md` item 7 (Sentry free tier); code built ahead of the account existing, exactly as far as safely possible without inventing credentials.
+## 9. ✅ RESOLVED — Production error monitoring live and verified (2026-08-19)
+**Phase:** 7. **Status:** `@sentry/nextjs` fully integrated, tested, deployed to Production, and live-verified with a real DSN. Not a deferred item anymore.
 **What's built:** server/edge/client instrumentation (`instrumentation.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`, `sentry.client.config.ts`), `app/global-error.tsx` for root-layout crashes, conservative PII posture (`sendDefaultPii: false` on all 3 runtimes, no Session Replay, a shared `lib/sentry-scrub.ts` `beforeSend` scrub hook). 10 new unit tests, full suite/tsc/lint/build/Visual QA all clean.
-**Why still open:** the only remaining step is a genuine external-account action -- creating the Sentry project and getting a real DSN -- which cannot be done without Siam.
-**Unblock:** Siam creates a free Sentry project and adds `NEXT_PUBLIC_SENTRY_DSN` + `SENTRY_DSN` to Vercel Production env vars. Exact values and the planned post-DSN verification method are in `V1_FINAL_HUMAN_GATES.md` item 7.
+**Live verification:** Siam added `NEXT_PUBLIC_SENTRY_DSN`/`SENTRY_DSN` to Vercel Production. Two real test errors triggered against the live domain each produced a fresh, unique Sentry event id with `flushed: true` (SDK-confirmed delivery to Sentry's ingest endpoint) and `environment: "production"`. Found and fixed one real bug during verification: the temporary test route defaulted to static caching and silently didn't re-execute on a second call — fixed with `export const dynamic = "force-dynamic"`. Temporary route fully removed and confirmed gone afterward.
+**No further action needed** unless Siam later wants readable (non-minified) production stack traces, which needs `SENTRY_AUTH_TOKEN`/`SENTRY_ORG`/`SENTRY_PROJECT` — optional, error capture already works fully without them.
 
 ## 10. Rate limiting gaps on OTP login + consultation-start
 **Phase:** 7. **Status:** confirmed, real gap.
