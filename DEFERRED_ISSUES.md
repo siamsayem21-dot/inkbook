@@ -90,11 +90,10 @@ CLAUDE.md-adjacent product framing (and this mission's own Phase 2 name) implies
 **Live verification:** Siam added `NEXT_PUBLIC_SENTRY_DSN`/`SENTRY_DSN` to Vercel Production. Two real test errors triggered against the live domain each produced a fresh, unique Sentry event id with `flushed: true` (SDK-confirmed delivery to Sentry's ingest endpoint) and `environment: "production"`. Found and fixed one real bug during verification: the temporary test route defaulted to static caching and silently didn't re-execute on a second call — fixed with `export const dynamic = "force-dynamic"`. Temporary route fully removed and confirmed gone afterward.
 **No further action needed** unless Siam later wants readable (non-minified) production stack traces, which needs `SENTRY_AUTH_TOKEN`/`SENTRY_ORG`/`SENTRY_PROJECT` — optional, error capture already works fully without them.
 
-## 10. Rate limiting gaps on OTP login + consultation-start
-**Phase:** 7. **Status:** confirmed, real gap.
-`lib/rate-limit.ts` (a real in-process sliding-window limiter, self-documented as needing an upgrade to `@upstash/redis` before high-traffic launch) is wired into most public POST routes (bookings, custom-requests, consent-forms, stripe/checkout, waitlist, AI routes) — but the client-side OTP login (`EmailLoginForm.tsx` → `supabase.auth.signInWithOtp`) and consultation-start (`app/book/[studio]/consult/**`) have no app-level rate limiting of their own, relying entirely on Supabase's built-in email-rate-limit defaults.
-**Why deferred:** not necessarily exploitable today at V1's traffic scale, but a real gap against "protect public-facing unauthenticated routes" that should be closed before wider beta traffic.
-**Unblock:** none needed from Siam — safe to build directly (reuse the existing `lib/rate-limit.ts` pattern) as a hardening task.
+## 10. ✅ RESOLVED — Rate limiting gaps on OTP login + consultation-start (commit `5603ee3`)
+**Phase:** 7. **Status:** built and live — re-confirmed in code 2026-08-20 (full-autonomous-mode reconciliation; this entry was stale, still marked "confirmed, real gap" after the fix already shipped).
+`app/book/[studio]/login/rate-limit-action.ts` adds a server-action pre-flight gate (`checkOtpSendAllowed`, 5 sends per IP+email per 10 min) in front of both `EmailLoginForm.tsx`'s initial send and `OtpVerifyForm.tsx`'s resend — the actual `supabase.auth.signInWithOtp` call itself is untouched, so auth behavior is unchanged, only an additive check runs before it. `app/book/[studio]/consult/actions.ts` has `checkRateLimit("consult-submit:" + ip, 10, 10 * 60 * 1000)` on consultation-start. Both reuse the existing `lib/rate-limit.ts` in-process limiter, same pattern as every other public route.
+**No further action needed.**
 
 ## 11. Calendar/availability — buffer-based conflict check shipped, day-off support prepared but not applied
 **Phase:** 6. **Status:** partially resolved this session (strict completion mission, 2026-08-18) — see below for exactly what's done vs. still needs Siam.
