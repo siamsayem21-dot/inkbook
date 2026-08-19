@@ -2,7 +2,35 @@
 
 ## CURRENT
 
-_(empty — full autonomous-mode completion run in progress (2026-08-20). Prior "CRITICAL PROCESS EXCEPTION" (commit `e2273d1`) resolved — Siam approved KEEP. Sentry monitoring, Artist Unavailable Dates, and the consultation-deposit scheduling bug are all resolved and deployed since the overnight run. See `V1_FINAL_HUMAN_GATES.md` for current item-by-item status.)_
+_(empty — end-of-day checkpoint, 2026-08-20. Full-autonomous-mode completion run finished cleanly. See "MORNING RESUME" below and `V1_FINAL_HUMAN_GATES.md` for current item-by-item status.)_
+
+## END-OF-DAY CHECKPOINT — 2026-08-20
+
+**V1 SAFE ENGINEERING COMPLETE:** YES — every safely-completable V1 engineering task is done, tested, and deployed. Two items remain and are genuinely human-only (both listed below).
+
+- **Sentry production monitoring:** ✅ VERIFIED AND COMPLETE (2026-08-19). Live-verified with real DSN, real test errors, `environment: "production"`, PII-scrubbed payload confirmed clean. No further action needed. See `V1_FINAL_HUMAN_GATES.md` item 7.
+- **Visual QA:** clean. V1 14/14 passed (desktop + mobile, all public pages). V2 14/14 passed (desktop + mobile baseline checks). An earlier same-day run showed 14 false failures caused by a stray leftover local dev server holding port 3000 — killed, re-ran clean, confirmed not a real regression.
+- **CI:** green. Last 7 runs on `master` all passed (Unit + Component, DB Verification + E2E, Test Dashboard).
+- **Production:** healthy. Latest Vercel deployment Ready, matches latest push (`118dfb6`). Smoke-checked: public pages 200, `/owner/dashboard` and `/artist/dashboard` correctly 307-redirect unauthenticated visitors to `/login`, cron endpoints correctly 401 without their secret, all temporary diagnostic routes confirmed gone (404). `tsc`/lint/unit(601)/component(12)/production build all clean.
+- **What remains human-only:**
+  1. 🔴 **Stripe Connect activation** — see exact steps below.
+  2. Cron cadence / Vercel billing decision — **DECISION: KEEP HOBBY for V1/beta** (once-daily cadence accepted; unpaid-deposit auto-cancel can take up to ~48h, not the "24hrs" CLAUDE.md figure). Revisit only if Siam wants faster automation later — that's a billing upgrade, not a bug.
+- **Stripe Connect — exact remaining steps (in order):**
+  1. ✅ Already confirmed live — Connect is enabled on the InkBook Stripe platform account.
+  2. Apply `supabase/migrations/20260819000000_studios_stripe_connect.sql` in the Supabase SQL Editor (additive, 5 new nullable/defaulted `studios` columns — safe).
+  3. 🔴 **Register the missing connect-webhook** in the Stripe Dashboard at `https://www.inkbook.tech/api/stripe/connect-webhook`, scoped to **"Listen to events on Connected accounts"**, subscribed to `account.updated` and `checkout.session.completed`. Confirmed live 2026-08-20 that this endpoint does not exist yet — the `STRIPE_CONNECT_WEBHOOK_SECRET` already in Vercel is orphaned (doesn't match any real endpoint). An autonomous creation attempt was explicitly authorized but blocked by the coding tool's own permission system — this is a manual Dashboard action, ~5 minutes.
+  4. Replace `STRIPE_CONNECT_WEBHOOK_SECRET` in Vercel with the real secret from step 3.
+  5. Set `STRIPE_CONNECT_ENABLED=true` in Vercel — the single switch. Do this LAST, only after steps 1-4 are confirmed. Currently correctly unset.
+  6. Smoke test: connect one real (or test) studio end-to-end, confirm a deposit routes to that studio's own Stripe account, not InkBook's.
+  Full detail in `V1_FINAL_HUMAN_GATES.md` item 3 and `DEFERRED_ISSUES.md` #3.
+- **Working tree:** clean. Branch `master`, up to date with `origin/master`. No uncommitted changes, no active background jobs.
+
+## MORNING RESUME — read this first next session
+
+Nothing is broken and nothing is mid-flight. V1 engineering is done; the only two things left are the human-only items above. Next session should:
+1. Ask Siam whether the Stripe Connect webhook has been registered yet (step 3 above). If yes, verify the new secret is in Vercel, then proceed through steps 4-6 (this is a Stripe/payment-routing change — needs Siam's explicit go-ahead per CLAUDE.md, even though the checklist itself is already fully documented).
+2. If no new instruction from Siam and no NEEDS_SIAM item has changed, do not invent new work — check `TASKS.md` NEXT/BLOCKED (both empty as of this checkpoint) and wait for new instructions or a queued task from Siam's ChatGPT InkBook Project.
+3. Do not re-verify Sentry, Visual QA, or re-run the full CI/build sweep unless there's a new code change or a suspected regression — this checkpoint already confirms all of it clean as of 2026-08-20.
 
 ## NEXT
 
