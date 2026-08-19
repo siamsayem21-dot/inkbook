@@ -34,6 +34,16 @@ export async function payWithStripeTestCard(page: Page) {
   const nameField = page.locator('input[name="billingName"], input#billingName');
   if (await nameField.count()) await nameField.fill("E2E Test Client");
 
+  // Stripe's checkout requires a billing ZIP for US and, when Link is
+  // enabled, a phone number too -- both are client-side validated, so
+  // "Pay" silently no-ops (no navigation, no error) if either is left
+  // blank rather than throwing.
+  const zipField = page.locator('input[name="postalCode"], input#postalCode, input[placeholder="ZIP"]');
+  if (await zipField.count()) await zipField.fill("90210");
+
+  const phoneField = page.locator('input[type="tel"]');
+  if (await phoneField.count()) await phoneField.fill("2015550123");
+
   // Stripe's hosted checkout page also has a "Pay with card" accordion
   // toggle whose accessible name matches /^pay/i, which appears in the DOM
   // before the real submit button does. locator.or(...).first() resolves
