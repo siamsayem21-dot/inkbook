@@ -110,8 +110,11 @@ test.describe("Full owner workflow", () => {
       await clientContext.close();
     });
 
-    // ── 5. Owner: quote + book the appointment ─────────────────────────────
-    await test.step("Owner reviews, quotes, and books the appointment", async () => {
+    // ── 5. Owner: quote, then pick the artist for the Deposit Collection
+    // section. The "Book Appointment" date/time section (below) only
+    // renders once status is "deposit_paid" — it doesn't exist yet here,
+    // so date/time/confirm are handled in a later step (see step 6b).
+    await test.step("Owner reviews and quotes the consultation", async () => {
       await ownerPage.goto("/owner/consultations");
       await ownerPage.getByText(clientName).first().click();
       await ownerPage.waitForURL(/\/owner\/consultations\/.+/);
@@ -120,13 +123,9 @@ test.describe("Full owner workflow", () => {
       await expect(ownerPage.getByRole("button", { name: /save quote/i })).toBeEnabled({ timeout: 15_000 });
       await ownerPage.getByRole("button", { name: /save quote/i }).click();
       await expect(ownerPage.getByText(/quote saved/i)).toBeVisible({ timeout: 10_000 });
+      await expect(ownerPage.getByText(/deposit collection/i)).toBeVisible({ timeout: 10_000 });
 
       await ownerPage.locator("select").first().selectOption({ label: artistName });
-      const tomorrow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
-      await ownerPage.locator('input[type="date"]').fill(tomorrow);
-      await ownerPage.locator('input[type="time"]').fill("14:00");
-      await ownerPage.getByRole("button", { name: /confirm appointment/i }).click();
-      await expect(ownerPage.getByText(/deposit collection/i)).toBeVisible({ timeout: 10_000 });
     });
 
     // Generating a deposit link calls the real Stripe API server-side (same
@@ -149,6 +148,29 @@ test.describe("Full owner workflow", () => {
       await clientPage.goto(depositUrl);
       await payWithStripeTestCard(clientPage);
       await clientPage.waitForURL(/\/book\/.+\/book\/consent/, { timeout: 30_000 });
+    });
+
+    // ── 6b. Owner: now that the deposit is paid (status -> deposit_paid),
+    // the "Book Appointment" date/time section appears — the artist is
+    // already locked in from step 5 (consult.artist_id was set server-side
+    // when the deposit link was generated), so only date/time remain here.
+    // The client reaching the consent page (previous step) confirms Stripe's
+    // own redirect fired, not that our webhook has finished updating
+    // deposit_paid status server-side yet — poll with reloads rather than
+    // assuming a single reload wins the race.
+    await test.step("Owner schedules the appointment date/time", async () => {
+      const dateInput = ownerPage.locator('input[type="date"]');
+      await expect(async () => {
+        await ownerPage.reload({ waitUntil: "networkidle" });
+        await expect(dateInput).toBeVisible({ timeout: 2_000 });
+      }).toPass({ timeout: 30_000, intervals: [2_000] });
+
+      const tomorrow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+      await dateInput.fill(tomorrow);
+      await ownerPage.locator('input[type="time"]').fill("14:00");
+      await ownerPage.getByRole("button", { name: /confirm appointment/i }).click();
+      await expect(ownerPage.getByText("Appointment")).toBeVisible({ timeout: 15_000 });
+      await expect(ownerPage.getByText(artistName)).toBeVisible();
     });
 
     // ── 7. Client signs the consent form ───────────────────────────────────
