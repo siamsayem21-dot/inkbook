@@ -171,7 +171,7 @@ test.describe("Full owner workflow", () => {
 
     // ── 7. Client signs the consent form ───────────────────────────────────
     await test.step("Client signs the consent form", async () => {
-      await clientPage.getByLabel(/full legal name/i).fill(clientName);
+      await clientPage.getByLabel(/^full legal name$/i).fill(clientName);
       await clientPage.getByLabel(/date of birth/i).fill("1990-01-01");
       await clientPage
         .getByLabel(/government id photo/i)
