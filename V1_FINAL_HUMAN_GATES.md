@@ -64,11 +64,14 @@ Siam reviewed and approved the proposed fix. Implemented exactly as reviewed: `h
 **Expected result:** a `SENTRY_DSN` (or similar) value to hand to Claude.
 **Verification Claude should run after:** once the DSN is provided, Claude can wire up `@sentry/nextjs`, trigger one deliberate test error, and confirm it appears in the Sentry dashboard.
 
-### 8. Artist unavailable_dates — migration, then wiring
-**Why needed:** lets artists mark specific days off; currently prepared but genuinely unsafe to wire in before the migration runs (would break every booking attempt).
-**Exact action, in order:** (1) Siam applies `supabase/migrations/20260818000000_artist_unavailable_dates.sql`. (2) Tell Claude it's applied. (3) Claude builds the small follow-up: a UI section to manage `unavailable_dates`, plus wiring the same 3 booking-creation call sites that already use `lib/booking-conflict.ts` to also reject dates in the artist's unavailable list.
-**Expected result:** artists can mark days off; bookings on those days are rejected.
-**Verification Claude should run after:** a live QA script creating an artist with an unavailable date, confirming a booking attempt on that date is rejected and one on a different date succeeds.
+### 8. ✅ RESOLVED — Artist Unavailable Dates V1 built, tested, and deployed (2026-08-19)
+Siam applied `supabase/migrations/20260818000000_artist_unavailable_dates.sql` in Production. Verified the column live (REST probe) before building anything. Built the full follow-up: a "Days Off" card on the existing `/artist/schedule` page (`components/artist/UnavailableDates.tsx`, no locked-module redesign), `addUnavailableDate`/`removeUnavailableDate` server actions (same ownership-verification pattern as the existing `saveAvailability()`), a shared `isDateUnavailable()` helper in `lib/booking-conflict.ts`, and wired it into all 3 existing booking-creation paths that already use booking-conflict validation (`app/api/bookings/route.ts`, `assignSchedule()`, `app/api/custom-requests/[id]/schedule/route.ts`) — each now rejects (409) a booking for a date in the artist's unavailable list, extending an existing artist-fetch query rather than adding a new round-trip.
+
+**Verification performed:**
+- 15 new unit tests (helper edge cases, rejection + success at all 3 call sites, server-action ownership + list management) — full suite 594/594, `tsc`, lint, production build all clean.
+- **Live QA, real browser**: real artist login, added a day off via the actual UI, confirmed in DB, confirmed the chip renders after reload; real API calls confirmed a booking on that date is rejected (409, correct message) and a booking on any other date still succeeds (201) normally; removed the day off via the UI, confirmed in DB; confirmed the pre-existing conflict-buffer behavior is unaffected. **0 failures**, all QA data cleaned up and re-confirmed gone.
+- Visual QA V1 (runtime regressions) + V2 (pixel baseline) both 14/14 clean on public pages — no unintended regression elsewhere. (The new authenticated artist-schedule UI itself isn't in scope of that public-pages suite; it was verified directly via the live browser QA above instead.)
+- Deployed: CI fully green (run `32258432405`), production smoke-tested (homepage 200, artist schedule route correctly 307-redirects unauthenticated, bookings API correctly 400s malformed input) — confirms the deployed code is live and handling requests correctly, without touching any real data.
 
 ### 9. Orphaned `app/client-portal/**` prototype cleanup (low priority, cosmetic)
 **Why needed:** ~30 dead files from a superseded mock-data prototype, confirmed zero live references. One component (`AftercareCard.tsx`) has UI not present in the live portal — worth a glance before deleting outright, in case it's wanted as a real feature.
@@ -97,6 +100,6 @@ If you want a second pair of eyes regardless of this recommendation, that's enti
 
 ## 5. Final state
 
-**NOT READY FOR FINAL HUMAN GATES CLOSE-OUT — exact reason:** items 1, 2, 4, and 5 are resolved. 5 items remain in §2 that require Siam personally: item 3 (Stripe Connect activation, partially done), item 6 (billing/plan decision), item 7 (monitoring-provider signup), item 8 (Production DDL), item 9 (product judgment call on a dead-code tree). Plus two small follow-ups from item 5's resolution: a yes/no on extending E2E to simulate webhook delivery, and whether to query production for any bookings already stuck in the now-fixed state. No further *ordinary engineering* work is safely buildable without one of these.
+**NOT READY FOR FINAL HUMAN GATES CLOSE-OUT — exact reason:** items 1, 2, 4, 5, and 8 are resolved. 4 items remain in §2 that require Siam personally: item 3 (Stripe Connect activation, partially done), item 6 (billing/plan decision), item 7 (monitoring-provider signup), item 9 (product judgment call on a dead-code tree). Plus one small follow-up from item 5's resolution: a yes/no on extending the E2E test to simulate webhook delivery (the production-stuck-bookings question from the same item was checked read-only afterward — zero found, no remediation needed, that sub-item is closed). No further *ordinary engineering* work is safely buildable without one of these.
 
-**Next human-gated step: §2 item 3 — finish the Stripe Connect activation checklist.** Two of six steps are already done. No item is currently more urgent than another — item 5's real defect is now fixed and deployed, so this reverts to being a genuine choose-your-own-order list.
+**Next human-gated step: §2 item 3 — finish the Stripe Connect activation checklist.** Two of six steps are already done. No item is currently more urgent than another — this reverts to being a genuine choose-your-own-order list.
