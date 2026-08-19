@@ -112,9 +112,9 @@ test.describe("Full owner workflow", () => {
 
     // ── 5. Owner: quote, then pick the artist for the Deposit Collection
     // section. The "Book Appointment" date/time section only renders once
-    // consult.status === "deposit_paid" -- see the note after step 6 for why
-    // that transition never actually happens for this flow (a real product
-    // bug, not something this test works around).
+    // consult.status === "deposit_paid" -- see step 6b, which covers the
+    // webhook fix (2026-08-19, TASKS.md NEEDS_SIAM/DONE) that makes this
+    // transition actually happen for consultation-originated bookings.
     await test.step("Owner reviews and quotes the consultation", async () => {
       await ownerPage.goto("/owner/consultations");
       await ownerPage.getByText(clientName).first().click();
@@ -151,23 +151,37 @@ test.describe("Full owner workflow", () => {
       await clientPage.waitForURL(/\/book\/.+\/book\/consent/, { timeout: 30_000 });
     });
 
-    // NOTE (2026-08-19): a real product bug was found while building this
-    // step and intentionally left un-worked-around here rather than papered
-    // over: consultation-originated deposit links reuse the generic
-    // sendDepositRequest() checkout-session action (owner/bookings/
-    // [bookingId]/actions.ts), whose webhook branch (Branch C,
-    // handleLegacyBookingDeposit in app/api/stripe/webhook/route.ts) updates
-    // bookings.status -> "confirmed" but never touches consultations.status.
-    // ConsultationDetail.tsx's "Book Appointment" date/time section is gated
-    // on consult.status === "deposit_paid", which this webhook branch never
-    // sets -- so for this flow specifically, that section is unreachable and
-    // the booking is left "confirmed" with date/time permanently null. This
-    // is a real payment-webhook logic bug, recorded in TASKS.md NEEDS_SIAM
-    // rather than fixed here (modifying the live webhook handler needs
-    // Siam's review, not an autonomous CI-fix commit). This test covers
-    // what's actually reachable today: payment succeeds, the booking is
-    // confirmed, and the client can still sign consent (that route has its
-    // own independent Stripe-API fallback if the webhook hasn't landed yet).
+    // ── 6b. Owner: now that the deposit is paid, handleLegacyBookingDeposit
+    // (Branch C, app/api/stripe/webhook/route.ts) advances the linked
+    // consultation's status to "deposit_paid" (fixed 2026-08-19 -- this
+    // branch previously only updated bookings/deposits and never touched
+    // consultations, permanently stranding this flow's date/time UI). The
+    // client reaching the consent page confirms Stripe's own redirect fired,
+    // not that our webhook has finished processing yet -- poll with reloads.
+    await test.step("Owner schedules the appointment (verifies the webhook consultation-status fix)", async () => {
+      const dateInput = ownerPage.locator('input[type="date"]');
+      await expect(async () => {
+        await ownerPage.reload({ waitUntil: "networkidle" });
+        await expect(dateInput).toBeVisible({ timeout: 2_000 });
+      }).toPass({ timeout: 30_000, intervals: [2_000] });
+
+      const tomorrow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+      await dateInput.fill(tomorrow);
+      await ownerPage.locator('input[type="time"]').fill("14:00");
+      await ownerPage.getByRole("button", { name: /confirm appointment/i }).click();
+
+      // Poll the DB directly rather than a UI wait condition -- more
+      // reliable than waiting on a specific post-submit render. Only one
+      // booking exists for this studio at this point in the test.
+      const admin = e2eAdminClient();
+      let scheduled = false;
+      for (let i = 0; i < 30; i++) {
+        const { data } = await admin.from("bookings").select("date, time").eq("studio_id", studioId).maybeSingle();
+        if (data?.date && data?.time) { scheduled = true; break; }
+        await new Promise((r) => setTimeout(r, 2_000));
+      }
+      expect(scheduled, "booking should have a real date/time after scheduling").toBe(true);
+    });
 
     // ── 7. Client signs the consent form ───────────────────────────────────
     await test.step("Client signs the consent form", async () => {

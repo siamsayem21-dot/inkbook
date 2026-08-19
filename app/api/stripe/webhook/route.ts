@@ -506,6 +506,24 @@ async function handleLegacyBookingDeposit(
       .eq("booking_id", bookingId),
   ]);
 
+  // Best-effort: if this booking originated from a consultation ("Generate
+  // Deposit Link" in ConsultationDetail.tsx), advance that consultation's
+  // own status so its "Book Appointment" date/time section becomes
+  // reachable. Branch C predates the consultation feature and otherwise has
+  // no awareness of it — mirrors the pattern Branch B already uses for
+  // custom_requests. Guarded to only ever advance from "quoted" so a stray
+  // or late-retried webhook can never regress a consultation that's already
+  // moved further (e.g. "booked") via some other path. Never throws — this
+  // must not put the booking/deposit confirmation above at risk.
+  await supabase
+    .from("consultations")
+    .update({ status: "deposit_paid" } as never)
+    .eq("booking_id", bookingId)
+    .eq("status", "quoted")
+    .then(({ error }) => {
+      if (error) console.error("[stripe/webhook] Branch C: consultation status update failed (non-fatal):", error);
+    });
+
   const { data: bookingRow } = await supabase
     .from("bookings")
     .select("client_id, artist_id, studio_id, date, time, deposit_amount_cents")

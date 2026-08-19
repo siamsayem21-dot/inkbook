@@ -388,7 +388,94 @@ describe("POST /api/stripe/webhook — Branch C (legacy booking deposit)", () =>
     const res = await POST(makeRequest("{}"));
     expect(res.status).toBe(200);
     expect(sb.fromCalls).not.toContain("deposits");
+    expect(sb.fromCalls).not.toContain("consultations");
     expect(trySendSms).not.toHaveBeenCalled();
+  });
+
+  // ── Consultation-awareness fix (2026-08-19, see TASKS.md NEEDS_SIAM) ──────
+  // Branch C predates the AI consultation feature. A booking created via
+  // ConsultationDetail.tsx's "Generate Deposit Link" already has
+  // consultations.booking_id set (by startConsultationDeposit()) before this
+  // webhook ever fires — so on payment, Branch C should also advance that
+  // consultation's status to "deposit_paid", the same way Branch B already
+  // does for custom_requests.
+  it("advances a linked consultation from quoted to deposit_paid", async () => {
+    mockConstructEvent({
+      type: "checkout.session.completed",
+      data: { object: { id: "cs_C", payment_intent: "pi_C", metadata: { bookingId: "bk_legacy" } } },
+      created: 1700000000,
+    });
+    sb.queueFrom("bookings", { deposit_paid: false }); // idempotency check
+    sb.queueFrom("bookings", ok()); // update confirmed
+    sb.queueFrom("deposits", ok()); // update paid
+    sb.queueFrom("consultations", ok()); // update deposit_paid
+    sb.queueFrom("bookings", {
+      client_id: "client-1", artist_id: "artist-1", studio_id: "studio-1",
+      date: "2026-08-01", time: "10:00:00", deposit_amount_cents: 5000,
+    }); // re-fetch
+    sb.queueFrom("clients", { full_name: "Alex", email: "alex@example.com", phone: "5551234567" });
+    sb.queueFrom("artists", { name: "Jane Artist" });
+    sb.queueFrom("studios", { name: "Ink & Iron", address: null });
+
+    const res = await POST(makeRequest("{}"));
+    expect(res.status).toBe(200);
+
+    const chain = sb.getChain("consultations");
+    expect(chain.update).toHaveBeenCalledWith(expect.objectContaining({ status: "deposit_paid" }));
+    expect(chain.eq).toHaveBeenCalledWith("booking_id", "bk_legacy");
+    expect(chain.eq).toHaveBeenCalledWith("status", "quoted");
+  });
+
+  it("does not error when the booking has no linked consultation (classic BookingForm flow)", async () => {
+    mockConstructEvent({
+      type: "checkout.session.completed",
+      data: { object: { id: "cs_C", payment_intent: "pi_C", metadata: { bookingId: "bk_classic" } } },
+      created: 1700000000,
+    });
+    sb.queueFrom("bookings", { deposit_paid: false });
+    sb.queueFrom("bookings", ok());
+    sb.queueFrom("deposits", ok());
+    // No consultations row queued — mock defaults to { data: null, error: null },
+    // matching zero matching rows in production (the .eq("status", "quoted")
+    // filter matches nothing for a non-consultation booking).
+    sb.queueFrom("bookings", {
+      client_id: "client-1", artist_id: "artist-1", studio_id: "studio-1",
+      date: "2026-08-01", time: "10:00:00", deposit_amount_cents: 5000,
+    });
+    sb.queueFrom("clients", { full_name: "Alex", email: "alex@example.com", phone: "5551234567" });
+    sb.queueFrom("artists", { name: "Jane Artist" });
+    sb.queueFrom("studios", { name: "Ink & Iron", address: null });
+
+    const res = await POST(makeRequest("{}"));
+    expect(res.status).toBe(200);
+  });
+
+  it("logs but does not fail the request if the consultation update itself errors", async () => {
+    mockConstructEvent({
+      type: "checkout.session.completed",
+      data: { object: { id: "cs_C", payment_intent: "pi_C", metadata: { bookingId: "bk_legacy" } } },
+      created: 1700000000,
+    });
+    sb.queueFrom("bookings", { deposit_paid: false });
+    sb.queueFrom("bookings", ok());
+    sb.queueFrom("deposits", ok());
+    sb.queueFrom("consultations", null, { message: "transient db error" });
+    sb.queueFrom("bookings", {
+      client_id: "client-1", artist_id: "artist-1", studio_id: "studio-1",
+      date: "2026-08-01", time: "10:00:00", deposit_amount_cents: 5000,
+    });
+    sb.queueFrom("clients", { full_name: "Alex", email: "alex@example.com", phone: "5551234567" });
+    sb.queueFrom("artists", { name: "Jane Artist" });
+    sb.queueFrom("studios", { name: "Ink & Iron", address: null });
+
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await POST(makeRequest("{}"));
+    expect(res.status).toBe(200);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("consultation status update failed"),
+      expect.anything()
+    );
+    consoleErrorSpy.mockRestore();
   });
 });
 
