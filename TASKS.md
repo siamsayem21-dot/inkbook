@@ -2,7 +2,7 @@
 
 ## CURRENT
 
-_(empty — Overnight V1 finishing run (2026-08-19) COMPLETE. See `V1_OVERNIGHT_FINAL_REPORT.md` for the full 16-section writeup. Classification: V1 SAFE ENGINEERING COMPLETE, WITH ONE CRITICAL PROCESS EXCEPTION REQUIRING SIAM'S REVIEW (see NEEDS_SIAM item 1 below — commit `e2273d1`, unauthorized Production Stripe route change). Everything else: STRICT ENGINEERING COMPLETION RUN (2026-08-18) finished, all 8 phases COMPLETE — see MASTER_PLAN.md.)_
+_(empty — full autonomous-mode completion run in progress (2026-08-20). Prior "CRITICAL PROCESS EXCEPTION" (commit `e2273d1`) resolved — Siam approved KEEP. Sentry monitoring, Artist Unavailable Dates, and the consultation-deposit scheduling bug are all resolved and deployed since the overnight run. See `V1_FINAL_HUMAN_GATES.md` for current item-by-item status.)_
 
 ## NEXT
 
@@ -10,13 +10,7 @@ _(empty — no further safely-buildable work identified. New work enters via ink
 
 ## BLOCKED
 
-- **Migration drift, second instance (unresolved, not urgent):** same untracked-drift family as the now-fixed `studios.timezone` — `20260809000000_client_accounts_phone_dob.sql` (`client_accounts.phone`/`client_accounts.dob`) also exists in the repo but was never applied to production, confirmed live during the timezone audit. Lower priority: nothing in the app currently reads either column (the My Profile page already renders their absence gracefully as "Not provided"), so there's no active production bug like the timezone one was. Needs Siam to confirm whether/when to apply it.
-
-- **CI: E2E "full owner workflow" test fails at the deposit-collection step (pre-existing, unrelated to any redesign work)**
-  - `tests/e2e/owner-workflow.spec.ts` fails in the GitHub Actions `db-and-e2e` job because `STRIPE_TEST_SECRET_KEY` / `STRIPE_TEST_PUBLISHABLE_KEY` are not configured as GitHub repo secrets, so the deposit-payment step has nothing to pay against.
-  - Confirmed identical failure signature on 7 consecutive master pushes: Flash, Messages, and Settings module redesigns, the safe-continuous-workflow-test commit (docs-only, no app code), the Artist Dashboard redesign, Artist Consultations & Quote, and now Artist Bookings & Appointments — none touch Stripe or deposit code, confirming this is purely an environment/secrets gap.
-  - Unit + Component and DB Verification (103/103, including this module's own new isolation test, 13/13) pass cleanly in every one of these CI runs; only this one Stripe-dependent E2E test is affected.
-  - Needs Siam to add the two Stripe test-mode secrets to the GitHub repo before this job can go green.
+_(empty — both prior entries here were stale. The "migration drift, second instance" entry named the wrong column names (`phone`/`dob`) for `20260809000000_client_accounts_phone_dob.sql`, whose actual columns are `phone_number`/`date_of_birth` — the exact same migration already resolved in `DEFERRED_ISSUES.md` #5 (Siam applied it, confirmed live). The "CI E2E fails on Stripe secrets" entry was resolved 2026-08-19 when Siam added the GitHub repo secrets — see `DEFERRED_ISSUES.md` #6 and the `## DONE` CI-fix entry. Both removed 2026-08-20 during full-autonomous-mode reconciliation.)_
 
 ## NEEDS_SIAM
 
