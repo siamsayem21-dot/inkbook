@@ -35,32 +35,37 @@ Siam applied `supabase/migrations/20260817000000_compliance_audit_log.sql` in Pr
    6. **Smoke test:** connect one real (or your own test) studio end-to-end; confirm a real deposit routes to that studio's own Stripe account, not InkBook's.
 **Verification Claude should run after:** re-run the same live TEST-mode Connect verification proof used earlier this run (real connected account, real webhook delivery, real payment, cross-studio mismatch rejection) against the now-live configuration.
 
-### 4. GitHub Stripe test secrets
-**Why needed:** unlocks the E2E job in CI (`DB Verification + E2E`), currently the only failing CI step, and has been for many consecutive pushes.
-**Exact action:** in GitHub repo Settings → Secrets and variables → Actions, add two secrets named exactly `STRIPE_TEST_SECRET_KEY` and `STRIPE_TEST_PUBLISHABLE_KEY`, using your Stripe **test-mode** keys (never live keys).
-**Expected result:** the `E2E tests (full owner workflow)` step in CI stops failing.
-**Verification Claude should run after:** `gh run list --limit 1` after the next push, confirm the `Test` workflow shows `completed / success` end-to-end.
+### 4. ✅ RESOLVED — GitHub Stripe test secrets added, CI fully green (2026-08-19)
+Siam added both secrets. Unblocking the E2E job surfaced 6 real, previously-unreachable bugs (test logic, a Playwright locator gotcha, two null-date crashes in production pages, and a real accessibility bug in `ConsentForm.tsx`) — all found via actual CI logs/screenshots/trace files and fixed across 10 CI iterations. One additional real bug was found and deliberately left unfixed (see item 1's sibling entry — search TASKS.md for "consultation-originated deposit bookings can never be scheduled" — CRITICAL NEEDS_SIAM, requires a change to the live Stripe webhook handler). Confirmed via run `32248171120`: `Test` workflow fully green end to end. Full detail in `TASKS.md` `## DONE`.
 
-### 5. Cron cadence — KEEP HOBBY or UPGRADE
+### 5. 🔴 CRITICAL — consultation-deposit bookings can never be scheduled (found 2026-08-19, unlocked by item 4's CI fix)
+**Why needed:** real production bug. When a client pays a deposit generated via `ConsultationDetail.tsx`'s "Generate Deposit Link" button, `bookings.status` correctly becomes `"confirmed"` — but `consultations.status` is never updated, staying `"quoted"` forever. `ConsultationDetail.tsx`'s "Book Appointment" date/time section is gated on `consult.status === "deposit_paid"`, a transition that never happens for this flow. The booking is left `"confirmed"` with `date`/`time` permanently `NULL`, with no UI path to ever schedule it.
+**Root cause:** the "Generate Deposit Link" button reuses the generic `sendDepositRequest()` action, whose Stripe webhook branch (`handleLegacyBookingDeposit` in `app/api/stripe/webhook/route.ts`) predates the AI consultation feature and never touches `consultations` — unlike the sibling branch (`handleCustomRequestDeposit`), which correctly updates its own source table.
+**Exact action:** review the smallest likely fix — have `handleLegacyBookingDeposit` also update a linked consultation's status to `"deposit_paid"` when one exists (mirroring the existing `custom_requests` pattern) — and tell Claude to build and deploy it. This touches the live, platform-wide Stripe webhook handler, so it needs your review before deploying regardless of how narrow the change is.
+**Expected result:** consultation-originated deposit bookings become schedulable again.
+**Verification Claude should run after:** a live TEST-mode proof — pay a consultation deposit, confirm `consultations.status` flips to `"deposit_paid"`, confirm the "Book Appointment" section appears and a date/time can be set — plus the E2E test (now covering this exact path, currently stops short of it on purpose) extended to cover the fixed behavior.
+**Also needed, separately:** a decision on any real consultation-originated bookings already stuck in this state in production (query `bookings` where `status = 'confirmed' AND date IS NULL`, cross-referenced to `consultations` — not yet run).
+
+### 6. Cron cadence — KEEP HOBBY or UPGRADE
 **Why needed:** all 6 crons are structurally capped at once-daily on the Vercel Hobby plan (confirmed via `vercel.json`); the practical effect is unpaid-deposit bookings can take up to ~48h to auto-cancel instead of the CLAUDE.md-stated 24h, and every other automation (reminders, no-show marking, etc.) has similar once-daily granularity. All 6 crons' code is already verified correct (idempotent, isolated, timezone-safe) — this is purely a cadence/billing question, not a bug.
 **Recommendation:** **KEEP HOBBY for V1/beta launch.** Pre-revenue, the latency is a minor UX rough edge, not a blocker — 30-100 studios (Month 3-6 targets) won't meaningfully suffer from a once-daily cancel/reminder cycle. Revisit once paid studio volume makes faster cycles worth the plan cost.
 **Exact action:** none required if keeping Hobby. If upgrading, tell Claude which plan, and cron schedules in `vercel.json` can be tightened afterward.
 **Expected result:** N/A unless upgrading.
 
-### 6. Production error monitoring
+### 7. Production error monitoring
 **Why needed:** 66 API-route error sites currently only log to `console.error` / Vercel logs — nobody gets paged if something breaks in production.
 **Recommendation:** smallest appropriate V1 setup is **Sentry's free tier** (5k errors/month, generous pre-launch) via `@sentry/nextjs`, which auto-instruments API routes, middleware, and client errors with minimal code changes.
 **Exact action:** Siam creates a free Sentry account + project, gets a DSN.
 **Expected result:** a `SENTRY_DSN` (or similar) value to hand to Claude.
 **Verification Claude should run after:** once the DSN is provided, Claude can wire up `@sentry/nextjs`, trigger one deliberate test error, and confirm it appears in the Sentry dashboard.
 
-### 7. Artist unavailable_dates — migration, then wiring
+### 8. Artist unavailable_dates — migration, then wiring
 **Why needed:** lets artists mark specific days off; currently prepared but genuinely unsafe to wire in before the migration runs (would break every booking attempt).
 **Exact action, in order:** (1) Siam applies `supabase/migrations/20260818000000_artist_unavailable_dates.sql`. (2) Tell Claude it's applied. (3) Claude builds the small follow-up: a UI section to manage `unavailable_dates`, plus wiring the same 3 booking-creation call sites that already use `lib/booking-conflict.ts` to also reject dates in the artist's unavailable list.
 **Expected result:** artists can mark days off; bookings on those days are rejected.
 **Verification Claude should run after:** a live QA script creating an artist with an unavailable date, confirming a booking attempt on that date is rejected and one on a different date succeeds.
 
-### 8. Orphaned `app/client-portal/**` prototype cleanup (low priority, cosmetic)
+### 9. Orphaned `app/client-portal/**` prototype cleanup (low priority, cosmetic)
 **Why needed:** ~30 dead files from a superseded mock-data prototype, confirmed zero live references. One component (`AftercareCard.tsx`) has UI not present in the live portal — worth a glance before deleting outright, in case it's wanted as a real feature.
 **Exact action:** Siam says either "delete it" or "the aftercare UI is wanted — turn it into a real feature first."
 **Expected result:** either the tree is removed, or a small new feature task is queued.
@@ -87,6 +92,6 @@ If you want a second pair of eyes regardless of this recommendation, that's enti
 
 ## 5. Final state
 
-**NOT READY FOR FINAL HUMAN GATES CLOSE-OUT — exact reason:** item 1 (`e2273d1`) is now resolved — Siam approved KEEP. 7 items remain in §2 that require Siam personally (Production DDL ×2, a secrets addition, a billing/plan decision, a monitoring-provider signup, and one product judgment call on a dead-code tree). No further *ordinary engineering* work is safely buildable without one of these. Once Siam has acted on the items in §2 (in the dependency order given), tell Claude which ones are done and it will run the paired verification for each and can then mark V1 fully closed.
+**NOT READY FOR FINAL HUMAN GATES CLOSE-OUT — exact reason:** items 1, 2, and 4 are resolved. 6 items remain in §2 that require Siam personally: item 3 (Stripe Connect activation, partially done), item 5 (🔴 CRITICAL — real webhook bug found tonight, needs your review of the fix approach before it's built), item 6 (billing/plan decision), item 7 (monitoring-provider signup), item 8 (Production DDL), item 9 (product judgment call on a dead-code tree). No further *ordinary engineering* work is safely buildable without one of these.
 
-**Next human-gated step: §2 item 3 — finish the Stripe Connect activation checklist.** Two of six steps are already done (migration applied, webhook secret set). Remaining: confirm Connect is enabled on the Stripe platform account, confirm the connect-webhook is registered in the Stripe Dashboard, then set `STRIPE_CONNECT_ENABLED=true` in Vercel and smoke test.
+**Next human-gated step: §2 item 5 — the consultation-deposit scheduling bug.** This is now the highest-priority open item: it's a real, currently-live defect affecting real client bookings, not an infrastructure/process item. Item 3 (Stripe Connect) remains available in parallel whenever convenient, since it doesn't depend on item 5.
