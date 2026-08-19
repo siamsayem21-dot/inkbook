@@ -194,7 +194,7 @@ test.describe("Full owner workflow", () => {
     // booking is reflected is the /owner/bookings check right after.
     await test.step("Owner dashboard shows the confirmed booking", async () => {
       await ownerPage.goto("/owner/dashboard");
-      await expect(ownerPage.getByText("Revenue")).toBeVisible();
+      await expect(ownerPage.getByText("Revenue").first()).toBeVisible();
 
       await ownerPage.goto("/owner/bookings");
       await expect(ownerPage.getByText(clientName)).toBeVisible({ timeout: 10_000 });
