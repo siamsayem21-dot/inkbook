@@ -21,11 +21,8 @@ Everything in this document is either already done, or requires Siam personally 
 ### 1. ✅ RESOLVED — commit `e2273d1` — **Siam approved KEEP (2026-08-19)**
 Siam reviewed the §4 recommendation and evidence and approved **KEEP** — no modification, no revert. The commit remains live in Production as-is. No further action needed on this item.
 
-### 2. Compliance audit log — apply the migration
-**Why needed:** the audit-log feature is fully built and deployed but fails closed (shows "No events yet" for everyone) until its table exists in production.
-**Exact action:** Siam runs `supabase/migrations/20260817000000_compliance_audit_log.sql` in the Supabase Dashboard → SQL Editor.
-**Expected result:** `audit_log` table exists with RLS enabled, one SELECT policy for owners scoped to their own studio.
-**Verification Claude should run after:** `node scripts/verify-audit-log.mjs` (already prepared, self-cleaning — confirms table existence, insert, studio-scoped isolation via a real owner session).
+### 2. ✅ RESOLVED — Compliance audit log migration applied and verified (2026-08-19)
+Siam applied `supabase/migrations/20260817000000_compliance_audit_log.sql` in Production. Verified via `node scripts/verify-audit-log.mjs` (self-cleaning, 4/4 checks passed): table exists with the exact expected columns; insert works; app-layer studio-scoped filtering correctly isolates; and — the strongest proof — a real owner session correctly saw only their own studio's audit_log row and was blocked from seeing another studio's row, functionally confirming both RLS is enabled and the owner SELECT policy is correctly scoped. All test rows cleaned up and re-confirmed gone. Index existence (`CREATE INDEX IF NOT EXISTS` in the migration) could not be directly confirmed — PostgREST doesn't expose index metadata and this environment has no SQL execution access — noted as a minor honest gap, not a concern given the statement is standard and idempotent.
 
 ### 3. Stripe Connect — finish the activation checklist (already partially done)
 **Why needed:** the subscription-only, 0%-fee, Direct-Charge architecture is fully built, tested, and deployed inert. You've already done steps 2 and 4 below yourself.
@@ -92,4 +89,4 @@ If you want a second pair of eyes regardless of this recommendation, that's enti
 
 **NOT READY FOR FINAL HUMAN GATES CLOSE-OUT — exact reason:** item 1 (`e2273d1`) is now resolved — Siam approved KEEP. 7 items remain in §2 that require Siam personally (Production DDL ×2, a secrets addition, a billing/plan decision, a monitoring-provider signup, and one product judgment call on a dead-code tree). No further *ordinary engineering* work is safely buildable without one of these. Once Siam has acted on the items in §2 (in the dependency order given), tell Claude which ones are done and it will run the paired verification for each and can then mark V1 fully closed.
 
-**Next human-gated step: §2 item 2 — apply the compliance audit log migration** (`supabase/migrations/20260817000000_compliance_audit_log.sql` in the Supabase SQL Editor). It's the only item with no dependency on anything else, and Claude already has the verification script ready to run the moment it's applied.
+**Next human-gated step: §2 item 3 — finish the Stripe Connect activation checklist.** Two of six steps are already done (migration applied, webhook secret set). Remaining: confirm Connect is enabled on the Stripe platform account, confirm the connect-webhook is registered in the Stripe Dashboard, then set `STRIPE_CONNECT_ENABLED=true` in Vercel and smoke test.
