@@ -82,11 +82,11 @@ CLAUDE.md-adjacent product framing (and this mission's own Phase 2 name) implies
 **Why deferred:** unclear whether "AI artist matching" was ever an intended V1 feature or just phase-naming shorthand for "the consultation flow that leads to picking an artist" — a product-scope question, not a bug.
 **Unblock:** Siam clarifies whether AI-driven artist matching is in scope for V1, or whether manual artist selection (already working) is the intended design.
 
-## 9. No production error monitoring/alerting
-**Phase:** 7. **Status:** confirmed missing, not started.
-No Sentry/Bugsnag/Rollbar/Datadog or any error-tracking SDK anywhere in the repo. All error handling is `console.error`/`console.log`, visible only via Vercel function logs. A production error (a cron silently failing, a webhook throwing, an unhandled exception) would only surface via someone manually checking logs or a user reporting it after the fact.
-**Why deferred:** adding a monitoring provider (Sentry etc.) means a new external service/API key, which is a legitimate small product/infra decision, not something to silently bolt on.
-**Unblock:** Siam picks a provider (or approves a specific one, e.g. Sentry's free tier) and this becomes a small, safe, buildable task.
+## 9. 🟡 No production error monitoring/alerting — CODE COMPLETE, deployed inert (2026-08-19)
+**Phase:** 7. **Status:** `@sentry/nextjs` fully integrated, tested, and deployed to Production -- but fully inert (no Sentry env vars exist anywhere, and every `Sentry.init()` call is gated on `enabled: !!<dsn>`). Provider was implicitly approved via the recommendation already recorded here and in `V1_FINAL_HUMAN_GATES.md` item 7 (Sentry free tier); code built ahead of the account existing, exactly as far as safely possible without inventing credentials.
+**What's built:** server/edge/client instrumentation (`instrumentation.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`, `sentry.client.config.ts`), `app/global-error.tsx` for root-layout crashes, conservative PII posture (`sendDefaultPii: false` on all 3 runtimes, no Session Replay, a shared `lib/sentry-scrub.ts` `beforeSend` scrub hook). 10 new unit tests, full suite/tsc/lint/build/Visual QA all clean.
+**Why still open:** the only remaining step is a genuine external-account action -- creating the Sentry project and getting a real DSN -- which cannot be done without Siam.
+**Unblock:** Siam creates a free Sentry project and adds `NEXT_PUBLIC_SENTRY_DSN` + `SENTRY_DSN` to Vercel Production env vars. Exact values and the planned post-DSN verification method are in `V1_FINAL_HUMAN_GATES.md` item 7.
 
 ## 10. Rate limiting gaps on OTP login + consultation-start
 **Phase:** 7. **Status:** confirmed, real gap.

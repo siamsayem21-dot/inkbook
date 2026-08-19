@@ -57,12 +57,23 @@ Siam reviewed and approved the proposed fix. Implemented exactly as reviewed: `h
 **Exact action:** none required if keeping Hobby. If upgrading, tell Claude which plan, and cron schedules in `vercel.json` can be tightened afterward.
 **Expected result:** N/A unless upgrading.
 
-### 7. Production error monitoring
-**Why needed:** 66 API-route error sites currently only log to `console.error` / Vercel logs — nobody gets paged if something breaks in production.
-**Recommendation:** smallest appropriate V1 setup is **Sentry's free tier** (5k errors/month, generous pre-launch) via `@sentry/nextjs`, which auto-instruments API routes, middleware, and client errors with minimal code changes.
-**Exact action:** Siam creates a free Sentry account + project, gets a DSN.
-**Expected result:** a `SENTRY_DSN` (or similar) value to hand to Claude.
-**Verification Claude should run after:** once the DSN is provided, Claude can wire up `@sentry/nextjs`, trigger one deliberate test error, and confirm it appears in the Sentry dashboard.
+### 7. 🟡 CODE COMPLETE, deployed inert — one external-account step left (2026-08-19)
+**Status:** everything buildable without a real Sentry account is done, tested, and live in Production — but fully inert (zero DSN configured anywhere), so it changes nothing about current behavior. This is a genuine external-account gate, not a code gap.
+
+**What's built:** `@sentry/nextjs ^10.70.0` (current, peer-compatible with this repo's Next.js 14.2.35) — `next.config.mjs` wrapped with `withSentryConfig` (org/project/authToken all env-var-driven, none hardcoded), `instrumentation.ts` + `sentry.server.config.ts` + `sentry.edge.config.ts` + `sentry.client.config.ts` covering server/edge/browser, `app/global-error.tsx` for App-Router root-layout crashes, and a shared `lib/sentry-scrub.ts` `beforeSend` hook that strips anything matching a password/token/secret/authorization/api-key/card/cvc/ssn pattern from breadcrumbs/context/request data as defense-in-depth beyond `sendDefaultPii: false` (set explicitly on all 3 runtimes — no Session Replay, no default PII capture).
+
+**Verified:** 10 new unit tests (PII-scrub edge cases + a config-loads-safely-with-zero-Sentry-env-vars check) — full suite 601/601, `tsc`, lint, production build (with Sentry wired in, still zero Sentry env vars set) all clean. Visual QA V1+V2 both 28/28 clean, no regression. Confirmed via Visual QA's own "no console errors" checks that Sentry produces zero runtime noise when unconfigured.
+
+**Deployed:** yes — CI green (run `32266930195`), pushed to `master`, Vercel auto-deployed, production smoke-tested read-only (homepage/pricing/login all 200). Because every `Sentry.init()` call is gated on `enabled: !!<dsn env var>` and no Sentry env var exists in Production, this deploy is provably a no-op today — same principle already used for the Stripe Connect flag gate.
+
+**The ONE manual thing Siam must do next:** create a free Sentry account + project (Sentry.io, no credit card required for the free tier — 5k errors/month), then add its values to Vercel.
+
+**Exactly which Sentry value(s) must be added to Vercel** (Project Settings → Environment Variables, Production):
+1. `NEXT_PUBLIC_SENTRY_DSN` — the project's DSN, needed client-side (browser bundle) — safe to expose publicly, a DSN only allows *sending* events.
+2. `SENTRY_DSN` — the same DSN, needed server/edge-side (this one doesn't need the `NEXT_PUBLIC_` prefix since server code never ships to the browser).
+3. *(Optional, for readable production stack traces — can be added later, independently)* `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` — unlocks automatic source-map upload at build time. Without these, Sentry still captures every error correctly, just with minified/unreadable stack traces. `SENTRY_AUTH_TOKEN` is a real secret (scoped to Sentry, not this app) — treat it like any other Vercel secret.
+
+**How Claude will verify a real captured test error afterward:** once told the DSN(s) are set in Vercel, trigger one deliberate, harmless test error against the live production deployment (e.g. a dedicated throwaway API route or a Server Action that calls `throw new Error("Sentry V1 verification — safe to ignore")`, or `Sentry.captureException()` directly) — then confirm via the Sentry API (using a project auth token, or by asking Siam to visually confirm in the dashboard, whichever is available) that the event actually landed, with the correct environment/release tag and no unexpected PII in the payload. Not done yet — needs the DSN to exist first.
 
 ### 8. ✅ RESOLVED — Artist Unavailable Dates V1 built, tested, and deployed (2026-08-19)
 Siam applied `supabase/migrations/20260818000000_artist_unavailable_dates.sql` in Production. Verified the column live (REST probe) before building anything. Built the full follow-up: a "Days Off" card on the existing `/artist/schedule` page (`components/artist/UnavailableDates.tsx`, no locked-module redesign), `addUnavailableDate`/`removeUnavailableDate` server actions (same ownership-verification pattern as the existing `saveAvailability()`), a shared `isDateUnavailable()` helper in `lib/booking-conflict.ts`, and wired it into all 3 existing booking-creation paths that already use booking-conflict validation (`app/api/bookings/route.ts`, `assignSchedule()`, `app/api/custom-requests/[id]/schedule/route.ts`) — each now rejects (409) a booking for a date in the artist's unavailable list, extending an existing artist-fetch query rather than adding a new round-trip.
@@ -100,6 +111,6 @@ If you want a second pair of eyes regardless of this recommendation, that's enti
 
 ## 5. Final state
 
-**NOT READY FOR FINAL HUMAN GATES CLOSE-OUT — exact reason:** items 1, 2, 4, 5, and 8 are resolved. 4 items remain in §2 that require Siam personally: item 3 (Stripe Connect activation, partially done), item 6 (billing/plan decision), item 7 (monitoring-provider signup), item 9 (product judgment call on a dead-code tree). Plus one small follow-up from item 5's resolution: a yes/no on extending the E2E test to simulate webhook delivery (the production-stuck-bookings question from the same item was checked read-only afterward — zero found, no remediation needed, that sub-item is closed). No further *ordinary engineering* work is safely buildable without one of these.
+**NOT READY FOR FINAL HUMAN GATES CLOSE-OUT — exact reason:** items 1, 2, 4, 5, and 8 are resolved. 4 items remain in §2 that require Siam personally: item 3 (Stripe Connect activation, partially done), item 6 (billing/plan decision), item 7 (monitoring — code complete and deployed inert, just needs a free Sentry account + its DSN added to Vercel), item 9 (product judgment call on a dead-code tree). Plus one small follow-up from item 5's resolution: a yes/no on extending the E2E test to simulate webhook delivery (the production-stuck-bookings question from the same item was checked read-only afterward — zero found, no remediation needed, that sub-item is closed). No further *ordinary engineering* work is safely buildable without one of these.
 
 **Next human-gated step: §2 item 3 — finish the Stripe Connect activation checklist.** Two of six steps are already done. No item is currently more urgent than another — this reverts to being a genuine choose-your-own-order list.
