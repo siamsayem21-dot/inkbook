@@ -92,9 +92,10 @@ export default function ConsentForm({ bookingId, studioSlug, artistId, redirectT
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label className={labelClass}>Full legal name</label>
+        <label className={labelClass} htmlFor="consent-full-name">Full legal name</label>
         <input
           required
+          id="consent-full-name"
           type="text"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
@@ -104,9 +105,10 @@ export default function ConsentForm({ bookingId, studioSlug, artistId, redirectT
       </div>
 
       <div>
-        <label className={labelClass}>Date of birth</label>
+        <label className={labelClass} htmlFor="consent-dob">Date of birth</label>
         <input
           required
+          id="consent-dob"
           type="date"
           value={dob}
           onChange={(e) => handleDobChange(e.target.value)}
@@ -115,9 +117,10 @@ export default function ConsentForm({ bookingId, studioSlug, artistId, redirectT
       </div>
 
       <div>
-        <label className={labelClass}>Government ID photo</label>
+        <label className={labelClass} htmlFor="consent-id-photo">Government ID photo</label>
         <input
           required
+          id="consent-id-photo"
           type="file"
           accept="image/jpeg,image/png,image/webp"
           onChange={(e) => setIdPhoto(e.target.files?.[0] ?? null)}
@@ -134,9 +137,10 @@ export default function ConsentForm({ bookingId, studioSlug, artistId, redirectT
             Parental / guardian consent required
           </p>
           <div>
-            <label className="text-sm text-gray-700 block mb-1.5">Guardian full name</label>
+            <label className="text-sm text-gray-700 block mb-1.5" htmlFor="consent-guardian-name">Guardian full name</label>
             <input
               required
+              id="consent-guardian-name"
               type="text"
               value={guardianName}
               onChange={(e) => setGuardianName(e.target.value)}
@@ -144,11 +148,12 @@ export default function ConsentForm({ bookingId, studioSlug, artistId, redirectT
             />
           </div>
           <div>
-            <label className="text-sm text-gray-700 block mb-1.5">
+            <label className="text-sm text-gray-700 block mb-1.5" htmlFor="consent-guardian-signature">
               Guardian signature (type full name)
             </label>
             <input
               required
+              id="consent-guardian-signature"
               type="text"
               value={guardianSignature}
               onChange={(e) => setGuardianSignature(e.target.value)}
@@ -187,11 +192,12 @@ export default function ConsentForm({ bookingId, studioSlug, artistId, redirectT
       </label>
 
       <div>
-        <label className={labelClass}>
+        <label className={labelClass} htmlFor="consent-signature">
           Signature (type your full legal name)
         </label>
         <input
           required
+          id="consent-signature"
           type="text"
           value={signature}
           onChange={(e) => setSignature(e.target.value)}
