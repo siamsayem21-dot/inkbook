@@ -34,8 +34,18 @@ export async function payWithStripeTestCard(page: Page) {
   const nameField = page.locator('input[name="billingName"], input#billingName');
   if (await nameField.count()) await nameField.fill("E2E Test Client");
 
-  const submit = page.getByTestId("hosted-payment-submit-button").or(page.getByRole("button", { name: /^pay/i }));
-  await submit.first().click();
+  // Stripe's hosted checkout page also has a "Pay with card" accordion
+  // toggle whose accessible name matches /^pay/i, which appears in the DOM
+  // before the real submit button does. locator.or(...).first() resolves
+  // once and keeps retrying that same (wrong, never-visible) element rather
+  // than re-evaluating for the submit button once it appears -- so try the
+  // canonical, stable testid first and only fall back to the regex if it's
+  // genuinely absent.
+  try {
+    await page.getByTestId("hosted-payment-submit-button").click({ timeout: 15_000 });
+  } catch {
+    await page.getByRole("button", { name: /^pay/i }).last().click();
+  }
 
   await page.waitForURL((url: URL) => !url.hostname.includes("stripe.com"), { timeout: 30_000 });
 }
