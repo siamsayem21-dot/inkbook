@@ -56,14 +56,22 @@ export default async function ConsentPage({ params, searchParams }: Props) {
     .single();
   const artistName = (artistData as { name: string } | null)?.name ?? "Your artist";
 
-  const appointmentDate = new Date(booking.date).toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  });
-  const appointmentTime = booking.time.slice(0, 5);
+  // The consultation-based deposit flow (startConsultationDeposit(), see
+  // ConsultationDetail.tsx) creates a provisional booking with no date/time
+  // yet -- the owner schedules those only after the deposit is paid. The
+  // classic BookingForm/FlashBookingForm flow always has date/time set
+  // before the deposit is ever requested. Both flows share this page as
+  // their Stripe success_url, so date/time must be treated as optional here.
+  const appointmentDate = booking.date
+    ? new Date(booking.date).toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        timeZone: "UTC",
+      })
+    : "To be scheduled";
+  const appointmentTime = booking.time ? booking.time.slice(0, 5) : null;
 
   return (
     <main className="max-w-xl mx-auto px-6 py-10">
@@ -108,10 +116,12 @@ export default async function ConsentPage({ params, searchParams }: Props) {
           <span className="text-gray-400">Date</span>
           <span className="font-medium text-gray-200">{appointmentDate}</span>
         </div>
-        <div className="flex justify-between">
-          <span className="text-gray-400">Time</span>
-          <span className="font-medium text-gray-200">{appointmentTime}</span>
-        </div>
+        {appointmentTime && (
+          <div className="flex justify-between">
+            <span className="text-gray-400">Time</span>
+            <span className="font-medium text-gray-200">{appointmentTime}</span>
+          </div>
+        )}
         <div className="flex justify-between border-t border-white/10 pt-2.5">
           <span className="text-gray-400">Deposit paid</span>
           <span className="font-medium text-gold">
