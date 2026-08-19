@@ -21,8 +21,8 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
 
     if (bookingData) {
       const bk = bookingData as {
-        date: string;
-        time: string;
+        date: string | null;
+        time: string | null;
         deposit_amount_cents: number;
         artist_id: string;
       };
@@ -35,14 +35,20 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
 
       bookingDetails = {
         artistName: (artistData as { name: string } | null)?.name ?? "—",
-        date: new Date(bk.date).toLocaleDateString("en-US", {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-          timeZone: "UTC",
-        }),
-        time: bk.time.slice(0, 5),
+        // Consultation-originated deposit bookings don't have date/time set
+        // yet at this point (see the note in tests/e2e/owner-workflow.spec.ts
+        // and TASKS.md NEEDS_SIAM) -- classic BookingForm/FlashBookingForm
+        // bookings always do.
+        date: bk.date
+          ? new Date(bk.date).toLocaleDateString("en-US", {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+              timeZone: "UTC",
+            })
+          : "To be scheduled",
+        time: bk.time ? bk.time.slice(0, 5) : "",
         depositAmountCents: bk.deposit_amount_cents,
       };
     }
