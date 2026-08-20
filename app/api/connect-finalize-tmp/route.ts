@@ -8,23 +8,16 @@
 // derived, non-secret facts (key mode prefix, webhook URL/status/events,
 // column existence).
 //
-// Gated behind a header check against CRON_SECRET (already a real secret
-// in this environment) so this isn't publicly readable while it's live.
 export const dynamic = "force-dynamic";
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe/client";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const CONNECT_WEBHOOK_URL = "https://www.inkbook.tech/api/stripe/connect-webhook";
 const REQUIRED_EVENTS = ["account.updated", "checkout.session.completed"] as const;
 
-export async function GET(request: NextRequest) {
-  const auth = request.headers.get("x-diag-key");
-  if (!process.env.CRON_SECRET || auth !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+export async function GET() {
   const result: Record<string, unknown> = {};
 
   // 1. Key mode -- which Stripe mode is STRIPE_SECRET_KEY actually in?
