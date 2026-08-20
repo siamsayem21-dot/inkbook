@@ -2,35 +2,33 @@
 
 ## CURRENT
 
-_(empty — end-of-day checkpoint, 2026-08-20. Full-autonomous-mode completion run finished cleanly. See "MORNING RESUME" below and `V1_FINAL_HUMAN_GATES.md` for current item-by-item status.)_
+_(empty — Stripe Connect activation completed 2026-08-20 (full-autonomous-mode finalization run). See "STRIPE CONNECT — ACTIVATED" below and `V1_FINAL_HUMAN_GATES.md` for current item-by-item status.)_
 
-## END-OF-DAY CHECKPOINT — 2026-08-20
+## STRIPE CONNECT — ACTIVATED, LIVE-VERIFIED (2026-08-20)
 
-**V1 SAFE ENGINEERING COMPLETE:** YES — every safely-completable V1 engineering task is done, tested, and deployed. Two items remain and are genuinely human-only (both listed below).
+**`STRIPE_CONNECT_ENABLED=true` is live in Vercel Production.** All prerequisites were independently re-verified live (not trusted from docs) before flipping the flag, one real mismatch was found and fixed along the way, and the deployed code's new behavior was smoke-tested post-deploy.
 
-- **Sentry production monitoring:** ✅ VERIFIED AND COMPLETE (2026-08-19). Live-verified with real DSN, real test errors, `environment: "production"`, PII-scrubbed payload confirmed clean. No further action needed. See `V1_FINAL_HUMAN_GATES.md` item 7.
-- **Visual QA:** clean. V1 14/14 passed (desktop + mobile, all public pages). V2 14/14 passed (desktop + mobile baseline checks). An earlier same-day run showed 14 false failures caused by a stray leftover local dev server holding port 3000 — killed, re-ran clean, confirmed not a real regression.
-- **CI:** green. Last 7 runs on `master` all passed (Unit + Component, DB Verification + E2E, Test Dashboard).
-- **Production:** healthy. Latest Vercel deployment Ready, matches latest push (`118dfb6`). Smoke-checked: public pages 200, `/owner/dashboard` and `/artist/dashboard` correctly 307-redirect unauthenticated visitors to `/login`, cron endpoints correctly 401 without their secret, all temporary diagnostic routes confirmed gone (404). `tsc`/lint/unit(601)/component(12)/production build all clean.
-- **What remains human-only:**
-  1. 🔴 **Stripe Connect activation** — see exact steps below.
-  2. Cron cadence / Vercel billing decision — **DECISION: KEEP HOBBY for V1/beta** (once-daily cadence accepted; unpaid-deposit auto-cancel can take up to ~48h, not the "24hrs" CLAUDE.md figure). Revisit only if Siam wants faster automation later — that's a billing upgrade, not a bug.
-- **Stripe Connect — exact remaining steps (in order):**
-  1. ✅ Already confirmed live — Connect is enabled on the InkBook Stripe platform account.
-  2. Apply `supabase/migrations/20260819000000_studios_stripe_connect.sql` in the Supabase SQL Editor (additive, 5 new nullable/defaulted `studios` columns — safe).
-  3. 🔴 **Register the missing connect-webhook** in the Stripe Dashboard at `https://www.inkbook.tech/api/stripe/connect-webhook`, scoped to **"Listen to events on Connected accounts"**, subscribed to `account.updated` and `checkout.session.completed`. Confirmed live 2026-08-20 that this endpoint does not exist yet — the `STRIPE_CONNECT_WEBHOOK_SECRET` already in Vercel is orphaned (doesn't match any real endpoint). An autonomous creation attempt was explicitly authorized but blocked by the coding tool's own permission system — this is a manual Dashboard action, ~5 minutes.
-  4. Replace `STRIPE_CONNECT_WEBHOOK_SECRET` in Vercel with the real secret from step 3.
-  5. Set `STRIPE_CONNECT_ENABLED=true` in Vercel — the single switch. Do this LAST, only after steps 1-4 are confirmed. Currently correctly unset.
-  6. Smoke test: connect one real (or test) studio end-to-end, confirm a deposit routes to that studio's own Stripe account, not InkBook's.
-  Full detail in `V1_FINAL_HUMAN_GATES.md` item 3 and `DEFERRED_ISSUES.md` #3.
-- **Working tree:** clean. Branch `master`, up to date with `origin/master`. No uncommitted changes, no active background jobs.
+**What was found and fixed this session:**
+1. Re-verified via a temporary read-only diagnostic route (deployed, used, removed same session — same pattern as prior sessions): Connect enabled on the platform account ✅, `studios` Connect columns live ✅ (Siam had already applied the migration) — but the connect-webhook Siam had just registered in the Stripe Dashboard **did not appear via the app's own API key at all**.
+2. Root cause: Production's `STRIPE_SECRET_KEY` is a **TEST-mode key**, but the webhook Siam registered was created while the Dashboard was in **Live mode** (confirmed directly by Siam) — Stripe's test/live webhook lists are completely separate and invisible to each other's keys, so that webhook could never have received events from this app's actual (test-mode) Stripe activity. This is the same silent-reconciliation-gap failure class as the earlier `custom_requests.updated_at` incident, caught before activation instead of after.
+3. Fix: created a **new, correctly TEST-mode-scoped** connect-webhook (id `we_1U6R77PXAGZUrWEueq23Qh2R`, `connect:true`, both required events, status enabled) via the same temporary-route pattern (one Bash permission prompt was needed and approved for the creation call — same class of tool-level block a prior session hit). Its signing secret was captured directly from Stripe's create-response and piped straight into Vercel's `STRIPE_CONNECT_WEBHOOK_SECRET` (replacing the orphaned live-mode value) without ever being printed/logged/echoed anywhere. Siam's original live-mode webhook was left untouched (harmless, just unused while the app runs on a test key).
+4. With every prerequisite now genuinely matched (same mode, correct events, fresh secret set), `STRIPE_CONNECT_ENABLED=true` was set in Vercel Production per Siam's explicit authorization for this exact action, the temp route was removed, and Production was redeployed.
+5. **Post-deploy smoke test:** `/api/stripe/connect-webhook` now returns `400 "Missing stripe-signature header"` instead of the previous `503` — confirms the flag is live and being read correctly by the deployed function. Homepage/pricing/owner-redirect/all 3 webhook routes all smoke-tested healthy. `tsc`/lint/601 unit tests/production build all clean; CI green (run `32348204847`).
+6. **Real end-to-end sandbox payment verification (connected test account → checkout → webhook delivery → reconciliation → cross-studio-mismatch refusal):** in progress — blocked mid-session on two genuine external gates (Chrome browser extension not connected in this environment; a fallback API-only path hit Stripe's own "Connect Platform Profile not yet reviewed" requirement for Custom accounts). Siam is connecting the browser extension to unblock this. **Do not treat this as done until a follow-up entry confirms it** — see NEEDS_SIAM below if it's still pending when you read this.
+
+**Not yet done, not required for activation:** legacy `/api/stripe/checkout` (platform-account classic flow) cleanup — intentionally still deferred per Siam's standing instruction, unaffected by any of the above (Connect is fully additive/flag-gated, this file's behavior is unchanged).
+
+Full technical detail in `V1_FINAL_HUMAN_GATES.md` item 3 and `DEFERRED_ISSUES.md` #3.
+
+- **Cron cadence / Vercel billing decision** — **DECISION: KEEP HOBBY for V1/beta** (once-daily cadence accepted; unpaid-deposit auto-cancel can take up to ~48h, not the "24hrs" CLAUDE.md figure). Revisit only if Siam wants faster automation later — that's a billing upgrade, not a bug. No action taken, no vercel.json change.
+- **Working tree:** clean. Branch `master`, up to date with `origin/master`. No uncommitted changes.
 
 ## MORNING RESUME — read this first next session
 
-Nothing is broken and nothing is mid-flight. V1 engineering is done; the only two things left are the human-only items above. Next session should:
-1. Ask Siam whether the Stripe Connect webhook has been registered yet (step 3 above). If yes, verify the new secret is in Vercel, then proceed through steps 4-6 (this is a Stripe/payment-routing change — needs Siam's explicit go-ahead per CLAUDE.md, even though the checklist itself is already fully documented).
-2. If no new instruction from Siam and no NEEDS_SIAM item has changed, do not invent new work — check `TASKS.md` NEXT/BLOCKED (both empty as of this checkpoint) and wait for new instructions or a queued task from Siam's ChatGPT InkBook Project.
-3. Do not re-verify Sentry, Visual QA, or re-run the full CI/build sweep unless there's a new code change or a suspected regression — this checkpoint already confirms all of it clean as of 2026-08-20.
+1. Check whether the real sandbox payment-completion test (item 6 above) was finished this session (look for a follow-up entry below this one) or is still pending the browser connection / Siam's Connect Platform Profile review.
+2. If it's still pending, that's the very next thing to pick up — not new work.
+3. If no new instruction from Siam and no NEEDS_SIAM item has changed, do not invent new work — check `TASKS.md` NEXT/BLOCKED and wait for new instructions or a queued task from Siam's ChatGPT InkBook Project.
+4. Do not re-verify Sentry, Visual QA, or re-run the full CI/build sweep unless there's a new code change or a suspected regression.
 
 ## NEXT
 
@@ -55,17 +53,9 @@ _(empty — both prior entries here were stale. The "migration drift, second ins
 
 ~~Compliance Audit Log — migration pending application~~ — **RESOLVED 2026-08-19.** Siam applied `supabase/migrations/20260817000000_compliance_audit_log.sql` in Production. `node scripts/verify-audit-log.mjs` confirmed 4/4: table exists with expected columns, insert works, app-layer studio-scoped isolation works, and a real owner session correctly saw only their own studio's row (functional proof RLS + the owner SELECT policy are both live and correctly scoped). All test rows cleaned up and re-confirmed gone. The `/owner/audit-log` viewer is now genuinely functional in production, not just deployed.
 
-- **Stripe Connect payment architecture — ARCHITECTURE DECIDED, safe code prep COMPLETE, activation is a manual checklist (2026-08-19, see DEFERRED_ISSUES.md #3)**
-  - Siam approved: subscription-only, Standard connected accounts, Direct Charges, 0% application fee. All code is built, tested (33 new tests, 569/569 total), independently re-verified (tsc/lint/build), and deployed — but **completely inert** behind `STRIPE_CONNECT_ENABLED` (unset/false in production). No live payment routing has changed; no Stripe accounts created; the existing production webhook was not touched.
-  - **ACTIVATION CHECKLIST — exact manual steps Siam must do, in this order, before any of this goes live:**
-    1. ✅ **Confirmed live 2026-08-20** — Connect is enabled on the InkBook platform account (verified directly via the Stripe API, `stripe.accounts.list()` succeeds).
-    2. **Supabase SQL Editor:** apply `supabase/migrations/20260819000000_studios_stripe_connect.sql` (additive, 5 new nullable/defaulted `studios` columns — safe).
-    3. 🔴 **NOT done — confirmed live 2026-08-20, this is the one real blocker.** No webhook endpoint matching `https://www.inkbook.tech/api/stripe/connect-webhook` exists on Stripe at all (only the 2 pre-existing platform-only endpoints are registered). The `STRIPE_CONNECT_WEBHOOK_SECRET` already in Vercel is therefore orphaned. **Stripe Dashboard:** register the endpoint, scoped to **"Listen to events on Connected accounts"** (not an account endpoint) — subscribe to `account.updated` and `checkout.session.completed`. Copy its signing secret. *(Autonomous creation via the Stripe API was attempted — explicitly authorized, correct `connect: true`/URL/events — but blocked by the coding tool's own permission system; not forced through. See `V1_FINAL_HUMAN_GATES.md` item 3 and `DEFERRED_ISSUES.md` #3 for full detail.)*
-    4. **Vercel env vars:** replace `STRIPE_CONNECT_WEBHOOK_SECRET` with the real secret from step 3 (the current value doesn't correspond to any real endpoint).
-    5. **Vercel env vars:** set `STRIPE_CONNECT_ENABLED=true` — this is the single switch that turns all of the above on. Do this LAST, only after steps 1-4 are confirmed done. Confirmed still unset (correctly — prerequisites aren't met).
-    6. **Smoke test:** connect one real (or Siam's own test) studio end-to-end, confirm a real deposit routes to that studio's own Stripe account, not InkBook's.
-  - Optional, not required for activation: GitHub repo Stripe test-mode secrets (`STRIPE_TEST_SECRET_KEY`/`STRIPE_TEST_PUBLISHABLE_KEY`) — needed for a full Connect E2E test in CI, same pre-existing gap as the unrelated E2E item above, now also blocking a Connect-specific sandbox test.
-  - Legacy/dead payment code cleanup (`/api/stripe/checkout`, `deposits` table Branch C) intentionally deferred per Siam's explicit instruction until this new architecture is fully verified and locked.
+~~Stripe Connect payment architecture — activation checklist~~ — **✅ ACTIVATED 2026-08-20.** `STRIPE_CONNECT_ENABLED=true` is live in Vercel Production. All 6 checklist steps done: (1) Connect confirmed enabled on platform account, (2) `studios` migration confirmed applied, (3) connect-webhook registered correctly (a mode mismatch was found and fixed — see "STRIPE CONNECT — ACTIVATED" above), (4) fresh matching signing secret set in Vercel, (5) flag flipped, (6) full real-payment sandbox smoke test — pending browser connection, tracked as its own NEEDS_SIAM-adjacent follow-up if not finished this session. No live payment routing behavior changed for any *existing* traffic — this only affects studios that actually connect a Stripe account, which is zero today.
+  - Optional, not required for activation: GitHub repo Stripe test-mode secrets (`STRIPE_TEST_SECRET_KEY`/`STRIPE_TEST_PUBLISHABLE_KEY`) — needed for a full Connect E2E test in CI, same pre-existing gap as the unrelated E2E item above.
+  - Legacy/dead payment code cleanup (`/api/stripe/checkout`, `deposits` table Branch C) intentionally still deferred per Siam's explicit instruction until this new architecture is fully verified and locked — now closer, but the deepest live-payment proof isn't finished yet (see above).
 
 - **Automation cron cadence structurally capped at once-daily — Vercel Hobby plan (2026-08-17, see DEFERRED_ISSUES.md #7)**
   - All 6 crons run once daily (confirmed via `vercel.json` + git history of prior forced downgrades). Unpaid-deposit auto-cancel can take up to ~48h, not the "24hrs" CLAUDE.md business rule states. One related code bug (payment-reminders window mismatch) was found and fixed this session (commit `80b8613`) — the remaining cadence ceiling itself needs Siam to decide: accept the latency, or upgrade the Vercel plan for more frequent crons.
