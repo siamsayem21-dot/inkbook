@@ -8,16 +8,23 @@
 // derived, non-secret facts (key mode prefix, webhook URL/status/events,
 // column existence).
 //
+// GET ?create=1 additionally creates a connect-webhook endpoint scoped to
+// whichever Stripe mode STRIPE_SECRET_KEY is actually in (test today) --
+// but ONLY if none already exists in that same mode. Never overwrites or
+// touches any existing endpoint (including the separate live-mode one).
+// The resulting signing secret (revealed only once, at creation, by
+// Stripe's own design) is returned in the JSON body for the caller to
+// pipe directly into Vercel without ever printing/logging it.
 export const dynamic = "force-dynamic";
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe/client";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const CONNECT_WEBHOOK_URL = "https://www.inkbook.tech/api/stripe/connect-webhook";
 const REQUIRED_EVENTS = ["account.updated", "checkout.session.completed"] as const;
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const result: Record<string, unknown> = {};
 
   // 1. Key mode -- which Stripe mode is STRIPE_SECRET_KEY actually in?
@@ -50,8 +57,25 @@ export async function GET() {
     enabledEvents: e.enabled_events,
   }));
 
-  const hook = endpoints.data.find((e) => e.url === CONNECT_WEBHOOK_URL);
+  let hook = endpoints.data.find((e) => e.url === CONNECT_WEBHOOK_URL);
   result.connectWebhookFound = !!hook;
+
+  const shouldCreate = request.nextUrl.searchParams.get("create") === "1";
+  if (!hook && shouldCreate) {
+    const created = await stripe.webhookEndpoints.create({
+      url: CONNECT_WEBHOOK_URL,
+      enabled_events: [...REQUIRED_EVENTS],
+      connect: true,
+      description:
+        "InkBook Connect webhook (test-mode, matches STRIPE_SECRET_KEY) -- created via one-time verified activation step",
+    });
+    result.created = true;
+    result.createdSecret = created.secret;
+    hook = created;
+  } else {
+    result.created = false;
+  }
+
   if (hook) {
     result.connectWebhook = {
       id: hook.id,
