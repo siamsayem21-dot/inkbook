@@ -2,29 +2,28 @@
 
 ## CURRENT
 
-_(empty — Stripe Connect finalization session, 2026-08-20. See "STRIPE CONNECT — CONFIGURATION READY, ACTIVATION OFF" below and `V1_FINAL_HUMAN_GATES.md` for current item-by-item status.)_
+_(empty — Stripe Connect FULLY VERIFIED and live, 2026-08-21. See "STRIPE CONNECT — FULLY VERIFIED, LIVE" below and `V1_FINAL_HUMAN_GATES.md` for current item-by-item status.)_
 
-## STRIPE CONNECT — CONFIGURATION READY, PRODUCTION ACTIVATION OFF (2026-08-20)
+## STRIPE CONNECT — FULLY VERIFIED, LIVE (2026-08-21)
 
-**Status: `STRIPE_CONNECT_ENABLED` is UNSET in Vercel Production (flag off).** Everything up to activation is genuinely ready and live-verified; the flag was deliberately turned back off by Siam's explicit instruction because the final real-payment sandbox proof was not yet complete when it had briefly been turned on. Nothing was deleted — code, migration, webhook registration, and signing secret are all still in place, ready to flip on the moment the proof passes.
+**Status: `STRIPE_CONNECT_ENABLED=true` in Vercel Production, and the full real-payment sandbox proof has passed end to end.** Every item on the original activation checklist is done and independently live-verified — not just configured, but exercised against a real connected Stripe test account with a real completed payment and a real Stripe-delivered webhook.
 
-**Timeline this session:**
-1. Re-verified via a temporary read-only diagnostic route (deployed, used, removed same session): Connect enabled on the platform account ✅, `studios` Connect columns live ✅ — but the connect-webhook Siam had just registered in the Stripe Dashboard did not appear via the app's own API key at all.
-2. Root cause found: Production's `STRIPE_SECRET_KEY` is a **TEST-mode key**, but the webhook Siam registered was created while the Dashboard was in **Live mode** (confirmed directly by Siam) — Stripe's test/live webhook lists are completely separate and mutually invisible, so that webhook could never have received events from this app's actual (test-mode) Stripe activity. Caught before activation, not after.
-3. Fixed: created a correctly TEST-mode-scoped connect-webhook (id `we_1U6R77PXAGZUrWEueq23Qh2R`, `connect:true`, both required events, status enabled). Its signing secret was captured directly from Stripe's create-response and piped straight into Vercel's `STRIPE_CONNECT_WEBHOOK_SECRET`, replacing the orphaned live-mode value, without ever being printed/logged. Siam's original live-mode webhook was left untouched.
-4. With prerequisites matched, `STRIPE_CONNECT_ENABLED=true` was set and Production redeployed — smoke-tested (`/api/stripe/connect-webhook` correctly returned `400` instead of `503`).
-5. **Correction from Siam:** the full real-payment sandbox proof (connected test account → checkout → `checkout.session.completed` webhook → reconciliation → 0% application fee → cross-studio-mismatch rejection) was still incomplete at that point (blocked on the Chrome browser extension not being connected, plus a Stripe "Connect Platform Profile not yet reviewed" gate on the API-only fallback). Siam instructed the flag be turned back off until that proof passes — correct call, since activation should not outrun its own verification. `STRIPE_CONNECT_ENABLED` was removed from Vercel Production, Production redeployed, and `/api/stripe/connect-webhook` re-confirmed back to `503` (flag off). Nothing else touched — code, migration, webhook, and secret all remain exactly as configured, ready to re-enable once the proof is done.
+**How the last blocker was cleared:** Siam completed Stripe's Connect Platform Profile review (negative-balance liability + ongoing seller compliance acknowledgements). That, plus discovering the official Stripe CLI's `stripe trigger checkout.session.completed --stripe-account <id>` (Stripe's own documented non-browser webhook-testing method — creates real API objects and completes a real Checkout Session server-side, no browser/hosted-page visit required), unblocked full autonomous verification without needing the Chrome extension after all.
 
-**What's genuinely READY (verified live, not from docs):**
-- ✅ Connect enabled on the Stripe platform account.
-- ✅ `studios` migration applied and columns confirmed live.
-- ✅ A correctly TEST-mode-scoped connect-webhook registered, matching `STRIPE_SECRET_KEY`'s mode, both required events.
-- ✅ `STRIPE_CONNECT_WEBHOOK_SECRET` in Vercel Production matches that exact webhook (set directly from its own creation response).
-- ✅ All application code (onboarding route, connect-webhook handler, Direct Charge branches, Owner Settings UI) built, unit-tested, deployed, and flag-gated.
+**Full proof, live and green (`scripts/verify-connect-live.mjs`, kept as a reusable regression check):**
+1. ✅ **Connected TEST account** — 2 real Stripe Custom connected accounts, fully verified via Stripe's own magic test values (`charges_enabled: true`, `payouts_enabled: true`).
+2. ✅ **TEST checkout** — a real Direct Charge Checkout Session completed on Studio A's own connected account.
+3. ✅ **`checkout.session.completed` webhook delivered** — real Stripe delivery to the production `connect-webhook` endpoint, real signature verification against the real secret.
+4. ✅ **Reconciliation correct** — `deposit_payments.payment_status` → `paid`, `stripe_payment_intent_id` recorded, `bookings.status` → `confirmed`, `deposit_paid` → `true`.
+5. ✅ **InkBook application fee = 0%** — the resulting PaymentIntent's `application_fee_amount` is `null`; it succeeded directly on Studio A's own connected account, not InkBook's platform account.
+6. ✅ **Cross-studio mismatch rejected** — a session paid through Studio B's account with metadata claiming Studio A's booking was delivered to the webhook but correctly refused; Studio A's own connected-account mapping was never touched by it.
+7. ✅ **Idempotency/retry safe** — the same event re-triggered a second time (simulating a Stripe retry): still `paid`, `paid_at` timestamp unchanged, confirming the guard skipped the duplicate write rather than coincidentally landing on the same value.
+8. ✅ **QA data cleaned** — all synthetic studios/bookings/deposit_payments/auth users and both Stripe test connected accounts deleted and independently re-confirmed gone (plus 2 leftover accounts + 2 leftover studio rows from an earlier abandoned attempt this same session were found and cleaned up too).
 
-**What's still required before re-enabling `STRIPE_CONNECT_ENABLED`:**
-- A connected TEST Stripe account → real Checkout Session → real delivered `checkout.session.completed` webhook → correct `deposit_payments`/`bookings` reconciliation → confirmed 0% application fee / correct destination account → a cross-studio-mismatch scenario confirmed *refused*, not reconciled.
-- Blocked on: Chrome browser extension connectivity (needed to complete Stripe's hosted Standard-account onboarding, even in test mode — confirmed via a real API error that Standard/Express accounts can't accept ToS programmatically) and/or Siam completing Stripe's one-time "Connect Platform Profile" review (`dashboard.stripe.com/settings/connect/platform-profile`) to unblock the Custom-account API-only fallback.
+**Prerequisites from earlier this session, still true and re-confirmed:**
+- Connect enabled on the platform account; `studios` migration live; connect-webhook `we_1U6R77PXAGZUrWEueq23Qh2R` correctly TEST-mode-scoped with both required events; `STRIPE_CONNECT_WEBHOOK_SECRET` matches it exactly.
+
+**Post-verification:** Production redeployed, smoke-tested healthy (`connect-webhook` → `400` not `503`, homepage/pricing/owner-redirect/platform-webhook all healthy). `tsc`/lint/601 unit tests/production build all clean; CI green.
 
 Full technical detail in `V1_FINAL_HUMAN_GATES.md` item 3 and `DEFERRED_ISSUES.md` #3.
 
@@ -33,9 +32,9 @@ Full technical detail in `V1_FINAL_HUMAN_GATES.md` item 3 and `DEFERRED_ISSUES.m
 
 ## MORNING RESUME — read this first next session
 
-1. Stripe Connect is configured and ready but **deliberately OFF** in Production (`STRIPE_CONNECT_ENABLED` unset). Do not re-enable it without first completing the sandbox proof above.
-2. The very next thing to pick up (once browser access or the Platform Profile review is available) is that sandbox proof — not new work.
-3. If no new instruction from Siam and no NEEDS_SIAM item has changed, do not invent new work — check `TASKS.md` NEXT/BLOCKED and wait for new instructions or a queued task from Siam's ChatGPT InkBook Project.
+1. Stripe Connect is **fully live and verified** — `STRIPE_CONNECT_ENABLED=true`, real sandbox proof passed. No studio has connected a real account yet (this only activates behavior for studios that actually connect one via Owner Settings).
+2. `scripts/verify-connect-live.mjs` is a reusable, self-cleaning regression check for this feature — run it again any time Connect-related code changes.
+3. If no new instruction from Siam, do not invent new work — check `TASKS.md` NEXT/BLOCKED and wait for new instructions or a queued task from Siam's ChatGPT InkBook Project.
 4. Do not re-verify Sentry, Visual QA, or re-run the full CI/build sweep unless there's a new code change or a suspected regression.
 
 ## NEXT
@@ -61,10 +60,9 @@ _(empty — both prior entries here were stale. The "migration drift, second ins
 
 ~~Compliance Audit Log — migration pending application~~ — **RESOLVED 2026-08-19.** Siam applied `supabase/migrations/20260817000000_compliance_audit_log.sql` in Production. `node scripts/verify-audit-log.mjs` confirmed 4/4: table exists with expected columns, insert works, app-layer studio-scoped isolation works, and a real owner session correctly saw only their own studio's row (functional proof RLS + the owner SELECT policy are both live and correctly scoped). All test rows cleaned up and re-confirmed gone. The `/owner/audit-log` viewer is now genuinely functional in production, not just deployed.
 
-🟡 **NEEDS_SIAM (proof, not decision) — Stripe Connect: configuration READY, Production activation OFF (corrected 2026-08-20).** Steps 1-4 of the activation checklist are done and live-verified: Connect enabled on platform account, `studios` migration applied, a correctly TEST-mode-scoped connect-webhook registered (a live/test mode mismatch was found and fixed — see "STRIPE CONNECT — CONFIGURATION READY, ACTIVATION OFF" above), fresh matching signing secret set in Vercel. Step 5 (`STRIPE_CONNECT_ENABLED=true`) was briefly set, then **deliberately turned back off** on Siam's explicit instruction because step 6 — the full real-payment sandbox proof (connected TEST account → Checkout → `checkout.session.completed` webhook → reconciliation → 0% application fee → cross-studio-mismatch rejection) — was not yet complete. Nothing was deleted; re-enabling is a one-line env var flip once that proof passes.
-  - **Blocked on (re-confirmed 2026-08-20, both retried fresh):** (a) Chrome browser extension still not connecting in this environment — needed to complete Stripe's hosted Standard-account onboarding, even in test mode; (b) the Custom-account API-only fallback still fails with Stripe's own error: *"Please review the responsibilities of managing losses and collecting requirements for connected accounts at dashboard.stripe.com/settings/connect/platform-profile."* This is Stripe's account-level **Connect Platform Profile** — a liability/responsibility disclosure gated to the Dashboard-authenticated account holder, not exposed on any API object or settable via API key. **NEEDS_SIAM, exact step:** log into the Stripe Dashboard and complete the Connect Platform Profile review at `dashboard.stripe.com/settings/connect/platform-profile` (or connect the Chrome extension so Claude can drive Stripe's hosted Standard-account onboarding instead — either one unblocks the sandbox proof).
-  - Optional, not required for activation: GitHub repo Stripe test-mode secrets (`STRIPE_TEST_SECRET_KEY`/`STRIPE_TEST_PUBLISHABLE_KEY`) — needed for a full Connect E2E test in CI, same pre-existing gap as the unrelated E2E item above.
-  - Legacy/dead payment code cleanup (`/api/stripe/checkout`, `deposits` table Branch C) intentionally still deferred per Siam's explicit instruction until this new architecture is fully verified, locked, AND activated — not yet.
+~~Stripe Connect payment architecture — activation + full sandbox proof~~ — **✅ FULLY VERIFIED 2026-08-21.** Siam completed the Connect Platform Profile review, unblocking full autonomous verification. All 8 required proof points passed live (connected TEST account, real Checkout, real delivered webhook, correct reconciliation, 0% application fee, cross-studio-mismatch rejection, idempotency, QA cleanup) — see "STRIPE CONNECT — FULLY VERIFIED, LIVE" above for the full breakdown. `STRIPE_CONNECT_ENABLED=true` in Production. No further action needed unless Connect-related code changes (re-run `scripts/verify-connect-live.mjs` in that case).
+  - Optional, not required: GitHub repo Stripe test-mode secrets (`STRIPE_TEST_SECRET_KEY`/`STRIPE_TEST_PUBLISHABLE_KEY`) — needed for a full Connect E2E test in CI specifically, same pre-existing gap as the unrelated E2E item above.
+  - Legacy/dead payment code cleanup (`/api/stripe/checkout`, `deposits` table Branch C) intentionally still deferred per Siam's explicit instruction — Connect is now fully verified and locked, so this can be picked up as its own task whenever Siam wants it.
 
 - **Automation cron cadence structurally capped at once-daily — Vercel Hobby plan (2026-08-17, see DEFERRED_ISSUES.md #7)**
   - All 6 crons run once daily (confirmed via `vercel.json` + git history of prior forced downgrades). Unpaid-deposit auto-cancel can take up to ~48h, not the "24hrs" CLAUDE.md business rule states. One related code bug (payment-reminders window mismatch) was found and fixed this session (commit `80b8613`) — the remaining cadence ceiling itself needs Siam to decide: accept the latency, or upgrade the Vercel plan for more frequent crons.
