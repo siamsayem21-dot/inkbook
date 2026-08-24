@@ -97,16 +97,28 @@ export default async function ConsultationsPage({
     query = query.in("status" as never, statusFilter);
   }
 
-  const { data: rows, error } = await query;
+  // These three queries are independent of each other (none depend on
+  // another's result) — run them concurrently instead of one round trip at a
+  // time. `query` itself is built above and awaited here for the first time.
+  const [{ data: rows, error }, { data: allRows }, { data: studioRaw }] = await Promise.all([
+    query,
+    // Stage counts — always over the full dataset, independent of the active filter.
+    // Counted via getStage() (not a literal status match) so any "converted" row
+    // lands in the "Completed" tile instead of vanishing from every count.
+    supabase
+      .from("consultations")
+      .select("status")
+      .eq("studio_id" as never, studioId),
+    // Real studio subdomain for the empty-state consultation link — OwnerLayout
+    // already redirects to /register if no studio exists, so this should always
+    // resolve; the placeholder text is only a fallback for that unreachable case.
+    supabase
+      .from("studios")
+      .select("subdomain")
+      .eq("id" as never, studioId)
+      .maybeSingle(),
+  ]);
   const consultations = ((rows ?? []) as ConsultRow[]);
-
-  // Stage counts — always over the full dataset, independent of the active filter.
-  // Counted via getStage() (not a literal status match) so any "converted" row
-  // lands in the "Completed" tile instead of vanishing from every count.
-  const { data: allRows } = await supabase
-    .from("consultations")
-    .select("status")
-    .eq("studio_id" as never, studioId);
 
   const all = (allRows ?? []) as { status: string }[];
   const stageCounts = Object.fromEntries(
@@ -115,14 +127,6 @@ export default async function ConsultationsPage({
   const total = all.length;
   const needsActionCount = all.filter((r) => NEEDS_ACTION.has(r.status)).length;
 
-  // Real studio subdomain for the empty-state consultation link — OwnerLayout
-  // already redirects to /register if no studio exists, so this should always
-  // resolve; the placeholder text is only a fallback for that unreachable case.
-  const { data: studioRaw } = await supabase
-    .from("studios")
-    .select("subdomain")
-    .eq("id" as never, studioId)
-    .maybeSingle();
   const subdomain = (studioRaw as { subdomain: string } | null)?.subdomain ?? null;
 
   // Assigned artist names — consultations only store artist_id; join in JS the

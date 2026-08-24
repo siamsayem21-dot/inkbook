@@ -12,8 +12,44 @@ export const getCurrentUser = cache(async () => {
   return user;
 });
 
+// Resolves the authenticated owner's own studio row (id/subdomain/subscription
+// status/name — everything app/(owner)/layout.tsx and getStudioId() each used
+// to query independently). cache()-deduplicated so an owner's studio is looked
+// up from `studios` at most once per request no matter how many call sites
+// need it, instead of once per call site. Same ORDER BY (oldest studio row
+// first, id as tiebreaker) as the two call sites this replaces, so behavior —
+// including which studio wins for an owner with more than one row — is
+// unchanged. Returns `error: true` (not a thrown error) so callers can keep
+// their own "don't redirect on a transient query error" behavior.
+export const getOwnerStudio = cache(async (): Promise<{
+  studio: { id: string; subdomain: string; subscription_status: string | null; name: string | null } | null;
+  error: boolean;
+}> => {
+  const user = await getCurrentUser();
+  if (!user) return { studio: null, error: false };
+
+  const supabase = createAdminClient();
+  const { data: studios, error } = await supabase
+    .from("studios")
+    .select("id, subdomain, subscription_status, name")
+    .eq("owner_id", user.id)
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true })
+    .limit(1);
+
+  if (error) {
+    console.error("[getOwnerStudio] studio query failed:", error.message, "| user:", user.id);
+    return { studio: null, error: true };
+  }
+
+  return {
+    studio: (studios?.[0] as { id: string; subdomain: string; subscription_status: string | null; name: string | null } | undefined) ?? null,
+    error: false,
+  };
+});
+
 // Resolves the authenticated user's studio ID.
-// Owner:  auth.users.id → studios.owner_id → studio.id
+// Owner:  auth.users.id → studios.owner_id → studio.id (via getOwnerStudio(), cache-shared)
 // Artist: auth.users.id → artists.user_id  → artists.studio_id
 // Returns null when the user is unauthenticated or has no associated studio.
 // cache() deduplicates within a single request — layout + page share one result.
@@ -21,25 +57,10 @@ export const getStudioId = cache(async (): Promise<string | null> => {
   const user = await getCurrentUser();
   if (!user) return null;
 
+  const { studio } = await getOwnerStudio();
+  if (studio) return studio.id;
+
   const supabase = createAdminClient();
-
-  // .limit(1) — .maybeSingle() errors (and returns null) when multiple rows match
-  // (an owner can have more than one studio row, e.g. from repeated /register runs).
-  // Without an explicit order, Postgres doesn't guarantee which row comes back —
-  // ORDER BY created_at (oldest first, id as a tiebreaker for equal timestamps)
-  // makes this deterministic and matches app/(owner)/layout.tsx's own studio
-  // lookup, so the sidebar's studio name always agrees with the studio_id this
-  // resolves to.
-  const { data: studios } = await supabase
-    .from("studios")
-    .select("id")
-    .eq("owner_id", user.id)
-    .order("created_at", { ascending: true })
-    .order("id", { ascending: true })
-    .limit(1);
-
-  if (studios && studios.length > 0) return (studios[0] as { id: string }).id;
-
   const { data: artists } = await supabase
     .from("artists")
     .select("studio_id")
