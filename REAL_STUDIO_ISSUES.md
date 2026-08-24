@@ -30,7 +30,7 @@ FILES (24 files still affected, `grep -rl '<label'` vs `htmlFor` count mismatch)
   components/owner/BlacklistManager.tsx, components/owner/ClientsTable.tsx, components/owner/ReviewsManager.tsx
 FIX: Additive-only, zero visual/behavior change — add a unique `id` to each input/select and a matching `htmlFor` on its label. Fixing this session (batch 1, highest-traffic first-touch pages, blocks nothing else in the critical journey): `app/(auth)/register/page.tsx`, `app/(auth)/login/page.tsx`, `app/(auth)/reset-password/page.tsx`. Remaining 21 files recorded as a follow-up batch (same mechanical fix, safe, low priority relative to functional bugs) — not done in this session to keep blast radius proportionate to an autonomous QA pass touching many already-locked modules in one sitting.
 TEST: Playwright `getByLabel(...)` resolving correctly for the 3 fixed pages; visual diff not expected (no className/layout change).
-STATUS: IN PROGRESS (batch 1 fix applied this session; batch 2 deferred)
+STATUS: PARTIALLY FIXED, VERIFIED — batch 1 (register/login/reset-password) committed as `6995af0`, confirmed via a live Playwright `getByLabel()` call that previously timed out and now resolves correctly, plus 601/601 unit tests + tsc + lint clean. Batch 2 (21 remaining files) deferred — same mechanical fix, low priority relative to functional bugs, safe to pick up anytime.
 LAUNCH BLOCKER: No — all flows remain completable by sighted users; real compliance/accessibility risk worth scheduling deliberately.
 NOTES: This finding generalizes and supersedes the narrower "ConsentForm.tsx has the same unlinked-label bug, unfixed" note from the 2026-08-02 PR #9 session memory — it's not isolated to ConsentForm, it's the dominant form-label pattern across the whole app.
 

@@ -74,14 +74,25 @@
 - 2 apparent test failures during this round were investigated and confirmed to be my own script's bugs, not product bugs: a wrong column name (`price_cents` vs the real `agreed_price_cents`) on my verification query, and a DB read that ran before the async completion transition had finished (completion did succeed, ~a few hundred ms after my first check). No real product defect found.
 - Noted, not a bug: `remainder_collected: false` at completion time (deposit $100 paid, quote $650, so $550 remains uncollected) — this matches the app's actual design (remainder collection is a separate owner/artist-triggered action, not a completion gate); not tested further this round for time.
 
+## Isolation spot-check — RESULT: PASS (7/7)
+- Fresh Studio B owner could NOT see Studio A's consultation or booking via direct URL (no cross-studio leak).
+- Unauthenticated direct access to `/owner/dashboard`, `/owner/consultations/[id]`, `/artist/bookings/[id]` all correctly redirect to `/login` (no pre-auth leak).
+- Nonexistent studio slug on the public booking page returns a clean 404, no crash.
+
+## Mobile viewport check — RESULT: PASS (4/4), 1 unreproducible note
+- Public studio home, consultation form, and login page all render with no horizontal overflow at 390px width (iPhone 13 emulation); primary CTA button visible without scrolling.
+- One React hydration console warning ("Extra attributes from the server: style" on an `<input>`) appeared once during a combined multi-page mobile run, but did NOT reproduce in 2 follow-up isolated single-page checks (same pages, same viewport) and had zero functional impact anywhere in this session's testing. Logged as an unconfirmed, non-reproducible note per the "don't act on one ambiguous observation" rule — not filed as a bug.
+
+## QA data cleanup — RESULT: COMPLETE, VERIFIED CLEAN
+- Dry-run reviewed and confirmed scope (6 studios, all exactly tagged `[QA-SEED-REALSTUDIO-20260824]`, subdomains `qa-realstudio-*`/`qa-isolation-b-*`/`qa-debug-*` — zero real studios matched) before Siam explicitly approved deletion (the delete step was blocked by the auto-mode safety classifier and required explicit confirmation, as expected for a DB-deletion action).
+- Deleted: 6 studios (cascaded to their artists/clients/bookings/deposit_payments), 1 consultation, 1 session_agreement, 1 consent_form, 1 artist_invite, 7 auth users (owners + 1 artist).
+- Independently re-verified after deletion: 0 remaining rows across bookings/artists/clients/consultations/artist_invites/session_agreements/consent_forms for all 6 target studio ids; the specific booking/artist/client rows used throughout this session are confirmed gone; 0 target studios remain; 0 target auth users remain.
+- Real production data (13+ pre-existing studios, the 2 already-known `[QA-OVERNIGHT-ARTIST-SWEEP]` studios from a prior session, etc.) was never queried for deletion and is unaffected.
+- Local dev server (port 3001) and the local `stripe listen` forwarder were both stopped at the end of the session; no lingering processes.
+
+## Fixes applied and committed this run
+- Commit `6995af0`: linked `htmlFor`/`id` on every label/input pair in `/register`, `/login`, `/reset-password` (ISSUE-001 batch 1/3) — additive-only, zero visual change, verified via `tsc`/lint/601 unit tests (pre-commit hook) all clean, plus live confirmation the fix works (a Playwright `getByLabel()` call that previously timed out now resolves correctly).
+- Working tree clean after commit; no other files touched.
+
 ## Current status
-- Round: security isolation spot-check + mobile viewport check, then QA data cleanup and final report. (Round 9 aftercare/review not exercised live — the review-request path is a once-daily cron per DEFERRED_ISSUES.md #7, already verified correct by a prior session; re-triggering it live was judged lower value than isolation/mobile coverage given remaining time budget. `bookings.review_requested_at` is still null on our QA booking as expected pre-cron-run.)
-- Persona: C — Client (isolation attempts), all personas (mobile)
-- Last passed step: Round 8 fully verified
-- Next step: attempt cross-studio/cross-client data access on the real QA data, check 2-3 key public pages at mobile viewport
-
-## Regression status
-- No fixes applied yet this run.
-
-## Last full journey result
-- Not yet run.
+- Mission complete for this session. See the final report delivered to Siam in chat for the full summary, remaining issues, and verdict.
