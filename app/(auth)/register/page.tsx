@@ -111,8 +111,9 @@ export default function RegisterPage() {
         )}
 
         <div>
-          <label className="label-xs text-zinc-500 block mb-2">Studio Name</label>
+          <label htmlFor="register-studio-name" className="label-xs text-zinc-500 block mb-2">Studio Name</label>
           <input
+            id="register-studio-name"
             type="text"
             placeholder="Ink & Iron Studio"
             value={studioName}
@@ -121,8 +122,9 @@ export default function RegisterPage() {
           />
         </div>
         <div>
-          <label className="label-xs text-zinc-500 block mb-2">Your Name</label>
+          <label htmlFor="register-owner-name" className="label-xs text-zinc-500 block mb-2">Your Name</label>
           <input
+            id="register-owner-name"
             type="text"
             placeholder="Jane Smith"
             value={ownerName}
@@ -131,8 +133,9 @@ export default function RegisterPage() {
           />
         </div>
         <div>
-          <label className="label-xs text-zinc-500 block mb-2">Email</label>
+          <label htmlFor="register-email" className="label-xs text-zinc-500 block mb-2">Email</label>
           <input
+            id="register-email"
             type="email"
             placeholder="you@studio.com"
             value={email}
@@ -141,8 +144,9 @@ export default function RegisterPage() {
           />
         </div>
         <div>
-          <label className="label-xs text-zinc-500 block mb-2">Password</label>
+          <label htmlFor="register-password" className="label-xs text-zinc-500 block mb-2">Password</label>
           <input
+            id="register-password"
             type="password"
             placeholder="••••••••"
             value={password}
@@ -151,9 +155,10 @@ export default function RegisterPage() {
           />
         </div>
         <div>
-          <label className="label-xs text-zinc-500 block mb-2">Subdomain</label>
+          <label htmlFor="register-subdomain" className="label-xs text-zinc-500 block mb-2">Subdomain</label>
           <div className="flex items-center">
             <input
+              id="register-subdomain"
               type="text"
               placeholder="inkandironstudio"
               value={subdomain}
@@ -166,8 +171,9 @@ export default function RegisterPage() {
           </div>
         </div>
         <div>
-          <label className="label-xs text-zinc-500 block mb-2">Timezone</label>
+          <label htmlFor="register-timezone" className="label-xs text-zinc-500 block mb-2">Timezone</label>
           <select
+            id="register-timezone"
             value={timezone}
             onChange={(e) => setTimezone(e.target.value)}
             className={inputClass}

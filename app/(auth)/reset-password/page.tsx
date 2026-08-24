@@ -83,8 +83,9 @@ export default function ResetPasswordPage() {
         )}
 
         <div>
-          <label className="text-sm text-zinc-400 block mb-1.5">New password</label>
+          <label htmlFor="reset-password-new" className="text-sm text-zinc-400 block mb-1.5">New password</label>
           <input
+            id="reset-password-new"
             required
             type="password"
             placeholder="Minimum 8 characters"
@@ -95,8 +96,9 @@ export default function ResetPasswordPage() {
         </div>
 
         <div>
-          <label className="text-sm text-zinc-400 block mb-1.5">Confirm password</label>
+          <label htmlFor="reset-password-confirm" className="text-sm text-zinc-400 block mb-1.5">Confirm password</label>
           <input
+            id="reset-password-confirm"
             required
             type="password"
             placeholder="Repeat your new password"

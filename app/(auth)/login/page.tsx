@@ -83,8 +83,9 @@ function LoginForm() {
           )}
 
           <div>
-            <label className="label-xs text-zinc-500 block mb-2">Email</label>
+            <label htmlFor="login-email" className="label-xs text-zinc-500 block mb-2">Email</label>
             <input
+              id="login-email"
               required
               type="email"
               placeholder="you@studio.com"
@@ -96,7 +97,7 @@ function LoginForm() {
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="label-xs text-zinc-500">Password</label>
+              <label htmlFor="login-password" className="label-xs text-zinc-500">Password</label>
               <button
                 type="button"
                 onClick={handleForgotPassword}
@@ -107,6 +108,7 @@ function LoginForm() {
               </button>
             </div>
             <input
+              id="login-password"
               required
               type="password"
               placeholder="••••••••"
