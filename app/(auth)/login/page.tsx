@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 function LoginForm() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,7 +33,15 @@ function LoginForm() {
       return;
     }
 
-    window.location.href = "/dashboard";
+    // Client-side (soft) navigation instead of a hard reload — the auth cookie
+    // is already set by signInWithPassword() above (@supabase/ssr writes it via
+    // document.cookie synchronously), so middleware and the /dashboard redirect
+    // hub both see the fresh session on the very next request either way. Same
+    // proven pattern app/(auth)/register/page.tsx already uses after signUp().
+    // Avoids a full browser reload (re-fetching every JS asset from scratch) on
+    // every single login, which was a measured, real contributor to login being
+    // by far the slowest interaction in the app (see OWNER_DASHBOARD_PERF.md).
+    router.push("/dashboard");
   }
 
   async function handleForgotPassword() {

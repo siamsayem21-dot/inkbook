@@ -21,10 +21,15 @@ describe("next.config.mjs — safe with no Sentry env vars", () => {
     }
   });
 
+  // Dynamically importing next.config.mjs also runs @sentry/nextjs's build-time
+  // webpack config processing, which is inherently heavier than a typical unit
+  // test — the default 5000ms budget flakes under concurrent system load
+  // (consistently ~2.6s standalone, 5.4-9s when the full suite runs alongside
+  // other CPU-heavy work) even though the import itself is correct every time.
   it("loads without throwing and produces a valid Next.js config object", async () => {
     const mod = await import("../../next.config.mjs");
     const config = mod.default;
     expect(config).toBeTruthy();
     expect(config.images?.remotePatterns?.[0]?.hostname).toBe("images.unsplash.com");
-  });
+  }, 20000);
 });
