@@ -55,10 +55,11 @@ export default function EmailLoginForm({ studioSlug, brandColor, textOnBrand }: 
         )}
 
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 block mb-2">
+          <label htmlFor="email-login-input" className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 block mb-2">
             Email
           </label>
           <input
+            id="email-login-input"
             required
             autoFocus
             type="email"

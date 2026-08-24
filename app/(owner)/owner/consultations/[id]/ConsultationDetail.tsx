@@ -527,8 +527,9 @@ export default function ConsultationDetail({
           <div className="px-5 py-4 space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className={labelCls}>Artist</label>
+                <label htmlFor="book-appointment-artist" className={labelCls}>Artist</label>
                 <select
+                  id="book-appointment-artist"
                   value={bookArtist}
                   onChange={(e) => setBookArtist(e.target.value)}
                   className={inputCls}
@@ -552,8 +553,9 @@ export default function ConsultationDetail({
                 )}
               </div>
               <div>
-                <label className={labelCls}>Date</label>
+                <label htmlFor="book-appointment-date" className={labelCls}>Date</label>
                 <input
+                  id="book-appointment-date"
                   type="date"
                   value={bookDate}
                   min={new Date().toISOString().split("T")[0]}
@@ -562,8 +564,9 @@ export default function ConsultationDetail({
                 />
               </div>
               <div>
-                <label className={labelCls}>Time</label>
+                <label htmlFor="book-appointment-time" className={labelCls}>Time</label>
                 <input
+                  id="book-appointment-time"
                   type="time"
                   value={bookTime}
                   onChange={(e) => setBookTime(e.target.value)}
@@ -790,8 +793,9 @@ export default function ConsultationDetail({
                   <div className="space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className={labelCls}>Final Price ($)</label>
+                        <label htmlFor="owner-consult-final-price" className={labelCls}>Final Price ($)</label>
                         <input
+                          id="owner-consult-final-price"
                           type="number"
                           min="0"
                           step="25"
@@ -802,8 +806,9 @@ export default function ConsultationDetail({
                         />
                       </div>
                       <div>
-                        <label className={labelCls}>Session Count</label>
+                        <label htmlFor="owner-consult-final-sessions" className={labelCls}>Session Count</label>
                         <input
+                          id="owner-consult-final-sessions"
                           type="number"
                           min="1"
                           step="1"
@@ -815,8 +820,9 @@ export default function ConsultationDetail({
                       </div>
                     </div>
                     <div>
-                      <label className={labelCls}>Notes for Client (optional)</label>
+                      <label htmlFor="owner-consult-quote-notes" className={labelCls}>Notes for Client (optional)</label>
                       <textarea
+                        id="owner-consult-quote-notes"
                         rows={3}
                         className={`${inputCls} resize-none`}
                         placeholder="Any additional notes, conditions, or context for the client…"
@@ -883,8 +889,9 @@ export default function ConsultationDetail({
 
             {!bookingId && (
               <div>
-                <label className={labelCls}>Artist</label>
+                <label htmlFor="deposit-collection-artist" className={labelCls}>Artist</label>
                 <select
+                  id="deposit-collection-artist"
                   value={bookArtist}
                   onChange={(e) => setBookArtist(e.target.value)}
                   className={inputCls}

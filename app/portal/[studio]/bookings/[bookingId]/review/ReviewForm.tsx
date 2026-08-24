@@ -79,8 +79,9 @@ export default function ReviewForm({ bookingId, redirectTo }: Props) {
       </div>
 
       <div>
-        <label className="text-sm text-gray-700 block mb-1.5">Your review</label>
+        <label htmlFor="review-quote" className="text-sm text-gray-700 block mb-1.5">Your review</label>
         <textarea
+          id="review-quote"
           required
           value={quote}
           onChange={(e) => setQuote(e.target.value)}

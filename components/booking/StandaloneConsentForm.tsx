@@ -174,8 +174,9 @@ export default function StandaloneConsentForm({ studioSlug, studioName }: Props)
         </h2>
         <div className="space-y-4">
           <div>
-            <label className={labelClass}>Full legal name</label>
+            <label htmlFor="scf-full-name" className={labelClass}>Full legal name</label>
             <input
+              id="scf-full-name"
               required
               type="text"
               value={fullName}
@@ -186,8 +187,9 @@ export default function StandaloneConsentForm({ studioSlug, studioName }: Props)
             />
           </div>
           <div>
-            <label className={labelClass}>Date of birth</label>
+            <label htmlFor="scf-dob" className={labelClass}>Date of birth</label>
             <input
+              id="scf-dob"
               required
               type="date"
               value={dob}
@@ -263,8 +265,9 @@ export default function StandaloneConsentForm({ studioSlug, studioName }: Props)
         </h2>
         <div className="space-y-4">
           <div>
-            <label className={labelClass}>Tattoo placement</label>
+            <label htmlFor="scf-placement" className={labelClass}>Tattoo placement</label>
             <input
+              id="scf-placement"
               required
               type="text"
               value={placement}
@@ -274,8 +277,9 @@ export default function StandaloneConsentForm({ studioSlug, studioName }: Props)
             />
           </div>
           <div>
-            <label className={labelClass}>Artist name</label>
+            <label htmlFor="scf-artist-name" className={labelClass}>Artist name</label>
             <input
+              id="scf-artist-name"
               required
               type="text"
               value={artistName}
@@ -285,8 +289,9 @@ export default function StandaloneConsentForm({ studioSlug, studioName }: Props)
             />
           </div>
           <div>
-            <label className={labelClass}>Design description</label>
+            <label htmlFor="scf-design-description" className={labelClass}>Design description</label>
             <textarea
+              id="scf-design-description"
               required
               rows={3}
               value={designDescription}
@@ -347,10 +352,11 @@ export default function StandaloneConsentForm({ studioSlug, studioName }: Props)
 
         {/* Signature */}
         <div>
-          <label className={labelClass}>
+          <label htmlFor="scf-signature" className={labelClass}>
             Digital signature — type your full legal name to sign
           </label>
           <input
+            id="scf-signature"
             required
             type="text"
             value={signature}

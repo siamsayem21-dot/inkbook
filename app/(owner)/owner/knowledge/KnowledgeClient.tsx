@@ -106,8 +106,9 @@ function AddEntryForm({
 
       {/* Title */}
       <div>
-        <label className="text-xs text-zinc-500 block mb-1.5">Title</label>
+        <label htmlFor="knowledge-title-new" className="text-xs text-zinc-500 block mb-1.5">Title</label>
         <input
+          id="knowledge-title-new"
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -125,8 +126,9 @@ function AddEntryForm({
 
       {/* Content */}
       <div>
-        <label className="text-xs text-zinc-500 block mb-1.5">Content</label>
+        <label htmlFor="knowledge-content-new" className="text-xs text-zinc-500 block mb-1.5">Content</label>
         <textarea
+          id="knowledge-content-new"
           rows={4}
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -283,12 +285,12 @@ function EntryCard({
       ) : (
         <div className="px-5 pb-5 space-y-3 border-t border-zinc-100 pt-4">
           <div>
-            <label className="text-xs text-zinc-500 block mb-1.5">Title</label>
-            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className={inputCls} />
+            <label htmlFor={`knowledge-title-${entry.id}`} className="text-xs text-zinc-500 block mb-1.5">Title</label>
+            <input id={`knowledge-title-${entry.id}`} type="text" value={title} onChange={(e) => setTitle(e.target.value)} className={inputCls} />
           </div>
           <div>
-            <label className="text-xs text-zinc-500 block mb-1.5">Content</label>
-            <textarea rows={4} value={content} onChange={(e) => setContent(e.target.value)} className={textareaCls} />
+            <label htmlFor={`knowledge-content-${entry.id}`} className="text-xs text-zinc-500 block mb-1.5">Content</label>
+            <textarea id={`knowledge-content-${entry.id}`} rows={4} value={content} onChange={(e) => setContent(e.target.value)} className={textareaCls} />
           </div>
           <label className="flex items-center gap-3 cursor-pointer select-none">
             <div

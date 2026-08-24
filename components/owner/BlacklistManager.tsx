@@ -126,8 +126,9 @@ export default function BlacklistManager({
           <p className="text-sm font-semibold text-zinc-900">Block a client</p>
 
           <div>
-            <label className="text-xs text-zinc-500 block mb-1.5">Email address</label>
+            <label htmlFor="blacklist-email" className="text-xs text-zinc-500 block mb-1.5">Email address</label>
             <input
+              id="blacklist-email"
               type="email"
               value={clientEmail}
               onChange={(e) => setEmail(e.target.value)}
@@ -137,8 +138,9 @@ export default function BlacklistManager({
           </div>
 
           <div>
-            <label className="text-xs text-zinc-500 block mb-1.5">Phone number</label>
+            <label htmlFor="blacklist-phone" className="text-xs text-zinc-500 block mb-1.5">Phone number</label>
             <input
+              id="blacklist-phone"
               type="tel"
               value={clientPhone}
               onChange={(e) => setPhone(e.target.value)}
@@ -151,10 +153,11 @@ export default function BlacklistManager({
           </div>
 
           <div>
-            <label className="text-xs text-zinc-500 block mb-1.5">
+            <label htmlFor="blacklist-reason" className="text-xs text-zinc-500 block mb-1.5">
               Reason <span className="text-zinc-400">(internal only)</span>
             </label>
             <input
+              id="blacklist-reason"
               type="text"
               value={reason}
               onChange={(e) => setReason(e.target.value)}

@@ -201,8 +201,9 @@ function Step1({
       </div>
       <div className="space-y-4">
         <div>
-          <label className={labelCls}>Full Name *</label>
+          <label htmlFor="consult-name" className={labelCls}>Full Name *</label>
           <input
+            id="consult-name"
             type="text"
             className={inputCls}
             placeholder="Alex Johnson"
@@ -212,8 +213,9 @@ function Step1({
           <FieldError msg={errors.name} />
         </div>
         <div>
-          <label className={labelCls}>Email Address *</label>
+          <label htmlFor="consult-email" className={labelCls}>Email Address *</label>
           <input
+            id="consult-email"
             type="email"
             className={inputCls}
             placeholder="alex@example.com"
@@ -223,8 +225,9 @@ function Step1({
           <FieldError msg={errors.email} />
         </div>
         <div>
-          <label className={labelCls}>Phone Number *</label>
+          <label htmlFor="consult-phone" className={labelCls}>Phone Number *</label>
           <input
+            id="consult-phone"
             type="tel"
             className={inputCls}
             placeholder="+1 (555) 000-0000"
@@ -271,8 +274,9 @@ function Step2({
       </div>
       <div className="space-y-4">
         <div>
-          <label className={labelCls}>Tattoo Description *</label>
+          <label htmlFor="consult-description" className={labelCls}>Tattoo Description *</label>
           <textarea
+            id="consult-description"
             className={`${inputCls} resize-none`}
             rows={4}
             placeholder="Describe your tattoo idea in detail. What imagery, theme, or concept are you going for? The more you share, the better we can prepare."
@@ -285,8 +289,9 @@ function Step2({
           </div>
         </div>
         <div>
-          <label className={labelCls}>Placement *</label>
+          <label htmlFor="consult-placement" className={labelCls}>Placement *</label>
           <input
+            id="consult-placement"
             type="text"
             className={inputCls}
             placeholder="e.g. Left forearm, right shoulder blade, full sleeve..."
@@ -297,8 +302,9 @@ function Step2({
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className={labelCls}>Estimated Size *</label>
+            <label htmlFor="consult-size" className={labelCls}>Estimated Size *</label>
             <select
+              id="consult-size"
               className={`${inputCls} cursor-pointer`}
               value={data.size}
               onChange={(e) => update("size", e.target.value)}
@@ -309,8 +315,9 @@ function Step2({
             <FieldError msg={errors.size} />
           </div>
           <div>
-            <label className={labelCls}>Budget Range *</label>
+            <label htmlFor="consult-budget" className={labelCls}>Budget Range *</label>
             <select
+              id="consult-budget"
               className={`${inputCls} cursor-pointer`}
               value={data.budget}
               onChange={(e) => update("budget", e.target.value)}
@@ -326,7 +333,7 @@ function Step2({
           <ColorPrefCards value={data.colorPref} onChange={(v) => update("colorPref", v)} />
         </div>
         <div>
-          <label className={labelCls}>Reference Images (optional, up to 5)</label>
+          <label htmlFor="consult-reference-images" className={labelCls}>Reference Images (optional, up to 5)</label>
           <div className="space-y-3">
             {photoPreviewUrls.length > 0 && (
               <div className="flex flex-wrap gap-2">
@@ -352,6 +359,7 @@ function Step2({
             {photoPreviewUrls.length < 5 && (
               <>
                 <input
+                  id="consult-reference-images"
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
@@ -422,11 +430,12 @@ function Step3({
       <div className="space-y-4">
         {data.questions.map((question, i) => (
           <div key={i} className="bg-[#0d0d0d] border border-[#1E1E1E] rounded-xl p-4">
-            <label className="block text-sm text-zinc-300 mb-2 leading-relaxed">
+            <label htmlFor={`consult-followup-${i}`} className="block text-sm text-zinc-300 mb-2 leading-relaxed">
               <span className="text-[#D4A853] text-xs mr-2">{i + 1}.</span>
               {question}
             </label>
             <input
+              id={`consult-followup-${i}`}
               type="text"
               className={inputCls}
               placeholder="Your answer (optional)..."
@@ -515,8 +524,9 @@ function Step4({
 
       {/* Style override */}
       <div>
-        <label className={labelCls}>Override Style (optional)</label>
+        <label htmlFor="consult-style-override" className={labelCls}>Override Style (optional)</label>
         <select
+          id="consult-style-override"
           className={`${inputCls} cursor-pointer`}
           value={data.styleOverride || data.detectedStyle}
           onChange={(e) => update("styleOverride", e.target.value)}

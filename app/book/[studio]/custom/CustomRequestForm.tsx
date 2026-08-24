@@ -256,8 +256,9 @@ export default function CustomRequestForm({
         <div className="space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className={lc}>Full Legal Name *</label>
+              <label htmlFor="cr-client-name" className={lc}>Full Legal Name *</label>
               <input
+                id="cr-client-name"
                 type="text"
                 value={form.clientName}
                 onChange={(e) => set("clientName", e.target.value)}
@@ -268,8 +269,9 @@ export default function CustomRequestForm({
               {err("clientName") && <p className="text-red-400 text-xs mt-1">{err("clientName")}</p>}
             </div>
             <div>
-              <label className={lc}>Email *</label>
+              <label htmlFor="cr-client-email" className={lc}>Email *</label>
               <input
+                id="cr-client-email"
                 type="email"
                 value={form.clientEmail}
                 onChange={(e) => set("clientEmail", e.target.value)}
@@ -282,8 +284,9 @@ export default function CustomRequestForm({
           </div>
 
           <div>
-            <label className={lc}>Phone *</label>
+            <label htmlFor="cr-client-phone" className={lc}>Phone *</label>
             <input
+              id="cr-client-phone"
               type="tel"
               value={form.clientPhone}
               onChange={(e) => set("clientPhone", e.target.value)}
@@ -295,8 +298,9 @@ export default function CustomRequestForm({
           </div>
 
           <div>
-            <label className={lc}>Preferred Artist</label>
+            <label htmlFor="cr-artist" className={lc}>Preferred Artist</label>
             <select
+              id="cr-artist"
               value={form.artistId}
               onChange={(e) => set("artistId", e.target.value)}
               className={ic}
@@ -321,8 +325,9 @@ export default function CustomRequestForm({
         {header}
         <div className="space-y-5">
           <div>
-            <label className={lc}>Tattoo Style *</label>
+            <label htmlFor="cr-style" className={lc}>Tattoo Style *</label>
             <select
+              id="cr-style"
               value={form.style}
               onChange={(e) => set("style", e.target.value)}
               onBlur={() => touch("style")}
@@ -335,8 +340,9 @@ export default function CustomRequestForm({
           </div>
 
           <div>
-            <label className={lc}>Placement *</label>
+            <label htmlFor="cr-placement" className={lc}>Placement *</label>
             <input
+              id="cr-placement"
               type="text"
               value={form.placement}
               onChange={(e) => set("placement", e.target.value)}
@@ -349,8 +355,9 @@ export default function CustomRequestForm({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className={lc}>Size *</label>
+              <label htmlFor="cr-size" className={lc}>Size *</label>
               <select
+                id="cr-size"
                 value={form.size}
                 onChange={(e) => set("size", e.target.value)}
                 onBlur={() => touch("size")}
@@ -362,8 +369,9 @@ export default function CustomRequestForm({
               {err("size") && <p className="text-red-400 text-xs mt-1">{err("size")}</p>}
             </div>
             <div>
-              <label className={lc}>Budget Range *</label>
+              <label htmlFor="cr-budget" className={lc}>Budget Range *</label>
               <select
+                id="cr-budget"
                 value={form.budgetRange}
                 onChange={(e) => set("budgetRange", e.target.value)}
                 onBlur={() => touch("budgetRange")}
@@ -377,13 +385,14 @@ export default function CustomRequestForm({
           </div>
 
           <div>
-            <label className={lc}>
+            <label htmlFor="cr-description" className={lc}>
               Description *{" "}
               <span className="normal-case tracking-normal text-zinc-600">
                 ({form.description.trim().length}/20 min)
               </span>
             </label>
             <textarea
+              id="cr-description"
               rows={5}
               value={form.description}
               onChange={(e) => set("description", e.target.value)}
@@ -408,7 +417,7 @@ export default function CustomRequestForm({
 
         {/* Reference photos */}
         <div>
-          <label className={lc}>
+          <label htmlFor="cr-photos" className={lc}>
             Reference Photos{" "}
             <span className="normal-case tracking-normal text-zinc-600">
               (optional · up to {MAX_PHOTOS})
@@ -457,6 +466,7 @@ export default function CustomRequestForm({
           )}
 
           <input
+            id="cr-photos"
             ref={fileRef}
             type="file"
             accept={ACCEPTED}
@@ -468,8 +478,9 @@ export default function CustomRequestForm({
 
         {/* Availability */}
         <div>
-          <label className={lc}>Availability</label>
+          <label htmlFor="cr-availability" className={lc}>Availability</label>
           <input
+            id="cr-availability"
             type="text"
             value={form.availabilityNote}
             onChange={(e) => set("availabilityNote", e.target.value)}

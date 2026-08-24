@@ -46,8 +46,8 @@ export default function NewAgreementForm({ bookingOptions }: { bookingOptions: {
       {error && <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3">{error}</div>}
 
       <div>
-        <label className={labelClass}>Session *</label>
-        <select required value={bookingId} onChange={(e) => setBookingId(e.target.value)} className={inputClass}>
+        <label htmlFor="agreement-session" className={labelClass}>Session *</label>
+        <select id="agreement-session" required value={bookingId} onChange={(e) => setBookingId(e.target.value)} className={inputClass}>
           {bookingOptions.map((o) => (
             <option key={o.id} value={o.id}>{o.label}</option>
           ))}
@@ -55,8 +55,9 @@ export default function NewAgreementForm({ bookingOptions }: { bookingOptions: {
       </div>
 
       <div>
-        <label className={labelClass}>Design Description *</label>
+        <label htmlFor="agreement-design-description" className={labelClass}>Design Description *</label>
         <textarea
+          id="agreement-design-description"
           required rows={3} value={designDescription} onChange={(e) => setDesignDescription(e.target.value)}
           placeholder="Exact scope agreed for this session — what's being tattooed, style, details"
           className={`${inputClass} resize-none`}
@@ -65,26 +66,27 @@ export default function NewAgreementForm({ bookingOptions }: { bookingOptions: {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className={labelClass}>Placement *</label>
-          <input required type="text" value={placement} onChange={(e) => setPlacement(e.target.value)} placeholder="e.g. Left forearm" className={inputClass} />
+          <label htmlFor="agreement-placement" className={labelClass}>Placement *</label>
+          <input id="agreement-placement" required type="text" value={placement} onChange={(e) => setPlacement(e.target.value)} placeholder="e.g. Left forearm" className={inputClass} />
         </div>
         <div>
-          <label className={labelClass}>Size (optional)</label>
-          <input type="text" value={sizeInches} onChange={(e) => setSizeInches(e.target.value)} placeholder={'e.g. 4"x6"'} className={inputClass} />
+          <label htmlFor="agreement-size" className={labelClass}>Size (optional)</label>
+          <input id="agreement-size" type="text" value={sizeInches} onChange={(e) => setSizeInches(e.target.value)} placeholder={'e.g. 4"x6"'} className={inputClass} />
         </div>
       </div>
 
       <div>
-        <label className={labelClass}>Agreed Price (USD) *</label>
+        <label htmlFor="agreement-price" className={labelClass}>Agreed Price (USD) *</label>
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm">$</span>
-          <input required type="number" min="0" step="1" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="300" className={`${inputClass} pl-7`} />
+          <input id="agreement-price" required type="number" min="0" step="1" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="300" className={`${inputClass} pl-7`} />
         </div>
       </div>
 
       <div className="pt-2 border-t border-zinc-100">
-        <label className={labelClass}>Client Signature * <span className="text-zinc-400">(client types their full legal name to confirm)</span></label>
+        <label htmlFor="agreement-signature" className={labelClass}>Client Signature * <span className="text-zinc-400">(client types their full legal name to confirm)</span></label>
         <input
+          id="agreement-signature"
           required type="text" value={signature} onChange={(e) => setSignature(e.target.value)}
           placeholder="Client's full legal name"
           className={inputClass}

@@ -95,4 +95,54 @@
 - Working tree clean after commit; no other files touched.
 
 ## Current status
-- Mission complete for this session. See the final report delivered to Siam in chat for the full summary, remaining issues, and verdict.
+- 2026-08-24 session complete. See the final report delivered to Siam in chat for that session's summary.
+
+---
+
+# 2026-08-24/25 — Final Cleanup + Focused Verification Pass
+
+Follow-up pass per Siam's explicit instruction: do not restart the full QA mission, finish the remaining confidence gaps (accessibility batch 2, AI Artist Match, Review/Follow-up flow), then a short regression. Not a from-scratch re-run.
+
+## Task 1 — RESULT: DONE (accessibility label-fix batch 2/2)
+- Fixed the remaining 21 files listed in ISSUE-001 as deferred, using the same additive `htmlFor`/`id` pattern as batch 1, zero visual/behavior change.
+- Found and fixed 1 additional genuinely-affected file not in the original list: `app/book/[studio]/consult/ConsultationForm.tsx` (11 labels) — missed in the original session because it was tested via placeholder-based Playwright locators as a workaround at the time, so the gap went unnoticed until this pass's repo-wide re-sweep caught it (`htmlFor=0` while `labels=11`). This is the most important file in the whole set — the core client-facing consultation form.
+- Correction to the original finding: `components/booking/ConsentForm.tsx`'s "1 remaining unlinked label" is not actually a bug — it's the checkbox's `<label><input type="checkbox"/>text</label>` wrapping pattern, which is a fully valid, standard implicit-label association (no `htmlFor` needed). No fix applied there; ISSUE-001 corrected to reflect this.
+- Final repo-wide sweep (`labels` vs `htmlFor` count per file) confirms every remaining gap is one of: (a) a custom widget with no single native input to associate (star-rating button groups, a category button-grid, a color-swatch toggle) — not fixable via `htmlFor` without a UI redesign, out of scope; (b) a valid wrapping-label checkbox/file-trigger; (c) dead/orphaned code intentionally left untouched this pass (see below).
+- **New finding — 2 more orphaned/dead-code files** (same category as ISSUE-002, not fixed, not deleted): `app/(owner)/owner/artists/[artistId]/page.tsx` (hardcoded fake stats "14"/"$3,200"/"2%", unwired Save/Remove buttons, confirmed unreachable — zero real links to `/owner/artists/[artistId]`) and `components/owner/ArtistTable.tsx` (unused component, links to a nonexistent `/artists/[id]` route). Added to ISSUE-002.
+- Verified: `tsc --noEmit` clean, `next lint` clean, `npm run build` clean (full production build, all routes compiled), `npm run test` 601/601, plus a live Playwright `getByLabel()` regression check against the newly-fixed `ConsultationForm.tsx`/`StudioSettingsClient.tsx`/owner `ConsultationDetail.tsx` fields — all resolve correctly now.
+- Commit: batch 2 + `DEFERRED_ISSUES.md` #8 correction, committed together (see below).
+
+## Task 2 — RESULT: PASS (AI Artist Match, full live verification)
+- `DEFERRED_ISSUES.md` #8 was stale — it said "not built," but the feature (`lib/artist-match.ts` + `app/api/ai/artist-match/route.ts`, wired into owner `ConsultationDetail.tsx`) was actually built in an earlier session and never re-documented. Corrected to ✅ RESOLVED with full evidence.
+- Real QA setup: fresh studio, 2 real artists with distinct `styles` (`["Fine Line"]` vs `["Traditional"]`) via the real invite→accept flow (hit the Solo plan's 1-artist limit mid-setup — a real, correctly-enforced product behavior, not a bug; bumped this QA studio to the `studio` plan tier to continue testing with 2 artists).
+- Real client consultation submitted via the (now label-fixed) public wizard, description written to genuinely read as fine-line minimalist work.
+- 4 separate real `/api/ai/artist-match` Claude calls, all consistent: Fine Line artist → `score: 100, isRecommended: true` with accurate reasoning; Traditional artist → `score: 95, isRecommended: false`, correctly explained. Confirmed live in the owner UI: "Recommended" optgroup shows only the correctly-matched artist, "Other Artists" shows the other, in both the Book-Appointment and Deposit-Collection artist selects.
+- Isolation/safety verified directly against the API: scoped correctly to only the given studio's own artists (2, not leaking any other studio's); missing `studioId` → safe `400`; nonexistent `studioId` → safe empty-list `200` (deterministic fallback), no crash either way.
+- No bugs found.
+
+## Task 3 — RESULT: PASS (Review/Follow-up flow, full live verification)
+- Architecture note (not a bug, confirmed via the code's own comment): review eligibility — and "My Bookings" generally — is deliberately scoped to bookings reachable via an `ai_chats` → `consultations.booking_id` chain (the Client Portal's own authenticated AI-chat consultation flow), not by email-matching a `clients` row from the anonymous public wizard. This was an explicit, considered design decision (an email-match join was evaluated and rejected as unsafe), not an oversight.
+- Real client authentication without needing real email delivery: `supabase.auth.admin.generateLink` + `verifyOtp({type:'email', token_hash})` server-side to get a genuine access/refresh token pair, then injected into the browser via a dynamically-loaded `@supabase/ssr` client calling `setSession()` — a legitimate real-auth technique, not a bypass (same underlying Supabase session mechanism a real magic-link click produces). `client_accounts` row confirmed auto-created on first authenticated request.
+- The `ai_chats` linkage itself was seeded directly (mirroring exactly what the real chat-completion code writes) rather than driving the full multi-turn AI chat UI through the browser — that chat feature is a separate, already-verified capability from an earlier project phase; this pass's focus was the review flow it unlocks, not re-verifying the chat UI.
+- Full real journey from there: owner quote → real Stripe TEST deposit payment with real CLI-forwarded, signature-verified webhook reconciliation → real consent form submission (real file upload) → owner schedule assignment → artist "Mark Session Completed" → client review submission (5 stars, real text) → **session agreement** (closes the one part of the critical journey not otherwise exercised this pass).
+- Review submission fully verified: `reviews` row correct (`rating: 5`, correct `client_account_id`, correct `booking_id`), starts `is_public: false` (owner-moderation gate, by design), owner's `/owner/reviews` page correctly shows it "Pending" approval. Duplicate-prevention confirmed (re-visiting the review page after submitting redirects away, persists across a fresh page load). Isolation confirmed (a different client account cannot reach/review the same booking).
+- 2 apparent test failures during the run were investigated and confirmed to be this session's own test-timing artifacts (DB/redirect checks racing ahead of an async write completing), not product bugs — each was independently disproven by a subsequent check in the same run succeeding correctly.
+- No bugs found.
+
+## Task 4 — RESULT: PASS (critical-journey closure + short regression)
+- Session Agreement completed for the Task 3 booking via the real artist UI (`/artist/agreements/new`), correctly offered in the booking dropdown, saved without error, `session_agreements` row verified correct. Artist booking detail confirmed consistent (Completed status, deposit paid) — closes every stage of the critical journey (Studio Page → Consultation → Artist Match → Quote → Deposit → Booking → Consent → Appointment → Agreement → Completion → Review) with real, live-verified evidence from Tasks 2-4 of this pass.
+- Full regression: `tsc --noEmit` clean, `next lint` clean, **production build clean** (first full build run this session — confirms nothing dev-mode's JIT compilation was masking), `npm run test` 601/601.
+- Isolation and mobile critical-path were both already verified fresh in the 2026-08-24 session (7/7 and 4/4 respectively) and not re-run from scratch per the "don't restart the mission" instruction — no code changed in those specific areas since, beyond the additive label fixes already regression-tested via `getByLabel`.
+
+## QA data cleanup (this pass) — RESULT: COMPLETE, VERIFIED CLEAN
+- Dry-run confirmed scope (1 QA-tagged studio, 6 QA auth accounts, all clearly tagged/pattern-matched to this pass) before explicit confirmation and deletion (same auto-mode classifier gate as before).
+- Independently re-verified after deletion: 0 remaining rows across bookings/artists/clients/consultations/ai_chats/artist_invites/session_agreements/reviews/consent_forms for the target studio id; the specific booking used throughout Tasks 2-4 confirmed gone; 0 target studios/auth users remain.
+- Local dev server and `stripe listen` forwarder both stopped at the end of this pass.
+
+## Fixes applied and committed this pass
+- Accessibility label-fix batch 2/2 (21 files + `ConsultationForm.tsx`) — additive-only, zero visual change.
+- `DEFERRED_ISSUES.md` #8 corrected from stale "not built" to ✅ RESOLVED with live verification evidence.
+- `REAL_STUDIO_ISSUES.md` ISSUE-001 marked fully resolved (both batches); ISSUE-002 expanded with 2 newly-found orphaned files.
+
+## Current status
+- Final Cleanup + Focused Verification pass complete. See the final report delivered to Siam in chat for the full summary and verdict.

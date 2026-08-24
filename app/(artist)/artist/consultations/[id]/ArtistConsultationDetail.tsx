@@ -580,8 +580,9 @@ export default function ArtistConsultationDetail({
                   <div className="space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className={labelCls}>Final Price ($)</label>
+                        <label htmlFor="artist-quote-final-price" className={labelCls}>Final Price ($)</label>
                         <input
+                          id="artist-quote-final-price"
                           type="number"
                           min="0"
                           step="25"
@@ -592,8 +593,9 @@ export default function ArtistConsultationDetail({
                         />
                       </div>
                       <div>
-                        <label className={labelCls}>Session Count</label>
+                        <label htmlFor="artist-quote-final-sessions" className={labelCls}>Session Count</label>
                         <input
+                          id="artist-quote-final-sessions"
                           type="number"
                           min="1"
                           step="1"
@@ -605,8 +607,9 @@ export default function ArtistConsultationDetail({
                       </div>
                     </div>
                     <div>
-                      <label className={labelCls}>Notes for Client (optional)</label>
+                      <label htmlFor="artist-quote-notes" className={labelCls}>Notes for Client (optional)</label>
                       <textarea
+                        id="artist-quote-notes"
                         rows={3}
                         className={`${inputCls} resize-none`}
                         placeholder="Any additional notes, conditions, or context for the client…"

@@ -100,8 +100,9 @@ export default function QuoteForm({ requestId, currentStatus }: Props) {
       {view === "approve" && (
         <form onSubmit={handleApprove} className="space-y-4">
           <div>
-            <label className="block text-xs text-zinc-400 mb-1.5">Total Quote ($) *</label>
+            <label htmlFor="quote-total" className="block text-xs text-zinc-400 mb-1.5">Total Quote ($) *</label>
             <input
+              id="quote-total"
               required type="number" min="1" step="0.01"
               className={inputCls} placeholder="e.g. 500.00"
               value={quoteAmount} onChange={(e) => setQuoteAmount(e.target.value)}
@@ -109,8 +110,9 @@ export default function QuoteForm({ requestId, currentStatus }: Props) {
             <p className="text-[11px] text-zinc-400 mt-1">Full session price shown to the client</p>
           </div>
           <div>
-            <label className="block text-xs text-zinc-400 mb-1.5">Deposit Amount ($) *</label>
+            <label htmlFor="quote-deposit" className="block text-xs text-zinc-400 mb-1.5">Deposit Amount ($) *</label>
             <input
+              id="quote-deposit"
               required type="number" min="1" step="0.01"
               className={inputCls} placeholder="e.g. 150.00"
               value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)}
@@ -118,8 +120,9 @@ export default function QuoteForm({ requestId, currentStatus }: Props) {
             <p className="text-[11px] text-zinc-400 mt-1">Collected now to secure the appointment — must be less than the total quote</p>
           </div>
           <div>
-            <label className="block text-xs text-zinc-400 mb-1.5">Note to Client (optional)</label>
+            <label htmlFor="quote-note" className="block text-xs text-zinc-400 mb-1.5">Note to Client (optional)</label>
             <textarea
+              id="quote-note"
               rows={3} className={`${inputCls} resize-none`}
               placeholder="Any details about the session, next steps…"
               value={artistNote} onChange={(e) => setArtistNote(e.target.value)}
@@ -145,8 +148,9 @@ export default function QuoteForm({ requestId, currentStatus }: Props) {
       {view === "decline" && (
         <form onSubmit={handleDecline} className="space-y-4">
           <div>
-            <label className="block text-xs text-zinc-400 mb-1.5">Reason *</label>
+            <label htmlFor="decline-reason" className="block text-xs text-zinc-400 mb-1.5">Reason *</label>
             <textarea
+              id="decline-reason"
               required rows={4} className={`${inputCls} resize-none`}
               placeholder="Let the client know why — schedule full, style not in your range, etc."
               value={declineReason} onChange={(e) => setDeclineReason(e.target.value)}

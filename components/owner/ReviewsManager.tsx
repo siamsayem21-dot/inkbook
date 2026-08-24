@@ -170,8 +170,9 @@ export default function ReviewsManager({
           <p className="text-sm font-semibold text-zinc-900">Add a testimonial</p>
 
           <div>
-            <label className="text-xs text-zinc-500 block mb-1.5">Client name</label>
+            <label htmlFor="review-author-name" className="text-xs text-zinc-500 block mb-1.5">Client name</label>
             <input
+              id="review-author-name"
               type="text"
               value={authorName}
               onChange={(e) => setAuthorName(e.target.value)}
@@ -207,8 +208,9 @@ export default function ReviewsManager({
           </div>
 
           <div>
-            <label className="text-xs text-zinc-500 block mb-1.5">Review text</label>
+            <label htmlFor="review-quote-text" className="text-xs text-zinc-500 block mb-1.5">Review text</label>
             <textarea
+              id="review-quote-text"
               value={quote}
               onChange={(e) => setQuote(e.target.value)}
               rows={4}

@@ -122,8 +122,9 @@ export default function StudioSettingsClient({
       )}
 
       <div>
-        <label className="text-sm text-zinc-500 block mb-1.5">Studio name</label>
+        <label htmlFor="studio-name" className="text-sm text-zinc-500 block mb-1.5">Studio name</label>
         <input
+          id="studio-name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -133,9 +134,10 @@ export default function StudioSettingsClient({
       </div>
 
       <div>
-        <label className="text-sm text-zinc-500 block mb-1.5">Subdomain (read-only)</label>
+        <label htmlFor="studio-subdomain" className="text-sm text-zinc-500 block mb-1.5">Subdomain (read-only)</label>
         <div className="flex items-center">
           <input
+            id="studio-subdomain"
             type="text"
             value={initialSubdomain}
             readOnly
@@ -149,8 +151,9 @@ export default function StudioSettingsClient({
       </div>
 
       <div>
-        <label className="text-sm text-zinc-500 block mb-1.5">Address</label>
+        <label htmlFor="studio-address" className="text-sm text-zinc-500 block mb-1.5">Address</label>
         <input
+          id="studio-address"
           type="text"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
@@ -160,8 +163,9 @@ export default function StudioSettingsClient({
       </div>
 
       <div>
-        <label className="text-sm text-zinc-500 block mb-1.5">State (drives consent form templates)</label>
+        <label htmlFor="studio-state" className="text-sm text-zinc-500 block mb-1.5">State (drives consent form templates)</label>
         <select
+          id="studio-state"
           value={state}
           onChange={(e) => setState(e.target.value)}
           className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-4 py-2.5 text-sm text-zinc-900 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-colors"
@@ -174,8 +178,9 @@ export default function StudioSettingsClient({
       </div>
 
       <div>
-        <label className="text-sm text-zinc-500 block mb-1.5">Timezone</label>
+        <label htmlFor="studio-timezone" className="text-sm text-zinc-500 block mb-1.5">Timezone</label>
         <select
+          id="studio-timezone"
           value={timezone}
           onChange={(e) => setTimezone(e.target.value)}
           className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-4 py-2.5 text-sm text-zinc-900 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-colors"
@@ -193,7 +198,7 @@ export default function StudioSettingsClient({
 
         {/* Logo upload */}
         <div>
-          <label className="text-sm text-zinc-500 block mb-1.5">Studio Logo</label>
+          <label htmlFor="studio-logo" className="text-sm text-zinc-500 block mb-1.5">Studio Logo</label>
           <div className="flex items-center gap-4">
             {logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -209,6 +214,7 @@ export default function StudioSettingsClient({
             )}
             <div>
               <input
+                id="studio-logo"
                 ref={fileInputRef}
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
@@ -232,7 +238,7 @@ export default function StudioSettingsClient({
         {/* Color pickers */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-sm text-zinc-500 block mb-1.5">Primary Color</label>
+            <label htmlFor="studio-primary-color" className="text-sm text-zinc-500 block mb-1.5">Primary Color</label>
             <div className="flex items-center gap-2">
               <input
                 type="color"
@@ -241,6 +247,7 @@ export default function StudioSettingsClient({
                 className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0"
               />
               <input
+                id="studio-primary-color"
                 type="text"
                 value={primaryColor}
                 onChange={(e) => setPrimaryColor(e.target.value)}
@@ -251,7 +258,7 @@ export default function StudioSettingsClient({
             </div>
           </div>
           <div>
-            <label className="text-sm text-zinc-500 block mb-1.5">Secondary Color</label>
+            <label htmlFor="studio-secondary-color" className="text-sm text-zinc-500 block mb-1.5">Secondary Color</label>
             <div className="flex items-center gap-2">
               <input
                 type="color"
@@ -260,6 +267,7 @@ export default function StudioSettingsClient({
                 className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0"
               />
               <input
+                id="studio-secondary-color"
                 type="text"
                 value={secondaryColor}
                 onChange={(e) => setSecondaryColor(e.target.value)}
@@ -273,8 +281,9 @@ export default function StudioSettingsClient({
 
         {/* Font selector */}
         <div>
-          <label className="text-sm text-zinc-500 block mb-1.5">Font Style</label>
+          <label htmlFor="studio-font-choice" className="text-sm text-zinc-500 block mb-1.5">Font Style</label>
           <select
+            id="studio-font-choice"
             value={fontChoice}
             onChange={(e) => setFontChoice(e.target.value)}
             className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-4 py-2.5 text-sm text-zinc-900 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-colors"

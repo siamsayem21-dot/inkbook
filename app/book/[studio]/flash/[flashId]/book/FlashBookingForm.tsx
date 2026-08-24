@@ -101,8 +101,9 @@ export default function FlashBookingForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className={labelClass}>Full legal name</label>
+          <label htmlFor="flash-full-name" className={labelClass}>Full legal name</label>
           <input
+            id="flash-full-name"
             required
             type="text"
             value={fullName}
@@ -112,8 +113,9 @@ export default function FlashBookingForm({
           />
         </div>
         <div>
-          <label className={labelClass}>Email</label>
+          <label htmlFor="flash-email" className={labelClass}>Email</label>
           <input
+            id="flash-email"
             required
             type="email"
             value={email}
@@ -125,8 +127,9 @@ export default function FlashBookingForm({
       </div>
 
       <div>
-        <label className={labelClass}>Phone (for SMS reminders)</label>
+        <label htmlFor="flash-phone" className={labelClass}>Phone (for SMS reminders)</label>
         <input
+          id="flash-phone"
           required
           type="tel"
           value={phone}
@@ -138,8 +141,9 @@ export default function FlashBookingForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className={labelClass}>Preferred date</label>
+          <label htmlFor="flash-date" className={labelClass}>Preferred date</label>
           <input
+            id="flash-date"
             required
             type="date"
             min={today}
@@ -149,8 +153,9 @@ export default function FlashBookingForm({
           />
         </div>
         <div>
-          <label className={labelClass}>Preferred time</label>
+          <label htmlFor="flash-time" className={labelClass}>Preferred time</label>
           <select
+            id="flash-time"
             required
             value={time}
             onChange={(e) => setTime(e.target.value)}

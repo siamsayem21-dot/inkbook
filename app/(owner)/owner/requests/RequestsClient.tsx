@@ -280,8 +280,9 @@ function ApproveModal({
 
         {needsArtist && (
           <div>
-            <label className="block text-xs text-zinc-400 mb-1.5">Assign Artist *</label>
+            <label htmlFor="requests-assign-artist" className="block text-xs text-zinc-400 mb-1.5">Assign Artist *</label>
             <select
+              id="requests-assign-artist"
               value={artistId}
               onChange={(e) => setArtistId(e.target.value)}
               className={inputCls}
@@ -296,8 +297,9 @@ function ApproveModal({
         )}
 
         <div>
-          <label className="block text-xs text-zinc-400 mb-1.5">Total Quote ($) *</label>
+          <label htmlFor="requests-total-quote" className="block text-xs text-zinc-400 mb-1.5">Total Quote ($) *</label>
           <input
+            id="requests-total-quote"
             type="number" min="1" step="0.01" autoFocus
             value={quote} onChange={(e) => setQuote(e.target.value)}
             className={inputCls} placeholder="e.g. 500.00"
@@ -306,8 +308,9 @@ function ApproveModal({
         </div>
 
         <div>
-          <label className="block text-xs text-zinc-400 mb-1.5">Deposit Amount ($) *</label>
+          <label htmlFor="requests-deposit-amount" className="block text-xs text-zinc-400 mb-1.5">Deposit Amount ($) *</label>
           <input
+            id="requests-deposit-amount"
             type="number" min="1" step="0.01"
             value={deposit} onChange={(e) => setDeposit(e.target.value)}
             className={inputCls} placeholder="e.g. 150.00"
@@ -316,8 +319,9 @@ function ApproveModal({
         </div>
 
         <div>
-          <label className="block text-xs text-zinc-400 mb-1.5">Note to Client (optional)</label>
+          <label htmlFor="requests-note" className="block text-xs text-zinc-400 mb-1.5">Note to Client (optional)</label>
           <textarea
+            id="requests-note"
             rows={3} value={note} onChange={(e) => setNote(e.target.value)}
             className={`${inputCls} resize-none`}
             placeholder="Any details about the session, next steps…"
@@ -379,8 +383,9 @@ function DeclineModal({
       >
         <h2 className="text-base font-semibold text-zinc-900">Decline Request</h2>
         <div>
-          <label className="block text-xs text-zinc-400 mb-1.5">Reason *</label>
+          <label htmlFor="requests-decline-reason" className="block text-xs text-zinc-400 mb-1.5">Reason *</label>
           <textarea
+            id="requests-decline-reason"
             rows={4} autoFocus value={reason} onChange={(e) => setReason(e.target.value)}
             className={`${inputCls} resize-none`}
             placeholder="Let the client know why…"

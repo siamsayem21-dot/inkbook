@@ -223,7 +223,7 @@ export default function FlashClient({
         {/* Image upload */}
         {isCreate && (
           <div>
-            <label className={labelClass}>Design Image *</label>
+            <label htmlFor="flash-design-image" className={labelClass}>Design Image *</label>
             <div
               onClick={() => fileRef.current?.click()}
               className="border border-dashed border-zinc-300 rounded-xl flex items-center justify-center cursor-pointer hover:border-violet-300 transition-colors overflow-hidden"
@@ -237,6 +237,7 @@ export default function FlashClient({
               )}
             </div>
             <input
+              id="flash-design-image"
               ref={fileRef}
               type="file"
               accept="image/jpeg,image/png,image/webp"
@@ -248,8 +249,9 @@ export default function FlashClient({
 
         {/* Title */}
         <div>
-          <label className={labelClass}>Title *</label>
+          <label htmlFor="flash-title" className={labelClass}>Title *</label>
           <input
+            id="flash-title"
             required
             type="text"
             value={form.title}
@@ -261,8 +263,9 @@ export default function FlashClient({
 
         {/* Description */}
         <div>
-          <label className={labelClass}>Description</label>
+          <label htmlFor="flash-description" className={labelClass}>Description</label>
           <textarea
+            id="flash-description"
             rows={2}
             value={form.description}
             onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
@@ -274,10 +277,11 @@ export default function FlashClient({
         <div className="grid grid-cols-2 gap-4">
           {/* Price */}
           <div>
-            <label className={labelClass}>Price (USD) *</label>
+            <label htmlFor="flash-price" className={labelClass}>Price (USD) *</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm">$</span>
               <input
+                id="flash-price"
                 required
                 type="number"
                 min="0"
@@ -292,8 +296,9 @@ export default function FlashClient({
 
           {/* Category */}
           <div>
-            <label className={labelClass}>Category</label>
+            <label htmlFor="flash-category" className={labelClass}>Category</label>
             <select
+              id="flash-category"
               value={form.category}
               onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
               className={inputClass}

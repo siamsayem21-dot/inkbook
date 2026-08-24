@@ -148,8 +148,9 @@ export default function BookingForm({ studioSlug, artistId }: Props) {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className={labelClass}>Full legal name</label>
+          <label htmlFor="booking-full-name" className={labelClass}>Full legal name</label>
           <input
+            id="booking-full-name"
             required
             type="text"
             value={fullName}
@@ -159,8 +160,9 @@ export default function BookingForm({ studioSlug, artistId }: Props) {
           />
         </div>
         <div>
-          <label className={labelClass}>Email</label>
+          <label htmlFor="booking-email" className={labelClass}>Email</label>
           <input
+            id="booking-email"
             required
             type="email"
             value={email}
@@ -176,8 +178,9 @@ export default function BookingForm({ studioSlug, artistId }: Props) {
       </div>
 
       <div>
-        <label className={labelClass}>Phone (for SMS reminders)</label>
+        <label htmlFor="booking-phone" className={labelClass}>Phone (for SMS reminders)</label>
         <input
+          id="booking-phone"
           required
           type="tel"
           value={phone}
@@ -189,8 +192,9 @@ export default function BookingForm({ studioSlug, artistId }: Props) {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className={labelClass}>Preferred date</label>
+          <label htmlFor="booking-date" className={labelClass}>Preferred date</label>
           <input
+            id="booking-date"
             required
             type="date"
             min={today}
@@ -200,8 +204,9 @@ export default function BookingForm({ studioSlug, artistId }: Props) {
           />
         </div>
         <div>
-          <label className={labelClass}>Preferred time</label>
+          <label htmlFor="booking-time" className={labelClass}>Preferred time</label>
           <select
+            id="booking-time"
             required
             value={time}
             onChange={(e) => setTime(e.target.value)}
@@ -221,8 +226,9 @@ export default function BookingForm({ studioSlug, artistId }: Props) {
       </div>
 
       <div>
-        <label className={labelClass}>Tattoo style</label>
+        <label htmlFor="booking-style" className={labelClass}>Tattoo style</label>
         <select
+          id="booking-style"
           required
           value={style}
           onChange={(e) => setStyle(e.target.value)}
@@ -236,8 +242,9 @@ export default function BookingForm({ studioSlug, artistId }: Props) {
       </div>
 
       <div>
-        <label className={labelClass}>Description &amp; placement</label>
+        <label htmlFor="booking-description" className={labelClass}>Description &amp; placement</label>
         <textarea
+          id="booking-description"
           required
           rows={3}
           value={description}
