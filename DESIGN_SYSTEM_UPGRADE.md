@@ -486,5 +486,8 @@ gitignored, not committed — described here instead):
 Visually reviewed by this session as a genuine, measurable improvement over
 the rejected first pass — not just re-labeled the same result. Held on branch
 `feature/design-depth-correction`, **not merged to master**, per explicit
-instruction. Recommend Siam do the same live-preview visual check that
-rejected the first pass before this one gets a merge decision.
+instruction. Preview: `https://inkbook-hgj6qdeue-siamsayem21-dots-projects.vercel.app`
+(Vercel Deployment Protection/SSO applies — same as the first pass's preview;
+open it while logged into the Vercel dashboard, or configure a bypass token).
+Recommend Siam do the same live-preview visual check that rejected the first
+pass before this one gets a merge decision.
