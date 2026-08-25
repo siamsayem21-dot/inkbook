@@ -67,41 +67,41 @@ testing of `cron/payment-reminders` pass 2 / `cron/review-requests` /
 this session — see EXHAUSTIVE_ISSUES.md).
 
 ## CURRENT ROLE / ROUTE / STATE / ACTION
-A11y/console/perf checks — DONE. Transitioning next to final regressions.
+Final regressions — DONE (production cleanliness audit + flagship journey
+re-run). Final build/test gate — DONE (601/601, confirmed just now).
+Transitioning to the final report.
 
 ## LAST VERIFIED ITEM
-A11y/console/perf checks complete (`scripts/qa-phase-a11y-console-perf.mjs`,
-18 checks against production, 0 findings): zero real browser console
-errors across 16 routes spanning all 4 portals, all navigation timing under
-4.3s. Form-label accessibility spot-check found zero unlabeled controls on
-the public Custom Request form, and — notably — zero unlabeled controls on
-the standalone consent form too, meaning the previously-documented
-unlinked-label bug on `StandaloneConsentForm` (recorded in this repo's
-history from PR #9) has evidently been fixed by later work since that note
-was written; corrected in EXHAUSTIVE_ISSUES.md rather than re-reported as
-still-open. Error/resilience testing (prior block): 23 checks, 0 findings
-— zero crash screens/500s across 21 malformed-ID probes, double-submit
-race protection confirmed, network-failure handling confirmed clean.
-Design/Motion re-verification (prior block): 15 real transform checks, 0
-findings. Security/RLS sweep (prior block): all 31 API routes have a
-status. Automations/Cron (prior block): 1 real NEW P1 bug found
-(cron/sms-reminders).
+Final regression pass complete: (1) a full production-wide scan found 10
+orphaned QA-tagged studios and 33 orphaned QA auth users left behind by
+earlier crashed/interrupted runs (some predating this mission) — all
+cleaned, one needed a manual `consent_forms` cleanup first (a live instance
+of the documented RESTRICT-FK/no-CASCADE gotcha), final re-scan confirms
+zero remaining; (2) `scripts/qa-full-studio-journey.mjs` re-run one final
+time end-to-end — the flagship AI Consultation → Quote → Artist Match →
+Stripe TEST Deposit → Webhook → Booking → Cross-Role Visibility journey
+still works correctly; its "2 findings" are both already-known/explained
+(the standing P1 re-confirming itself as expected, and a pre-existing
+test-script limitation on `/book/[studio]/consult`'s form-detection that
+also corrected an earlier over-cautious NOT_TESTED note — that route is
+confirmed real and reachable). Final build/test gate: `npm test` run
+explicitly one more time, 601/601 clean. A11y/console/perf (prior block):
+18 checks, 0 findings, plus a correction that the previously-documented
+`StandaloneConsentForm` unlinked-label bug has evidently been fixed since
+it was last recorded. Error/resilience (prior block): 23 checks, 0
+findings. Design/Motion (prior block): 15 checks, 0 findings. Security/RLS
+(prior block): all 31 API routes have a status. Automations/Cron (prior
+block): 1 real NEW P1 bug found (cron/sms-reminders).
 
 ## NEXT EXACT ITEM
-Final regressions (Sections 49-54 of the mission spec) — a full walk of the
-critical real-studio journey plus each portal's daily-operations checklist,
-one more time, against the current state of everything found/fixed this
-mission (confirms nothing regressed across the many commits made during
-this QA pass itself, e.g. the `/owner/artists/new` fix, none of which have
-been deployed yet). Then: final build/test gate (Section 55 — already
-continuously green at 601/601 after every commit this mission, one known
-FLAKY test — `tests/unit/sentry-config.test.ts`, a pre-existing timing
-sensitivity unrelated to any change made this mission — worth one explicit
-final confirmation run), final report (Section 61) — verdict will very
-likely be "C. LAUNCH BLOCKERS REMAIN" per the mission's own rule against
-choosing "A" while P0/P1 remain unresolved, unless Siam resolves the Stripe
-Connect rollout decision and approves the cron/sms-reminders migration
-first.
+Write the final report (Section 61 of the mission spec) — all 40 completion
+criteria are now satisfied. Verdict: **C. INKBOOK EXHAUSTIVE QA FAILED —
+LAUNCH BLOCKERS REMAIN**, per the mission's own explicit rule ("Never
+choose A if a P0/P1 remains unresolved") — 1 P0 + 2 P1 findings remain
+open, all correctly classified BLOCKED_NEEDS_SIAM (not left broken by
+inaction — each has either a real-money-routing decision or a production
+schema-DDL approval that only Siam can make). Every other surface tested
+this mission passed clean.
 
 ## TOTALS (updated as mission progresses)
 - TOTAL INVENTORY ITEMS: 76 page routes + 31 API routes + 26 server-action

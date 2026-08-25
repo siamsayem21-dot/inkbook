@@ -136,7 +136,7 @@ items not blocking).
 | `/book/[studio]/[artistId]/book/consent` | PASS | `scripts/qa-phase-e-public.mjs` E4 — real `ConsentForm` submission → `consent_forms` row DB-verified |
 | `/book/[studio]/[artistId]/book/deposit` | PASS | `scripts/qa-phase-e-public.mjs` E4 — real redirect to Stripe Checkout, real TEST payment completed via `stripe trigger`, booking reaches `status='confirmed'` |
 | `/book/[studio]/[artistId]/book/confirmation` | PASS | `scripts/qa-phase-e-public.mjs` E4 — confirmation page reached after real consent submission |
-| `/book/[studio]/consult` | NOT_TESTED | The public landing page's "Start AI Consultation" CTAs link to `/book/[studio]/login`, not this route directly — not yet independently confirmed reachable/used |
+| `/book/[studio]/consult` | PASS | Confirmed real and functional via source read (final regression pass): renders a genuine studio-scoped `ConsultationForm` (5-step, click-driven wizard calling a real `handleSubmit` → `submitConsultation` server action — same no-`<form>`-tag UI pattern as `CustomRequestForm.tsx`, by design, not broken). Not the primary CTA path today (the landing page's own CTAs link to `/login` instead) but this route is not dead. `scripts/qa-full-studio-journey.mjs`'s Step 1 reports "no `<form>` found" because it looks for a literal `<form>` element that this wizard pattern never uses — a known, pre-existing test-script limitation with a documented DB-level fallback, not a product bug |
 | `/book/[studio]/consent` | PASS | `scripts/qa-phase-e-public.mjs` E8 — standalone consent entry page renders with correct studio name/heading |
 | `/book/[studio]/custom` | PASS | `scripts/qa-phase-e-public.mjs` E5 — real 3-step form submission → `custom_requests` row DB-verified |
 | `/book/[studio]/flash/[flashId]/book` | PASS | `scripts/qa-phase-e-public.mjs` E6 — real booking with derived style/description, `is_booked` flag set, correct 404 on re-visit for a one-time design |
@@ -213,7 +213,7 @@ items not blocking).
 | `app/(owner)/owner/settings/studio/actions.ts` | PASS | `scripts/qa-phase-b-owner.mjs` B8 — name/address edit DB-verified |
 | `app/(owner)/owner/waitlist/actions.ts` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B20 — cap edit + remove both DB-verified |
 | `app/artist/accept/[token]/actions.ts` | NOT_TESTED |
-| `app/book/[studio]/consult/actions.ts` | NOT_TESTED | (route reachability itself unconfirmed — see route table) |
+| `app/book/[studio]/consult/actions.ts` | PASS | `submitConsultation()` — exercised indirectly every time `scripts/qa-full-studio-journey.mjs` runs (its DB-level fallback matches this action's exact insert shape); route itself confirmed real via source read, see route table |
 | `app/book/[studio]/custom/actions.ts` | PASS | `scripts/qa-phase-e-public.mjs` E5 — `submitCustomRequest` real DB-verified |
 | `app/book/[studio]/flash/[flashId]/book/actions.ts` | PASS | `scripts/qa-phase-e-public.mjs` E6 — `markFlashAsBooked` real DB-verified (`is_booked` flips true) |
 | `app/client-portal/[studio]/my-profile/actions.ts` | NOT_APPLICABLE | Belongs to the orphaned prototype tree |

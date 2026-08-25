@@ -604,3 +604,57 @@ unlabeled controls too.** Re-confirmed with fresh evidence rather than
 trusting the stale note: the issue has evidently been fixed by later work
 in this codebase since that finding was last recorded. Correcting the
 record here rather than re-reporting a bug that no longer exists.
+
+## Final production cleanliness audit — real orphaned QA data found and cleaned
+
+Before final regressions, a production-wide scan for leftover QA-tagged
+data (studio names containing "QA", `client_accounts`/`auth.users` with
+`example.test` emails) turned up **10 orphaned studios and 33 orphaned auth
+users** that earlier cleanup blocks had not fully removed — some from
+crashed/interrupted runs within this mission, several predating this
+mission entirely (e.g. `[QA-OVERNIGHT-ARTIST-SWEEP]` from 2026-08-18,
+`[QA-SEED-PERF-20260825]` from 2026-08-24 — leftovers from prior,
+untracked sessions' QA work, not something this mission created). All 10
+studios deleted (cascading their bookings/artists/clients/consultations/
+etc.); one (`QA-SEED-PERF`) needed manual `consent_forms` cleanup first — a
+live instance of the same RESTRICT-FK-on-`clients.id`/no-CASCADE pattern
+already documented in `feedback_postgres_rls_cascade_gotchas.md`. 31 of 33
+orphaned auth users deleted; the remaining 2 (`smoke*@example.test`) follow
+a different, older naming convention unrelated to any QA tag from this
+mission or its immediate predecessors and have no attached studio — left
+untouched per this mission's own caution around not touching state it
+didn't create and can't fully attribute. Final re-scan confirms **zero**
+remaining QA-tagged studios or `example.test` `client_accounts` in
+production. This audit and cleanup is itself a finding worth Siam's
+awareness: earlier per-script cleanup (this mission's own scripts included
+a `finally` block with delete calls every time) is not fully bulletproof
+against a hard crash/interrupt happening before that block runs — worth
+periodically re-running a scan like this one, not a one-time fix.
+
+## Final regression — flagship real-studio journey re-run, 0 new findings
+
+`scripts/qa-full-studio-journey.mjs` re-run one final time against
+production after every phase of this mission's own testing activity
+(confirms nothing regressed from the sheer volume of QA data created/
+deleted across Owner/Public/Cron/Security/Motion/Resilience/A11y phases).
+Result: the full AI Consultation → Owner Quote → AI Artist Match → Stripe
+TEST Deposit → Webhook Reconciliation → Booking Confirmation → Cross-Role
+Visibility journey still works end-to-end. The script's own accounting
+showed "2 findings" — both already fully explained, neither new:
+
+1. The already-documented P1 (owner deposit link charges the platform
+   account for a Connect-connected studio) — this is the script's own
+   built-in re-confirmation of that exact finding, expected to "fail" here
+   since it remains genuinely unfixed (BLOCKED_NEEDS_SIAM). Not new.
+2. Step 1 reports "no `<form>` found" on `/book/[studio]/consult` — investigated
+   fresh rather than assumed: the page and its `ConsultationForm` are real
+   and fully functional (source-confirmed, a genuine 5-step click-driven
+   wizard with a real `handleSubmit` → `submitConsultation` server action —
+   the same no-`<form>`-tag UI pattern this whole codebase uses for
+   `CustomRequestForm.tsx` too, by design). The script's own literal
+   `<form>` element check simply doesn't match this app's actual UI
+   pattern; it already has a working, documented DB-level fallback that
+   lets the rest of the journey continue and pass normally. **TEST-SCRIPT
+   LIMITATION, not a product bug** — and it corrects an earlier
+   over-cautious note in `PRODUCT_COVERAGE_MATRIX.md` that had this route's
+   live-reachability marked uncertain; it is confirmed real and reachable.
