@@ -4,7 +4,13 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useState } from "react";
+import { Menu, X } from "lucide-react";
 
+// Light/white + soft-purple InkBook shell — mirrors components/owner/OwnerSidebar.tsx
+// (Owner Portal) and app/portal/[studio]/_components/PortalSidebar.tsx (Client
+// Portal) so all three portals share one visual language. Currently only used
+// for role="artist" (Owner Portal has its own OwnerSidebar); the "owner" branch
+// is kept for backward compatibility rather than removed.
 const ownerNav = [
   { label: "Dashboard",     href: "/owner/dashboard" },
   { label: "Consultations", href: "/owner/consultations" },
@@ -63,10 +69,10 @@ export default function Sidebar({ role, studioName }: Props) {
           key={item.href}
           href={item.href}
           onClick={onClose}
-          className={`py-2 px-4 text-[10px] uppercase tracking-[0.13em] font-medium transition-all flex items-center ${
+          className={`mx-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
             active
-              ? "text-gold bg-gold/[0.07] border-l-2 border-gold pl-[calc(1rem-2px)]"
-              : "text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04]"
+              ? "bg-violet-50 text-violet-700"
+              : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900"
           }`}
         >
           {item.label}
@@ -80,38 +86,38 @@ export default function Sidebar({ role, studioName }: Props) {
       {/* Logo */}
       <div className="px-4 mb-6">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 border border-gold/40 flex items-center justify-center shrink-0">
-            <span className="font-cinzel text-gold text-[10px] font-bold">IB</span>
+          <div className="w-7 h-7 rounded-lg bg-violet-600 flex items-center justify-center shrink-0">
+            <span className="text-white text-[10px] font-bold">IB</span>
           </div>
-          <span className="font-cinzel text-[13px] tracking-wider text-white">InkBook</span>
+          <span className="text-[15px] font-extrabold text-zinc-900 tracking-tight">InkBook</span>
         </div>
-        <span className="text-[9px] uppercase tracking-[0.18em] text-zinc-600 mt-1.5 block ml-[2.375rem]">
+        <span className="text-[9px] uppercase tracking-[0.18em] text-zinc-400 mt-1.5 block ml-[2.375rem]">
           {role} Portal
         </span>
       </div>
 
       {/* Studio name */}
       {studioName && (
-        <div className="mx-4 py-2.5 mb-3 border-y border-white/[0.06] flex items-center gap-2.5">
-          <div className="w-6 h-6 bg-gold/10 border border-gold/25 flex items-center justify-center shrink-0">
-            <span className="font-cinzel text-gold text-[9px] font-bold">
+        <div className="mx-4 py-2.5 mb-3 border-y border-zinc-100 flex items-center gap-2.5">
+          <div className="w-6 h-6 rounded-md bg-violet-50 flex items-center justify-center shrink-0">
+            <span className="text-violet-700 text-[10px] font-bold">
               {studioName.charAt(0).toUpperCase()}
             </span>
           </div>
-          <span className="text-xs font-medium text-zinc-300 truncate">{studioName}</span>
+          <span className="text-xs font-medium text-zinc-600 truncate">{studioName}</span>
         </div>
       )}
 
       {/* Nav links */}
-      <div className="flex-1 flex flex-col mt-1">
+      <div className="flex-1 flex flex-col gap-0.5 mt-1 overflow-y-auto">
         {navLinks(onClose)}
       </div>
 
       {/* Sign out */}
-      <div className="px-4 pt-4 mt-4 border-t border-white/[0.06]">
+      <div className="px-4 pt-4 mt-4 border-t border-zinc-100">
         <button
           onClick={() => { onClose?.(); handleSignOut(); }}
-          className="w-full text-left py-1.5 text-[9px] uppercase tracking-[0.15em] text-zinc-600 hover:text-zinc-400 transition-colors"
+          className="w-full text-left py-1.5 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
         >
           Sign Out
         </button>
@@ -122,34 +128,34 @@ export default function Sidebar({ role, studioName }: Props) {
   return (
     <>
       {/* ── Mobile top bar ── */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-ink border-b border-white/[0.06] px-4 h-12 flex items-center justify-between">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-zinc-200 px-4 h-12 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 border border-gold/40 flex items-center justify-center">
-            <span className="font-cinzel text-gold text-[9px] font-bold">IB</span>
+          <div className="w-6 h-6 rounded-md bg-violet-600 flex items-center justify-center">
+            <span className="text-white text-[9px] font-bold">IB</span>
           </div>
-          <span className="font-cinzel text-[13px] tracking-wider">InkBook</span>
+          <span className="text-sm font-extrabold text-zinc-900">InkBook</span>
         </div>
         <button
           onClick={() => setMobileOpen((o) => !o)}
-          className="text-zinc-400 hover:text-white w-8 h-8 flex items-center justify-center"
+          className="text-zinc-500 hover:text-zinc-900 w-8 h-8 flex items-center justify-center"
           aria-label="Toggle navigation"
         >
-          {mobileOpen ? "✕" : "☰"}
+          {mobileOpen ? <X size={18} /> : <Menu size={18} />}
         </button>
       </div>
 
       {/* ── Mobile drawer ── */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-40">
-          <div className="absolute inset-0 bg-black/70" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute top-12 left-0 bottom-0 w-56 bg-[#0d0d0d] border-r border-white/[0.06] flex flex-col py-6 overflow-y-auto">
+          <div className="absolute inset-0 bg-black/30" onClick={() => setMobileOpen(false)} />
+          <aside className="absolute top-12 left-0 bottom-0 w-64 bg-white border-r border-zinc-200 flex flex-col py-6 overflow-y-auto">
             {sidebarContent(() => setMobileOpen(false))}
           </aside>
         </div>
       )}
 
       {/* ── Desktop sidebar ── */}
-      <aside className="hidden md:flex w-56 shrink-0 bg-[#0d0d0d] border-r border-white/[0.06] flex-col py-6">
+      <aside className="hidden md:flex w-56 shrink-0 bg-white border-r border-zinc-200 flex-col py-6">
         {sidebarContent()}
       </aside>
     </>

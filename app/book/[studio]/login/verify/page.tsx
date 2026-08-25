@@ -32,28 +32,28 @@ export default async function ClientVerifyPage({ params, searchParams }: Props) 
   const brand = getBrand(studio.primary_color ?? "#D4AF37");
 
   return (
-    <div className="min-h-screen bg-[#080808]">
+    <div className="min-h-screen bg-[#FAF9FC] text-zinc-900">
       <div className="max-w-md mx-auto px-4 sm:px-6 py-8 md:py-14">
         <Link
           href={`/book/${params.studio}/login`}
-          className="inline-flex items-center gap-1.5 text-sm text-white/40 hover:text-white/70 transition-colors mb-8"
+          className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors mb-8"
         >
           ← Use a different email
         </Link>
 
         <div className="mb-8">
           <div
-            className="inline-flex items-center gap-2.5 px-4 py-1.5 mb-5"
+            className="inline-flex items-center gap-2.5 px-4 py-1.5 mb-5 rounded-full"
             style={{ border: `1px solid ${brand.full}40` }}
           >
             <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: brand.full }} />
-            <span className="text-[10px] uppercase tracking-widest" style={{ color: `${brand.full}cc` }}>
+            <span className="text-[10px] uppercase tracking-widest" style={{ color: brand.full }}>
               Verify Your Email
             </span>
           </div>
-          <h1 className="font-serif text-3xl md:text-4xl tracking-wide mb-3">Enter your code</h1>
-          <p className="text-zinc-400 text-sm leading-relaxed">
-            We sent a 6-digit code to <span className="text-zinc-200 font-medium">{email}</span>.
+          <h1 className="font-serif text-3xl md:text-4xl tracking-wide mb-3 text-zinc-900">Enter your code</h1>
+          <p className="text-zinc-500 text-sm leading-relaxed">
+            We sent a 6-digit code to <span className="text-zinc-900 font-medium">{email}</span>.
           </p>
         </div>
 

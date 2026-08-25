@@ -83,7 +83,7 @@ export default async function ClientRequestPage({ params, searchParams }: Props)
           <span className="w-1.5 h-1.5 rounded-full bg-gold shrink-0" />
           <span className="text-[10px] uppercase tracking-widest text-gold/80">Custom Request</span>
         </div>
-        <h1 className="font-cinzel text-3xl font-bold tracking-wide mb-1">Your Quote</h1>
+        <h1 className="font-serif text-3xl font-bold tracking-wide mb-1">Your Quote</h1>
         <p className="text-zinc-500 text-sm">
           {studio.name}{artistName ? ` · ${artistName}` : ""}
         </p>
@@ -129,7 +129,7 @@ export default async function ClientRequestPage({ params, searchParams }: Props)
           enforcement — this is defense in depth, not the only guard. */}
       {cr.status === "quoted" && cr.quote_amount != null && (
         <div className="bg-gold/[0.07] border border-gold/25 rounded-xl p-6 mb-6 space-y-4">
-          <h2 className="font-cinzel text-lg font-bold">Your Custom Quote</h2>
+          <h2 className="font-serif text-lg font-bold">Your Custom Quote</h2>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-bold text-gold">${cr.quote_amount.toFixed(2)}</span>
             <span className="text-zinc-500 text-sm">total session price</span>
@@ -166,7 +166,7 @@ export default async function ClientRequestPage({ params, searchParams }: Props)
 
       {cr.status === "accepted" && (
         <div className="bg-gold/[0.07] border border-gold/25 rounded-xl p-6 mb-6">
-          <p className="font-cinzel text-lg font-bold mb-1">Appointment Confirmed</p>
+          <p className="font-serif text-lg font-bold mb-1">Appointment Confirmed</p>
           <p className="text-sm text-zinc-400">
             Your deposit has been received. The studio will reach out to finalize your session date and time.
           </p>

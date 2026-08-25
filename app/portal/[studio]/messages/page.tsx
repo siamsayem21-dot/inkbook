@@ -62,8 +62,8 @@ export default async function ClientMessagesPage({ params }: Props) {
     <div className="max-w-2xl">
       <div className="flex items-start justify-between gap-4 flex-wrap mb-3">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-2">Client Portal</p>
-          <h1 className="font-serif text-2xl md:text-3xl tracking-wide">Messages</h1>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Client Portal</p>
+          <h1 className="font-serif text-2xl md:text-3xl tracking-wide text-zinc-900">Messages</h1>
         </div>
         <NewConversationButton
           studioId={studio.id}
@@ -72,7 +72,7 @@ export default async function ClientMessagesPage({ params }: Props) {
           textOnBrand={brand.textOnBrand}
         />
       </div>
-      <p className="text-zinc-400 text-sm leading-relaxed mb-8">
+      <p className="text-zinc-500 text-sm leading-relaxed mb-8">
         Message {studio.name} directly — questions about a project, or anything else.
       </p>
 

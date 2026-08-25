@@ -51,7 +51,7 @@ export default async function DemoConsultationPage() {
               AI Consultation
             </span>
           </div>
-          <h1 className="font-cinzel text-3xl md:text-4xl font-bold tracking-wide mb-3">
+          <h1 className="font-serif text-3xl md:text-4xl font-bold tracking-wide mb-3">
             Start Your Tattoo Journey
           </h1>
           <p className="text-zinc-400 text-sm leading-relaxed max-w-lg">

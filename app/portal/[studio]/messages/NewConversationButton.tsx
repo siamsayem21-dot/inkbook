@@ -34,12 +34,12 @@ export default function NewConversationButton({ studioId, studioSlug, brandColor
         type="button"
         onClick={handleClick}
         disabled={isPending}
-        className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 transition-opacity hover:opacity-90 disabled:opacity-50"
+        className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 rounded-lg transition-opacity hover:opacity-90 disabled:opacity-50"
         style={{ backgroundColor: brandColor, color: textOnBrand }}
       >
         {isPending ? "Starting…" : "New Conversation"}
       </button>
-      {error && <p className="text-xs text-red-400 mt-1.5">{error}</p>}
+      {error && <p className="text-xs text-red-600 mt-1.5">{error}</p>}
     </div>
   );
 }

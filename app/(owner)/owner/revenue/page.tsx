@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudioId } from "@/lib/auth/config";
 import RevenueChart, { type MonthRevenue } from "@/components/owner/RevenueChart";
 import { aggregateRevenueByMonth, sumKeptDepositCents } from "@/lib/revenue";
+import MotionCard from "@/components/ui/MotionCard";
 
 export const dynamic = "force-dynamic";
 
@@ -90,10 +91,10 @@ export default async function RevenuePage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {statCards.map((s) => (
-            <div key={s.label} className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5">
+            <MotionCard key={s.label} className="bg-white rounded-2xl border border-zinc-200 shadow-sm hover:shadow-elevation-3 p-5">
               <p className="text-zinc-500 text-xs mb-1">{s.label}</p>
               <p className="text-2xl font-bold text-zinc-900">{s.value}</p>
-            </div>
+            </MotionCard>
           ))}
         </div>
 

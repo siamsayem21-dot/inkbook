@@ -120,9 +120,9 @@ export default function OtpVerifyForm({ studioSlug, email, brandColor, textOnBra
   const code = digits.join("");
 
   return (
-    <div className="border border-white/[0.08] bg-zinc-900/50 p-8">
+    <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-8">
       {error && (
-        <div className="border border-red-800/60 text-red-400 text-sm px-4 py-3 bg-red-950/40 mb-5">
+        <div className="border border-red-200 text-red-700 text-sm px-4 py-3 bg-red-50 rounded-lg mb-5">
           {error}
         </div>
       )}
@@ -141,7 +141,7 @@ export default function OtpVerifyForm({ studioSlug, email, brandColor, textOnBra
             onChange={(e) => handleChange(i, e.target.value)}
             onKeyDown={(e) => handleKeyDown(i, e)}
             onPaste={handlePaste}
-            className="w-full aspect-square max-w-14 text-center text-xl font-semibold bg-zinc-900 border border-white/[0.1] text-white focus:outline-none focus:border-[var(--brand-primary)] transition-colors disabled:opacity-50"
+            className="w-full aspect-square max-w-14 text-center text-xl font-semibold bg-white border border-zinc-200 rounded-lg text-zinc-900 focus:outline-none focus:border-[var(--brand-primary)] transition-colors disabled:opacity-50"
           />
         ))}
       </div>
@@ -150,7 +150,7 @@ export default function OtpVerifyForm({ studioSlug, email, brandColor, textOnBra
         type="button"
         onClick={() => verify(code)}
         disabled={verifying || code.length !== CODE_LENGTH}
-        className="w-full text-sm font-bold uppercase tracking-widest py-3.5 transition-opacity hover:opacity-90 disabled:opacity-50"
+        className="w-full text-sm font-bold uppercase tracking-widest py-3.5 rounded-lg transition-opacity hover:opacity-90 disabled:opacity-50"
         style={{ backgroundColor: brandColor, color: textOnBrand }}
       >
         {verifying ? "Verifying…" : "Verify & Continue"}
@@ -158,7 +158,7 @@ export default function OtpVerifyForm({ studioSlug, email, brandColor, textOnBra
 
       <div className="text-center mt-6">
         {countdown > 0 ? (
-          <p className="text-zinc-600 text-xs">
+          <p className="text-zinc-400 text-xs">
             Didn&apos;t get a code? Resend in {countdown}s
           </p>
         ) : (

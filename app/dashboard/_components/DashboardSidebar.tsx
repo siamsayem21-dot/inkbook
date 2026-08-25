@@ -33,9 +33,9 @@ export default function DashboardSidebar({ studioName, studioSubdomain }: Props)
       <div className="px-4 mb-6">
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 border border-gold/40 flex items-center justify-center shrink-0">
-            <span className="font-cinzel text-gold text-[10px] font-bold">IB</span>
+            <span className="font-serif text-gold text-[10px] font-bold">IB</span>
           </div>
-          <span className="font-cinzel text-[13px] tracking-wider text-white">InkBook</span>
+          <span className="font-serif text-[13px] tracking-wider text-white">InkBook</span>
         </div>
       </div>
 
@@ -44,7 +44,7 @@ export default function DashboardSidebar({ studioName, studioSubdomain }: Props)
         <p className="label-xs text-zinc-700 mb-2.5">Studio</p>
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 bg-gold/10 border border-gold/25 flex items-center justify-center shrink-0">
-            <span className="font-cinzel text-gold text-[9px] font-bold">
+            <span className="font-serif text-gold text-[9px] font-bold">
               {studioName.charAt(0).toUpperCase()}
             </span>
           </div>

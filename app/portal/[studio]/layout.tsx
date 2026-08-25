@@ -31,7 +31,7 @@ export default async function ClientPortalLayout({ children, params }: Props) {
   const brand = getBrand(studio.primary_color ?? "#D4AF37");
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white flex">
+    <div className="min-h-screen bg-[#FAF9FC] text-zinc-900 flex">
       <PortalSidebar
         studioSlug={params.studio}
         studioName={studio.name}

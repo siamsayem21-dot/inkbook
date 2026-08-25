@@ -36,7 +36,7 @@ export default function ArtistCard({
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <div className="w-20 h-20 rounded-full bg-zinc-700 flex items-center justify-center ring-2 ring-white/10">
-              <span className="font-cinzel text-white/60 text-2xl font-bold">
+              <span className="font-serif text-white/60 text-2xl font-bold">
                 {name.charAt(0).toUpperCase()}
               </span>
             </div>
@@ -47,7 +47,7 @@ export default function ArtistCard({
       {/* Info */}
       <div className="p-5">
         {/* Name + rate */}
-        <h3 className="font-cinzel font-bold text-base tracking-wide mb-1">{name}</h3>
+        <h3 className="font-serif font-bold text-base tracking-wide mb-1">{name}</h3>
         <p className="text-gold text-sm font-semibold mb-3">From ${minRate}/hr</p>
 
         {/* Bio snippet */}

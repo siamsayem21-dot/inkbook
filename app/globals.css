@@ -999,3 +999,76 @@ body {
     opacity: 1 !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   INKBOOK PRODUCT (PORTAL) SYSTEM
+   Light premium + soft 3D + subtle cursor-reactive motion, scoped to
+   Owner Portal / Artist Portal / Client Portal / Auth. Deliberately additive —
+   nothing above this line (the public marketing site's dark/gold system) is
+   modified or reused here.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Hover lift — standard interactive card. Desktop pointer devices only;
+   touch devices get a lightweight tap-scale instead (see .tap-scale). */
+@media (hover: hover) and (pointer: fine) {
+  .hover-lift {
+    transition: transform 200ms var(--ease-out), box-shadow 200ms var(--ease-out);
+  }
+  .hover-lift:hover {
+    transform: translateY(-3px);
+  }
+}
+
+/* Cursor-follow light — very soft radial highlight tracking the pointer inside
+   a premium card. JS sets --mx/--my (see components/ui/MotionCard.tsx). */
+@media (hover: hover) and (pointer: fine) {
+  .cursor-glow {
+    position: relative;
+    isolation: isolate;
+  }
+  .cursor-glow::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0;
+    border-radius: inherit;
+    transition: opacity 250ms ease;
+    background: radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%), var(--glow-color, rgba(124, 58, 237, 0.10)), transparent 70%);
+  }
+  .cursor-glow:hover::after {
+    opacity: 1;
+  }
+  .cursor-glow > * {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+/* Tap feedback — mobile/touch equivalent of hover-lift, no pointer-tracking. */
+.tap-scale {
+  transition: transform 120ms var(--ease-out);
+}
+.tap-scale:active {
+  transform: scale(0.98);
+}
+
+/* Spring return for JS-driven tilt/parallax/magnetic effects. */
+.motion-spring {
+  transition: transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hover-lift,
+  .hover-lift:hover {
+    transform: none !important;
+    transition: none !important;
+  }
+  .cursor-glow::after {
+    display: none !important;
+  }
+  .motion-spring {
+    transition: none !important;
+  }
+}

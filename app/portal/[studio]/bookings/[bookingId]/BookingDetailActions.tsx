@@ -83,14 +83,14 @@ export default function BookingDetailActions({
   }
 
   return (
-    <div className="mt-5 pt-5 border-t border-white/[0.06]">
+    <div className="mt-5 pt-5 border-t border-zinc-100">
       <div className="flex flex-wrap gap-3">
         {status === "pending_deposit" && (
           <button
             type="button"
             onClick={handlePayDeposit}
             disabled={isPending}
-            className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 rounded-lg transition-opacity hover:opacity-90 disabled:opacity-50"
             style={{ backgroundColor: brandColor, color: textOnBrand }}
           >
             {isPending ? "Working…" : "Pay Deposit Now"}
@@ -100,7 +100,7 @@ export default function BookingDetailActions({
         {depositPaid && !hasConsentForm && (status === "awaiting_schedule" || status === "confirmed") && (
           <Link
             href={`/portal/${studioSlug}/projects/${consultationId}/consent`}
-            className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 transition-opacity hover:opacity-90"
+            className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 rounded-lg transition-opacity hover:opacity-90"
             style={{ backgroundColor: brandColor, color: textOnBrand }}
           >
             Sign Consent Form
@@ -112,7 +112,7 @@ export default function BookingDetailActions({
             type="button"
             onClick={handlePayRemainder}
             disabled={isPending}
-            className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 rounded-lg transition-opacity hover:opacity-90 disabled:opacity-50"
             style={{ backgroundColor: brandColor, color: textOnBrand }}
           >
             {isPending ? "Working…" : "Pay Remaining Balance"}
@@ -122,7 +122,7 @@ export default function BookingDetailActions({
         {status === "completed" && !hasReview && (
           <Link
             href={`/portal/${studioSlug}/bookings/${bookingId}/review`}
-            className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 transition-opacity hover:opacity-90"
+            className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 rounded-lg transition-opacity hover:opacity-90"
             style={{ backgroundColor: brandColor, color: textOnBrand }}
           >
             Leave a Review
@@ -133,7 +133,7 @@ export default function BookingDetailActions({
           type="button"
           onClick={handleMessage}
           disabled={isPending}
-          className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 border border-white/[0.15] text-zinc-300 hover:border-white/30 hover:text-white transition-colors disabled:opacity-50"
+          className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 rounded-lg border border-zinc-300 text-zinc-600 hover:border-zinc-400 hover:text-zinc-900 hover:bg-zinc-50 transition-colors disabled:opacity-50"
         >
           Message About This Booking
         </button>

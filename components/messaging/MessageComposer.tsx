@@ -42,15 +42,15 @@ export default function MessageComposer({
   }
 
   return (
-    <div className="border-t border-white/[0.08] p-3">
+    <div className="border-t border-zinc-100 p-3">
       {error && (
-        <div className="border border-red-800/60 text-red-400 text-xs px-3 py-2 bg-red-950/40 mb-2">{error}</div>
+        <div className="border border-red-200 text-red-700 text-xs px-3 py-2 bg-red-50 rounded-lg mb-2">{error}</div>
       )}
 
       {imagePreview && (
         <div className="mb-2 relative w-fit">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={imagePreview} alt="Selected" className="h-16 w-16 object-cover rounded-lg border border-white/[0.1]" />
+          <img src={imagePreview} alt="Selected" className="h-16 w-16 object-cover rounded-lg border border-zinc-200" />
           <button
             type="button"
             onClick={onRemoveImage}
@@ -77,7 +77,7 @@ export default function MessageComposer({
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={sending}
-          className="shrink-0 w-10 h-10 flex items-center justify-center border border-white/[0.1] text-zinc-400 hover:text-white hover:border-white/20 transition-colors disabled:opacity-40"
+          className="shrink-0 w-10 h-10 flex items-center justify-center rounded-lg border border-zinc-200 text-zinc-400 hover:text-zinc-700 hover:border-zinc-300 transition-colors disabled:opacity-40"
           aria-label="Attach image"
         >
           📎
@@ -94,12 +94,12 @@ export default function MessageComposer({
           onKeyDown={handleKeyDown}
           disabled={sending}
           placeholder="Type your message…"
-          className="flex-1 resize-none bg-zinc-900 border border-white/[0.1] px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none transition-colors disabled:opacity-50 max-h-[120px]"
+          className="flex-1 resize-none bg-white border border-zinc-200 rounded-lg px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-400 transition-colors disabled:opacity-50 max-h-[120px]"
         />
         <button
           type="submit"
           disabled={sending || (!text.trim() && !imagePreview)}
-          className="shrink-0 text-xs font-bold uppercase tracking-widest px-4 h-10 transition-opacity hover:opacity-90 disabled:opacity-40"
+          className="shrink-0 text-xs font-bold uppercase tracking-widest px-4 h-10 rounded-lg transition-opacity hover:opacity-90 disabled:opacity-40"
           style={{ backgroundColor: accentColor, color: textOnAccent }}
         >
           Send

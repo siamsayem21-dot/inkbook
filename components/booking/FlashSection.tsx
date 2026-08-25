@@ -44,7 +44,7 @@ export default function FlashSection({
       {/* Section header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="font-cinzel text-2xl md:text-3xl font-bold tracking-wide">Available Flash</h2>
+          <h2 className="font-serif text-2xl md:text-3xl font-bold tracking-wide">Available Flash</h2>
           <p className="text-zinc-500 text-sm mt-2">
             Ready-made designs — book immediately, no wait time.
           </p>

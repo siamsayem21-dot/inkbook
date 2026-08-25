@@ -14,12 +14,12 @@ export default function Navbar({ studioName = "InkBook", logoUrl }: Props) {
           <img src={logoUrl} alt={studioName} className="h-7 w-auto object-contain" />
         ) : (
           <div className="w-7 h-7 border border-gold/40 flex items-center justify-center shrink-0">
-            <span className="font-cinzel text-gold text-[10px] font-bold">
+            <span className="font-serif text-gold text-[10px] font-bold">
               {studioName.charAt(0).toUpperCase()}
             </span>
           </div>
         )}
-        <span className="font-cinzel font-bold tracking-wide text-sm">{studioName}</span>
+        <span className="font-serif font-bold tracking-wide text-sm">{studioName}</span>
       </div>
       <Link href="/" className="label-xs text-zinc-700 hover:text-zinc-500 transition-colors">
         Powered by InkBook

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useState } from "react";
+import { Menu, X } from "lucide-react";
 
 // Light/white + soft-purple InkBook shell for the Owner Portal — mirrors the visual
 // language already shipped in app/client-portal (white bg, violet-600 accents,
@@ -123,7 +124,7 @@ export default function OwnerSidebar({ studioName }: Props) {
           className="text-zinc-500 hover:text-zinc-900 w-8 h-8 flex items-center justify-center"
           aria-label="Toggle navigation"
         >
-          {mobileOpen ? "✕" : "☰"}
+          {mobileOpen ? <X size={18} /> : <Menu size={18} />}
         </button>
       </div>
 

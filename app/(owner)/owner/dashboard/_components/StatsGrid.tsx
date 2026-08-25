@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { DollarSign, UserPlus, BadgeCheck, Wallet, CalendarCheck, UserX } from "lucide-react";
+import MotionCard from "@/components/ui/MotionCard";
 
 interface Stat {
   label: string;
@@ -17,14 +18,17 @@ export default function StatsGrid({ stats }: { stats: Stat[] }) {
       {stats.map((s, i) => {
         const Icon = ICONS[i] ?? DollarSign;
         return (
-          <div key={s.label} className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5">
+          <MotionCard
+            key={s.label}
+            className="bg-white rounded-2xl border border-zinc-200 shadow-sm hover:shadow-elevation-3 p-5"
+          >
             <div className="w-9 h-9 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center mb-3">
               <Icon size={17} />
             </div>
             <p className={`text-2xl font-bold ${s.unavailable ? "text-zinc-300" : "text-zinc-900"}`}>{s.value}</p>
             <p className="text-sm text-zinc-500 mt-0.5">{s.label}</p>
             {s.sub && <p className="text-xs text-zinc-400 mt-1">{s.sub}</p>}
-          </div>
+          </MotionCard>
         );
       })}
     </div>

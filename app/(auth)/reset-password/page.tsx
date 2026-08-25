@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -54,71 +55,58 @@ export default function ResetPasswordPage() {
 
   if (checking) {
     return (
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center">
+      <div className="bg-white rounded-2xl border border-zinc-200 shadow-elevation-3 p-8 text-center">
         <p className="text-zinc-500 text-sm">Verifying your reset link…</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+    <div className="bg-white rounded-2xl border border-zinc-200 shadow-elevation-3 p-8">
       {/* Logo */}
       <div className="flex items-center gap-2 mb-8">
-        <div className="w-7 h-7 rounded-lg bg-gold flex items-center justify-center">
-          <span className="text-black text-xs font-black">IB</span>
+        <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
+          <span className="text-white text-xs font-bold">IB</span>
         </div>
-        <span className="font-bold">InkBook</span>
+        <span className="font-serif text-lg tracking-wide text-zinc-900">InkBook</span>
       </div>
 
-      <h1 className="text-2xl font-bold mb-1">Set new password</h1>
-      <p className="text-zinc-400 text-sm mb-8">
+      <h1 className="text-2xl font-bold tracking-tight mb-1 text-zinc-900">Set new password</h1>
+      <p className="text-zinc-500 text-sm mb-8">
         Choose a strong password for your account.
       </p>
 
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         {error && (
-          <div className="bg-red-950 border border-red-800 text-red-300 text-sm rounded-lg px-4 py-3">
+          <div className="rounded-xl border border-red-200 text-red-700 text-sm px-4 py-3 bg-red-50">
             {error}
           </div>
         )}
 
-        <div>
-          <label htmlFor="reset-password-new" className="text-sm text-zinc-400 block mb-1.5">New password</label>
-          <input
-            id="reset-password-new"
-            required
-            type="password"
-            placeholder="Minimum 8 characters"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold transition-colors"
-          />
-        </div>
+        <PasswordInput
+          id="reset-password-new"
+          label="New password"
+          placeholder="Minimum 8 characters"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-        <div>
-          <label htmlFor="reset-password-confirm" className="text-sm text-zinc-400 block mb-1.5">Confirm password</label>
-          <input
-            id="reset-password-confirm"
-            required
-            type="password"
-            placeholder="Repeat your new password"
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            className={`w-full bg-zinc-800 border rounded-lg px-4 py-2.5 text-sm focus:outline-none transition-colors ${
-              mismatch
-                ? "border-red-700 focus:border-red-600"
-                : "border-zinc-700 focus:border-gold"
-            }`}
-          />
-          {mismatch && (
-            <p className="text-red-400 text-xs mt-1">Passwords do not match</p>
-          )}
-        </div>
+        <PasswordInput
+          id="reset-password-confirm"
+          label="Confirm password"
+          placeholder="Repeat your new password"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          error={mismatch}
+        />
+        {mismatch && (
+          <p className="text-red-600 text-xs -mt-2">Passwords do not match</p>
+        )}
 
         <button
           type="submit"
           disabled={loading || mismatch}
-          className="w-full bg-gold text-black font-bold py-2.5 rounded-lg hover:bg-gold-light disabled:opacity-50 transition-colors mt-2"
+          className="w-full rounded-lg bg-violet-600 text-white text-sm font-semibold py-3 hover:bg-violet-700 disabled:opacity-50 transition-colors mt-2"
         >
           {loading ? "Updating password…" : "Set new password"}
         </button>

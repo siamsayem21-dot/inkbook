@@ -40,7 +40,7 @@ export default function PlanBanner({
   return (
     <div className="flex items-center justify-between border border-white/[0.08] px-5 py-4">
       <div className="flex items-center gap-3">
-        <span className="font-cinzel text-sm font-semibold text-zinc-300 tracking-wide">{planLabel}</span>
+        <span className="font-serif text-sm font-semibold text-zinc-300 tracking-wide">{planLabel}</span>
         <span className={`label-xs border px-2.5 py-1 ${badge.className}`}>
           {badge.label}
         </span>

@@ -196,7 +196,7 @@ function Step1({
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="font-cinzel text-xl font-bold tracking-wide mb-1">Your Information</h2>
+        <h2 className="font-serif text-xl font-bold tracking-wide mb-1">Your Information</h2>
         <p className="text-zinc-500 text-sm">We&apos;ll use this to send you updates and contact you about your consultation.</p>
       </div>
       <div className="space-y-4">
@@ -269,7 +269,7 @@ function Step2({
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="font-cinzel text-xl font-bold tracking-wide mb-1">Your Vision</h2>
+        <h2 className="font-serif text-xl font-bold tracking-wide mb-1">Your Vision</h2>
         <p className="text-zinc-500 text-sm">Describe what you have in mind — be as specific as you like.</p>
       </div>
       <div className="space-y-4">
@@ -422,7 +422,7 @@ function Step3({
           <span className="w-1.5 h-1.5 rounded-full bg-[#D4A853]" />
           <span className="text-[10px] uppercase tracking-widest text-[#D4A853]">AI Generated</span>
         </div>
-        <h2 className="font-cinzel text-xl font-bold tracking-wide mb-1">A Few Questions</h2>
+        <h2 className="font-serif text-xl font-bold tracking-wide mb-1">A Few Questions</h2>
         <p className="text-zinc-500 text-sm">
           Based on your vision, the AI has a few follow-up questions. Answer as many as you like — all are optional.
         </p>
@@ -490,7 +490,7 @@ function Step4({
           <span className="w-1.5 h-1.5 rounded-full bg-[#D4A853]" />
           <span className="text-[10px] uppercase tracking-widest text-[#D4A853]">Style Analysis</span>
         </div>
-        <h2 className="font-cinzel text-xl font-bold tracking-wide mb-1">AI Style Detection</h2>
+        <h2 className="font-serif text-xl font-bold tracking-wide mb-1">AI Style Detection</h2>
         <p className="text-zinc-500 text-sm">
           The AI analyzed your vision and detected the best matching style. You can override this below.
         </p>
@@ -501,7 +501,7 @@ function Step4({
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Detected Style</p>
-            <p className="font-cinzel text-2xl font-bold text-white">{data.detectedStyle || "Other"}</p>
+            <p className="font-serif text-2xl font-bold text-white">{data.detectedStyle || "Other"}</p>
           </div>
           <div className="text-right shrink-0">
             <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Confidence</p>
@@ -580,7 +580,7 @@ function Step5({
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="font-cinzel text-xl font-bold tracking-wide mb-1">Review Your Consultation</h2>
+        <h2 className="font-serif text-xl font-bold tracking-wide mb-1">Review Your Consultation</h2>
         <p className="text-zinc-500 text-sm">
           Everything looks good? Submit to send your consultation to the studio.
         </p>
@@ -722,7 +722,7 @@ function SuccessScreen({
       >
         ✓
       </div>
-      <h2 className="font-cinzel text-2xl font-bold tracking-wide mb-2">Consultation Submitted!</h2>
+      <h2 className="font-serif text-2xl font-bold tracking-wide mb-2">Consultation Submitted!</h2>
       <p className="text-zinc-400 text-sm leading-relaxed mb-6 max-w-sm mx-auto">
         Thank you, {name.split(" ")[0]}. Your consultation has been sent to {studioName} and they will review it shortly.
       </p>
