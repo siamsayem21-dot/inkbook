@@ -30,7 +30,7 @@ const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
 const ANON_KEY = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const PROJECT_REF = SUPABASE_URL.match(/https:\/\/([a-z0-9]+)\.supabase\.co/)[1];
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = process.env.QA_BASE_URL ?? "http://localhost:3000";
 const TAG = "QA-DESIGN-SWEEP";
 const SCREENSHOT_DIR = "reports/design-qa-screenshots";
 mkdirSync(SCREENSHOT_DIR, { recursive: true });
@@ -301,7 +301,7 @@ HEAD("Client Portal");
     const cookies = (chunks.length === 1
       ? [{ name: cookieName, value: chunks[0] }]
       : chunks.map((c, i) => ({ name: `${cookieName}.${i}`, value: c }))
-    ).map((c) => ({ ...c, domain: "localhost", path: "/", httpOnly: false, secure: false, sameSite: "Lax" }));
+    ).map((c) => ({ ...c, domain: new URL(BASE_URL).hostname, path: "/", httpOnly: false, secure: BASE_URL.startsWith("https"), sameSite: "Lax" }));
     await context.addCookies(cookies);
 
     const page = await context.newPage();
