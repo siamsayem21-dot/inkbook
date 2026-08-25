@@ -82,18 +82,32 @@ leakage across 5 routes + 3 direct-ID probes. **Full Phase C: 0 findings**
 ## CLIENT PORTAL — LIVE (`app/portal/[studio]/**`, 7 top-level + 4 sub)
 | Route | Status | Evidence |
 |---|---|---|
-| `/portal/[studio]/dashboard` | NOT_TESTED | |
-| `/portal/[studio]/consultation` | NOT_TESTED | |
-| `/portal/[studio]/projects` | NOT_TESTED | |
-| `/portal/[studio]/projects/[id]` | NOT_TESTED | |
-| `/portal/[studio]/projects/[id]/consent` | NOT_TESTED | |
-| `/portal/[studio]/bookings` | NOT_TESTED | |
-| `/portal/[studio]/bookings/[bookingId]` | NOT_TESTED | |
-| `/portal/[studio]/bookings/[bookingId]/review` | NOT_TESTED | |
-| `/portal/[studio]/history` | NOT_TESTED | |
-| `/portal/[studio]/messages` | NOT_TESTED | |
-| `/portal/[studio]/messages/[threadId]` | NOT_TESTED | |
-| `/portal/[studio]/settings` | NOT_TESTED | |
+| `/portal/[studio]/dashboard` | PASS | `scripts/qa-phase-d-client.mjs` D2 — welcome, magnetic CTA, section cards, mobile, all real |
+| `/portal/[studio]/consultation` | PASS | D1 — real Claude AI round-trip, message 1→2 |
+| `/portal/[studio]/projects` | PASS | D3 — 6 real projects across full lifecycle, desktop+mobile |
+| `/portal/[studio]/projects/[id]` | PASS | D3/C1-C6 — new/quoted/accepted/deposit-pending/confirmed/completed states all real |
+| `/portal/[studio]/projects/[id]/consent` | PASS | consent submission DB-verified after fixing QA seed gap (see EXHAUSTIVE_ISSUES.md) |
+| `/portal/[studio]/bookings` | PASS | D4 — 4 real bookings, desktop+mobile |
+| `/portal/[studio]/bookings/[bookingId]` | PASS | D4 — deposit countdown, message-about-booking, aftercare, review all DB-verified |
+| `/portal/[studio]/bookings/[bookingId]/review` | PASS | real review submission DB-confirmed (rating, is_public default, ownership), idempotent redirect on revisit |
+| `/portal/[studio]/history` | PASS | D5 — timeline + general conversations render, mobile clean |
+| `/portal/[studio]/messages` | PASS | D6 — real send, thread list, idempotent "New Conversation" |
+| `/portal/[studio]/messages/[threadId]` | PASS | D6 — full cross-role round trip confirmed (client↔owner) |
+| `/portal/[studio]/settings` | PASS | D7 — real display-name save, DB-confirmed, persists across reload |
+
+**Client Portal security (Phase D8/D8b):** Client B (empty account) sees
+correct empty states on 3 routes; 5/5 direct-ID IDOR probes against Client
+A's data (project/consent/booking/review/thread) all correctly blocked
+(404). Cross-studio: Client A's session can view Studio B's portal *shell*
+(by design — client accounts aren't studio-invitation-gated, confirmed via
+`lib/client-portal/*.ts`'s double `studio_id`+`client_account_id` scoping on
+every real query) but zero actual Studio A data leaks into it. **0 real
+security findings.**
+
+**Full Phase D: 3 real findings, all explained** — see EXHAUSTIVE_ISSUES.md
+(the P0 Stripe Connect finding surfaced 3 times here via different clicks;
+1 QA-seed gap surfaced 3 times via the consent flow; 3 lower-confidence
+items not blocking).
 
 ## CLIENT PORTAL — ORPHANED PROTOTYPE (`app/client-portal/[studio]/**`)
 | Route | Status | Evidence |

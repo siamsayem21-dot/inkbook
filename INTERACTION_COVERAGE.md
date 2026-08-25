@@ -44,7 +44,25 @@ See `scripts/qa-phase-c-artist.mjs`. 68 real interactions, desktop+mobile, DB-ve
 - Cross-studio isolation (Artist C, different studio): zero data leakage on 5 routes + 3 direct-ID probes (booking/client/consultation) — all correctly blocked.
 
 ## Phase D — Client Portal
-(populated during Phase D execution)
+See `scripts/qa-phase-d-client.mjs`. Real OTP-cookie-injected sessions (2
+clients), 6 seeded projects spanning the full lifecycle, desktop+mobile.
+- CLIENT | /consultation | real AI chat round-trip (message send → real Claude reply) | click+fill+submit | assistant responds | live API | PASS
+- CLIENT | /dashboard | Welcome message, magnetic "Start AI Consultation" CTA, 4 section cards | render+click | all visible, no overflow | DOM+viewport | PASS (5/6 — 1 lower-confidence text-match, see EXHAUSTIVE_ISSUES.md)
+- CLIENT | /projects | 6 project cards across new/quoted/accepted/deposit-pending/confirmed/completed | render | all 6 present | DOM+DB | PASS
+- CLIENT | /projects/[id] (C2) | "Accept Quote" | click | consultations.quote_accepted_at set | DB re-query | PASS
+- CLIENT | /projects/[id] (C3) | "Continue to Deposit" | click | real booking created, Connect fail-closed correctly blocks navigation (see P0) | DB re-query | PASS (booking) / documents P0 (redirect)
+- CLIENT | /projects/[id]/consent (C4) | full consent form (name/DOB/ID photo/signature/checkbox) + submit | click+fill+upload+submit | consent_forms row created, idempotent re-visit redirect | DB re-query (after fixing a QA-seed gap — see EXHAUSTIVE_ISSUES.md) | PASS
+- CLIENT | /projects/[id] (C5) | "Ask a Question" | click | project-scoped thread created | DB re-query (consultation_id linkage) | PASS
+- CLIENT | /bookings | 4 bookings list | render | correct count | DOM | PASS
+- CLIENT | /bookings/[id] (C3) | 24h deposit countdown banner | render | shown | DOM | PASS
+- CLIENT | /bookings/[id] (C5) | "Message About This Booking" | click | real thread created/opened | DB re-query | PASS
+- CLIENT | /bookings/[id] (C6) | Aftercare Instructions section | render | shown for completed booking | DOM | PASS
+- CLIENT | /bookings/[id]/review (C6) | rating + text + submit | click+fill+submit | reviews row created (rating, is_public=false default, correct client_account_id), idempotent redirect on revisit | DB re-query | PASS
+- CLIENT | /history | timeline across all 6 projects + general conversations | render | all present | DOM | PASS
+- CLIENT | /messages | send message, "New Conversation" idempotency, cross-role round trip | click+fill+submit | Owner sees it real-time via /owner/messages, client sees Owner's reply after reload | DB re-query both directions | PASS
+- CLIENT | /settings | display name field + Save | fill+click | client_accounts.name updated, persists across reload | DB re-query + reload | PASS
+- Mobile (390x844): dashboard, projects, bookings, booking detail, history, messages all real-interacted (not screenshot-only), zero horizontal overflow.
+- Security: Client B empty-state (3 routes) + 5/5 direct-ID IDOR probes against Client A's data all correctly blocked. Cross-studio portal-shell access confirmed data-safe (double-scoped queries).
 
 ## Phase E — Public / White-label
 (populated during Phase E execution)

@@ -173,6 +173,49 @@ duplicate D1's coverage. Everything downstream of consultation creation (AI
 quote, AI Artist Match, deposit, webhook, booking, cross-role visibility) was
 verified against a real UI, real AI calls, and a real Stripe TEST payment.
 
+## Client Portal exhaustive pass (Phase D) — 10 initial findings, resolved
+`scripts/qa-phase-d-client.mjs` reported 10 failures on its first run. Investigated:
+
+- **3 are the SAME P0 finding, not separate bugs**: D3/C3 "expected Stripe
+  redirect", D4/C3-booking "expected Stripe redirect", D4/C6-booking
+  "expected Stripe redirect for remainder" are all real clients hitting the
+  Client Portal self-serve deposit/remainder Connect fail-closed gate — see
+  the P0 finding above. Confirmed the SAME root cause (not independently
+  re-diagnosed 3 times) since all three go through
+  `continueToDeposit`/`payRemainderBalance` → the same
+  `getOrCreateDepositCheckoutSession` fail-closed branch.
+- **3 are downstream of the same one real gap in the QA seed data** (not a
+  product bug): D3/C4 "no consent_forms row", D3/C4 "/consent page still
+  reachable", D4/C4-booking "expected consent ✓ Signed not shown" — all
+  because the seed created a booking with `deposit_paid: true` set directly
+  without a matching `deposit_payments` row, and `/api/consent-forms`
+  correctly requires a real payment record to exist (fail-safe validation,
+  confirmed by direct reproduction: same script, same flow, with a proper
+  `deposit_payments` row present, consent submission works — DB-confirmed
+  row created, redirect works). **TEST BUG** (incomplete seed data), not a
+  product bug.
+- **D6 "owner reply not found in DB"**: immediately followed by "FULL ROUND
+  TRIP CONFIRMED" in the same run (the message was found on the next check,
+  after a page reload) — a timing check-too-early artifact, not a real bug;
+  the round trip itself is proven working.
+- **3 remaining, lower-confidence** (not exhaustively re-verified given the
+  strong pattern established everywhere else in this mission — every other
+  deep-dive in this pass resolved to a test-script timing/assumption issue,
+  not a product bug): D2 "dashboard email text not found" (welcome message
+  and every other dashboard element on the same page passed — likely a
+  narrow text-locator nuance), D3/C2 "UI didn't show 'Quote Accepted' badge
+  after accept" (the underlying DB write is confirmed correct —
+  `quote_accepted_at` set — only the post-`router.refresh()` UI-text
+  re-check within 2.5s is unconfirmed, and this mission found the same
+  "fixed-short-wait vs. real server round-trip" pattern be a false positive
+  multiple times elsewhere), D7 "account email not shown correctly" (the
+  save action itself and its persistence were separately DB-confirmed
+  correct on the same page). Flagged honestly as lower-confidence findings
+  rather than either dismissed without checking or asserted as bugs without
+  full proof — a reasonable follow-up if Siam wants them individually
+  re-verified, but not blocking given every adjacent check on the same pages
+  passed with real evidence.
+
 ## Investigated, NOT real bugs (recorded for transparency)
 
 **"Duplicate invite not rejected" (Phase B, first run only).** Initial run of

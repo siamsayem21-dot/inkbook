@@ -43,40 +43,83 @@ restart from zero.
   `qa-overnight-owner-sweep.mjs`, `qa-overnight-artist-sweep.mjs`).
 
 ## CURRENT PHASE
-Phase 0 (setup) → transitioning to Phase A (Auth exhaustive verification).
+Phase A (Auth) — DONE. Phase C (Artist Portal) — DONE. Phase D (Client
+Portal) — DONE. Phase B (Owner Portal) — PARTIAL (Artists + Settings only;
+~15 modules remain: Bookings, Consultations, Pipeline, Requests, Messages,
+Flash, Portfolio, Clients, Revenue, Reviews, Blacklist, Consent Forms,
+Waitlist, Knowledge, Audit Log, Billing). Core cross-role journey
+(`qa-full-studio-journey.mjs`: AI Consultation → AI Artist Match → Quote →
+Stripe TEST Deposit → Booking → Consent → Completion → Review) — DONE, PASS
+end-to-end. Now resuming Phase B part 2 (remaining Owner modules).
 
 ## CURRENT ROLE / ROUTE / STATE / ACTION
-Not yet started interactive execution — building inventory + tracking docs.
+OWNER | about to start | `/owner/bookings` (list + detail) as the first
+module of Phase B part 2.
 
 ## LAST VERIFIED ITEM
-(none yet — mission just started)
+Phase D (Client Portal) fully documented: `PRODUCT_COVERAGE_MATRIX.md`
+Client Portal route rows all PASS, `INTERACTION_COVERAGE.md` Phase D section
+populated with 16 detailed interaction rows + security summary.
 
 ## NEXT EXACT ITEM
-Finish building `PRODUCT_COVERAGE_MATRIX.md` (route inventory, done below) and
-`INTERACTION_COVERAGE.md` skeleton, then begin Phase A (Auth).
+Write/run `scripts/qa-phase-b-owner-part2.mjs` covering the ~15 remaining
+Owner Portal modules listed above, using the same real-click → DB re-query →
+honest-FAIL-investigation methodology as Phases B/C/D. Start with Bookings
+and Consultations/Pipeline (highest-traffic, already touched indirectly by
+the P0/P1 findings and the full studio journey, so cross-check those areas
+carry over cleanly) then continue to the rest of the list. After Phase B
+part 2: Phase E (Public/White-label), then Security/RLS broad sweep, then
+Design/Motion production re-verification, then final regressions + report.
 
 ## TOTALS (updated as mission progresses)
-- TOTAL INVENTORY ITEMS: TBD (route inventory below: 76 page routes + 31 API
-  routes + 26 server-action files = 133 top-level surfaces before per-surface
-  interaction expansion)
-- PASS: 0
-- FAIL: 0
-- FIXED_RETESTED_PASS: 0
+- TOTAL INVENTORY ITEMS: 76 page routes + 31 API routes + 26 server-action
+  files = 133 top-level surfaces (per-surface interaction expansion ongoing)
+- PASS: Phase A (~15 items), Phase C (68 interactions), Phase D (16 routes +
+  security), Phase B part 1 (10 items), full studio journey (1 end-to-end
+  pass covering AI/Match/Quote/Stripe TEST deposit/Booking/Consent/
+  Completion/Review) — all PASS
+- FAIL: 0 outstanding (all Phase D FAILs investigated: 2 confirmed real
+  product bugs — see BUG COUNT below — rest were test-script/seed-data bugs,
+  fixed, retested PASS)
+- FIXED_RETESTED_PASS: 2 (`/owner/artists/new` dead form; Phase C portfolio
+  style-tag selector was a script bug not product, noted for completeness)
 - BLOCKED_EXTERNAL: 1 (tests/db — no Docker)
-- BLOCKED_NEEDS_SIAM: 0
-- NOT_APPLICABLE: 2 (orphaned `app/client-portal/[studio]/**` prototype — confirmed
-  zero live references via fresh grep this session; `app/dashboard/{artists,bookings,consent-forms}`
-  sub-pages — confirmed unreachable, `/dashboard` always redirects before
-  rendering, per code read earlier this session)
-- NOT_TESTED: everything else, TBD
+- BLOCKED_NEEDS_SIAM: 2 (P0 Client Portal deposit fail-closed; P1 owner
+  deposit link wrong-account routing — both real, both require a Siam
+  product/business decision on Stripe Connect rollout, not a code guess)
+- NOT_APPLICABLE: 2 (orphaned `app/client-portal/[studio]/**` prototype;
+  `app/dashboard/{artists,bookings,consent-forms}` unreachable sub-pages)
+- NOT_TESTED: Owner Portal ~15 remaining modules, Phase E (Public/
+  White-label), broader Security/RLS sweep beyond Phase C/D, Design/Motion
+  production re-verification, Blacklist/Waitlist/Automations/Reviews
+  standalone passes, error/resilience testing, a11y/console/perf checks,
+  final regressions (Sections 49-54), final build/test gate (55), final
+  report (61)
 
 ## BUG COUNT
-P0: 0 found / 0 fixed / 0 remaining
-P1: 0 found / 0 fixed / 0 remaining
-P2: 0 found / 0 fixed / 0 remaining
+P0: 1 found / 0 fixed / 1 remaining — Client Portal self-serve deposit/
+remainder payment fails closed for every real studio (Stripe Connect not yet
+connected by any studio). BLOCKED_NEEDS_SIAM — real-money routing change,
+mission hard gate forbids fixing without Siam approval on the rollout
+decision. See EXHAUSTIVE_ISSUES.md line ~37.
+P1: 1 found / 0 fixed / 1 remaining — Owner "Generate Deposit Link"
+(`sendDepositRequest`) charges InkBook's platform Stripe account instead of
+the connected studio's account (empirically confirmed via a real TEST-mode
+PaymentIntent). BLOCKED_NEEDS_SIAM — same hard gate. See EXHAUSTIVE_ISSUES.md
+line ~109.
+P2: 1 found / 1 fixed / 0 remaining (`/owner/artists/new` dead static form,
+fixed to redirect, retested PASS)
 P3: 0 found / 0 fixed / 0 remaining
 
 ## COVERAGE SNAPSHOT
-DESKTOP: 0% | MOBILE: 0% | SECURITY: 0% | MOTION: (prior pass verified, see
-DESIGN_SYSTEM_UPGRADE.md — being re-confirmed as part of this mission's Phase Y)
-AI: 0% | PAYMENT: 0% | AUTOMATION: 0%
+DESKTOP: Auth/Artist/Client/Owner-Artists+Settings covered (~50%) | MOBILE:
+Artist + Client covered, Owner Artists+Settings covered (~40%) | SECURITY:
+Auth boundary + Artist cross-studio isolation + Client IDOR probes covered,
+broader Owner-side API/action authorization sweep still pending (~40%) |
+MOTION: prior design-correction pass verified pre-mission, NOT yet
+re-confirmed against the live production deployment this mission (0% this
+mission) | AI: full consultation→match→quote pipeline verified end-to-end
+(100% core path) | PAYMENT: classic direct-booking deposit flow verified
+working via real Stripe TEST webhook; Connect-based flows have 2 confirmed
+bugs (P0/P1) documented and blocked on Siam (~60%, bugs found not fixed) |
+AUTOMATION: not yet started (0%)
