@@ -1006,21 +1006,60 @@ body {
    Owner Portal / Artist Portal / Client Portal / Auth. Deliberately additive —
    nothing above this line (the public marketing site's dark/gold system) is
    modified or reused here.
+
+   CORRECTION PASS (2026-08-25): the first version of this system shipped to
+   production and was rejected on sight — cards read as "basic white
+   rectangles with thin borders," depth wasn't visible at rest, and motion
+   was too subtle to notice. Every value below was deliberately turned up
+   from that first pass (see comments), not just re-labeled.
    ═══════════════════════════════════════════════════════════════════════ */
 
-/* Hover lift — standard interactive card. Desktop pointer devices only;
+/* Ambient page background — replaces a flat single-color canvas with a
+   restrained, fixed radial-gradient environment (two soft violet/lavender
+   glows, top-left and bottom-right). Apply to the outer page wrapper instead
+   of a flat background color. Still overwhelmingly off-white — this is
+   "premium environment," not a colored page. */
+.page-ambient {
+  background-color: #FAF9FC;
+  background-image:
+    radial-gradient(760px circle at 8% -6%, rgba(124, 58, 237, 0.07), transparent 60%),
+    radial-gradient(680px circle at 96% 8%, rgba(168, 85, 247, 0.05), transparent 55%),
+    radial-gradient(900px circle at 50% 115%, rgba(124, 58, 237, 0.045), transparent 60%);
+  background-attachment: fixed;
+}
+
+/* Premium card — the corrected resting-state depth for KPI/overview surfaces.
+   Unlike the first pass, elevation is visible WITHOUT hovering: a real
+   shadow-elevation-3 at rest (not shadow-sm), a soft top highlight (glass-like
+   inner edge), and a hairline border lighter than the old zinc-200 default. */
+.premium-card {
+  background: #fff;
+  border: 1px solid rgba(24, 18, 43, 0.07);
+  border-radius: 1rem;
+  box-shadow:
+    0 2px 4px rgba(24, 18, 43, 0.06),
+    0 1px 1px rgba(24, 18, 43, 0.04),
+    0 16px 36px -6px rgba(76, 29, 149, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* Hover lift — standard interactive card. Corrected: -3px → -4px to actually
+   register (spec: "3-5px, visibly lift"). Desktop pointer devices only;
    touch devices get a lightweight tap-scale instead (see .tap-scale). */
 @media (hover: hover) and (pointer: fine) {
   .hover-lift {
-    transition: transform 200ms var(--ease-out), box-shadow 200ms var(--ease-out);
+    transition: transform 220ms var(--ease-out), box-shadow 220ms var(--ease-out);
   }
   .hover-lift:hover {
-    transform: translateY(-3px);
+    transform: translateY(-4px);
   }
 }
 
-/* Cursor-follow light — very soft radial highlight tracking the pointer inside
-   a premium card. JS sets --mx/--my (see components/ui/MotionCard.tsx). */
+/* Cursor-follow light — soft radial highlight tracking the pointer inside a
+   premium card. Corrected: 220px → 320px circle, 0.10 → 0.16 base opacity —
+   the first pass was confirmed too faint to notice. Still restrained (no
+   neon): capped well under 0.2 alpha. JS sets --mx/--my (see
+   components/ui/MotionCard.tsx). */
 @media (hover: hover) and (pointer: fine) {
   .cursor-glow {
     position: relative;
@@ -1035,7 +1074,7 @@ body {
     opacity: 0;
     border-radius: inherit;
     transition: opacity 250ms ease;
-    background: radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%), var(--glow-color, rgba(124, 58, 237, 0.10)), transparent 70%);
+    background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), var(--glow-color, rgba(124, 58, 237, 0.16)), transparent 72%);
   }
   .cursor-glow:hover::after {
     opacity: 1;
@@ -1043,6 +1082,19 @@ body {
   .cursor-glow > * {
     position: relative;
     z-index: 1;
+  }
+}
+
+/* Parallax layer — elements inside a MotionCard marked data-parallax move
+   independently of the card's own tilt (JS writes --px/--py, see
+   components/ui/MotionCard.tsx), creating the "layers floating at different
+   depths" effect. New in the correction pass — the first pass had no
+   parallax at all despite it being in the original spec. */
+@media (hover: hover) and (pointer: fine) {
+  [data-parallax] {
+    transform: translate(var(--px, 0), var(--py, 0));
+    transition: transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform;
   }
 }
 
@@ -1067,6 +1119,10 @@ body {
   }
   .cursor-glow::after {
     display: none !important;
+  }
+  [data-parallax] {
+    transform: none !important;
+    transition: none !important;
   }
   .motion-spring {
     transition: none !important;

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { LeadStatus } from "@/lib/pipeline";
+import MotionCard from "@/components/ui/MotionCard";
 
 interface Props {
   stageCounts: Record<string, number>;
@@ -24,7 +25,7 @@ const DASHBOARD_STAGES: { value: LeadStatus; label: string }[] = [
 // the dashboard's period control — matches /owner/pipeline, which this links to.
 export default function LeadPipelineOverview({ stageCounts, total }: Props) {
   return (
-    <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6">
+    <MotionCard className="premium-card hover:shadow-elevation-4 transition-shadow duration-200 p-6" maxTiltDeg={2}>
       <div className="flex items-center justify-between mb-5">
         <div>
           <h2 className="text-base font-semibold text-zinc-900">Lead pipeline overview</h2>
@@ -37,15 +38,15 @@ export default function LeadPipelineOverview({ stageCounts, total }: Props) {
 
       <div className="grid grid-cols-5 gap-2">
         {DASHBOARD_STAGES.map((s, i) => (
-          <div key={s.value} className="relative rounded-xl border border-zinc-100 px-2 py-3.5 text-center">
+          <div key={s.value} className="relative rounded-xl bg-violet-50/40 border border-violet-100/60 px-2 py-3.5 text-center">
             <p className="text-xl font-bold text-zinc-900 tabular-nums">{stageCounts[s.value] ?? 0}</p>
             <p className="text-[9px] uppercase tracking-widest text-zinc-400 mt-1 leading-tight">{s.label}</p>
             {i < DASHBOARD_STAGES.length - 1 && (
-              <span className="hidden sm:block absolute top-1/2 -right-2.5 -translate-y-1/2 text-zinc-300 text-xs">→</span>
+              <span className="hidden sm:block absolute top-1/2 -right-2.5 -translate-y-1/2 text-violet-300 text-xs">→</span>
             )}
           </div>
         ))}
       </div>
-    </div>
+    </MotionCard>
   );
 }

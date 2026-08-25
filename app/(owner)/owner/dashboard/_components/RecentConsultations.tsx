@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getStage, type LeadStatus } from "@/lib/pipeline";
+import MotionCard from "@/components/ui/MotionCard";
 
 export interface RecentConsultation {
   id: string;
@@ -24,7 +25,7 @@ const LIGHT_STAGE_BADGE: Record<LeadStatus, string> = {
 
 export default function RecentConsultations({ items }: { items: RecentConsultation[] }) {
   return (
-    <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6 h-full flex flex-col">
+    <MotionCard className="premium-card hover:shadow-elevation-4 transition-shadow duration-200 p-6 h-full flex flex-col" maxTiltDeg={2}>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-base font-semibold text-zinc-900">Recent consultations</h2>
         <Link href="/owner/consultations" className="text-xs font-medium text-violet-600 hover:text-violet-700">
@@ -33,7 +34,9 @@ export default function RecentConsultations({ items }: { items: RecentConsultati
       </div>
 
       {items.length === 0 ? (
-        <p className="text-sm text-zinc-400 text-center py-10 flex-1">No AI consultations submitted yet.</p>
+        <div data-parallax data-parallax-strength="4" className="flex-1 flex items-center justify-center rounded-xl bg-violet-50/50 border border-violet-100/70">
+          <p className="text-sm text-zinc-400 py-10 text-center px-6">No AI consultations submitted yet.</p>
+        </div>
       ) : (
         <div className="flex-1 divide-y divide-zinc-100">
           {items.map((c) => {
@@ -58,6 +61,6 @@ export default function RecentConsultations({ items }: { items: RecentConsultati
           })}
         </div>
       )}
-    </div>
+    </MotionCard>
   );
 }

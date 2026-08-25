@@ -309,7 +309,7 @@ export default async function OwnerDashboardPage({
     // Breaks out of OwnerLayout's dark padding (p-4 pt-16 md:p-8) to paint this
     // page's own light canvas — first module of the dark→light InkBook migration.
     // Other owner pages are untouched; only the shared sidebar shell was relit.
-    <div className="-m-4 -mt-16 md:-m-8 min-h-[calc(100vh-3rem)] md:min-h-screen" style={{ background: "#FAF9FC" }}>
+    <div className="page-ambient -m-4 -mt-16 md:-m-8 min-h-[calc(100vh-3rem)] md:min-h-screen">
       <div className="p-4 pt-16 md:p-8 space-y-6">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <h1 className="text-2xl md:text-3xl font-bold text-zinc-900">Studio Dashboard</h1>
