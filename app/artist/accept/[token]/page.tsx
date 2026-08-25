@@ -6,18 +6,18 @@ import AcceptForm from "./AcceptForm";
 
 function ErrorPage({ title, message }: { title: string; message: string }) {
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-[#111] border border-[#1E1E1E] rounded-2xl p-8 text-center">
-        <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-5">
-          <svg className="w-5 h-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+    <div className="min-h-screen bg-[#FAF9FC] flex items-center justify-center px-4">
+      <div className="w-full max-w-md bg-white border border-zinc-200 shadow-elevation-3 rounded-2xl p-8 text-center">
+        <div className="w-12 h-12 rounded-full bg-red-50 border border-red-100 flex items-center justify-center mx-auto mb-5">
+          <svg className="w-5 h-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
           </svg>
         </div>
-        <h1 className="text-lg font-bold text-[#E8E8E8] mb-2">{title}</h1>
-        <p className="text-sm text-zinc-400 mb-6">{message}</p>
+        <h1 className="text-lg font-bold text-zinc-900 mb-2">{title}</h1>
+        <p className="text-sm text-zinc-500 mb-6">{message}</p>
         <Link
           href="/login"
-          className="inline-block text-sm text-[#c9a84c] hover:underline"
+          className="inline-block text-sm text-violet-600 hover:text-violet-700 hover:underline"
         >
           Sign in instead →
         </Link>
@@ -85,27 +85,27 @@ export default async function AcceptInvitePage({
   const studioName = (studio as { name: string } | null)?.name ?? "your studio";
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-[#FAF9FC] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-6">
-            <div className="w-8 h-8 rounded-lg bg-[#c9a84c] flex items-center justify-center">
-              <span className="text-black text-xs font-black">IB</span>
+            <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
+              <span className="text-white text-xs font-bold">IB</span>
             </div>
-            <span className="text-[#E8E8E8] font-bold text-lg">InkBook</span>
+            <span className="text-zinc-900 font-serif font-bold text-lg">InkBook</span>
           </div>
-          <h1 className="text-2xl font-bold text-[#E8E8E8] mb-2">
+          <h1 className="text-2xl font-bold text-zinc-900 mb-2">
             You&apos;re invited!
           </h1>
-          <p className="text-sm text-zinc-400">
-            <span className="text-[#c9a84c] font-medium">{studioName}</span> has invited you to
+          <p className="text-sm text-zinc-500">
+            <span className="text-violet-600 font-medium">{studioName}</span> has invited you to
             join their team. Set up your account below.
           </p>
         </div>
 
         {/* Form card */}
-        <div className="bg-[#111] border border-[#1E1E1E] rounded-2xl p-8">
+        <div className="bg-white border border-zinc-200 shadow-elevation-3 rounded-2xl p-8">
           <AcceptForm
             token={params.token}
             inviteeName={inv.invited_name}
@@ -114,9 +114,9 @@ export default async function AcceptInvitePage({
           />
         </div>
 
-        <p className="text-center text-xs text-zinc-600 mt-6">
+        <p className="text-center text-xs text-zinc-400 mt-6">
           Already have an account?{" "}
-          <Link href="/login" className="text-zinc-400 hover:text-[#c9a84c] transition-colors">
+          <Link href="/login" className="text-zinc-500 hover:text-violet-600 transition-colors">
             Sign in
           </Link>
         </p>

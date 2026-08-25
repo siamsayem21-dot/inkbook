@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { acceptInvite } from "./actions";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 export default function AcceptForm({
   token,
@@ -68,29 +69,31 @@ export default function AcceptForm({
     router.refresh();
   }
 
+  const mismatch = confirm.length > 0 && password !== confirm;
+
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
       {error && (
-        <div className="bg-red-950 border border-red-800 text-red-300 text-sm rounded-lg px-4 py-3">
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
           {error}
         </div>
       )}
 
       {/* Email — read-only, shows what they're joining as */}
       <div>
-        <label htmlFor="accept-email" className="text-sm text-zinc-400 block mb-1.5">Email</label>
+        <label htmlFor="accept-email" className="text-xs font-medium text-zinc-500 block mb-2">Email</label>
         <input
           id="accept-email"
           type="email"
           value={email}
           readOnly
-          className="w-full bg-[#0A0A0A] border border-[#2A2A2A] rounded-lg px-4 py-2.5 text-sm text-zinc-500 cursor-not-allowed"
+          className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-4 py-2.5 text-sm text-zinc-500 cursor-not-allowed"
         />
       </div>
 
       <div>
-        <label htmlFor="accept-name" className="text-sm text-zinc-400 block mb-1.5">
-          Your name <span className="text-[#c9a84c]">*</span>
+        <label htmlFor="accept-name" className="text-xs font-medium text-zinc-500 block mb-2">
+          Your name <span className="text-violet-600">*</span>
         </label>
         <input
           id="accept-name"
@@ -98,42 +101,32 @@ export default function AcceptForm({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Jane Smith"
-          className="w-full bg-[#0A0A0A] border border-[#2A2A2A] rounded-lg px-4 py-2.5 text-sm text-[#E8E8E8] focus:outline-none focus:border-[#c9a84c] transition-colors placeholder:text-zinc-600"
+          className="w-full bg-white border border-zinc-200 rounded-lg px-4 py-2.5 text-sm text-zinc-900 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition-colors placeholder:text-zinc-400"
         />
       </div>
 
-      <div>
-        <label htmlFor="accept-password" className="text-sm text-zinc-400 block mb-1.5">
-          Set a password <span className="text-[#c9a84c]">*</span>
-        </label>
-        <input
-          id="accept-password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="At least 8 characters"
-          className="w-full bg-[#0A0A0A] border border-[#2A2A2A] rounded-lg px-4 py-2.5 text-sm text-[#E8E8E8] focus:outline-none focus:border-[#c9a84c] transition-colors placeholder:text-zinc-600"
-        />
-      </div>
+      <PasswordInput
+        id="accept-password"
+        label="Set a password *"
+        placeholder="At least 8 characters"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
 
-      <div>
-        <label htmlFor="accept-confirm-password" className="text-sm text-zinc-400 block mb-1.5">
-          Confirm password <span className="text-[#c9a84c]">*</span>
-        </label>
-        <input
-          id="accept-confirm-password"
-          type="password"
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          placeholder="Repeat your password"
-          className="w-full bg-[#0A0A0A] border border-[#2A2A2A] rounded-lg px-4 py-2.5 text-sm text-[#E8E8E8] focus:outline-none focus:border-[#c9a84c] transition-colors placeholder:text-zinc-600"
-        />
-      </div>
+      <PasswordInput
+        id="accept-confirm-password"
+        label="Confirm password *"
+        placeholder="Repeat your password"
+        value={confirm}
+        onChange={(e) => setConfirm(e.target.value)}
+        error={mismatch}
+      />
+      {mismatch && <p className="text-red-600 text-xs -mt-3">Passwords do not match</p>}
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-[#c9a84c] text-black font-bold py-3 rounded-lg hover:bg-[#a8832e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-1"
+        className="w-full bg-violet-600 text-white font-semibold py-3 rounded-lg hover:bg-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-1"
       >
         {loading ? (
           <>

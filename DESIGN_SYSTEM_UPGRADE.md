@@ -8,8 +8,13 @@ Client Portal, and Auth (Login/Register/Reset Password). The public marketing si
 scope, not touched.
 
 ## CURRENT STAGE
-Stage 10-12: portal page sweep (converting remaining dark-shell pages to the light
-system) + motion application, after the shell/tokens/auth foundation landed.
+Stage 10-12: portal page sweep. Foundation (shell/tokens/motion/auth) is landed
+and committed on branch `feature/design-system-upgrade` (commit `1e73635`).
+3 parallel background agents are finishing the remaining page sweep in
+isolated worktrees: Owner Portal (artists/clients/requests pages), Client
+Portal (~7 remaining dark pages under app/portal/[studio]), Artist Portal
+(full verification pass). Their branches need merging into
+`feature/design-system-upgrade` once they report back.
 
 ## KEY AUDIT FINDING (governs the whole mission)
 The app already has **two competing design systems live in production**, not zero:
@@ -123,19 +128,48 @@ not re-litigated.
 
 ## BUGS FOUND
 1. Dark-shell/light-content split described above (the core finding) — not a
-   crash bug, a real cross-portal visual-consistency defect.
-2. Auth has no password show/hide control at all.
-3. 5 Owner pages (`artists`, `artists/new`, `artists/[artistId]`, `clients`,
-   `requests`) have neither the `FAF9FC` light hack nor obvious dark markers at
-   grep level — needs a direct look during the sweep to confirm they're not
-   rendering unreadable (light text/component on the still-dark shell bg) before
-   the shell fix; the shell fix likely resolves this for free either way.
-4. Minor: reset-password's small logo mark uses `rounded-lg` gold square while
-   login/register use a bordered (no fill) square — inconsistent even within
-   Auth alone.
+   crash bug, a real cross-portal visual-consistency defect. **FIXED.**
+2. Auth had no password show/hide control at all, anywhere in the app
+   (login/register/reset-password AND the artist-invite-accept flow). **FIXED**
+   — new `components/ui/PasswordInput.tsx` used in all 5 password fields
+   across the app (verified via `grep type="password"` — no others exist).
+3. **Real, previously-undiscovered production bug**: `font-cinzel` was
+   referenced as a CSS class in 14 files (Auth, Navbar, old `/dashboard` hub,
+   `/book/[studio]/consult`+`/custom`+`/request` pages, marketing landing
+   sections) but never defined anywhere — no such font is loaded (the real
+   serif font is Instrument Serif, exposed as `font-serif`), and Tailwind
+   silently drops unrecognized utility classes. Confirmed via the compiled
+   `.next/static/css` output containing zero matches for `.font-cinzel`,
+   `.bg-ink`, `.label-xs`, `.grain`, or `.gold-divider` anywhere. **FIXED**
+   (global rename `font-cinzel` → `font-serif`, verified safe — it's the
+   correct already-loaded font, not a style regression).
+4. `bg-ink`, `label-xs`, `gold-divider`, `.grain` are ALSO dead/undefined
+   classes (same root cause), but only in files outside this mission's scope
+   (public marketing site — `components/landing/**`, `components/shared/Navbar.tsx`
+   which is dead/unused code, not imported anywhere). Deliberately NOT touched
+   — out of scope (marketing site keeps its existing approved dark/gold brand)
+   and not worth a special-case exception. Flagged here for Siam's awareness;
+   not launch-blocking.
+5. 5 Owner pages (`artists`, `artists/new`, `artists/[artistId]`, `clients`,
+   `requests`) had neither the `FAF9FC` light hack nor obvious dark markers —
+   assigned to a background sweep agent to verify/fix.
+6. `app/dashboard/page.tsx` (the post-login role-redirect hub) always redirects
+   before rendering anything (owner→`/owner/dashboard`, artist→`/artist/dashboard`,
+   new user→`/register`) — its dark-themed `layout.tsx`/`DashboardSidebar.tsx`
+   are unreachable in practice. Confirmed via reading the redirect logic, not
+   fixed (no user ever sees it, not worth the churn).
+7. Minor: reset-password's small logo mark used `rounded-lg` filled square while
+   login/register used a bordered (no fill) square — inconsistent even within
+   Auth alone. **FIXED** — all 3 Auth pages + artist-accept-invite now use the
+   same `w-8 h-8 rounded-lg bg-violet-600` logo mark.
+8. Mobile sidebar toggle buttons across all 3 portals used raw `"✕"`/`"☰"` text
+   characters instead of real icons (icon-system inconsistency, Stage 8).
+   **FIXED** — normalized to Lucide `<X>`/`<Menu>` in `OwnerSidebar.tsx`,
+   `components/shared/Sidebar.tsx`, `PortalSidebar.tsx`.
 
 ## BUGS FIXED
-(updated as fixes land — see commits)
+See items above marked FIXED. All verified with `tsc --noEmit` + `npm run lint`
+clean after each batch; `npm run test` still 601/601 after the foundation commit.
 
 ## DEFERRED ISSUES
 (none yet — record here if something needs Siam per CLAUDE.md's approval-gate list)

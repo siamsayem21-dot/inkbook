@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { Menu, X } from "lucide-react";
 
 const NAV = [
   { label: "Dashboard",        href: "dashboard" },
@@ -115,7 +116,7 @@ export default function PortalSidebar({ studioSlug, studioName, clientEmail, bra
           className="text-zinc-500 hover:text-zinc-900 w-8 h-8 flex items-center justify-center"
           aria-label="Toggle navigation"
         >
-          {mobileOpen ? "✕" : "☰"}
+          {mobileOpen ? <X size={18} /> : <Menu size={18} />}
         </button>
       </div>
 
