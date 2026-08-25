@@ -87,9 +87,12 @@ test-script limitation on `/book/[studio]/consult`'s form-detection that
 also corrected an earlier over-cautious NOT_TESTED note — that route is
 confirmed real and reachable). Final build/test gate: `npm test` run
 explicitly one more time, 601/601 clean. A11y/console/perf (prior block):
-18 checks, 0 findings, plus a correction that the previously-documented
-`StandaloneConsentForm` unlinked-label bug has evidently been fixed since
-it was last recorded. Error/resilience (prior block): 23 checks, 0
+18 checks, 0 findings; the previously-documented (PR #9) unlinked-label bug
+is in `components/booking/ConsentForm.tsx`, not `StandaloneConsentForm`
+(an initial note conflated the two similarly-named components) — checked
+`ConsentForm.tsx` directly and confirmed the original bug has evidently
+been fixed by later work, correction recorded in EXHAUSTIVE_ISSUES.md.
+Error/resilience (prior block): 23 checks, 0
 findings. Design/Motion (prior block): 15 checks, 0 findings. Security/RLS
 (prior block): all 31 API routes have a status. Automations/Cron (prior
 block): 1 real NEW P1 bug found (cron/sms-reminders).

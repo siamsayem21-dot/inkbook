@@ -596,14 +596,24 @@ flagged as slow.
 Accessibility spot-check (form label ↔ input association, DOM-verified via
 `for`/`id`, `aria-label`/`aria-labelledby`, or label-wrapping — not just
 "a `<label>` exists somewhere on the page"): the public Custom Request
-form has zero unlabeled controls. **The standalone consent form
-(`StandaloneConsentForm`, `/book/[studio]/consent`) — previously documented
-in this repo's history (PR #9 review, referenced in this mission's own
-earlier session notes) as having an unlinked-label bug — now has zero
-unlabeled controls too.** Re-confirmed with fresh evidence rather than
-trusting the stale note: the issue has evidently been fixed by later work
-in this codebase since that finding was last recorded. Correcting the
-record here rather than re-reporting a bug that no longer exists.
+form has zero unlabeled controls. The live browser test also checked
+`StandaloneConsentForm` (`/book/[studio]/consent`) and found zero unlabeled
+controls there too — but that is a *different* component from the one this
+repo's history actually documented as buggy.
+
+**Correction:** the PR #9-documented unlinked-label bug was in
+`components/booking/ConsentForm.tsx` (the shared consent form used in the
+real booking flow at `/book/[studio]/[artistId]/book/consent`, and by the
+Client Portal), not `StandaloneConsentForm.tsx` — an initial version of
+this note conflated the two similarly-named components. Checked
+`ConsentForm.tsx` directly via source read: every `<label>` now has a
+correct `htmlFor` matching its input's `id`
+(`consent-full-name`/`consent-dob`/`consent-id-photo`/`consent-signature`/
+`consent-guardian-name`/`consent-guardian-signature`, all paired). **The
+originally-documented bug has evidently been fixed by later, unrelated
+work in this codebase since that PR #9 finding was recorded** — corrected
+the record here rather than continuing to carry a stale "unfixed" note
+forward, and rather than mistakenly crediting the fix to the wrong file.
 
 ## Final production cleanliness audit — real orphaned QA data found and cleaned
 
