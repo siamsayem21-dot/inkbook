@@ -580,3 +580,27 @@ enough to not matter which); and a genuinely aborted `POST /api/bookings`
 network request (via Playwright route interception, not a mock) surfaces a
 clean inline "Network error" message and leaves the user safely on the
 form — no infinite spinner, no crash, no silent data loss. 0 real findings.
+
+## A11y/console/perf checks — 18 checks, 0 findings
+
+Covered via `scripts/qa-phase-a11y-console-perf.mjs` against production:
+real `page.on("console", ...)` monitoring (not code inspection) across 16
+routes spanning all 4 portals — **zero real browser console errors**
+anywhere (benign noise like favicon 404s and the known Next.js "Failed to
+fetch RSC payload... falling back to browser navigation" client-nav message
+explicitly filtered out, not just ignored by omission). Navigation timing
+recorded for every route — all 16 loaded in under 4.3s (cold Playwright
+navigation over the real network, most in the 1.2-3.9s range), nothing
+flagged as slow.
+
+Accessibility spot-check (form label ↔ input association, DOM-verified via
+`for`/`id`, `aria-label`/`aria-labelledby`, or label-wrapping — not just
+"a `<label>` exists somewhere on the page"): the public Custom Request
+form has zero unlabeled controls. **The standalone consent form
+(`StandaloneConsentForm`, `/book/[studio]/consent`) — previously documented
+in this repo's history (PR #9 review, referenced in this mission's own
+earlier session notes) as having an unlinked-label bug — now has zero
+unlabeled controls too.** Re-confirmed with fresh evidence rather than
+trusting the stale note: the issue has evidently been fixed by later work
+in this codebase since that finding was last recorded. Correcting the
+record here rather than re-reporting a bug that no longer exists.

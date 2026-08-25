@@ -67,42 +67,41 @@ testing of `cron/payment-reminders` pass 2 / `cron/review-requests` /
 this session — see EXHAUSTIVE_ISSUES.md).
 
 ## CURRENT ROLE / ROUTE / STATE / ACTION
-Error/resilience testing — DONE. Transitioning next to a11y/console/perf
-checks.
+A11y/console/perf checks — DONE. Transitioning next to final regressions.
 
 ## LAST VERIFIED ITEM
-Error/resilience testing complete (`scripts/qa-phase-resilience.mjs`, 23
-checks against production, 0 findings): malformed (non-UUID) and
-well-formed-but-nonexistent IDs across 21 dynamic routes spanning Owner,
-Artist, and Public — zero raw crash screens, zero 500s, every one degrades
-gracefully. A real rapid double-click on the Custom Request submit button
-produces exactly one row, not two. A genuinely aborted `POST /api/bookings`
-network request (Playwright route interception, not a mock) surfaces a
-clean inline error and leaves the form usable — no infinite spinner, no
-crash. Design/Motion re-verification (prior block): 15 real transform
-checks against production, 0 findings, every DESIGN_MOTION_COVERAGE.md row
-now PASS. Security/RLS sweep (prior block): all 31 API routes have a
-status, 0 remaining NOT_TESTED. Automations/Cron (prior block): 4/6 PASS
-via real production evidence, 1 real NEW P1 bug found (cron/sms-reminders
-silently sending zero reminders — BLOCKED_NEEDS_SIAM), 1 inconclusive.
+A11y/console/perf checks complete (`scripts/qa-phase-a11y-console-perf.mjs`,
+18 checks against production, 0 findings): zero real browser console
+errors across 16 routes spanning all 4 portals, all navigation timing under
+4.3s. Form-label accessibility spot-check found zero unlabeled controls on
+the public Custom Request form, and — notably — zero unlabeled controls on
+the standalone consent form too, meaning the previously-documented
+unlinked-label bug on `StandaloneConsentForm` (recorded in this repo's
+history from PR #9) has evidently been fixed by later work since that note
+was written; corrected in EXHAUSTIVE_ISSUES.md rather than re-reported as
+still-open. Error/resilience testing (prior block): 23 checks, 0 findings
+— zero crash screens/500s across 21 malformed-ID probes, double-submit
+race protection confirmed, network-failure handling confirmed clean.
+Design/Motion re-verification (prior block): 15 real transform checks, 0
+findings. Security/RLS sweep (prior block): all 31 API routes have a
+status. Automations/Cron (prior block): 1 real NEW P1 bug found
+(cron/sms-reminders).
 
 ## NEXT EXACT ITEM
-A11y/console/perf checks — not yet run as their own systematic pass (some
-incidental console-error monitoring happened inside individual Playwright
-scripts across Phases A-E, but was never graded as its own checklist item;
-this mission's own accessibility scope is otherwise limited to what was
-already fixed in prior sessions — see git history for the "a11y: finish
-form label htmlFor/id sweep" commit and the still-open ConsentForm.tsx
-unlinked-label note in EXHAUSTIVE_ISSUES.md history). Then: final
-regressions (Sections 49-54 — a full walk of the critical real-studio
-journey plus each portal's daily-operations checklist, one more time,
-against the current state of everything found/fixed this mission), final
-build/test gate (Section 55 — already continuously green at 601/601 after
-every commit this mission, but worth one explicit final confirmation),
-final report (Section 61) — verdict will very likely be "C. LAUNCH BLOCKERS
-REMAIN" per the mission's own rule against choosing "A" while P0/P1 remain
-unresolved, unless Siam resolves the Stripe Connect rollout decision and
-approves the cron/sms-reminders migration first.
+Final regressions (Sections 49-54 of the mission spec) — a full walk of the
+critical real-studio journey plus each portal's daily-operations checklist,
+one more time, against the current state of everything found/fixed this
+mission (confirms nothing regressed across the many commits made during
+this QA pass itself, e.g. the `/owner/artists/new` fix, none of which have
+been deployed yet). Then: final build/test gate (Section 55 — already
+continuously green at 601/601 after every commit this mission, one known
+FLAKY test — `tests/unit/sentry-config.test.ts`, a pre-existing timing
+sensitivity unrelated to any change made this mission — worth one explicit
+final confirmation run), final report (Section 61) — verdict will very
+likely be "C. LAUNCH BLOCKERS REMAIN" per the mission's own rule against
+choosing "A" while P0/P1 remain unresolved, unless Siam resolves the Stripe
+Connect rollout decision and approves the cron/sms-reminders migration
+first.
 
 ## TOTALS (updated as mission progresses)
 - TOTAL INVENTORY ITEMS: 76 page routes + 31 API routes + 26 server-action
