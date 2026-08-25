@@ -527,3 +527,37 @@ lives in `cron/sms-reminders`. It is **not** registered in `vercel.json`'s
 currently schedules it. Likely dead/superseded code left over from before
 `cron/sms-reminders` existed. Flagged for Siam's awareness, not treated as
 a bug — it's inert.
+
+## Design/Motion re-verification against production — 15 checks, 0 real findings
+
+Covered via `scripts/qa-motion-reverify-production.mjs` against
+`https://www.inkbook.tech`: real `getComputedStyle` transform measurements
+(not screenshots, not "the CSS class exists") after genuine pointer moves,
+across the design-correction pass's previously-verified elements (Owner
+Dashboard StatsGrid + a panel card, Artist Dashboard stat card,
+`prefers-reduced-motion` gate) plus 4 elements never independently measured
+before this mission (Artist Earnings stat cards, Client Portal dashboard's
+project timeline card, and both the hero and closing-section magnetic CTAs
+on the public `/book/[studio]` page). All 15 real. 0 product bugs.
+
+**2 test-script bugs found and fixed** (both on `/book/[studio]`, both
+resolved to the real component working correctly):
+1. Three links share the text "Start AI Consultation" on that page: a
+   plain, intentionally non-`Magnetic`-wrapped link in the persistent
+   header (`app/book/[studio]/layout.tsx`) — correct by
+   `components/ui/Magnetic.tsx`'s own documented "wrap ONE CTA per screen"
+   rule — plus the two real `Magnetic`-wrapped hero and closing-section
+   CTAs (`app/book/[studio]/page.tsx`). `.first()`/`.last()` picked the
+   header link for one check, which correctly showed no transform (it was
+   never supposed to have one) and was misread as a failure. Fixed by
+   identifying the real `Magnetic`-wrapped links via their wrapper's
+   `motion-spring` class instead of assuming DOM order.
+2. The closing-section CTA sits far below the fold — Playwright's
+   `page.mouse.move()` targets raw viewport coordinates and silently no-ops
+   when the target is off-screen, so the hover event never actually fired.
+   Fixed by calling `scrollIntoViewIfNeeded()` before every magnetic-
+   translate assertion. Rerun after both fixes: **the real Magnetic
+   component is confirmed genuinely wired and working on both the hero and
+   closing CTAs**, with real measured translates
+   (`matrix(1, 0, 0, 1, 3.39067, 1.82637)` and
+   `matrix(1, 0, 0, 1, 3.39356, 2.20186)`).

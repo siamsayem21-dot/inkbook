@@ -67,43 +67,43 @@ testing of `cron/payment-reminders` pass 2 / `cron/review-requests` /
 this session — see EXHAUSTIVE_ISSUES.md).
 
 ## CURRENT ROLE / ROUTE / STATE / ACTION
-Security/RLS sweep — systematic API authorization inventory done (source
-review of every remaining unaudited API route + one live cross-studio IDOR
-probe). Transitioning next to Design/Motion production re-verification.
+Design/Motion production re-verification — DONE. Transitioning next to
+error/resilience testing.
 
 ## LAST VERIFIED ITEM
-Security/RLS sweep complete: every one of the 31 top-level API routes now
-has a PASS/FAIL/NOT_APPLICABLE status in `PRODUCT_COVERAGE_MATRIX.md` (no
-remaining NOT_TESTED API routes) — covered either through earlier
-functional phases, a live cross-studio IDOR probe
-(`scripts/qa-phase-security-idor.mjs`, 12 checks against
-`custom-requests/[id]/{quote,decline,schedule}` — real cross-studio owner/
-artist attacks correctly rejected 403, unauthenticated rejected 401,
-positive control proves the session mechanism itself works, 0 findings), or
-a direct source review for the remaining low-risk routes (all confirmed to
-derive `studio_id`/`owner_id` server-side from the authenticated session or
-a validated lookup, never from client-supplied IDs). One dead-code
-observation noted (`/api/reminders` — CRON_SECRET-gated but not registered
-in `vercel.json`, superseded by `cron/sms-reminders`, inert, not a bug).
-Also still fully documented from the prior session block: Automations/Cron
-(4/6 PASS via real production evidence, 1 real NEW P1 bug found —
-cron/sms-reminders silently sending zero reminders since a migration was
-never applied — BLOCKED_NEEDS_SIAM, 1 inconclusive) and Phase E (Public/
-White-label, 33 interactions, 0 findings, including the mission's first
-real-Stripe-TEST-payment test of the classic direct-booking flow).
+Design/Motion re-verification against production complete
+(`scripts/qa-motion-reverify-production.mjs`, 15 real `getComputedStyle`
+transform checks against `https://www.inkbook.tech`, 0 findings). Every
+"RE-VERIFY" row in `DESIGN_MOTION_COVERAGE.md` is now confirmed PASS with
+fresh production evidence (Owner Dashboard StatsGrid + panel card, Artist
+Dashboard stat card, `prefers-reduced-motion` gate), plus 4 elements that
+had never been independently measured before this mission now also PASS
+(Artist Earnings stat cards, Client Portal dashboard's project timeline
+card, and both the hero and closing-section magnetic CTAs on the public
+`/book/[studio]` page). 2 test-script bugs found and fixed along the way
+(both on `/book/[studio]`: wrong-element selection due to a 3rd,
+intentionally-non-magnetic header CTA sharing the same link text; and a
+missing `scrollIntoViewIfNeeded()` before hovering a below-the-fold
+element) — both resolved to the real Magnetic component working correctly.
+Security/RLS sweep (prior block): every one of the 31 top-level API routes
+now has a PASS/FAIL/NOT_APPLICABLE status, 0 remaining NOT_TESTED, via a
+live 12-check cross-studio IDOR probe plus source review for the rest.
+Automations/Cron (prior block): 4/6 PASS via real production evidence, 1
+real NEW P1 bug found (cron/sms-reminders silently sending zero reminders
+since a migration was never applied — BLOCKED_NEEDS_SIAM), 1 inconclusive.
 
 ## NEXT EXACT ITEM
-Design/Motion production re-verification — `DESIGN_MOTION_COVERAGE.md`
-still has entries marked "RE-VERIFY" from before this mission (the
-correction-pass design work was verified once already, pre-mission, on a
-Preview deployment, then merged/deployed to production via "deploy kro" —
-this mission has not yet re-confirmed the live production site still shows
-the same real depth/motion/hover behavior). Then: error/resilience testing
-(refresh mid-flow, malformed IDs, network failures), a11y/console/perf
-checks, final regressions (Sections 49-54), final report (Section 61) —
-verdict will very likely be "C. LAUNCH BLOCKERS REMAIN" per the mission's
-own rule against choosing "A" while P0/P1 remain unresolved, unless Siam
-resolves the Stripe Connect rollout decision and approves the
+Error/resilience testing (refresh mid-flow, malformed/non-existent IDs,
+network-failure simulation on a payment or upload step) — largely not yet
+independently exercised as its own pass (some coverage exists incidentally,
+e.g. Phase E's invalid-slug 404, Phase C/D's direct-ID IDOR probes doubling
+as malformed-ID tests). Then: a11y/console/perf checks (also largely
+incidental so far — Phase A/B/C/D/E all ran with a `page.on("console",...)`
+listener in some scripts but console output wasn't systematically graded as
+its own checklist item), final regressions (Sections 49-54), final report
+(Section 61) — verdict will very likely be "C. LAUNCH BLOCKERS REMAIN" per
+the mission's own rule against choosing "A" while P0/P1 remain unresolved,
+unless Siam resolves the Stripe Connect rollout decision and approves the
 cron/sms-reminders migration first.
 
 ## TOTALS (updated as mission progresses)
@@ -167,10 +167,14 @@ API-layer enforcement, and 6/6 cron auth-guards all empirically confirmed
 (~90%; remaining gap is RLS-policy-level testing itself, which needs Docker/
 local Postgres per this mission's own documented pre-existing environment
 gap) |
-MOTION: prior design-correction pass verified pre-mission, NOT yet
-re-confirmed against the live production deployment this mission (0% this
-mission) | AI: full consultation→match→quote pipeline verified end-to-end
-(100% core path) | PAYMENT: classic direct-booking deposit flow verified
-working via real Stripe TEST webhook; Connect-based flows have 2 confirmed
-bugs (P0/P1) documented and blocked on Siam (~60%, bugs found not fixed) |
-AUTOMATION: not yet started (0%)
+MOTION: re-confirmed against the live production deployment this mission —
+15 real `getComputedStyle` transform checks, 0 findings (~90%; a handful of
+panel/section elements confirmed via shared-mechanism inference rather than
+each being individually re-isolated) | AI: full consultation→match→quote
+pipeline verified end-to-end (100% core path) | PAYMENT: both the classic
+direct-booking deposit flow AND the AI-consultation deposit flow verified
+working via real Stripe TEST payments; Connect-based flows have 2 confirmed
+bugs (P0/P1) documented and blocked on Siam (~70%, bugs found not fixed) |
+AUTOMATION: 6/6 cron routes auth-guard tested, 4/6 confirmed executing via
+real production evidence, 1 confirmed broken (new P1), 1 inconclusive
+(~75%)
