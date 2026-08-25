@@ -7,6 +7,63 @@ Client Portal, and Auth (Login/Register/Reset Password). The public marketing si
 (`app/(public)`, landing page, pricing) keeps its existing dark/gold brand — out of
 scope, not touched.
 
+## ⚠ CORRECTION PASS (2026-08-25, same day) — READ THIS FIRST
+
+The original pass below shipped to production and Siam **rejected it on sight**:
+cards read as "basic white rectangles with thin borders," depth wasn't visible
+at rest, motion primitives existed but weren't meaningfully wired into real UI,
+and `MagneticButton` was built but never actually used anywhere. Typecheck/
+lint/tests/build all passed — none of that is proof of visual quality, and this
+correction pass does not repeat that mistake: every claim below is backed by a
+screenshot or a measured computed-style value, not a green checkmark.
+
+**What changed, concretely (branch `feature/design-depth-correction`, off `master`,
+NOT merged):**
+- `tailwind.config.ts`: `shadow-elevation-2/3` rebuilt from faint neutral-gray
+  shadows into genuinely layered, violet-tinted shadows with an inset top
+  highlight; added `shadow-elevation-4` as the hover/peak state. New
+  `.premium-card` class in `globals.css` uses `elevation-3` as its **resting**
+  shadow (the first pass only showed real depth on hover).
+- New `.page-ambient` class — restrained multi-point radial-gradient page
+  background (violet/lavender, ~5-7% opacity) replacing the flat `#FAF9FC`
+  single color, applied to Owner Dashboard, Artist Dashboard, and (via the
+  shell) Client Portal.
+- `components/ui/MotionCard.tsx`: tilt default raised 2° → 3.5°, hover lift
+  -3px → -4px, cursor-glow radius 220px → 320px and opacity 0.10 → 0.16, and
+  **new parallax support** (`data-parallax` descendants drift independently of
+  the card, computed once per pointer-move, no extra re-renders) — the first
+  pass had zero parallax despite it being in the original spec.
+- New `components/ui/Magnetic.tsx` — a `MagneticButton` equivalent for
+  wrapping `<Link>` CTAs (the original `MagneticButton` only works on a real
+  `<button>`, which is exactly why it ended up wired nowhere).
+- **`MagneticButton`/`Magnetic` now actually wired** to 3 real CTAs: the
+  Client Portal dashboard's "Start AI Consultation" (now the visually
+  dominant featured action, not one of five equal-weight cards), and both
+  "Start AI Consultation" CTAs on the public `/book/[studio]` page (hero +
+  closing section) — preserving each studio's own dynamic brand color.
+- Owner Dashboard: every panel (`StatsGrid`, `RevenueChart`, `BookingOverview`,
+  `LeadPipelineOverview`, `UpcomingAppointments`, `RecentConsultations`,
+  `OnboardingChecklist`) rebuilt with `.premium-card` + parallax icon/glow
+  layers; `LocationsOverview` (a table) gets the depth treatment without tilt
+  motion, per the mission's own "keep tables calm" rule. `BookingOverview`
+  gained an actual mini bar-chart instead of plain colored dots.
+- Artist Dashboard + Earnings: same icon-chip/parallax/premium-card treatment
+  applied to the 3 dashboard stat cards, the 4 earnings stat cards, and the
+  Today's Bookings/Next 7 Days panels.
+- Client Portal dashboard: featured CTA restructured (see above), the 4
+  remaining section cards got icon chips + `.premium-card`, the active-project
+  timeline card upgraded to `.premium-card` with a stronger tilt (2.5°).
+
+**Verification performed** (see "Motion Verification Table" and "Correction
+Pass — Visual/Motion Proof" below for the full detail): real Playwright hover
+simulation reading back `getComputedStyle(...).transform` — confirmed a
+genuine non-identity `matrix3d` rotation on Owner and Artist KPI cards while
+hovered, confirmed `cursor-glow`'s `::after` opacity goes to ~0.99 on hover,
+confirmed the Client Portal magnetic CTA wrapper gets a real `matrix(1,0,0,1,x,y)`
+translate while hovered, confirmed the same Owner card's transform is `none`
+under `prefers-reduced-motion: reduce`. Screenshots of every priority surface
+(rest + hovered state) captured and reviewed directly, not just DOM-checked.
+
 ## CURRENT STAGE
 **MISSION COMPLETE — LIVE IN PRODUCTION (2026-08-25).** Merged to `master`
 (`7d085a6` merge commit), pushed, deployed to Vercel Production, and verified
@@ -318,7 +375,116 @@ self-cleaning studio+owner+artist+client pattern.
   just trusting the sweep's own claim) — zero leftover QA studios,
   `client_accounts` rows, or auth users in production afterward.
 
-## NEXT EXACT TASK
-None — mission complete. Optional future follow-ups are listed in Deferred
-Issues (marketing-site dead CSS classes, `MagneticButton` CTA wiring, further
-motion coverage) — none are blocking, all are "nice to have, whenever."
+## NEXT EXACT TASK (superseded — see Correction Pass at the top)
+~~None — mission complete.~~ **Superseded 2026-08-25**: Siam rejected the
+above on visual review. See the Correction Pass section at the top of this
+file and the two sections below for the current, real status. The
+Preview/production-verification work above is still factually accurate for
+what it tested (routes/auth/console errors) — it just wasn't the right test
+for what actually mattered (rendered visual quality), which is the whole
+reason for this correction.
+
+---
+
+## MOTION VERIFICATION TABLE (correction pass)
+
+No row below is marked "wired" or "verified" merely because a reusable
+component exists — each is backed by an actual Playwright hover simulation
+reading `getComputedStyle` on the live rendered page, or a screenshot. See
+`scripts/qa-motion-visual-verify.mjs` (new, committed, self-cleaning) for the
+exact mechanics; raw output logged during this pass is summarized here.
+
+| Interaction | Component / Route | Actually Wired? | Verified? |
+|---|---|---|---|
+| Hover Lift | `MotionCard` — Owner StatsGrid, Owner Revenue/Pipeline/Bookings/Upcoming/Recent panels, Artist Dashboard/Earnings stat cards, Artist Today's/Next-7-Days panels, Client Portal project-timeline card | Yes | Yes — `translateY(-4px)` component of the measured `matrix3d` on hover (see Soft 3D Tilt row; lift and tilt are the same transform) |
+| Soft 3D Tilt | Same `MotionCard` instances as above | Yes | Yes — measured `getComputedStyle(...).transform` on Owner StatsGrid card 1 while hovered: `matrix3d(0.999, 0.002, -0.046, ...)` — a genuine non-identity rotation matrix, not `none`. Same confirmed independently on Artist Dashboard card 1. |
+| Cursor Parallax | `[data-parallax]` icon chips + ambient glow blobs inside Owner StatsGrid, Owner Revenue/Upcoming/Recent empty-states, Artist Dashboard/Earnings stat cards, Artist Today's/Next-7-Days empty-states | Yes | Partial — CSS mechanism (`--px`/`--py` custom properties, computed once per pointer-move in `MotionCard.tsx`) is live and confirmed present in the compiled output; not independently re-measured per-element via `getComputedStyle` this pass (the card-level tilt measurement above indirectly proves the pointer-tracking math is running, since both come from the same `handleMove`) |
+| Cursor Light Follow | `.cursor-glow` — every `MotionCard` instance | Yes | Yes — measured `getComputedStyle(el, "::after").opacity` on Owner StatsGrid card 1 while hovered: `0.989717` (vs `0` at rest) |
+| Magnetic CTA | `Magnetic` wrapper — Client Portal dashboard "Start AI Consultation" (featured, restructured to be the visually dominant single CTA); public `/book/[studio]` page's 2 "Start AI Consultation" CTAs (hero + closing section) | Yes | Yes for Client Portal — measured `getComputedStyle(...).transform` on the CTA wrapper while hovered: `matrix(1, 0, 0, 1, 3.773, 2.208)`, a real pointer-following translate, not `none`. Public booking page CTAs wired with the same component but not independently re-measured this pass (identical mechanism, lower priority per the mission's own ordering) |
+| Spring Return | `.motion-spring` (`cubic-bezier(0.34, 1.56, 0.64, 1)`, used by every `MotionCard`/`Magnetic`/`MagneticButton`) | Yes | Visual only — the overshoot curve is present in the compiled CSS and applies on every tilt/magnetic instance above; not independently isolated as its own measurement (return-to-neutral timing isn't something `getComputedStyle` can capture mid-transition in a scripted check) |
+| Reduced Motion | `@media (prefers-reduced-motion: reduce)` blocks in `globals.css`, `motionEnabled()` guards in `MotionCard`/`Magnetic`/`MagneticButton` | Yes | Yes — measured `getComputedStyle(...).transform` on the same Owner StatsGrid card, same hover simulation, inside a `reducedMotion: "reduce"` browser context: `none` |
+| Mobile Touch Fallback | `.tap-scale` (press-scale, no pointer-tracking), `@media (hover: hover) and (pointer: fine)` gates around every cursor-reactive class | Yes | Partial — confirmed via screenshot that mobile viewports (390×844) render cleanly with no stuck-hover/broken-layout artifacts on Owner/Artist/Client dashboards; the touch-specific `.tap-scale:active` state itself wasn't triggered by a scripted touch event this pass (Playwright's synthetic touch doesn't reliably fire `:active` in headless Chromium the way a real device does) |
+
+## CORRECTION PASS — VISUAL/MOTION PROOF
+
+Screenshots captured via `scripts/qa-motion-visual-verify.mjs` against a local
+production build of this branch's exact code (`reports/motion-qa-screenshots/`,
+gitignored, not committed — described here instead):
+
+- `01-owner-dashboard-desktop-REST` / `02-...-HOVER-card1`: KPI cards now show
+  real elevation at rest (gradient icon chips with their own drop shadow,
+  visible ambient glow blob, `26px` bold metric numbers), and the hovered
+  card visibly separates from its neighbors with a violet glow bleeding
+  outward. `BookingOverview` now renders an actual mini bar-chart per status.
+  `LeadPipelineOverview` stages sit on soft violet-tinted surfaces instead of
+  plain white cells.
+- `04-artist-dashboard-desktop-REST` / `05-...-HOVER-card1`: same icon-chip/
+  premium-card treatment, confirmed visually consistent with Owner's language
+  without being an identical layout (3 cards instead of 6, same DNA).
+- `07-client-portal-dashboard-desktop-REST` / `08-...-HOVER-cta`: the
+  restructured dashboard leads with one large gradient CTA (studio's own
+  brand color) instead of five equal-weight cards — "Start AI Consultation"
+  is now unmistakably the primary action, matching the mission's explicit
+  example.
+- `03/06/09-*-mobile`: all three portals confirmed clean at 390×844 — cards
+  stack correctly, ambient background doesn't cause overflow, no clipped
+  content.
+- `10-login-desktop`: Auth's existing card now inherits the richer
+  `elevation-3` shadow + `.page-ambient` background automatically (no Auth-
+  specific changes needed — confirms the token-level fix cascades correctly),
+  visibly deeper than the prior flat version without being redesigned.
+
+## PERFORMANCE (correction pass)
+- All motion writes are direct DOM `style`/`CSSStyleDeclaration` mutations or
+  CSS-variable sets inside a single `mousemove` handler — zero React
+  `setState` calls on pointer movement anywhere in `MotionCard`, `Magnetic`,
+  or `MagneticButton`. Parallax elements are queried once per card (cached in
+  a ref) rather than re-queried every frame.
+- Owner Dashboard warm navigation (already-authenticated, second visit):
+  **~2.57s** end-to-end (`page.goto` to `load`) against a local production
+  server hitting the real (non-local) Supabase over the network. This is
+  dominated by the page's Supabase data-fetch waterfall (multiple queries in
+  `app/(owner)/owner/dashboard/page.tsx`), not by anything added this pass —
+  none of the new CSS/motion code runs during navigation/load, only on
+  pointer events after the page is already interactive. No dedicated
+  pre-correction baseline number exists to diff against, so this is reported
+  as an observation, not a regression claim either way.
+- `tsc --noEmit`, `next lint`, and `npm run test` (601/601) all clean on the
+  final state of this branch. `npm run build` clean.
+- Full functional regression: `scripts/qa-design-system-sweep.mjs` re-run
+  against the same local production build after all correction-pass changes
+  — **0 findings** across every Owner/Artist/Client Portal/Auth route,
+  desktop + mobile (confirms the depth/motion rework didn't break anything
+  the first pass's functional sweep was already checking).
+
+## REMAINING ISSUES (correction pass)
+1. Parallax and Spring Return are marked "Yes/wired" but only *partially*
+   independently re-measured (see table) — the underlying mechanism is
+   confirmed present and running (same `handleMove`/`.motion-spring` code
+   path proven by the tilt/glow measurements), just not isolated with its own
+   dedicated `getComputedStyle` assertion this pass.
+2. Public `/book/[studio]` page's 2 magnetic CTAs are wired with the same
+   proven `Magnetic` component as the Client Portal one, but weren't
+   independently screenshot/measured this pass (Client Portal was the named
+   priority; public booking is explicitly lower-priority in the correction
+   brief).
+3. Mobile `:active` tap-scale state wasn't triggered by Playwright's
+   synthetic touch in headless Chromium — confirmed via screenshot that
+   mobile layout itself is clean, not that the specific tap animation fires.
+4. Same pre-existing marketing-site dead-CSS-class item from the first pass
+   (`bg-ink`/`label-xs`/`gold-divider`/`.grain` in `components/landing/**`) —
+   still out of scope, still not launch-blocking, still flagged for
+   awareness.
+5. Owner Portal's remaining non-dashboard pages (Bookings list, Consultations
+   list, Clients, etc.) were NOT part of this correction pass — the mission
+   explicitly prioritized Dashboard-first for Owner/Artist and named specific
+   Client Portal surfaces; a broader sweep of every list/detail page would be
+   a reasonable follow-up if Siam wants the same depth treatment everywhere,
+   not just the dashboards.
+
+## RECOMMENDATION
+Visually reviewed by this session as a genuine, measurable improvement over
+the rejected first pass — not just re-labeled the same result. Held on branch
+`feature/design-depth-correction`, **not merged to master**, per explicit
+instruction. Recommend Siam do the same live-preview visual check that
+rejected the first pass before this one gets a merge decision.

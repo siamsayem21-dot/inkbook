@@ -37,7 +37,7 @@ export default function OnboardingChecklist({ artistsDone, linkDone, bookingLink
   const doneCount = steps.filter((s) => s.done).length;
 
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
+    <div className="premium-card overflow-hidden">
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}

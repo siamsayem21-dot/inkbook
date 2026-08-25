@@ -7,10 +7,10 @@ import MotionCard from "@/components/ui/MotionCard";
 
 function NoArtistProfile() {
   return (
-    <div className="-m-4 -mt-16 md:-m-8 min-h-[calc(100vh-3rem)] md:min-h-screen" style={{ background: "#FAF9FC" }}>
+    <div className="page-ambient -m-4 -mt-16 md:-m-8 min-h-[calc(100vh-3rem)] md:min-h-screen">
       <div className="p-4 pt-16 md:p-8 space-y-8">
         <h1 className="text-2xl md:text-3xl font-bold text-zinc-900">Your Dashboard</h1>
-        <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-8 text-center">
+        <div className="premium-card p-8 text-center">
           <p className="text-sm text-zinc-500 mb-2">Artist profile not set up yet.</p>
           <p className="text-xs text-zinc-400">
             Ask your studio owner to add you as an artist in the owner dashboard.
@@ -169,7 +169,7 @@ export default async function ArtistDashboardPage() {
     // The shared Sidebar (components/shared/Sidebar.tsx) is untouched — it's used by
     // both Owner and Artist portals, so relighting it would also affect the locked
     // Owner Portal.
-    <div className="-m-4 -mt-16 md:-m-8 min-h-[calc(100vh-3rem)] md:min-h-screen" style={{ background: "#FAF9FC" }}>
+    <div className="page-ambient -m-4 -mt-16 md:-m-8 min-h-[calc(100vh-3rem)] md:min-h-screen">
       <div className="p-4 pt-16 md:p-8 space-y-8">
         {/* Header */}
         <div>
@@ -186,36 +186,39 @@ export default async function ArtistDashboardPage() {
 
         {/* Stats row */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <MotionCard className="bg-white rounded-2xl border border-zinc-200 shadow-sm hover:shadow-elevation-3 p-5">
-            <div className="w-9 h-9 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center mb-3">
-              <DollarSign size={17} />
+          <MotionCard className="premium-card hover:shadow-elevation-4 transition-shadow duration-200 relative overflow-hidden p-5">
+            <div data-parallax data-parallax-strength="4" className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-violet-500/10 blur-xl pointer-events-none" aria-hidden />
+            <div data-parallax data-parallax-strength="8" className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 text-white flex items-center justify-center mb-3.5 shadow-[0_4px_10px_-2px_rgba(124,58,237,0.45)]">
+              <DollarSign size={18} strokeWidth={2.25} />
             </div>
-            <p className="text-2xl font-bold text-zinc-900">{fmtMoney(monthEarnings)}</p>
-            <p className="text-sm text-zinc-500 mt-0.5">This Month&apos;s Earnings</p>
-            <p className="text-xs text-zinc-400 mt-1">confirmed &amp; completed deposits</p>
+            <p className="relative text-[26px] leading-none font-bold tracking-tight text-zinc-900">{fmtMoney(monthEarnings)}</p>
+            <p className="relative text-sm text-zinc-500 mt-1.5">This Month&apos;s Earnings</p>
+            <p className="relative text-xs text-zinc-400 mt-1">confirmed &amp; completed deposits</p>
           </MotionCard>
 
-          <MotionCard className="bg-white rounded-2xl border border-zinc-200 shadow-sm hover:shadow-elevation-3 p-5">
-            <div className="w-9 h-9 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center mb-3">
-              <CalendarCheck size={17} />
+          <MotionCard className="premium-card hover:shadow-elevation-4 transition-shadow duration-200 relative overflow-hidden p-5">
+            <div data-parallax data-parallax-strength="4" className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-violet-500/10 blur-xl pointer-events-none" aria-hidden />
+            <div data-parallax data-parallax-strength="8" className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 text-white flex items-center justify-center mb-3.5 shadow-[0_4px_10px_-2px_rgba(124,58,237,0.45)]">
+              <CalendarCheck size={18} strokeWidth={2.25} />
             </div>
-            <p className="text-2xl font-bold text-zinc-900">{todayBookings.length}</p>
-            <p className="text-sm text-zinc-500 mt-0.5">Today&apos;s Bookings</p>
-            <p className="text-xs text-zinc-400 mt-1">appointments today</p>
+            <p className="relative text-[26px] leading-none font-bold tracking-tight text-zinc-900">{todayBookings.length}</p>
+            <p className="relative text-sm text-zinc-500 mt-1.5">Today&apos;s Bookings</p>
+            <p className="relative text-xs text-zinc-400 mt-1">appointments today</p>
           </MotionCard>
 
-          <MotionCard className="bg-white rounded-2xl border border-zinc-200 shadow-sm hover:shadow-elevation-3 p-5">
-            <div className="w-9 h-9 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center mb-3">
-              <CalendarClock size={17} />
+          <MotionCard className="premium-card hover:shadow-elevation-4 transition-shadow duration-200 relative overflow-hidden p-5">
+            <div data-parallax data-parallax-strength="4" className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-violet-500/10 blur-xl pointer-events-none" aria-hidden />
+            <div data-parallax data-parallax-strength="8" className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 text-white flex items-center justify-center mb-3.5 shadow-[0_4px_10px_-2px_rgba(124,58,237,0.45)]">
+              <CalendarClock size={18} strokeWidth={2.25} />
             </div>
-            <p className="text-2xl font-bold text-zinc-900">{upcomingBookings.length}</p>
-            <p className="text-sm text-zinc-500 mt-0.5">Next 7 Days</p>
-            <p className="text-xs text-zinc-400 mt-1">upcoming appointments</p>
+            <p className="relative text-[26px] leading-none font-bold tracking-tight text-zinc-900">{upcomingBookings.length}</p>
+            <p className="relative text-sm text-zinc-500 mt-1.5">Next 7 Days</p>
+            <p className="relative text-xs text-zinc-400 mt-1">upcoming appointments</p>
           </MotionCard>
         </div>
 
         {/* Booking link */}
-        <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5 flex items-center gap-4">
+        <div className="premium-card p-5 flex items-center gap-4">
           <div className="flex-1 min-w-0">
             <p className="text-xs text-zinc-500 uppercase tracking-widest mb-2">
               Your Booking Link
@@ -228,7 +231,7 @@ export default async function ArtistDashboardPage() {
         {/* Main grid */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {/* Today's bookings */}
-          <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
+          <MotionCard className="premium-card hover:shadow-elevation-4 transition-shadow duration-200 overflow-hidden" maxTiltDeg={2}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100">
               <h2 className="text-base font-semibold text-zinc-900">Today&apos;s Bookings</h2>
               <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 shrink-0">
@@ -237,9 +240,9 @@ export default async function ArtistDashboardPage() {
             </div>
 
             {todayBookings.length === 0 ? (
-              <p className="px-5 py-10 text-sm text-zinc-400 text-center">
-                No bookings today
-              </p>
+              <div data-parallax data-parallax-strength="4" className="mx-5 my-5 rounded-xl bg-violet-50/50 border border-violet-100/70 py-10 text-center">
+                <p className="text-sm text-zinc-400">No bookings today</p>
+              </div>
             ) : (
               <div className="divide-y divide-zinc-100">
                 {todayBookings.map((b) => (
@@ -260,10 +263,10 @@ export default async function ArtistDashboardPage() {
                 ))}
               </div>
             )}
-          </div>
+          </MotionCard>
 
           {/* Next 7 days */}
-          <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
+          <MotionCard className="premium-card hover:shadow-elevation-4 transition-shadow duration-200 overflow-hidden" maxTiltDeg={2}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100">
               <h2 className="text-base font-semibold text-zinc-900">Next 7 Days</h2>
               <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 shrink-0">
@@ -272,9 +275,9 @@ export default async function ArtistDashboardPage() {
             </div>
 
             {Object.keys(byDay).length === 0 ? (
-              <p className="px-5 py-10 text-sm text-zinc-400 text-center">
-                No upcoming bookings
-              </p>
+              <div data-parallax data-parallax-strength="4" className="mx-5 my-5 rounded-xl bg-violet-50/50 border border-violet-100/70 py-10 text-center">
+                <p className="text-sm text-zinc-400">No upcoming bookings</p>
+              </div>
             ) : (
               Object.entries(byDay).map(([date, bookings]) => (
                 <div key={date}>
@@ -301,7 +304,7 @@ export default async function ArtistDashboardPage() {
                 </div>
               ))
             )}
-          </div>
+          </MotionCard>
         </div>
       </div>
     </div>

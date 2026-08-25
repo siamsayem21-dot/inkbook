@@ -16,7 +16,10 @@ export interface LocationSummary {
 // renders exactly one row: the current studio, standing in as "location 1 of 1".
 export default function LocationsOverview({ locations }: { locations: LocationSummary[] }) {
   return (
-    <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6">
+    // Plain premium-card (no MotionCard/tilt) — this is a table, and the
+    // design mission explicitly asks tables to stay calm even while the rest
+    // of the dashboard gets more depth/motion.
+    <div className="premium-card p-6">
       <div className="mb-4">
         <h2 className="text-base font-semibold text-zinc-900">Studio / location performance</h2>
         <p className="text-xs text-zinc-400 mt-0.5">

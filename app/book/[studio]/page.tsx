@@ -10,6 +10,7 @@ import ArtistCard from "@/components/booking/ArtistCard";
 import FlashSection, { type FlashCard } from "@/components/booking/FlashSection";
 import PortfolioSection, { type PortfolioCard } from "@/components/booking/PortfolioSection";
 import ReviewsSection from "@/components/booking/ReviewsSection";
+import Magnetic from "@/components/ui/Magnetic";
 
 interface Props {
   params: { studio: string };
@@ -130,13 +131,15 @@ export default async function StudioLandingPage({ params }: Props) {
         </p>
 
         <div className="flex flex-wrap items-center gap-4">
-          <Link
-            href={`/book/${params.studio}/login`}
-            className="text-sm font-bold uppercase tracking-widest px-7 py-3.5 transition-opacity hover:opacity-90"
-            style={{ backgroundColor: brand.full, color: brand.textOnBrand }}
-          >
-            Start AI Consultation →
-          </Link>
+          <Magnetic strength={9}>
+            <Link
+              href={`/book/${params.studio}/login`}
+              className="inline-block text-sm font-bold uppercase tracking-widest px-7 py-3.5 transition-opacity hover:opacity-90"
+              style={{ backgroundColor: brand.full, color: brand.textOnBrand }}
+            >
+              Start AI Consultation →
+            </Link>
+          </Magnetic>
           <a
             href="#artists"
             className="text-sm font-semibold uppercase tracking-widest px-7 py-3.5 border border-white/15 text-zinc-300 hover:border-white/30 hover:text-white transition-colors"
@@ -278,13 +281,15 @@ export default async function StudioLandingPage({ params }: Props) {
         <p className="text-zinc-500 text-sm mb-8 max-w-md mx-auto">
           Answer a few questions and our AI will analyze your vision, detect your style, and build a complete brief for the artist.
         </p>
-        <Link
-          href={`/book/${params.studio}/login`}
-          className="inline-block text-sm font-bold uppercase tracking-widest px-8 py-3.5 transition-opacity hover:opacity-90"
-          style={{ backgroundColor: brand.full, color: brand.textOnBrand }}
-        >
-          Start AI Consultation →
-        </Link>
+        <Magnetic strength={9}>
+          <Link
+            href={`/book/${params.studio}/login`}
+            className="inline-block text-sm font-bold uppercase tracking-widest px-8 py-3.5 transition-opacity hover:opacity-90"
+            style={{ backgroundColor: brand.full, color: brand.textOnBrand }}
+          >
+            Start AI Consultation →
+          </Link>
+        </Magnetic>
       </section>
 
       {/* Deposit notice */}
