@@ -28,6 +28,40 @@ See `scripts/qa-phase-b-owner.mjs` (Part 1: Artists + Settings — remaining Own
 - OWNER | /owner/settings/studio | populated | name/address fields + Save | fill+click | studios row updated | DB re-query | PASS
 - OWNER | /owner/artists, /owner/settings/studio | mobile (390x844) | full interaction (not screenshot-only) | click+fill+submit | no overflow, modal usable, real DB row created | DOM+DB | PASS (4 checks)
 
+**Part 2 — remaining ~15 modules.** See `scripts/qa-phase-b-owner-part2.mjs`.
+1 studio, 1 artist, 2 clients, 6 bookings (one per status), 4 consultations,
+2 custom_requests, 1 flash design, 1 waitlist entry seeded directly. 35
+interactions, desktop+mobile. **0 real findings** (2 test-script bugs found
+and fixed mid-run — a fixed-timeout race on the review-add DB check, and a
+body-text assertion that false-matched a `<select>` option label instead of
+the results table — both documented in EXHAUSTIVE_ISSUES.md).
+- OWNER | /owner/bookings | populated | filter strip (status=confirmed) | click/nav | count matches a raw DB query for that status | DOM+DB | PASS
+- OWNER | /owner/bookings | populated | booking row → detail nav | click | lands on `/owner/bookings/[id]` | DOM (URL) | PASS
+- OWNER | /owner/bookings/[id] | completed booking | render | correct status badge shown | DOM | PASS
+- OWNER | /owner/pipeline | populated | Kanban board render | render | stage counts match DB; both a `consultations` card and a `custom_requests` card render on the same board (dual-source confirmed) | DOM+DB | PASS
+- OWNER | /owner/requests | pending | Approve modal (assign quote $500 / deposit $150 / note) | click+fill+submit | `custom_requests.status='quoted'`, `quote_amount`/`deposit_amount` match | DB re-query | PASS
+- OWNER | /owner/requests | pending | Decline modal (reason) | click+fill+submit | `status='declined'`, `declined_reason` matches | DB re-query | PASS
+- OWNER | /owner/clients | populated | list render | render | both seeded clients visible, booking-count enrichment correct | DOM+DB | PASS
+- OWNER | /owner/revenue | populated | stat cards | render | "This month" renders; "Deposits kept (no-shows)" shows $150.00 matching the one seeded `deposit_kept=true` booking | DOM+DB | PASS
+- OWNER | /owner/reviews | empty→populated | "+ Add testimonial" form | click+fill+submit | real `reviews` row, `is_public=true` (owner-added default) | DB re-query (polled, not fixed-wait — see EXHAUSTIVE_ISSUES.md) | PASS
+- OWNER | /owner/reviews | populated | "Hide" toggle | click | `is_public` flips to false | DB re-query | PASS
+- OWNER | /owner/reviews | populated | "Delete" (2-click confirm) | click×2 | row removed | DB re-query | PASS
+- OWNER | /owner/blacklist | empty→populated | "Block client" form | click+fill+submit | real `blacklist` row + a real `blacklist.added` `audit_log` entry | DB re-query (both tables) | PASS
+- OWNER | /owner/blacklist | (negative test) | direct `POST /api/bookings` using the just-blocked email | fetch | HTTP 400, booking rejected | HTTP status | PASS — confirms enforcement lives at the API, not just the UI |
+- OWNER | /owner/blacklist | populated | "Remove" (2-click confirm) | click×2 | row deleted | DB re-query | PASS
+- OWNER | /owner/consent-forms | empty | render | "No Consent Forms Yet" shown for a studio with zero signed forms | DOM | PASS
+- OWNER | /owner/waitlist | populated | monthly cap input + Save | fill+click | `artists.monthly_booking_cap` updated | DB re-query | PASS
+- OWNER | /owner/waitlist | populated | "Remove" (2-click confirm) | click×2 | `waitlist` row deleted | DB re-query | PASS
+- OWNER | /owner/knowledge | empty→populated | "+ Add knowledge entry" (category=Policy) | click+fill+submit | real `studio_knowledge` row, `is_active=true` | DB re-query | PASS
+- OWNER | /owner/knowledge | populated | "Disable" toggle | click | `is_active` flips to false | DB re-query | PASS
+- OWNER | /owner/knowledge | populated | "Edit" → title/content change → "Save changes" | click+fill+submit | new title/content persisted | DB re-query | PASS
+- OWNER | /owner/knowledge | populated | "Delete" (2-click "Sure?" confirm) | click×2 | row removed | DB re-query | PASS
+- OWNER | /owner/audit-log | populated | render | both the `blacklist.added` and `blacklist.removed` events from the block/unblock steps above appear | DOM | PASS
+- OWNER | /owner/audit-log | populated | `?action=blacklist.added` filter | nav | results table scoped to only block events (not unblock) | DOM (table-scoped, not full-page text) | PASS
+- OWNER | /owner/flash | populated | render | artist-created flash design visible in owner's read-only cross-artist view | DOM | PASS
+- OWNER | /owner/settings/billing | populated | render | correct plan label/price for `plan='studio'` ($79/mo); Stripe Connect section renders (confirms `STRIPE_CONNECT_ENABLED=true` is genuinely active in this environment, corroborating the P0 finding) | DOM | PASS
+- Mobile (390x844): /owner/bookings, /owner/requests, /owner/clients, /owner/revenue, /owner/pipeline all real-navigated, zero horizontal overflow.
+
 ## Phase C — Artist Portal
 See `scripts/qa-phase-c-artist.mjs`. 68 real interactions, desktop+mobile, DB-verified. **0 findings** (1 script bug found and fixed mid-run — `:has-text("+ Add style tag")` selector ambiguity, not a product bug; 1 script crash fixed — double `dialog.accept()` on a retry path). Covered:
 - Route sweep: all 18 Artist routes × desktop + mobile = 36 checks, all 200/on-route/no-overflow.

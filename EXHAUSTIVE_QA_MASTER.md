@@ -44,43 +44,54 @@ restart from zero.
 
 ## CURRENT PHASE
 Phase A (Auth) — DONE. Phase C (Artist Portal) — DONE. Phase D (Client
-Portal) — DONE. Phase B (Owner Portal) — PARTIAL (Artists + Settings only;
-~15 modules remain: Bookings, Consultations, Pipeline, Requests, Messages,
-Flash, Portfolio, Clients, Revenue, Reviews, Blacklist, Consent Forms,
-Waitlist, Knowledge, Audit Log, Billing). Core cross-role journey
+Portal) — DONE. Phase B (Owner Portal) — DONE (Part 1: Artists + Settings;
+Part 2: Bookings, Pipeline, Requests, Clients, Revenue, Reviews, Blacklist,
+Consent Forms, Waitlist, Knowledge, Audit Log, Flash, Billing — 35
+interactions, 0 real findings). Core cross-role journey
 (`qa-full-studio-journey.mjs`: AI Consultation → AI Artist Match → Quote →
 Stripe TEST Deposit → Booking → Consent → Completion → Review) — DONE, PASS
-end-to-end. Now resuming Phase B part 2 (remaining Owner modules).
+end-to-end. Remaining Owner gaps (deliberately not blocking, tracked as
+NOT_TESTED, not re-litigated): `/owner/dashboard`, `/owner/consultations`
+(list view specifically — detail view is PASS), `/owner/artists/[artistId]`,
+`/owner/requests/[id]` (standalone detail page), `/owner/messages/[threadId]`.
 
 ## CURRENT ROLE / ROUTE / STATE / ACTION
-OWNER | about to start | `/owner/bookings` (list + detail) as the first
-module of Phase B part 2.
+Transitioning to Phase E (Public / White-label booking flow) — not yet
+started interactively.
 
 ## LAST VERIFIED ITEM
-Phase D (Client Portal) fully documented: `PRODUCT_COVERAGE_MATRIX.md`
-Client Portal route rows all PASS, `INTERACTION_COVERAGE.md` Phase D section
-populated with 16 detailed interaction rows + security summary.
+Phase B part 2 (Owner Portal remaining modules) fully documented:
+`PRODUCT_COVERAGE_MATRIX.md` Owner Portal route rows + server-action-file
+rows updated to PASS with evidence, `INTERACTION_COVERAGE.md` Phase B
+section populated with the Part 2 rows (B10-B25), `EXHAUSTIVE_ISSUES.md` has
+the 2 test-script bugs found/fixed during this phase (both TEST BUG, not
+product bugs) plus a summary paragraph. Owner Portal is now the most fully
+covered portal in this mission alongside Artist/Client.
 
 ## NEXT EXACT ITEM
-Write/run `scripts/qa-phase-b-owner-part2.mjs` covering the ~15 remaining
-Owner Portal modules listed above, using the same real-click → DB re-query →
-honest-FAIL-investigation methodology as Phases B/C/D. Start with Bookings
-and Consultations/Pipeline (highest-traffic, already touched indirectly by
-the P0/P1 findings and the full studio journey, so cross-check those areas
-carry over cleanly) then continue to the rest of the list. After Phase B
-part 2: Phase E (Public/White-label), then Security/RLS broad sweep, then
-Design/Motion production re-verification, then final regressions + report.
+Phase E — Public/White-label booking flow (`/book/[studio]` and its
+sub-routes: consultation intake, custom request, flash design booking,
+artist profile pages). Valid slug + invalid/non-existent slug, branding
+render, artist profiles/portfolio/flash/reviews/FAQ, all booking CTAs,
+mobile. Then: broader Security/RLS sweep beyond what Phases A/C/D/B already
+covered (API/server-action authorization inventory), Design/Motion
+production re-verification (DESIGN_MOTION_COVERAGE.md still has entries
+marked "RE-VERIFY" from before this mission), Automations/Cron (6 routes),
+Blacklist/Waitlist already covered above — remaining: Reviews/aftercare
+follow-up cron behavior specifically, error/resilience testing, a11y/
+console/perf checks, final regressions (Sections 49-54), final report.
 
 ## TOTALS (updated as mission progresses)
 - TOTAL INVENTORY ITEMS: 76 page routes + 31 API routes + 26 server-action
   files = 133 top-level surfaces (per-surface interaction expansion ongoing)
 - PASS: Phase A (~15 items), Phase C (68 interactions), Phase D (16 routes +
-  security), Phase B part 1 (10 items), full studio journey (1 end-to-end
-  pass covering AI/Match/Quote/Stripe TEST deposit/Booking/Consent/
-  Completion/Review) — all PASS
-- FAIL: 0 outstanding (all Phase D FAILs investigated: 2 confirmed real
-  product bugs — see BUG COUNT below — rest were test-script/seed-data bugs,
-  fixed, retested PASS)
+  security), Phase B part 1 (10 items), Phase B part 2 (35 interactions),
+  full studio journey (1 end-to-end pass covering AI/Match/Quote/Stripe TEST
+  deposit/Booking/Consent/Completion/Review) — all PASS. Owner Portal is now
+  ~85% route-covered (16 of ~20 top-level routes PASS).
+- FAIL: 0 outstanding (all investigated FAILs across every phase resolved to
+  either a confirmed real product bug — P0/P1, see BUG COUNT below — or a
+  test-script/seed-data bug, fixed and retested PASS)
 - FIXED_RETESTED_PASS: 2 (`/owner/artists/new` dead form; Phase C portfolio
   style-tag selector was a script bug not product, noted for completeness)
 - BLOCKED_EXTERNAL: 1 (tests/db — no Docker)

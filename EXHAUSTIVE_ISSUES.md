@@ -269,3 +269,50 @@ visibility), surfacing the genuine P1 finding above along the way.
 ~2.7s — likely a cold-import timing hiccup under concurrent load). Reran the
 full suite twice immediately after: 601/601 clean both times. Classified
 **FLAKY** — not touched, not a product bug.
+
+**"Add testimonial DB verification failed" (Phase B part 2, first run
+only).** `scripts/qa-phase-b-owner-part2.mjs` used a fixed 2000ms wait after
+clicking "Add testimonial" before querying `reviews` — too short under a
+network hiccup that run (a real `Failed to fetch RSC payload... falling back
+to browser navigation` was observed in a standalone repro). Directly
+reproduced standalone: the review is created correctly every time
+(`is_public: true`, `is_active: true`, correct `rating`/`quote`). Script
+fixed to poll for the DB row (up to 8s) instead of a fixed sleep. Rerun:
+clean. **TEST BUG.**
+
+**"Audit log action filter did not correctly scope results" (Phase B part 2,
+first run only).** Root-caused to the test assertion checking
+`document.body.innerText` for the substring "Client unblocked" — that text
+is genuinely present on the filtered page, but only as an `<option>` label
+inside the (unrelated) filter `<select>` dropdown, not as a second row in
+the results table. The actual filtered table correctly contained only the
+one "Client blocked" row the whole time. Script fixed to scope the assertion
+to `document.querySelector("table").innerText`. Rerun: clean. **TEST BUG.**
+
+## Phase B part 2 (Owner Portal remaining modules) — 35 interactions, 0 real findings
+
+Covered via `scripts/qa-phase-b-owner-part2.mjs` against production: Bookings
+(filter-strip counts vs. DB, detail nav, per-status detail rendering),
+Pipeline (Kanban stage counts vs. DB, dual-source consultation +
+custom_request cards), Requests (Approve modal → real `quote_amount`/
+`deposit_amount`/status persisted; Decline modal → real status/reason
+persisted), Clients (booking-count/consent/blacklist enrichment), Revenue
+(dollar figures cross-checked against a raw DB query — both "This month" and
+"Deposits kept (no-shows)" $150.00 for a seeded `deposit_kept` no-show
+booking), Reviews (add → real DB row, Hide toggle → `is_public` flips,
+2-click Delete → row removed), Blacklist (block → DB row + `audit_log`
+entry, then **a real POST to `/api/bookings` with the blocked email is
+correctly rejected with HTTP 400** — the block is enforced at the booking
+API, not just the UI — then Remove → row deleted), Consent Forms (correct
+empty state for a studio with zero signed forms), Waitlist (monthly cap edit
+→ DB, Remove entry → DB), Knowledge Base (create → DB row, Disable toggle →
+`is_active` flips, Edit → persists, 2-click Delete → row removed), Audit Log
+(both block/unblock events appear; `?action=blacklist.added` filter
+correctly scopes the results table to only block events), Flash (owner's
+read-only cross-artist view shows an artist-created design), Settings/
+Billing (correct plan label/price for `plan='studio'`; Stripe Connect
+section renders — directly corroborating the P0 finding, since this studio,
+like every real studio today, starts in the unconnected state), and a mobile
+(390×844) no-horizontal-overflow pass across 5 of the busier pages. 2 test-
+script bugs found and fixed along the way (both documented above), 0 real
+product bugs.

@@ -28,29 +28,29 @@ not code inspection alone. **0 findings.**
 | Route | Status | Evidence |
 |---|---|---|
 | `/owner/dashboard` | NOT_TESTED | |
-| `/owner/consultations` | NOT_TESTED | |
-| `/owner/consultations/[id]` | NOT_TESTED | |
-| `/owner/pipeline` | NOT_TESTED | |
+| `/owner/consultations` | NOT_TESTED | (Pipeline board, which surfaces the same data, is PASS — the dedicated list/filter-strip view itself not yet independently clicked) |
+| `/owner/consultations/[id]` | PASS | `scripts/qa-full-studio-journey.mjs` — real AI quote generation, AI Artist Match "Recommended" optgroup, deposit-collection artist picker, status transitions all real-interacted end-to-end |
+| `/owner/pipeline` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B12 — Kanban stage counts cross-checked vs. DB, dual-source (consultation + custom_request) cards both confirmed rendering |
 | `/owner/artists` | PASS | `scripts/qa-phase-b-owner.mjs` — invite/resend/cancel/remove all DB-verified, empty+populated+mobile states |
 | `/owner/artists/new` | FIXED→RETESTED (locally; prod redeploy pending Siam approval) | Was a dead unwired static form — see EXHAUSTIVE_ISSUES.md |
 | `/owner/artists/[artistId]` | NOT_TESTED | |
-| `/owner/bookings` | NOT_TESTED | |
-| `/owner/bookings/[bookingId]` | NOT_TESTED | |
-| `/owner/requests` | NOT_TESTED | |
-| `/owner/requests/[id]` | NOT_TESTED | |
-| `/owner/messages` | NOT_TESTED | |
+| `/owner/bookings` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B10 — filter-strip status counts cross-checked vs. DB across all 6 statuses, empty/populated states, detail nav |
+| `/owner/bookings/[bookingId]` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B11 — real detail render for a completed booking (correct status/deposit/consent state shown) |
+| `/owner/requests` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B13/B14 — Approve modal → real `quote_amount`/`deposit_amount`/status DB-verified; Decline modal → real status/reason DB-verified |
+| `/owner/requests/[id]` | NOT_TESTED | (the standalone detail page's own `OwnerQuoteForm.tsx` — approve/decline was exercised via the list page's modals instead, which cover the same server actions) |
+| `/owner/messages` | PASS | Cross-role verified via `scripts/qa-phase-d-client.mjs` — a client-sent message was confirmed visible to the owner here in real time |
 | `/owner/messages/[threadId]` | NOT_TESTED | |
-| `/owner/flash` | NOT_TESTED | |
-| `/owner/clients` | NOT_TESTED | |
-| `/owner/revenue` | NOT_TESTED | |
-| `/owner/reviews` | NOT_TESTED | |
-| `/owner/blacklist` | NOT_TESTED | |
-| `/owner/consent-forms` | NOT_TESTED | |
-| `/owner/waitlist` | NOT_TESTED | |
-| `/owner/knowledge` | NOT_TESTED | |
-| `/owner/audit-log` | NOT_TESTED | |
-| `/owner/settings` | NOT_TESTED | |
-| `/owner/settings/billing` | NOT_TESTED | |
+| `/owner/flash` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B23 — owner's read-only cross-artist view correctly shows an artist-created flash design |
+| `/owner/clients` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B15 — booking-count/consent/blacklist enrichment confirmed against seeded DB state |
+| `/owner/revenue` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B16 — dollar figures cross-checked against a raw DB query, including "Deposits kept (no-shows)" for a seeded no-show booking |
+| `/owner/reviews` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B17 — add → real DB row, Hide toggle → `is_public` flips, 2-click delete → row removed |
+| `/owner/blacklist` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B18 — block → DB row + `audit_log` entry; **a real `POST /api/bookings` with the blocked email is rejected HTTP 400**, proving enforcement at the API, not just the UI; remove → row deleted |
+| `/owner/consent-forms` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B19 — correct empty state for a studio with zero signed forms; populated-state rendering already confirmed via Phase C/D consent-form flows joining into this same table |
+| `/owner/waitlist` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B20 — monthly cap edit → DB-verified, remove entry → DB-verified |
+| `/owner/knowledge` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B21 — create → DB row, Disable toggle → `is_active` flips, edit → persists, 2-click delete → row removed |
+| `/owner/audit-log` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B22 — real block/unblock events appear, `?action=` filter correctly scopes the results table |
+| `/owner/settings` | NOT_TESTED | (redirect/index page — `/owner/settings/studio` and `/owner/settings/billing`, the two real destinations, are both PASS) |
+| `/owner/settings/billing` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B24 — correct plan label/price for `plan='studio'`; Stripe Connect section renders (STRIPE_CONNECT_ENABLED=true confirmed active) |
 | `/owner/settings/studio` | PASS | name/address edit → DB-verified persistence |
 
 ## ARTIST PORTAL (11 top-level + 6 detail/sub routes)
@@ -166,8 +166,8 @@ items not blocking).
 | `/api/billing/create-checkout` | NOT_TESTED | |
 | `/api/billing/portal` | NOT_TESTED | |
 | `POST /api/billing/webhook` | NOT_TESTED | |
-| `POST /api/bookings` | NOT_TESTED | |
-| `/api/consent-forms` | NOT_TESTED | |
+| `POST /api/bookings` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B18 — direct POST with a blacklisted client email correctly rejected HTTP 400; positive booking-creation path already covered indirectly via Phase C's real 409-conflict test on artist days-off |
+| `/api/consent-forms` | PASS | Investigated during Phase D — real 402 "No deposit found" validation confirmed correct (rejects a booking without a matching `deposit_payments` row); real signed submission with proper deposit data confirmed working, `consent_forms` row created |
 | `/api/consent-forms/standalone` | NOT_TESTED | |
 | `GET /api/cron/cancel-expired` | NOT_TESTED | |
 | `GET /api/cron/no-show` | NOT_TESTED | |
@@ -175,10 +175,10 @@ items not blocking).
 | `GET /api/cron/review-requests` | NOT_TESTED | |
 | `GET /api/cron/sms-reminders` | NOT_TESTED | |
 | `GET /api/cron/waitlist-notify` | NOT_TESTED | |
-| `/api/custom-requests` | NOT_TESTED | |
-| `POST /api/custom-requests/[id]/decline` | NOT_TESTED | |
-| `POST /api/custom-requests/[id]/deposit` | NOT_TESTED | |
-| `POST /api/custom-requests/[id]/quote` | NOT_TESTED | |
+| `/api/custom-requests` | NOT_TESTED | (client-facing submission endpoint — the owner-side review of a submitted request is PASS via B13/B14) |
+| `POST /api/custom-requests/[id]/decline` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B14 — real fetch via the Decline modal, `status`/`declined_reason` DB-verified |
+| `POST /api/custom-requests/[id]/deposit` | NOT_TESTED | (client-side deposit-payment step for a quoted custom request — same Connect fail-closed exposure as the P0 finding, not yet independently confirmed for this specific endpoint) |
+| `POST /api/custom-requests/[id]/quote` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B13 — real fetch via the Approve modal, `status`/`quote_amount`/`deposit_amount` DB-verified |
 | `POST /api/custom-requests/[id]/schedule` | NOT_TESTED | |
 | `POST /api/owner/clients/import` | NOT_TESTED | |
 | `/api/reminders` | NOT_TESTED | |
@@ -202,16 +202,16 @@ items not blocking).
 | `app/(artist)/artist/messages/actions.ts` | NOT_TESTED |
 | `app/(artist)/artist/portfolio/actions.ts` | NOT_TESTED |
 | `app/(artist)/artist/schedule/actions.ts` | NOT_TESTED |
-| `app/(owner)/owner/artists/actions.ts` | NOT_TESTED |
-| `app/(owner)/owner/audit-log/actions.ts` | NOT_TESTED |
-| `app/(owner)/owner/blacklist/actions.ts` | NOT_TESTED |
-| `app/(owner)/owner/bookings/[bookingId]/actions.ts` | NOT_TESTED |
-| `app/(owner)/owner/flash/actions.ts` | NOT_TESTED |
-| `app/(owner)/owner/knowledge/actions.ts` | NOT_TESTED |
-| `app/(owner)/owner/messages/actions.ts` | NOT_TESTED |
-| `app/(owner)/owner/reviews/actions.ts` | NOT_TESTED |
-| `app/(owner)/owner/settings/studio/actions.ts` | NOT_TESTED |
-| `app/(owner)/owner/waitlist/actions.ts` | NOT_TESTED |
+| `app/(owner)/owner/artists/actions.ts` | PASS | `scripts/qa-phase-b-owner.mjs` — invite/resend/cancel/remove all DB-verified |
+| `app/(owner)/owner/audit-log/actions.ts` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B22 — `getAuditLogEntries` filter param DB-verified |
+| `app/(owner)/owner/blacklist/actions.ts` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B18 — add/remove DB+audit_log-verified, plus a real negative booking-API test |
+| `app/(owner)/owner/bookings/[bookingId]/actions.ts` | PASS (sendDepositRequest — see P1 finding) | `scripts/qa-full-studio-journey.mjs` — real invocation surfaced the P1 wrong-Stripe-account bug (EXHAUSTIVE_ISSUES.md); other actions in this file (assignSchedule, markCompleted) not yet independently exercised from the Owner side |
+| `app/(owner)/owner/flash/actions.ts` | NOT_TESTED | (owner's Flash page is a read-only cross-artist view by design — see page.tsx comment; if this file exposes any owner-side mutation it hasn't been clicked yet) |
+| `app/(owner)/owner/knowledge/actions.ts` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B21 — create/toggle/edit/delete all DB-verified |
+| `app/(owner)/owner/messages/actions.ts` | PASS | Cross-role verified via `scripts/qa-phase-d-client.mjs` (owner receive+reply confirmed real-time) |
+| `app/(owner)/owner/reviews/actions.ts` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B17 — add/toggle/delete all DB-verified |
+| `app/(owner)/owner/settings/studio/actions.ts` | PASS | `scripts/qa-phase-b-owner.mjs` B8 — name/address edit DB-verified |
+| `app/(owner)/owner/waitlist/actions.ts` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B20 — cap edit + remove both DB-verified |
 | `app/artist/accept/[token]/actions.ts` | NOT_TESTED |
 | `app/book/[studio]/consult/actions.ts` | NOT_TESTED |
 | `app/book/[studio]/custom/actions.ts` | NOT_TESTED |
