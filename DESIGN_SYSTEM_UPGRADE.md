@@ -8,11 +8,16 @@ Client Portal, and Auth (Login/Register/Reset Password). The public marketing si
 scope, not touched.
 
 ## CURRENT STAGE
-Stages 1-13 substantively complete on branch `feature/design-system-upgrade`
-(not merged to `master`, not deployed — see "Deployment" note at the bottom).
-Foundation + all 3 portal sweeps + Auth landed and merged. Remaining: soft-3D/
-motion is applied at the flagship spots but could go further if Siam wants more;
-mobile/reduced-motion pass is architecturally done (built into the primitives
+**MISSION COMPLETE — LIVE IN PRODUCTION (2026-08-25).** Merged to `master`
+(`7d085a6` merge commit), pushed, deployed to Vercel Production, and verified
+live at `www.inkbook.tech` with a full authenticated Playwright sweep against
+production itself (not just Preview) — 0 findings. See "Production
+Verification" section near the bottom for the full result.
+
+Stages 1-13 substantively complete. Foundation + all 3 portal sweeps + Auth
+landed and merged. Remaining: soft-3D/motion is applied at the flagship spots
+but could go further if Siam wants more; mobile/reduced-motion pass is
+architecturally done (built into the primitives
 from the start) but not yet visually verified in a live browser (no Chrome
 extension connection available this session — see "QA" note below); final
 cross-portal consistency pass and production build/regression done.
@@ -123,9 +128,9 @@ this mission.
 - [ ] Final report to Siam — pending (this doc + chat summary).
 
 ## PORTALS COMPLETED
-Owner, Artist, Client Portal, and Auth are all converted and merged into
-`feature/design-system-upgrade`. Not merged to `master`, not deployed — see
-"Deployment — held for Siam" below.
+Owner, Artist, Client Portal, and Auth are all converted, merged to `master`,
+and live in production — see "Deployment — COMPLETE" and "Production
+Verification" below.
 
 ## Design tokens — approach decision
 The codebase has **no existing shared UI primitives** (`components/ui/` doesn't
@@ -282,19 +287,38 @@ clean after each batch; `npm run test` still 601/601 after the foundation commit
    clearest, most defensible "premium KPI card" spots per the mission's own
    "don't over-design" rule.
 
-## DEPLOYMENT — held for Siam
-All work is on branch `feature/design-system-upgrade`, NOT merged to `master`,
-NOT deployed. This follows CLAUDE.md's explicit approval gate ("Requires Siam
-approval before: Production deployment... Authentication/security-sensitive
-production changes") and the project's own established pattern throughout
-TASKS.md history (every prior module — Owner Portal 16/16, each Artist Portal
-module — went through a "READY FOR SIAM REVIEW" → visual approval → lock →
-deploy sequence, never straight to production). This mission's own brief says
-to push/deploy automatically at the end, but CLAUDE.md overrides that per this
-session's instructions, and deferred item #1 above (no live QA yet) is an
-independent, stronger reason to hold here regardless.
+## DEPLOYMENT — COMPLETE
+1. Preview deployed, QA'd (see below), Siam approved the merge.
+2. Merged `feature/design-system-upgrade` → `master` (`--no-ff`, commit
+   `7d085a6`), pushed to `origin/master`.
+3. Vercel auto-deployed to Production from the GitHub integration — confirmed
+   via `gh api .../commits/<sha>/status` (`state: success`, "Deployment has
+   completed") and independently via `www.inkbook.tech` serving the new JS
+   bundle (`grep`-confirmed `"Show password"`/`"Hide password"`/`elevation-3`
+   strings in the deployed `/login` page's compiled chunk — not just an HTTP
+   200, the actual new code).
+
+## PRODUCTION VERIFICATION (2026-08-25)
+Ran `scripts/qa-design-system-sweep.mjs` a second time with
+`QA_BASE_URL=https://www.inkbook.tech` — the same real-session sweep used for
+Preview QA, now against live production itself. Same temporary/tagged/
+self-cleaning studio+owner+artist+client pattern.
+
+- Owner Portal: 20 routes × 2 viewports, all 200, 0 console/network/overflow/
+  image issues. Sidebar confirmed white (`rgb(255,255,255)`). MotionCard
+  confirmed present on the live Dashboard.
+- Artist Portal: 11 routes × 2 viewports, all clean. Sidebar matches Owner.
+- Client Portal: 7 routes × 2 viewports, all clean, via the real OTP session
+  technique (no real inbox needed). Sidebar matches Owner/Artist.
+- Auth: login/register/reset-password × 2 viewports, all clean. Password eye
+  toggle behaviorally verified live (click → type flips password↔text, aria
+  label flips Show↔Hide). Reduced-motion login flow verified clean.
+- **Result: 0 findings.**
+- Cleanup independently re-verified with a separate, standalone script (not
+  just trusting the sweep's own claim) — zero leftover QA studios,
+  `client_accounts` rows, or auth users in production afterward.
 
 ## NEXT EXACT TASK
-Siam visual review of `feature/design-system-upgrade` (ideally via a Vercel
-preview deploy of the branch) — Owner/Artist/Client Portal + Auth, desktop and
-mobile. Once approved: merge to `master`, deploy, production smoke test.
+None — mission complete. Optional future follow-ups are listed in Deferred
+Issues (marketing-site dead CSS classes, `MagneticButton` CTA wiring, further
+motion coverage) — none are blocking, all are "nice to have, whenever."
