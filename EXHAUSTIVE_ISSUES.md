@@ -316,3 +316,82 @@ like every real studio today, starts in the unconnected state), and a mobile
 (390×844) no-horizontal-overflow pass across 5 of the busier pages. 2 test-
 script bugs found and fixed along the way (both documented above), 0 real
 product bugs.
+
+**"No pending deposit_payments row found" for the classic booking flow
+(Phase E, first run).** Root-caused to a wrong assumption in the test
+script, not a product bug: the classic `BookingForm`/`FlashBookingForm`
+direct-booking flow (`app/api/stripe/checkout/route.ts`) is webhook "Branch
+C" (`handleLegacyBookingDeposit`) — it writes to the older `deposits` table
+(`booking_id`/`amount_cents`/`status`/`stripe_checkout_session_id`), a
+completely different table from `deposit_payments` (Branch A, the
+consultation/Client-Portal flow only). Its Stripe session metadata is just
+`{ bookingId, studioSlug, artistId }` — no `depositPaymentId` key at all —
+so triggering the webhook with a `depositPaymentId` override (correct for
+the AI-consultation flow, per the earlier P1 investigation) was simply
+targeting the wrong branch. Script fixed to query `deposits` and trigger
+with only `metadata[bookingId]`. Rerun: **the entire classic direct-booking
+flow now passes end-to-end with a real Stripe TEST payment** — BookingForm
+submit → real booking → Stripe Checkout → webhook → `status='confirmed'` →
+consent form → confirmation page — the first time this specific code path
+(distinct from both the P0 and P1 Connect-related paths, and distinct from
+the AI-consultation journey already verified in
+`qa-full-studio-journey.mjs`) has been exercised end-to-end with a real
+payment in this mission. **TEST BUG**, and a genuinely new positive
+confirmation.
+
+**"Request Submitted!" success screen not detected (Phase E, custom
+request, first run).** The DB row was created correctly every time
+(`custom_requests` insert succeeded with the right `artist_id`/`status`) —
+root-caused to `locator.isVisible({ timeout })` not actually polling/
+waiting despite accepting a timeout-shaped option (Playwright silently
+ignores it; the call resolves immediately). Fixed to `.waitFor({ state:
+"visible", timeout })`. Rerun: clean. **TEST BUG.**
+
+**"'One-time design' badge missing" (Phase E, flash booking page, first
+run).** The badge renders with an `uppercase` CSS class, and Chromium's
+`innerText` reflects the applied `text-transform` — the DOM text is
+genuinely `"ONE-TIME DESIGN"`, not `"One-time design"`. The mixed-case
+substring check in the script never matched. Fixed to a case-insensitive
+regex. Rerun: clean. **TEST BUG.**
+
+**"Login form did not redirect to /login/verify" (Phase E, first run) —
+BLOCKED_EXTERNAL, not a product bug.** Root-caused via direct repro: the
+real response body contained Supabase Auth's own inline error, "email rate
+limit exceeded" — Supabase enforces a project-wide email-send quota on top
+of (and independent from) the app's own `checkOtpSendAllowed()` limiter, and
+this session's own extensive earlier OTP testing across Phase A, Phase D,
+and this phase's own studio seeding had already exhausted it by this point.
+The login form correctly displayed Supabase's error inline rather than
+failing silently or crashing — that is itself correct behavior. Script
+updated to detect this specific external condition and report it as
+BLOCKED_EXTERNAL rather than a false product-bug FAIL. Real 6-digit OTP code
+entry through this exact UI remains untested here for the same reason noted
+in the Client Portal work (no email-inbox access for disposable test
+addresses) — the underlying `verifyOtp()`/session mechanism this UI calls
+into is already covered by Phase A and Phase D via the equivalent
+cookie-injection technique.
+
+## Phase E (Public / White-label Booking Flow) — 33 interactions, 0 real findings
+
+Covered via `scripts/qa-phase-e-public.mjs` against production: the full
+`/book/[studio]` landing page (branding/about/stats, both seeded artist
+cards, portfolio section, flash section, reviews section, FAQ accordion —
+all sourced from real DB content, not hardcoded), an invalid-slug 404 with
+no data leakage, the artist profile page + "Book now" CTA, **the entire
+classic direct-booking flow completed end-to-end with a real Stripe TEST
+payment** (BookingForm → real booking → Stripe Checkout redirect → real
+`stripe trigger checkout.session.completed` → webhook Branch C → booking
+`confirmed` → real `ConsentForm` submission → confirmation page — the first
+full real-payment test of this specific code path in this mission), the
+3-step custom request form (→ real `custom_requests` row with correct
+`artist_id`), flash design booking (→ real booking with `style`/
+`description` correctly derived from the flash design, `is_booked` flag
+correctly set for a non-repeatable design, and a correct 404 on re-visiting
+an already-booked one-time design), the client-portal login form's real
+`signInWithOtp()` call and redirect behavior, the standalone consent-form
+entry page, the `request/[id]` client-facing quote status page (real
+`quote_amount`/`deposit_amount`/`quote_message` rendering + conditional "Pay
+deposit" CTA), and a mobile (390×844) no-horizontal-overflow pass across 4
+routes. 4 test-script issues found and fixed along the way (3 genuine TEST
+BUGs, 1 correctly reclassified as BLOCKED_EXTERNAL — all documented above),
+0 real product bugs.

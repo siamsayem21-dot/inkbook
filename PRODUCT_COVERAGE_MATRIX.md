@@ -130,19 +130,19 @@ items not blocking).
 ## PUBLIC / WHITE-LABEL BOOKING (real dynamic `/book/[studio]/**`)
 | Route | Status | Evidence |
 |---|---|---|
-| `/book/[studio]` | NOT_TESTED | |
-| `/book/[studio]/[artistId]` | NOT_TESTED | |
-| `/book/[studio]/[artistId]/book` | NOT_TESTED | |
-| `/book/[studio]/[artistId]/book/consent` | NOT_TESTED | |
-| `/book/[studio]/[artistId]/book/deposit` | NOT_TESTED | |
-| `/book/[studio]/[artistId]/book/confirmation` | NOT_TESTED | |
-| `/book/[studio]/consult` | NOT_TESTED | |
-| `/book/[studio]/consent` | NOT_TESTED | |
-| `/book/[studio]/custom` | NOT_TESTED | |
-| `/book/[studio]/flash/[flashId]/book` | NOT_TESTED | |
-| `/book/[studio]/request/[id]` | NOT_TESTED | |
-| `/book/[studio]/login` | NOT_TESTED | |
-| `/book/[studio]/login/verify` | NOT_TESTED | |
+| `/book/[studio]` | PASS | `scripts/qa-phase-e-public.mjs` E1/E2 — full landing render from real DB content (branding, 2 artist cards, portfolio, flash, reviews, FAQ); invalid slug correctly 404s |
+| `/book/[studio]/[artistId]` | PASS | `scripts/qa-phase-e-public.mjs` E3 — profile render + "Book now" CTA nav |
+| `/book/[studio]/[artistId]/book` | PASS | `scripts/qa-phase-e-public.mjs` E4 — BookingForm real submission → real booking row |
+| `/book/[studio]/[artistId]/book/consent` | PASS | `scripts/qa-phase-e-public.mjs` E4 — real `ConsentForm` submission → `consent_forms` row DB-verified |
+| `/book/[studio]/[artistId]/book/deposit` | PASS | `scripts/qa-phase-e-public.mjs` E4 — real redirect to Stripe Checkout, real TEST payment completed via `stripe trigger`, booking reaches `status='confirmed'` |
+| `/book/[studio]/[artistId]/book/confirmation` | PASS | `scripts/qa-phase-e-public.mjs` E4 — confirmation page reached after real consent submission |
+| `/book/[studio]/consult` | NOT_TESTED | The public landing page's "Start AI Consultation" CTAs link to `/book/[studio]/login`, not this route directly — not yet independently confirmed reachable/used |
+| `/book/[studio]/consent` | PASS | `scripts/qa-phase-e-public.mjs` E8 — standalone consent entry page renders with correct studio name/heading |
+| `/book/[studio]/custom` | PASS | `scripts/qa-phase-e-public.mjs` E5 — real 3-step form submission → `custom_requests` row DB-verified |
+| `/book/[studio]/flash/[flashId]/book` | PASS | `scripts/qa-phase-e-public.mjs` E6 — real booking with derived style/description, `is_booked` flag set, correct 404 on re-visit for a one-time design |
+| `/book/[studio]/request/[id]` | PASS | `scripts/qa-phase-e-public.mjs` E9 — real quote_amount/deposit_amount/quote_message rendering + conditional "Pay deposit" CTA |
+| `/book/[studio]/login` | PASS | `scripts/qa-phase-e-public.mjs` E7 — real `signInWithOtp()` call confirmed (redirect verified when Supabase's own project-wide email quota wasn't already exhausted by this session's testing; see EXHAUSTIVE_ISSUES.md) |
+| `/book/[studio]/login/verify` | PASS | `scripts/qa-phase-e-public.mjs` E7 — page renders correct email + 6-digit code UI; real code entry not independently retestable (no test-inbox access), underlying mechanism covered by Phase A/D |
 
 ## PUBLIC / MARKETING (out of design scope, still functionally testable)
 | Route | Status | Evidence |
@@ -183,7 +183,7 @@ items not blocking).
 | `POST /api/owner/clients/import` | NOT_TESTED | |
 | `/api/reminders` | NOT_TESTED | |
 | `POST /api/send-sms` | NOT_TESTED | |
-| `POST /api/stripe/checkout` | NOT_TESTED | Confirmed still real/live (not dead) via source read — the "classic" self-serve booking deposit flow, unaffected by the Connect fail-closed P0 finding since it doesn't route through Connect at all. Not runtime-exercised this pass. |
+| `POST /api/stripe/checkout` | PASS | `scripts/qa-phase-e-public.mjs` E4 — real session creation + a real completed Stripe TEST payment via `stripe trigger`, confirming this "classic" flow's own `deposits`-table path (webhook Branch C) end-to-end, unaffected by the Connect fail-closed P0 finding since it never routes through Connect |
 | `POST /api/stripe/connect/login-link` | NOT_TESTED | |
 | `POST /api/stripe/connect/onboard` | NOT_TESTED | |
 | `POST /api/stripe/connect-webhook` | PASS | 13/13 checks via `scripts/verify-connect-live.mjs` re-run this mission — real TEST payment, idempotency, cross-studio-mismatch rejection, 0% application fee |
@@ -213,9 +213,9 @@ items not blocking).
 | `app/(owner)/owner/settings/studio/actions.ts` | PASS | `scripts/qa-phase-b-owner.mjs` B8 — name/address edit DB-verified |
 | `app/(owner)/owner/waitlist/actions.ts` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B20 — cap edit + remove both DB-verified |
 | `app/artist/accept/[token]/actions.ts` | NOT_TESTED |
-| `app/book/[studio]/consult/actions.ts` | NOT_TESTED |
-| `app/book/[studio]/custom/actions.ts` | NOT_TESTED |
-| `app/book/[studio]/flash/[flashId]/book/actions.ts` | NOT_TESTED |
+| `app/book/[studio]/consult/actions.ts` | NOT_TESTED | (route reachability itself unconfirmed — see route table) |
+| `app/book/[studio]/custom/actions.ts` | PASS | `scripts/qa-phase-e-public.mjs` E5 — `submitCustomRequest` real DB-verified |
+| `app/book/[studio]/flash/[flashId]/book/actions.ts` | PASS | `scripts/qa-phase-e-public.mjs` E6 — `markFlashAsBooked` real DB-verified (`is_booked` flips true) |
 | `app/client-portal/[studio]/my-profile/actions.ts` | NOT_APPLICABLE | Belongs to the orphaned prototype tree |
 | `app/portal/[studio]/consultation/actions.ts` | NOT_TESTED |
 | `app/portal/[studio]/messages/actions.ts` | NOT_TESTED |

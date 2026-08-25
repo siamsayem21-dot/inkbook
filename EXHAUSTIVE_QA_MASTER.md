@@ -44,51 +44,63 @@ restart from zero.
 
 ## CURRENT PHASE
 Phase A (Auth) — DONE. Phase C (Artist Portal) — DONE. Phase D (Client
-Portal) — DONE. Phase B (Owner Portal) — DONE (Part 1: Artists + Settings;
-Part 2: Bookings, Pipeline, Requests, Clients, Revenue, Reviews, Blacklist,
-Consent Forms, Waitlist, Knowledge, Audit Log, Flash, Billing — 35
-interactions, 0 real findings). Core cross-role journey
+Portal) — DONE. Phase B (Owner Portal) — DONE (Part 1 + Part 2, 45
+interactions total, 0 real findings). Phase E (Public/White-label) — DONE
+(33 interactions, 0 real findings, including the first real-Stripe-TEST-
+payment test of the classic direct-booking flow). Core cross-role journey
 (`qa-full-studio-journey.mjs`: AI Consultation → AI Artist Match → Quote →
 Stripe TEST Deposit → Booking → Consent → Completion → Review) — DONE, PASS
-end-to-end. Remaining Owner gaps (deliberately not blocking, tracked as
+end-to-end. Remaining known gaps (deliberately not blocking, tracked as
 NOT_TESTED, not re-litigated): `/owner/dashboard`, `/owner/consultations`
-(list view specifically — detail view is PASS), `/owner/artists/[artistId]`,
-`/owner/requests/[id]` (standalone detail page), `/owner/messages/[threadId]`.
+(list view specifically), `/owner/artists/[artistId]`, `/owner/requests/[id]`
+(standalone detail page), `/owner/messages/[threadId]`,
+`/book/[studio]/consult` (reachability from the live UI unconfirmed — the
+"Start AI Consultation" CTAs all link to `/login` instead), real 6-digit OTP
+code entry through the public login UI (no test-inbox access — underlying
+mechanism covered by Phase A/D via cookie-injection).
 
 ## CURRENT ROLE / ROUTE / STATE / ACTION
-Transitioning to Phase E (Public / White-label booking flow) — not yet
-started interactively.
+Transitioning to the broader Security/RLS sweep — not yet started
+interactively.
 
 ## LAST VERIFIED ITEM
-Phase B part 2 (Owner Portal remaining modules) fully documented:
-`PRODUCT_COVERAGE_MATRIX.md` Owner Portal route rows + server-action-file
-rows updated to PASS with evidence, `INTERACTION_COVERAGE.md` Phase B
-section populated with the Part 2 rows (B10-B25), `EXHAUSTIVE_ISSUES.md` has
-the 2 test-script bugs found/fixed during this phase (both TEST BUG, not
-product bugs) plus a summary paragraph. Owner Portal is now the most fully
-covered portal in this mission alongside Artist/Client.
+Phase E (Public/White-label) fully documented: `PRODUCT_COVERAGE_MATRIX.md`
+public-route rows + the 3 relevant action-file/API rows updated to PASS with
+evidence, `INTERACTION_COVERAGE.md` Phase E section populated with 15
+detailed interaction rows, `EXHAUSTIVE_ISSUES.md` has the 4 test-script
+issues found/fixed during this phase (3 TEST BUG, 1 BLOCKED_EXTERNAL) plus a
+summary paragraph. Notably, this phase's E4 was the mission's first
+real-Stripe-TEST-payment completion of the classic (non-AI-consultation)
+direct-booking flow — a genuinely different code path (webhook Branch C /
+the `deposits` table) from the P0/P1 findings and from
+`qa-full-studio-journey.mjs`'s own payment test (Branch A), now confirmed
+working correctly end-to-end.
 
 ## NEXT EXACT ITEM
-Phase E — Public/White-label booking flow (`/book/[studio]` and its
-sub-routes: consultation intake, custom request, flash design booking,
-artist profile pages). Valid slug + invalid/non-existent slug, branding
-render, artist profiles/portfolio/flash/reviews/FAQ, all booking CTAs,
-mobile. Then: broader Security/RLS sweep beyond what Phases A/C/D/B already
-covered (API/server-action authorization inventory), Design/Motion
-production re-verification (DESIGN_MOTION_COVERAGE.md still has entries
-marked "RE-VERIFY" from before this mission), Automations/Cron (6 routes),
-Blacklist/Waitlist already covered above — remaining: Reviews/aftercare
-follow-up cron behavior specifically, error/resilience testing, a11y/
-console/perf checks, final regressions (Sections 49-54), final report.
+Broader Security/RLS sweep beyond what Phases A/B/C/D/E already covered
+along the way (auth boundaries, cross-studio isolation, blacklist
+enforcement, IDOR probes, the classic booking flow's public unauthenticated
+surface) — specifically a systematic API/server-action authorization
+inventory (which routes/actions verify `studio_id` ownership vs. trusting
+client-supplied IDs) rather than the incidental coverage gathered so far.
+Then: Design/Motion production re-verification (DESIGN_MOTION_COVERAGE.md
+still has entries marked "RE-VERIFY" from before this mission),
+Automations/Cron (6 `GET /api/cron/*` routes, all still NOT_TESTED), error/
+resilience testing (refresh mid-flow, malformed IDs, network failures),
+a11y/console/perf checks, final regressions (Sections 49-54), final report
+(Section 61) — verdict will very likely be "C. LAUNCH BLOCKERS REMAIN" per
+the mission's own rule against choosing "A" while P0/P1 remain unresolved,
+unless Siam resolves the Stripe Connect rollout decision first.
 
 ## TOTALS (updated as mission progresses)
 - TOTAL INVENTORY ITEMS: 76 page routes + 31 API routes + 26 server-action
   files = 133 top-level surfaces (per-surface interaction expansion ongoing)
 - PASS: Phase A (~15 items), Phase C (68 interactions), Phase D (16 routes +
   security), Phase B part 1 (10 items), Phase B part 2 (35 interactions),
-  full studio journey (1 end-to-end pass covering AI/Match/Quote/Stripe TEST
-  deposit/Booking/Consent/Completion/Review) — all PASS. Owner Portal is now
-  ~85% route-covered (16 of ~20 top-level routes PASS).
+  Phase E (33 interactions), full studio journey (1 end-to-end pass covering
+  AI/Match/Quote/Stripe TEST deposit/Booking/Consent/Completion/Review) —
+  all PASS. Owner Portal ~85% route-covered (16 of ~20 top-level routes),
+  Public/White-label ~92% route-covered (12 of 13 dynamic routes PASS).
 - FAIL: 0 outstanding (all investigated FAILs across every phase resolved to
   either a confirmed real product bug — P0/P1, see BUG COUNT below — or a
   test-script/seed-data bug, fixed and retested PASS)

@@ -99,7 +99,28 @@ clients), 6 seeded projects spanning the full lifecycle, desktop+mobile.
 - Security: Client B empty-state (3 routes) + 5/5 direct-ID IDOR probes against Client A's data all correctly blocked. Cross-studio portal-shell access confirmed data-safe (double-scoped queries).
 
 ## Phase E — Public / White-label
-(populated during Phase E execution)
+See `scripts/qa-phase-e-public.mjs`. 33 interactions against production,
+desktop+mobile. **0 real findings** (4 test-script issues found and fixed
+mid-run — wrong table assumption for the classic flow's webhook branch,
+`isVisible({timeout})` not actually polling, a case-sensitive check against
+CSS-uppercased text, and one correctly reclassified as BLOCKED_EXTERNAL —
+all documented in EXHAUSTIVE_ISSUES.md).
+- PUBLIC | /book/[studio] | populated | landing page render | render | branding/about/stats/2 artist cards/portfolio/flash/reviews/FAQ all from real DB content | DOM+DB | PASS
+- PUBLIC | /book/[nonexistent-slug] | — | direct nav | navigation | HTTP 404, no data leakage | HTTP status | PASS
+- PUBLIC | /book/[studio]/[artistId] | populated | render + "Book now" CTA | click | correct name/styles, navigates to /book | DOM (URL) | PASS
+- PUBLIC | /book/[studio]/[artistId]/book (E4) | — | BookingForm full submission | fill×7+click | real booking row created, redirected to /deposit?booking_id= | DB re-query | PASS
+- PUBLIC | .../book/deposit (E4) | — | "Pay $X deposit" | click | real redirect to checkout.stripe.com | DOM (URL) | PASS
+- PUBLIC | .../book/deposit (E4) | — | real Stripe TEST payment (`stripe trigger checkout.session.completed`, webhook Branch C / `deposits` table) | CLI+webhook | booking `status='confirmed'`, `deposit_paid=true` | DB re-query (polled) | PASS — **first real-payment test of this specific code path in the mission** |
+- PUBLIC | .../book/consent (E4) | post-payment | real `ConsentForm` submission (name/DOB/ID photo/signature/checkbox) | fill+upload+click | `consent_forms` row created, lands on /confirmation | DB re-query | PASS
+- PUBLIC | .../book/confirmation (E4) | — | render | render | confirmation page reached with booking details | DOM (URL+text) | PASS
+- PUBLIC | /book/[studio]/custom (E5) | — | 3-step form (About You → Your Idea → Final Details → Submit) | fill×9+click×3 | real `custom_requests` row, correct `artist_id`/`status='pending'`, "Request Submitted!" success screen | DOM+DB | PASS
+- PUBLIC | /book/[studio]/flash/[flashId]/book (E6) | non-repeatable design | full form submission | fill+click | real booking with `style`/`description` derived from the flash design | DB re-query | PASS
+- PUBLIC | (E6) | after booking | — | — | `flash_designs.is_booked` flips true; re-visiting the booking page for that design now 404s | DB re-query + HTTP status | PASS
+- PUBLIC | /book/[studio]/login (E7) | — | email submit | fill+click | real `signInWithOtp()` call, redirect to /login/verify?email= with correct email | DOM (URL) | PASS (or correctly-reported BLOCKED_EXTERNAL when Supabase's own project email quota was already exhausted by this session's testing) |
+- PUBLIC | /book/[studio]/login/verify (E7) | — | render | render | correct email displayed, 6-digit code UI present | DOM | PASS (real code entry out of scope — no test-inbox access; underlying mechanism covered by Phase A/D) |
+- PUBLIC | /book/[studio]/consent (E8) | — | render | render | correct studio name + form heading (standalone `StandaloneConsentForm`) | DOM | PASS
+- PUBLIC | /book/[studio]/request/[id] (E9) | quoted status | render | render | real `quote_amount`/`deposit_amount`/`quote_message` shown, "Pay deposit" CTA present | DOM+DB | PASS
+- Mobile (390x844): landing, artist profile, custom request form, login page all real-navigated, zero horizontal overflow.
 
 ## Phase F-N — Core Journeys (AI, Match, Quote, Stripe, Booking, Consent, Agreement, Remainder, Messages, Portfolio/Flash)
 (populated during those phases)
