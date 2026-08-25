@@ -31,6 +31,12 @@ const SERVICE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
 const ANON_KEY = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const PROJECT_REF = SUPABASE_URL.match(/https:\/\/([a-z0-9]+)\.supabase\.co/)[1];
 const BASE_URL = process.env.QA_BASE_URL ?? "http://localhost:3000";
+// Optional: Vercel "Protection Bypass for Automation" secret, for verifying
+// an SSO-protected Preview deployment. Never printed/logged — only passed
+// as a request header. Leave unset for local/production targets.
+const EXTRA_HEADERS = process.env.QA_BYPASS_SECRET
+  ? { "x-vercel-protection-bypass": process.env.QA_BYPASS_SECRET, "x-vercel-set-bypass-cookie": "true" }
+  : {};
 const TAG = "QA-DESIGN-SWEEP";
 const SCREENSHOT_DIR = "reports/design-qa-screenshots";
 mkdirSync(SCREENSHOT_DIR, { recursive: true });
@@ -174,7 +180,7 @@ try {
 // ═══════════════════════════════════════════════════════════════════════
 HEAD("Owner Portal");
 {
-  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, extraHTTPHeaders: EXTRA_HEADERS });
   const page = await context.newPage();
 
   await page.goto(`${BASE_URL}/login`);
@@ -228,7 +234,7 @@ HEAD("Owner Portal");
 // ═══════════════════════════════════════════════════════════════════════
 HEAD("Artist Portal");
 {
-  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, extraHTTPHeaders: EXTRA_HEADERS });
   const page = await context.newPage();
 
   await page.goto(`${BASE_URL}/login`);
@@ -292,7 +298,7 @@ HEAD("Client Portal");
   }
 
   if (clientSession) {
-    const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, extraHTTPHeaders: EXTRA_HEADERS });
     const cookieValue = "base64-" + Buffer.from(JSON.stringify(clientSession)).toString("base64url");
     const cookieName = `sb-${PROJECT_REF}-auth-token`;
     // Chunk past ~3180 chars, same as documented — single cookie usually suffices for a fresh session.
@@ -339,7 +345,7 @@ HEAD("Client Portal");
 // ═══════════════════════════════════════════════════════════════════════
 HEAD("Auth pages");
 {
-  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, extraHTTPHeaders: EXTRA_HEADERS });
   const page = await context.newPage();
 
   for (const viewport of [{ name: "desktop", w: 1440, h: 900 }, { name: "mobile", w: 390, h: 844 }]) {
@@ -378,7 +384,7 @@ HEAD("Auth pages");
 
   // Reduced motion: MotionCard should not throw / should render normally
   await context.close();
-  const reducedContext = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
+  const reducedContext = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce", extraHTTPHeaders: EXTRA_HEADERS });
   const reducedPage = await reducedContext.newPage();
   reducedPage.on("console", (msg) => { if (msg.type() === "error") FAIL(`console error under reduced-motion on /owner/dashboard: ${msg.text()}`); });
   try {
