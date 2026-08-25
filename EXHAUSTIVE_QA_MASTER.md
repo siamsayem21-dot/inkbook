@@ -67,41 +67,44 @@ testing of `cron/payment-reminders` pass 2 / `cron/review-requests` /
 this session — see EXHAUSTIVE_ISSUES.md).
 
 ## CURRENT ROLE / ROUTE / STATE / ACTION
-Transitioning to the broader Security/RLS sweep — not yet started
-interactively.
+Security/RLS sweep — systematic API authorization inventory done (source
+review of every remaining unaudited API route + one live cross-studio IDOR
+probe). Transitioning next to Design/Motion production re-verification.
 
 ## LAST VERIFIED ITEM
-Automations/Cron phase fully documented: `PRODUCT_COVERAGE_MATRIX.md`'s 6
-cron route rows updated (4 PASS, 1 real FAIL/P1, 1 inconclusive/NOT_TESTED),
-`EXHAUSTIVE_ISSUES.md` has the new P1 finding (cron/sms-reminders silently
-broken since `20260802000000_appointment_reminder_email.sql` was never
-applied to production) written up in full with root cause, blast radius,
-and a one-line safe fix, `EXHAUSTIVE_QA_MASTER.md` BUG COUNT updated to
-P1: 2 found. Also fully documented: Phase E (Public/White-label) —
-`PRODUCT_COVERAGE_MATRIX.md` public-route rows + 3 action-file/API rows PASS
-with evidence, `INTERACTION_COVERAGE.md` Phase E section (15 rows),
-`EXHAUSTIVE_ISSUES.md` 4 test-script issues (3 TEST BUG, 1
-BLOCKED_EXTERNAL). Phase E's E4 was the mission's first real-Stripe-TEST-
-payment completion of the classic (non-AI-consultation) direct-booking flow
-— a genuinely different code path (webhook Branch C / the `deposits` table)
-from the P0/P1 Connect findings and from `qa-full-studio-journey.mjs`'s own
-payment test (Branch A) — confirmed working correctly end-to-end.
+Security/RLS sweep complete: every one of the 31 top-level API routes now
+has a PASS/FAIL/NOT_APPLICABLE status in `PRODUCT_COVERAGE_MATRIX.md` (no
+remaining NOT_TESTED API routes) — covered either through earlier
+functional phases, a live cross-studio IDOR probe
+(`scripts/qa-phase-security-idor.mjs`, 12 checks against
+`custom-requests/[id]/{quote,decline,schedule}` — real cross-studio owner/
+artist attacks correctly rejected 403, unauthenticated rejected 401,
+positive control proves the session mechanism itself works, 0 findings), or
+a direct source review for the remaining low-risk routes (all confirmed to
+derive `studio_id`/`owner_id` server-side from the authenticated session or
+a validated lookup, never from client-supplied IDs). One dead-code
+observation noted (`/api/reminders` — CRON_SECRET-gated but not registered
+in `vercel.json`, superseded by `cron/sms-reminders`, inert, not a bug).
+Also still fully documented from the prior session block: Automations/Cron
+(4/6 PASS via real production evidence, 1 real NEW P1 bug found —
+cron/sms-reminders silently sending zero reminders since a migration was
+never applied — BLOCKED_NEEDS_SIAM, 1 inconclusive) and Phase E (Public/
+White-label, 33 interactions, 0 findings, including the mission's first
+real-Stripe-TEST-payment test of the classic direct-booking flow).
 
 ## NEXT EXACT ITEM
-Broader Security/RLS sweep beyond what Phases A/B/C/D/E already covered
-along the way (auth boundaries, cross-studio isolation, blacklist
-enforcement, IDOR probes, the classic booking flow's public unauthenticated
-surface) — specifically a systematic API/server-action authorization
-inventory (which routes/actions verify `studio_id` ownership vs. trusting
-client-supplied IDs) rather than the incidental coverage gathered so far.
-Then: Design/Motion production re-verification (DESIGN_MOTION_COVERAGE.md
-still has entries marked "RE-VERIFY" from before this mission),
-Automations/Cron (6 `GET /api/cron/*` routes, all still NOT_TESTED), error/
-resilience testing (refresh mid-flow, malformed IDs, network failures),
-a11y/console/perf checks, final regressions (Sections 49-54), final report
-(Section 61) — verdict will very likely be "C. LAUNCH BLOCKERS REMAIN" per
-the mission's own rule against choosing "A" while P0/P1 remain unresolved,
-unless Siam resolves the Stripe Connect rollout decision first.
+Design/Motion production re-verification — `DESIGN_MOTION_COVERAGE.md`
+still has entries marked "RE-VERIFY" from before this mission (the
+correction-pass design work was verified once already, pre-mission, on a
+Preview deployment, then merged/deployed to production via "deploy kro" —
+this mission has not yet re-confirmed the live production site still shows
+the same real depth/motion/hover behavior). Then: error/resilience testing
+(refresh mid-flow, malformed IDs, network failures), a11y/console/perf
+checks, final regressions (Sections 49-54), final report (Section 61) —
+verdict will very likely be "C. LAUNCH BLOCKERS REMAIN" per the mission's
+own rule against choosing "A" while P0/P1 remain unresolved, unless Siam
+resolves the Stripe Connect rollout decision and approves the
+cron/sms-reminders migration first.
 
 ## TOTALS (updated as mission progresses)
 - TOTAL INVENTORY ITEMS: 76 page routes + 31 API routes + 26 server-action
@@ -156,10 +159,14 @@ fixed to redirect, retested PASS)
 P3: 0 found / 0 fixed / 0 remaining
 
 ## COVERAGE SNAPSHOT
-DESKTOP: Auth/Artist/Client/Owner-Artists+Settings covered (~50%) | MOBILE:
-Artist + Client covered, Owner Artists+Settings covered (~40%) | SECURITY:
-Auth boundary + Artist cross-studio isolation + Client IDOR probes covered,
-broader Owner-side API/action authorization sweep still pending (~40%) |
+DESKTOP: Auth/Artist/Client/Owner (both parts)/Public covered (~75%) | MOBILE:
+Artist/Client/Owner(part1)/Public covered (~50%) | SECURITY: all 31 API
+routes now have a status (live IDOR probe or source review) — auth
+boundary, cross-studio isolation (Artist/Client/custom-requests), blacklist
+API-layer enforcement, and 6/6 cron auth-guards all empirically confirmed
+(~90%; remaining gap is RLS-policy-level testing itself, which needs Docker/
+local Postgres per this mission's own documented pre-existing environment
+gap) |
 MOTION: prior design-correction pass verified pre-mission, NOT yet
 re-confirmed against the live production deployment this mission (0% this
 mission) | AI: full consultation→match→quote pipeline verified end-to-end

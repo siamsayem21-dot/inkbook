@@ -161,14 +161,14 @@ items not blocking).
 | `POST /api/ai/consultation-questions` | NOT_TESTED | exercised indirectly via Client Portal AI chat (Phase D1) but not isolated |
 | `POST /api/ai/quote-generate` | PASS | real Claude call, realistic price range + reasoning, verified via `qa-full-studio-journey.mjs` |
 | `POST /api/ai/style-detect` | NOT_TESTED | exercised indirectly via Client Portal AI chat (Phase D1) but not isolated |
-| `/api/artists` | NOT_TESTED | |
+| `/api/artists` | PASS | Source-reviewed: public GET, filterable by `studioId`/`style`, returns only the same public fields already shown on `/book/[studio]` (no PII) — not a security-sensitive surface |
 | `/api/auth/[...nextauth]` | NOT_TESTED | Verify this is actually live/used — project's real auth is Supabase Auth, not NextAuth; may be dead |
 | `/api/billing/create-checkout` | NOT_TESTED | |
 | `/api/billing/portal` | NOT_TESTED | |
 | `POST /api/billing/webhook` | NOT_TESTED | |
 | `POST /api/bookings` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B18 — direct POST with a blacklisted client email correctly rejected HTTP 400; positive booking-creation path already covered indirectly via Phase C's real 409-conflict test on artist days-off |
 | `/api/consent-forms` | PASS | Investigated during Phase D — real 402 "No deposit found" validation confirmed correct (rejects a booking without a matching `deposit_payments` row); real signed submission with proper deposit data confirmed working, `consent_forms` row created |
-| `/api/consent-forms/standalone` | NOT_TESTED | |
+| `/api/consent-forms/standalone` | PASS | Source-reviewed: public by design (matches the booking-flow trust model, unguessable studio slug + rate-limited), no cross-studio data exposure — writes only, scoped to the resolved studio |
 | `GET /api/cron/cancel-expired` | PASS | `scripts/qa-phase-cron-automations.mjs` — auth guard (401 on unauthenticated + wrong-token) + real production evidence: 12 real `cancelled`+unpaid bookings confirm it is genuinely executing on schedule |
 | `GET /api/cron/no-show` | PASS | same script — auth guard + 22 real `no_show` bookings + 4 real `booking.no_show` `audit_log` entries (`actor_type='system'`) |
 | `GET /api/cron/payment-reminders` | PASS (pass 1) / NOT_TESTED (pass 2) | same script — auth guard; pass 1 (deposit-pending reminder) has 3 real confirming rows; pass 2 (remainder-balance reminder) has 0 real rows yet — inconclusive (may simply mean no booking has qualified yet), not confirmed broken |
@@ -176,21 +176,21 @@ items not blocking).
 | `GET /api/cron/sms-reminders` | **FAIL — REAL BUG (P1)** | same script — auth guard PASS, but real evidence query hit `column bookings.email_48hr_sent does not exist` — this cron has been sending ZERO reminders (SMS and email) since the email-reminder feature deployed; see EXHAUSTIVE_ISSUES.md P1 |
 | `GET /api/cron/waitlist-notify` | NOT_TESTED | same script — auth guard PASS; 0 real `notified=true` rows yet, inconclusive (no artist has dropped under cap with a waitlist entry pending yet) |
 | `/api/custom-requests` | NOT_TESTED | (client-facing submission endpoint — the owner-side review of a submitted request is PASS via B13/B14) |
-| `POST /api/custom-requests/[id]/decline` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B14 — real fetch via the Decline modal, `status`/`declined_reason` DB-verified |
+| `POST /api/custom-requests/[id]/decline` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B14 (legitimate use) + `scripts/qa-phase-security-idor.mjs` Probe 2 (real cross-studio artist correctly rejected 403, unauthenticated rejected 401, DB confirmed unmutated) |
 | `POST /api/custom-requests/[id]/deposit` | NOT_TESTED | (client-side deposit-payment step for a quoted custom request — same Connect fail-closed exposure as the P0 finding, not yet independently confirmed for this specific endpoint) |
-| `POST /api/custom-requests/[id]/quote` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B13 — real fetch via the Approve modal, `status`/`quote_amount`/`deposit_amount` DB-verified |
-| `POST /api/custom-requests/[id]/schedule` | NOT_TESTED | |
-| `POST /api/owner/clients/import` | NOT_TESTED | |
-| `/api/reminders` | NOT_TESTED | |
-| `POST /api/send-sms` | NOT_TESTED | |
+| `POST /api/custom-requests/[id]/quote` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B13 (legitimate use) + `scripts/qa-phase-security-idor.mjs` Probes 1/4/5 (real cross-studio owner correctly rejected 403, unauthenticated rejected 401, positive control confirms the real owner CAN quote their own request — DB-verified both ways) |
+| `POST /api/custom-requests/[id]/schedule` | PASS | `scripts/qa-phase-security-idor.mjs` — real cross-studio owner correctly rejected 403, unauthenticated rejected 401 (schedule itself not exercised on a legitimate path by this probe, but the auth boundary is empirically confirmed) |
+| `POST /api/owner/clients/import` | PASS | Source-reviewed: session-scoped via `getStudioId()`, every inserted row's `studio_id` comes from the server session, never from client-supplied CSV data — no IDOR surface |
+| `/api/reminders` | NOT_APPLICABLE | Source-reviewed: `CRON_SECRET`-gated, fail-closed, but **not registered in `vercel.json`'s `crons` array** — dead/superseded code, nothing schedules it (see EXHAUSTIVE_ISSUES.md "minor observation") |
+| `POST /api/send-sms` | PASS | Source-reviewed: `CRON_SECRET`-gated, fail-closed if the secret is ever unset — same pattern already live-auth-tested for all 6 `/api/cron/*` routes |
 | `POST /api/stripe/checkout` | PASS | `scripts/qa-phase-e-public.mjs` E4 — real session creation + a real completed Stripe TEST payment via `stripe trigger`, confirming this "classic" flow's own `deposits`-table path (webhook Branch C) end-to-end, unaffected by the Connect fail-closed P0 finding since it never routes through Connect |
-| `POST /api/stripe/connect/login-link` | NOT_TESTED | |
-| `POST /api/stripe/connect/onboard` | NOT_TESTED | |
+| `POST /api/stripe/connect/login-link` | PASS | Source-reviewed: derives the studio strictly from `owner_id = <authenticated user>` (real Supabase session via `auth.getUser()`), never a client-supplied studio id; gated behind `isStripeConnectEnabled()` |
+| `POST /api/stripe/connect/onboard` | PASS | Source-reviewed: same pattern as login-link — session-derived `owner_id` lookup only, gated behind `isStripeConnectEnabled()`, matches the documented "creates zero real Stripe accounts while the flag is off" behavior |
 | `POST /api/stripe/connect-webhook` | PASS | 13/13 checks via `scripts/verify-connect-live.mjs` re-run this mission — real TEST payment, idempotency, cross-studio-mismatch rejection, 0% application fee |
 | `POST /api/stripe/webhook` | PASS | real TEST payment reconciliation verified via `qa-full-studio-journey.mjs` (deposit_payments + bookings + consultations all correctly updated) — **also the route where the P1 finding's charge actually landed, confirming it's live/reachable for this exact scenario** |
-| `/api/studios` | NOT_TESTED | |
-| `POST /api/twilio/sms` | NOT_TESTED | Do not send real SMS to real numbers |
-| `/api/waitlist` | NOT_TESTED | |
+| `/api/studios` | PASS | Source-reviewed: GET returns only intentionally-public fields (same as shown on `/book/[studio]`); POST derives `owner_id` strictly from the authenticated session (`createServerClient().auth.getUser()`), never a client-supplied user id — code comment explicitly documents why |
+| `POST /api/twilio/sms` | PASS | Source-reviewed only (per this mission's own instruction not to send real SMS to real numbers): `CRON_SECRET`-gated, fail-closed, validates message `type` against an explicit allowlist |
+| `/api/waitlist` | PASS | Source-reviewed: public by design (matches the booking-flow trust model), `studio_id` always derived server-side from the looked-up `artistId`, never trusted from the client directly |
 
 ## SERVER ACTION FILES (26) — exercised via their owning route's UI, not directly
 | File | Status |

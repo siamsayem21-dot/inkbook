@@ -477,3 +477,53 @@ all 6 routes therefore used (1) direct auth-guard testing — real
 unauthenticated and wrong-bearer-token requests, both correctly rejected
 401 — and (2) real production-data evidence of organic execution, which is
 what surfaced this finding in the first place.
+
+## Security/RLS — cross-studio IDOR probe (custom-requests quote/decline/schedule) — 12 checks, 0 findings
+
+Covered via `scripts/qa-phase-security-idor.mjs` against production: real
+Studio B owner/artist accounts (genuine Supabase sessions via the same
+proven cookie-injection technique used throughout Phase D — not hand-built
+fake tokens) attempting to quote, decline, and schedule a real Studio A
+custom request they have no relationship to. All three cross-studio attacks
+correctly rejected (403 Forbidden), confirmed via DB re-query that no
+mutation occurred. All three endpoints also correctly reject fully
+unauthenticated requests (401). A positive control — Studio A's real owner
+successfully quoting their own request (200, DB-verified) — confirms the
+session/cookie mechanism itself works, so the 401/403s above are genuine
+authorization rejections rather than an artifact of broken auth plumbing.
+This empirically confirms (not just source-reads) the multi-layered
+owner-OR-assigned-artist-scoped-to-studio_id authorization logic in these
+three routes, which their own code comments already flagged as having had
+a real prior bug (an owner with more than one studio row being incorrectly
+403'd) — that fix holds and no new gap was found. 0 real findings.
+
+Also source-reviewed (not live-probed, judged low-risk enough that a code
+read plus this session's already-extensive live IDOR/cross-studio testing
+elsewhere — Phase C's 5 direct-ID probes, Phase D's 5/5 IDOR probes, Phase
+B's blacklist-enforcement API test, Phase E's invalid-slug 404 — gives
+adequate confidence): `app/api/owner/clients/import`,
+`app/api/stripe/connect/{onboard,login-link}` (both derive the studio
+strictly from `owner_id = <authenticated user>`, never from a client-
+supplied ID, and are additionally gated behind `isStripeConnectEnabled()`),
+`app/api/consent-forms` GET (owner-or-assigned-artist authorization,
+scoped to the booking's real `studio_id`/`artist_id`, same 404-for-both
+"not found" and "not authorized" pattern to avoid ID enumeration),
+`app/api/twilio/sms`, `app/api/send-sms`, `app/api/reminders` (all
+CRON_SECRET-gated, fail-closed if the secret is ever unset), `app/api/
+studios` GET/POST (public read is intentionally minimal/public-facing
+fields only; POST derives `owner_id` strictly from the authenticated
+session, never a client-supplied user id — the code comment there
+explicitly documents why), `app/api/artists` GET (public, but only
+ever returns the same public fields already shown on `/book/[studio]`),
+`app/api/waitlist` POST (public by design, matches the booking-flow trust
+model, `studio_id` derived server-side from the looked-up `artistId`, never
+client-supplied directly).
+
+**Minor observation, not a security bug:** `app/api/reminders/route.ts`
+exists, is `CRON_SECRET`-gated, and duplicates (an older, non-personalized-
+by-name-and-without-email-channel version of) the reminder logic that now
+lives in `cron/sms-reminders`. It is **not** registered in `vercel.json`'s
+`crons` array (confirmed — only the 6 `/api/cron/*` paths are), so nothing
+currently schedules it. Likely dead/superseded code left over from before
+`cron/sms-reminders` existed. Flagged for Siam's awareness, not treated as
+a bug — it's inert.
