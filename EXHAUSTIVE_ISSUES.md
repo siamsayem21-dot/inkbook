@@ -395,3 +395,85 @@ deposit" CTA), and a mobile (390×844) no-horizontal-overflow pass across 4
 routes. 4 test-script issues found and fixed along the way (3 genuine TEST
 BUGs, 1 correctly reclassified as BLOCKED_EXTERNAL — all documented above),
 0 real product bugs.
+
+## [P1] CONFIRMED — `cron/sms-reminders` has been sending ZERO appointment reminders (SMS and email) in production since the email-reminder feature was deployed, due to a missing migration
+
+**Route:** `GET /api/cron/sms-reminders` (`app/api/cron/sms-reminders/route.ts`),
+Vercel-scheduled daily at 09:00 UTC per `vercel.json`.
+
+**Found:** During the Automations/Cron QA pass
+(`scripts/qa-phase-cron-automations.mjs`), querying production for organic
+evidence that this cron has been running successfully (the only verification
+method available — see the CRON_SECRET access-gap note below) returned a
+real Postgres error, not zero rows: `column bookings.email_48hr_sent does
+not exist` (code `42703`), same for `email_day_of_sent`.
+
+**Root cause:** `app/api/cron/sms-reminders/route.ts`'s main candidate query
+(lines 73-81) selects `sms_48hr_sent, email_48hr_sent, sms_day_of_sent,
+email_day_of_sent` from `bookings` in a single `.select()` call. The two
+`email_*` columns were added by
+`supabase/migrations/20260802000000_appointment_reminder_email.sql`
+(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS email_48hr_sent BOOLEAN NOT
+NULL DEFAULT FALSE, ADD COLUMN IF NOT EXISTS email_day_of_sent BOOLEAN NOT
+NULL DEFAULT FALSE`) — committed to the repo (commit history confirms it's
+on `master`, the deployed branch) but **never actually run against the
+production Supabase database**. Confirmed isolated to this one migration:
+every other migration immediately before and after it in the timeline
+(`20260801220000`, `20260802010000` studio_timezone, `20260802020000`,
+`20260809000000` client_accounts phone/DOB, `20260809010000` studios
+contact fields, `20260817000000` compliance_audit_log, `20260819000000`
+Stripe Connect) is confirmed present and working — this is not a broader
+"migrations stopped applying" problem, just this one file.
+
+**Why this is worse than a simple missing-email-feature gap:** the route's
+query destructures only `{ data: candidates }`, never checking `error`:
+```ts
+const { data: candidates } = await supabase.from("bookings").select(...)...
+```
+When the `.select()` fails with the missing-column error, `data` is `null`,
+`candidates` falls through to `(candidates ?? []) as CandidateBookingRow[]`
+→ an empty array, the loop body never runs, and the route returns a normal
+`HTTP 200` with `{ sent48hr: 0, sentDayOf: 0 }` — **no error is logged
+anywhere, no alert fires, nothing looks broken from the outside.** Since
+this query selects the SMS columns in the same call as the broken email
+columns, **this has silently zeroed out SMS reminders too, not just email**
+— the entire cron has been a no-op since the email-reminder feature (commit
+`dc3613d feat(reminders): add email channel to appointment reminders`) was
+deployed. The 11/13 real production rows with `sms_48hr_sent`/
+`sms_day_of_sent = true` found elsewhere in this same QA pass are leftover
+evidence from *before* that deploy, not proof the cron is currently working
+— they predate the break.
+
+**Blast radius:** `cron/sms-reminders` only — the other 5 cron routes
+(`cancel-expired`, `no-show`, `payment-reminders`, `waitlist-notify`,
+`review-requests`) each have their own independent queries against columns
+confirmed present in production, and real organic evidence (12/22/3/4 real
+rows respectively) confirms they are genuinely still executing correctly.
+
+**Fix:** trivially safe — run the one already-written, already-reviewed,
+purely-additive, idempotent migration
+(`supabase/migrations/20260802000000_appointment_reminder_email.sql`)
+against the production database. Two nullable-with-default boolean columns,
+`IF NOT EXISTS`, no data migration, no RLS change, no destructive operation.
+Not applied by this session per this mission's own hard gate and the
+`inkbook-ops` skill's explicit rule that any production schema DDL requires
+Siam's approval, regardless of how safe it looks.
+
+**Status:** **BLOCKED_NEEDS_SIAM.** Not fixed. This is the mission's
+highest-priority actionable finding outside the pre-existing P0/P1 Stripe
+Connect items — unlike those two (which require a business decision on the
+Connect rollout), this one has a single, obvious, one-line fix with no
+tradeoffs: run the migration.
+
+**Separately noted, not a bug:** the correct production `CRON_SECRET` was
+not obtainable in this session to directly invoke these routes with a valid
+bearer token for a fully isolated, seeded-data test — it is absent from
+`.env.local` (local dev never calls these routes), and `vercel env pull
+--environment=production` returned empty string values for every secret
+in this session (an access-scope/tooling issue with this particular CLI
+session, not a code or security problem — `vercel env ls` confirms the
+variable genuinely exists, encrypted, set 88 days ago). Verification for
+all 6 routes therefore used (1) direct auth-guard testing — real
+unauthenticated and wrong-bearer-token requests, both correctly rejected
+401 — and (2) real production-data evidence of organic execution, which is
+what surfaced this finding in the first place.

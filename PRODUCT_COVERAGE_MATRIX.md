@@ -169,12 +169,12 @@ items not blocking).
 | `POST /api/bookings` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B18 — direct POST with a blacklisted client email correctly rejected HTTP 400; positive booking-creation path already covered indirectly via Phase C's real 409-conflict test on artist days-off |
 | `/api/consent-forms` | PASS | Investigated during Phase D — real 402 "No deposit found" validation confirmed correct (rejects a booking without a matching `deposit_payments` row); real signed submission with proper deposit data confirmed working, `consent_forms` row created |
 | `/api/consent-forms/standalone` | NOT_TESTED | |
-| `GET /api/cron/cancel-expired` | NOT_TESTED | |
-| `GET /api/cron/no-show` | NOT_TESTED | |
-| `GET /api/cron/payment-reminders` | NOT_TESTED | |
-| `GET /api/cron/review-requests` | NOT_TESTED | |
-| `GET /api/cron/sms-reminders` | NOT_TESTED | |
-| `GET /api/cron/waitlist-notify` | NOT_TESTED | |
+| `GET /api/cron/cancel-expired` | PASS | `scripts/qa-phase-cron-automations.mjs` — auth guard (401 on unauthenticated + wrong-token) + real production evidence: 12 real `cancelled`+unpaid bookings confirm it is genuinely executing on schedule |
+| `GET /api/cron/no-show` | PASS | same script — auth guard + 22 real `no_show` bookings + 4 real `booking.no_show` `audit_log` entries (`actor_type='system'`) |
+| `GET /api/cron/payment-reminders` | PASS (pass 1) / NOT_TESTED (pass 2) | same script — auth guard; pass 1 (deposit-pending reminder) has 3 real confirming rows; pass 2 (remainder-balance reminder) has 0 real rows yet — inconclusive (may simply mean no booking has qualified yet), not confirmed broken |
+| `GET /api/cron/review-requests` | NOT_TESTED | same script — auth guard PASS; 0 real `review_requested_at` rows yet, inconclusive (no completed-14-days-ago booking has existed in production yet) |
+| `GET /api/cron/sms-reminders` | **FAIL — REAL BUG (P1)** | same script — auth guard PASS, but real evidence query hit `column bookings.email_48hr_sent does not exist` — this cron has been sending ZERO reminders (SMS and email) since the email-reminder feature deployed; see EXHAUSTIVE_ISSUES.md P1 |
+| `GET /api/cron/waitlist-notify` | NOT_TESTED | same script — auth guard PASS; 0 real `notified=true` rows yet, inconclusive (no artist has dropped under cap with a waitlist entry pending yet) |
 | `/api/custom-requests` | NOT_TESTED | (client-facing submission endpoint — the owner-side review of a submitted request is PASS via B13/B14) |
 | `POST /api/custom-requests/[id]/decline` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B14 — real fetch via the Decline modal, `status`/`declined_reason` DB-verified |
 | `POST /api/custom-requests/[id]/deposit` | NOT_TESTED | (client-side deposit-payment step for a quoted custom request — same Connect fail-closed exposure as the P0 finding, not yet independently confirmed for this specific endpoint) |

@@ -47,7 +47,11 @@ Phase A (Auth) — DONE. Phase C (Artist Portal) — DONE. Phase D (Client
 Portal) — DONE. Phase B (Owner Portal) — DONE (Part 1 + Part 2, 45
 interactions total, 0 real findings). Phase E (Public/White-label) — DONE
 (33 interactions, 0 real findings, including the first real-Stripe-TEST-
-payment test of the classic direct-booking flow). Core cross-role journey
+payment test of the classic direct-booking flow). Automations/Cron — DONE
+(6/6 routes auth-guard tested; 4/6 confirmed genuinely executing via real
+production evidence; 1 NEW REAL P1 BUG FOUND — cron/sms-reminders has been
+sending zero reminders since a migration was never applied; 1 route
+inconclusive pending real-world data). Core cross-role journey
 (`qa-full-studio-journey.mjs`: AI Consultation → AI Artist Match → Quote →
 Stripe TEST Deposit → Booking → Consent → Completion → Review) — DONE, PASS
 end-to-end. Remaining known gaps (deliberately not blocking, tracked as
@@ -57,24 +61,31 @@ NOT_TESTED, not re-litigated): `/owner/dashboard`, `/owner/consultations`
 `/book/[studio]/consult` (reachability from the live UI unconfirmed — the
 "Start AI Consultation" CTAs all link to `/login` instead), real 6-digit OTP
 code entry through the public login UI (no test-inbox access — underlying
-mechanism covered by Phase A/D via cookie-injection).
+mechanism covered by Phase A/D via cookie-injection), direct authenticated
+testing of `cron/payment-reminders` pass 2 / `cron/review-requests` /
+`cron/waitlist-notify` (correct production `CRON_SECRET` not obtainable in
+this session — see EXHAUSTIVE_ISSUES.md).
 
 ## CURRENT ROLE / ROUTE / STATE / ACTION
 Transitioning to the broader Security/RLS sweep — not yet started
 interactively.
 
 ## LAST VERIFIED ITEM
-Phase E (Public/White-label) fully documented: `PRODUCT_COVERAGE_MATRIX.md`
-public-route rows + the 3 relevant action-file/API rows updated to PASS with
-evidence, `INTERACTION_COVERAGE.md` Phase E section populated with 15
-detailed interaction rows, `EXHAUSTIVE_ISSUES.md` has the 4 test-script
-issues found/fixed during this phase (3 TEST BUG, 1 BLOCKED_EXTERNAL) plus a
-summary paragraph. Notably, this phase's E4 was the mission's first
-real-Stripe-TEST-payment completion of the classic (non-AI-consultation)
-direct-booking flow — a genuinely different code path (webhook Branch C /
-the `deposits` table) from the P0/P1 findings and from
-`qa-full-studio-journey.mjs`'s own payment test (Branch A), now confirmed
-working correctly end-to-end.
+Automations/Cron phase fully documented: `PRODUCT_COVERAGE_MATRIX.md`'s 6
+cron route rows updated (4 PASS, 1 real FAIL/P1, 1 inconclusive/NOT_TESTED),
+`EXHAUSTIVE_ISSUES.md` has the new P1 finding (cron/sms-reminders silently
+broken since `20260802000000_appointment_reminder_email.sql` was never
+applied to production) written up in full with root cause, blast radius,
+and a one-line safe fix, `EXHAUSTIVE_QA_MASTER.md` BUG COUNT updated to
+P1: 2 found. Also fully documented: Phase E (Public/White-label) —
+`PRODUCT_COVERAGE_MATRIX.md` public-route rows + 3 action-file/API rows PASS
+with evidence, `INTERACTION_COVERAGE.md` Phase E section (15 rows),
+`EXHAUSTIVE_ISSUES.md` 4 test-script issues (3 TEST BUG, 1
+BLOCKED_EXTERNAL). Phase E's E4 was the mission's first real-Stripe-TEST-
+payment completion of the classic (non-AI-consultation) direct-booking flow
+— a genuinely different code path (webhook Branch C / the `deposits` table)
+from the P0/P1 Connect findings and from `qa-full-studio-journey.mjs`'s own
+payment test (Branch A) — confirmed working correctly end-to-end.
 
 ## NEXT EXACT ITEM
 Broader Security/RLS sweep beyond what Phases A/B/C/D/E already covered
@@ -125,11 +136,21 @@ remainder payment fails closed for every real studio (Stripe Connect not yet
 connected by any studio). BLOCKED_NEEDS_SIAM — real-money routing change,
 mission hard gate forbids fixing without Siam approval on the rollout
 decision. See EXHAUSTIVE_ISSUES.md line ~37.
-P1: 1 found / 0 fixed / 1 remaining — Owner "Generate Deposit Link"
-(`sendDepositRequest`) charges InkBook's platform Stripe account instead of
-the connected studio's account (empirically confirmed via a real TEST-mode
-PaymentIntent). BLOCKED_NEEDS_SIAM — same hard gate. See EXHAUSTIVE_ISSUES.md
+P1: 2 found / 0 fixed / 2 remaining —
+(1) Owner "Generate Deposit Link" (`sendDepositRequest`) charges InkBook's
+platform Stripe account instead of the connected studio's account
+(empirically confirmed via a real TEST-mode PaymentIntent). BLOCKED_NEEDS_SIAM
+— real-money routing change, mission hard gate. See EXHAUSTIVE_ISSUES.md
 line ~109.
+(2) `cron/sms-reminders` has sent ZERO appointment reminders (SMS AND email)
+in production since the email-reminder feature deployed — a missing
+migration (`20260802000000_appointment_reminder_email.sql` never applied)
+causes its main query to fail on every invocation, silently swallowed, cron
+returns HTTP 200 with `{sent48hr:0,sentDayOf:0}` every single run.
+BLOCKED_NEEDS_SIAM — production schema DDL requires Siam approval per this
+mission's hard gate, even though the fix itself (2 nullable boolean
+columns, already written, idempotent) is trivially safe. See
+EXHAUSTIVE_ISSUES.md, "Automations/Cron" section.
 P2: 1 found / 1 fixed / 0 remaining (`/owner/artists/new` dead static form,
 fixed to redirect, retested PASS)
 P3: 0 found / 0 fixed / 0 remaining

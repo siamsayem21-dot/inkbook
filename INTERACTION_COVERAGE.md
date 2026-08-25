@@ -126,4 +126,16 @@ all documented in EXHAUSTIVE_ISSUES.md).
 (populated during those phases)
 
 ## Phase O-R — Blacklist, Waitlist, Automations, Reviews
-(populated during those phases)
+Blacklist/Waitlist/Reviews already covered in Phase B part 2 (see above).
+Automations/Cron: see `scripts/qa-phase-cron-automations.mjs`.
+- SYSTEM | GET /api/cron/{all 6} | — | unauthenticated request | fetch | HTTP 401 | HTTP status | PASS (6/6)
+- SYSTEM | GET /api/cron/{all 6} | — | wrong-bearer-token request | fetch | HTTP 401 | HTTP status | PASS (6/6)
+- SYSTEM | vercel.json + `vercel cron ls` | — | registration check | read | all 6 routes registered with a schedule | file+CLI | PASS
+- SYSTEM | cancel-expired | real production data | organic-evidence query | DB read | 12 real cancelled+unpaid bookings confirm live execution | DB | PASS
+- SYSTEM | no-show | real production data | organic-evidence query | DB read | 22 real no_show bookings + 4 real `booking.no_show` audit_log entries | DB | PASS
+- SYSTEM | payment-reminders pass 1 | real production data | organic-evidence query | DB read | 3 real `deposit_reminder_sent=true` rows | DB | PASS
+- SYSTEM | payment-reminders pass 2 | real production data | organic-evidence query | DB read | 0 real rows — inconclusive, not confirmed broken | DB | NOT_TESTED
+- SYSTEM | sms-reminders | real production data | organic-evidence query | DB read | `column bookings.email_48hr_sent does not exist` — **REAL BUG, see EXHAUSTIVE_ISSUES.md P1** | DB | **FAIL**
+- SYSTEM | waitlist-notify | real production data | organic-evidence query | DB read | 0 real rows — inconclusive | DB | NOT_TESTED
+- SYSTEM | review-requests | real production data | organic-evidence query | DB read | 0 real rows — inconclusive | DB | NOT_TESTED
+- NOTE: direct authenticated invocation with seeded scenarios (originally planned) was not possible — the correct production `CRON_SECRET` could not be obtained in this session (absent from `.env.local`; `vercel env pull` returned empty values for every secret this session, an access/tooling gap, not a security finding — see EXHAUSTIVE_ISSUES.md).
