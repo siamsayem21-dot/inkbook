@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/auth/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { DollarSign, CheckCircle2, Clock3, CalendarRange } from "lucide-react";
 import { getBookingTotalCents, getOutstandingBalanceCents } from "@/lib/booking-balance";
+import MotionCard from "@/components/ui/MotionCard";
 
 // Same qualifying-status contract as Artist Dashboard's "This Month's
 // Earnings" card (app/(artist)/artist/dashboard/page.tsx) — the two must
@@ -174,14 +175,14 @@ export default async function EarningsPage({ searchParams }: Props) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {statCards.map((s) => (
-            <div key={s.label} className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5">
+            <MotionCard key={s.label} className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5">
               <div className="w-9 h-9 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center mb-3">
                 <s.icon size={17} />
               </div>
               <p className="text-2xl font-bold text-zinc-900">{s.value}</p>
               <p className="text-sm text-zinc-500 mt-0.5">{s.label}</p>
               <p className="text-xs text-zinc-400 mt-1">{s.sub}</p>
-            </div>
+            </MotionCard>
           ))}
         </div>
 
