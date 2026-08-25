@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { isValidIanaTimezone, sortedIanaTimezones } from "@/lib/timezone";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -88,30 +89,30 @@ export default function RegisterPage() {
     router.push("/owner/dashboard");
   }
 
-  const inputClass = "w-full bg-zinc-900 border border-white/[0.1] px-4 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-gold/50 transition-colors";
+  const inputClass = "w-full rounded-lg border border-zinc-200 px-4 py-2.5 text-sm bg-white text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition-colors";
 
   return (
-    <div className="border border-white/[0.08] bg-zinc-900/50 p-8">
+    <div className="bg-white rounded-2xl border border-zinc-200 shadow-elevation-3 p-8">
       {/* Logo */}
       <div className="flex items-center gap-2.5 mb-8">
-        <div className="w-7 h-7 border border-gold/40 flex items-center justify-center">
-          <span className="font-cinzel text-gold text-[10px] font-bold">IB</span>
+        <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
+          <span className="text-white text-xs font-bold">IB</span>
         </div>
-        <span className="font-cinzel text-sm tracking-wider text-white">InkBook</span>
+        <span className="font-serif text-lg tracking-wide text-zinc-900">InkBook</span>
       </div>
 
-      <h1 className="font-cinzel text-2xl font-bold tracking-wide mb-1">Create Your Studio</h1>
+      <h1 className="text-2xl font-bold tracking-tight mb-1 text-zinc-900">Create Your Studio</h1>
       <p className="text-zinc-500 text-sm mb-8">Start your free 14-day trial. No credit card required.</p>
 
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         {error && (
-          <div className="border border-red-800/60 text-red-400 text-sm px-4 py-3 bg-red-950/40">
+          <div className="rounded-xl border border-red-200 text-red-700 text-sm px-4 py-3 bg-red-50">
             {error}
           </div>
         )}
 
         <div>
-          <label htmlFor="register-studio-name" className="label-xs text-zinc-500 block mb-2">Studio Name</label>
+          <label htmlFor="register-studio-name" className="text-xs font-medium text-zinc-500 block mb-2">Studio Name</label>
           <input
             id="register-studio-name"
             type="text"
@@ -122,7 +123,7 @@ export default function RegisterPage() {
           />
         </div>
         <div>
-          <label htmlFor="register-owner-name" className="label-xs text-zinc-500 block mb-2">Your Name</label>
+          <label htmlFor="register-owner-name" className="text-xs font-medium text-zinc-500 block mb-2">Your Name</label>
           <input
             id="register-owner-name"
             type="text"
@@ -133,7 +134,7 @@ export default function RegisterPage() {
           />
         </div>
         <div>
-          <label htmlFor="register-email" className="label-xs text-zinc-500 block mb-2">Email</label>
+          <label htmlFor="register-email" className="text-xs font-medium text-zinc-500 block mb-2">Email</label>
           <input
             id="register-email"
             type="email"
@@ -143,19 +144,17 @@ export default function RegisterPage() {
             className={inputClass}
           />
         </div>
+
+        <PasswordInput
+          id="register-password"
+          label="Password"
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
         <div>
-          <label htmlFor="register-password" className="label-xs text-zinc-500 block mb-2">Password</label>
-          <input
-            id="register-password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label htmlFor="register-subdomain" className="label-xs text-zinc-500 block mb-2">Subdomain</label>
+          <label htmlFor="register-subdomain" className="text-xs font-medium text-zinc-500 block mb-2">Subdomain</label>
           <div className="flex items-center">
             <input
               id="register-subdomain"
@@ -163,15 +162,15 @@ export default function RegisterPage() {
               placeholder="inkandironstudio"
               value={subdomain}
               onChange={(e) => setSubdomain(e.target.value.toLowerCase())}
-              className="flex-1 bg-zinc-900 border border-white/[0.1] border-r-0 px-4 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-gold/50 transition-colors"
+              className="flex-1 rounded-l-lg border border-zinc-200 border-r-0 px-4 py-2.5 text-sm bg-white text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition-colors"
             />
-            <span className="bg-zinc-800 border border-white/[0.1] px-3 py-2.5 text-xs text-zinc-500 shrink-0">
+            <span className="rounded-r-lg bg-zinc-50 border border-zinc-200 px-3 py-2.5 text-xs text-zinc-500 shrink-0">
               .inkbook.app
             </span>
           </div>
         </div>
         <div>
-          <label htmlFor="register-timezone" className="label-xs text-zinc-500 block mb-2">Timezone</label>
+          <label htmlFor="register-timezone" className="text-xs font-medium text-zinc-500 block mb-2">Timezone</label>
           <select
             id="register-timezone"
             value={timezone}
@@ -182,7 +181,7 @@ export default function RegisterPage() {
               <option key={tz} value={tz}>{tz}</option>
             ))}
           </select>
-          <p className="text-zinc-600 text-xs mt-1.5">
+          <p className="text-zinc-400 text-xs mt-1.5">
             Detected automatically — used to time your appointment reminders correctly. Change it if this isn&apos;t right.
           </p>
         </div>
@@ -190,16 +189,16 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-gold text-black label-sm py-3 hover:bg-gold-light disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-2"
+          className="w-full rounded-lg bg-violet-600 text-white text-sm font-semibold py-3 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-2"
         >
           {loading ? "Creating Account…" : "Create Account"}
         </button>
       </form>
 
-      <div className="gold-divider mt-6" />
-      <p className="text-zinc-600 text-sm text-center mt-6">
+      <div className="h-px bg-zinc-100 mt-6" />
+      <p className="text-zinc-500 text-sm text-center mt-6">
         Already have an account?{" "}
-        <Link href="/login" className="text-gold hover:text-gold-light transition-colors underline underline-offset-4">
+        <Link href="/login" className="text-violet-600 hover:text-violet-700 transition-colors underline underline-offset-4">
           Sign In
         </Link>
       </p>

@@ -183,7 +183,7 @@ export default function CustomRequestForm({
         >
           <span className="text-2xl" style={{ color: primaryColor }}>✓</span>
         </div>
-        <h2 className="font-cinzel text-2xl font-bold mb-3">Request Submitted!</h2>
+        <h2 className="font-serif text-2xl font-bold mb-3">Request Submitted!</h2>
         <p className="text-zinc-400 text-sm leading-relaxed max-w-sm mx-auto mb-2">
           <strong className="text-white">{selectedArtistName ?? "The studio"}</strong> will review
           your request and respond within 48 hours.
