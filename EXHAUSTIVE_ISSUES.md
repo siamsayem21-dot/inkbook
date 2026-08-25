@@ -561,3 +561,22 @@ resolved to the real component working correctly):
    closing CTAs**, with real measured translates
    (`matrix(1, 0, 0, 1, 3.39067, 1.82637)` and
    `matrix(1, 0, 0, 1, 3.39356, 2.20186)`).
+
+## Error/resilience testing — 23 checks, 0 findings
+
+Covered via `scripts/qa-phase-resilience.mjs` against production:
+malformed (non-UUID, e.g. `not-a-real-id-at-all-!!`) and well-formed-but-
+nonexistent IDs across 21 dynamic routes spanning Owner Portal (7: artists,
+bookings, consultations, messages, requests), Artist Portal (7:
+agreements, bookings, clients, consultations, messages, requests), and
+Public (7: artist profile, flash booking, custom-request status, studio
+slug, deposit page) — every single one either redirects gracefully, 404s
+correctly, or renders a proper empty state; **zero raw Next.js error/crash
+screens, zero 500s** anywhere in the sweep. Also: a real rapid double-click
+on the Custom Request form's submit button produces exactly one
+`custom_requests` row, not two (the submit button correctly disables
+itself after the first click, and/or the server action is idempotent
+enough to not matter which); and a genuinely aborted `POST /api/bookings`
+network request (via Playwright route interception, not a mock) surfaces a
+clean inline "Network error" message and leaves the user safely on the
+form — no infinite spinner, no crash, no silent data loss. 0 real findings.
