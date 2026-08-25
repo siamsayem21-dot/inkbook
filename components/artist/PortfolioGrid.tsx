@@ -10,7 +10,7 @@ export default function PortfolioGrid({ images = [], editable = false }: Props) 
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="aspect-square bg-zinc-800 border border-zinc-700 rounded-xl flex items-center justify-center text-zinc-600 text-xs"
+            className="aspect-square bg-white border border-dashed border-zinc-300 rounded-xl flex items-center justify-center text-zinc-400 text-xs"
           >
             {editable ? "+ Add" : ""}
           </div>
@@ -22,7 +22,7 @@ export default function PortfolioGrid({ images = [], editable = false }: Props) 
   return (
     <div className="grid grid-cols-3 gap-3">
       {images.map((img) => (
-        <div key={img.id} className="aspect-square bg-zinc-800 rounded-xl overflow-hidden relative group">
+        <div key={img.id} className="aspect-square bg-white border border-zinc-200 shadow-sm rounded-xl overflow-hidden relative group">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={img.url} alt={img.style} className="w-full h-full object-cover" />
           {editable && (

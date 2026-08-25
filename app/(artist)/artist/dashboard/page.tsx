@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUser } from "@/lib/auth/config";
 import { DollarSign, CalendarCheck, CalendarClock } from "lucide-react";
 import CopyLinkButton from "@/components/artist/CopyLinkButton";
+import MotionCard from "@/components/ui/MotionCard";
 
 function NoArtistProfile() {
   return (
@@ -185,32 +186,32 @@ export default async function ArtistDashboardPage() {
 
         {/* Stats row */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5">
+          <MotionCard className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5">
             <div className="w-9 h-9 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center mb-3">
               <DollarSign size={17} />
             </div>
             <p className="text-2xl font-bold text-zinc-900">{fmtMoney(monthEarnings)}</p>
             <p className="text-sm text-zinc-500 mt-0.5">This Month&apos;s Earnings</p>
             <p className="text-xs text-zinc-400 mt-1">confirmed &amp; completed deposits</p>
-          </div>
+          </MotionCard>
 
-          <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5">
+          <MotionCard className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5">
             <div className="w-9 h-9 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center mb-3">
               <CalendarCheck size={17} />
             </div>
             <p className="text-2xl font-bold text-zinc-900">{todayBookings.length}</p>
             <p className="text-sm text-zinc-500 mt-0.5">Today&apos;s Bookings</p>
             <p className="text-xs text-zinc-400 mt-1">appointments today</p>
-          </div>
+          </MotionCard>
 
-          <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5">
+          <MotionCard className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5">
             <div className="w-9 h-9 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center mb-3">
               <CalendarClock size={17} />
             </div>
             <p className="text-2xl font-bold text-zinc-900">{upcomingBookings.length}</p>
             <p className="text-sm text-zinc-500 mt-0.5">Next 7 Days</p>
             <p className="text-xs text-zinc-400 mt-1">upcoming appointments</p>
-          </div>
+          </MotionCard>
         </div>
 
         {/* Booking link */}
