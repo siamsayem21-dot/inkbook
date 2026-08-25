@@ -18,12 +18,12 @@ export default function ProjectTimeline({ status, quoteAcceptedAt, depositPaidAt
               style={
                 done
                   ? { backgroundColor: brandColor, color: "#000" }
-                  : { border: "1px solid rgba(255,255,255,0.15)" }
+                  : { border: "1px solid #e4e4e7" }
               }
             >
               {done ? "✓" : ""}
             </span>
-            <span className={`text-sm ${done ? "text-zinc-200" : "text-zinc-600"}`}>{label}</span>
+            <span className={`text-sm ${done ? "text-zinc-900 font-medium" : "text-zinc-400"}`}>{label}</span>
           </div>
         );
       })}

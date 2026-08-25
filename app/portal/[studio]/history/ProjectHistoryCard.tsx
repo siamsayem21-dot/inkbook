@@ -23,7 +23,7 @@ function TranscriptBubble({ role, content, imageUrl }: { role: "user" | "assista
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
         className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-xs leading-relaxed ${
-          isUser ? "bg-white/[0.08] text-zinc-100 rounded-br-sm" : "bg-zinc-800/60 text-zinc-300 rounded-bl-sm"
+          isUser ? "bg-zinc-900 text-white rounded-br-sm" : "bg-zinc-100 text-zinc-700 rounded-bl-sm"
         }`}
       >
         {imageUrl && (
@@ -45,30 +45,30 @@ export default function ProjectHistoryCard({ studioSlug, project, brandColor, te
   const lastActivity = project.timeline[project.timeline.length - 1];
 
   return (
-    <div className="border border-white/[0.08] bg-zinc-900/40">
+    <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
       <button
         type="button"
         onClick={() => setExpanded((e) => !e)}
-        className="w-full text-left p-5 flex items-start justify-between gap-4 flex-wrap hover:bg-white/[0.02] transition-colors"
+        className="w-full text-left p-5 flex items-start justify-between gap-4 flex-wrap hover:bg-zinc-50 transition-colors"
       >
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-zinc-100 truncate">{project.title}</p>
+          <p className="text-sm font-semibold text-zinc-900 truncate">{project.title}</p>
           <div className="flex items-center gap-2 flex-wrap mt-2.5">
             <span className={`text-[10px] px-2 py-0.5 border rounded-full ${statusMeta.badge}`}>{statusMeta.label}</span>
             {bookingMeta && <span className={`text-[10px] px-2 py-0.5 border rounded-full ${bookingMeta.badge}`}>{bookingMeta.label}</span>}
           </div>
           {lastActivity && (
-            <p className="text-[10px] text-zinc-600 mt-2.5">
+            <p className="text-[10px] text-zinc-400 mt-2.5">
               Last activity: {fmtDate(lastActivity.date)}
               {lastActivity.approximate ? " (approx.)" : ""}
             </p>
           )}
         </div>
-        <span className="text-zinc-500 text-xs shrink-0">{expanded ? "Hide ▲" : "Details ▼"}</span>
+        <span className="text-zinc-400 text-xs shrink-0">{expanded ? "Hide ▲" : "Details ▼"}</span>
       </button>
 
       {expanded && (
-        <div className="border-t border-white/[0.06] p-5 space-y-5">
+        <div className="border-t border-zinc-100 p-5 space-y-5">
           <div className="space-y-2.5">
             {project.timeline.map((entry) => (
               <div key={entry.key} className="flex items-center gap-3">
@@ -78,9 +78,9 @@ export default function ProjectHistoryCard({ studioSlug, project, brandColor, te
                 >
                   ✓
                 </span>
-                <span className="text-sm text-zinc-200">
+                <span className="text-sm text-zinc-800">
                   {entry.label}
-                  <span className="text-zinc-600 ml-2 text-xs">
+                  <span className="text-zinc-400 ml-2 text-xs">
                     {entry.approximate ? `around ${fmtDate(entry.date)}` : fmtDate(entry.date)}
                   </span>
                 </span>
@@ -89,27 +89,27 @@ export default function ProjectHistoryCard({ studioSlug, project, brandColor, te
           </div>
 
           <div className="flex flex-wrap gap-3 text-[10px] uppercase tracking-widest font-semibold">
-            <Link href={`/portal/${studioSlug}/projects/${project.id}`} className="text-zinc-300 hover:text-white transition-colors">
+            <Link href={`/portal/${studioSlug}/projects/${project.id}`} className="text-zinc-500 hover:text-zinc-900 transition-colors">
               View Project →
             </Link>
             {project.booking && (
-              <Link href={`/portal/${studioSlug}/bookings/${project.booking.id}`} className="text-zinc-300 hover:text-white transition-colors">
+              <Link href={`/portal/${studioSlug}/bookings/${project.booking.id}`} className="text-zinc-500 hover:text-zinc-900 transition-colors">
                 View Booking →
               </Link>
             )}
             {project.thread && (
-              <Link href={`/portal/${studioSlug}/messages/${project.thread.id}`} className="text-zinc-300 hover:text-white transition-colors">
+              <Link href={`/portal/${studioSlug}/messages/${project.thread.id}`} className="text-zinc-500 hover:text-zinc-900 transition-colors">
                 View Conversation →
               </Link>
             )}
           </div>
 
           {project.transcript.length > 0 && (
-            <div className="pt-2 border-t border-white/[0.06]">
+            <div className="pt-2 border-t border-zinc-100">
               <button
                 type="button"
                 onClick={() => setShowTranscript((s) => !s)}
-                className="text-[10px] uppercase tracking-widest text-zinc-500 hover:text-zinc-300 transition-colors"
+                className="text-[10px] uppercase tracking-widest text-zinc-500 hover:text-zinc-900 transition-colors"
               >
                 {showTranscript ? "Hide AI Consultation Transcript ▲" : "Show AI Consultation Transcript ▼"}
               </button>

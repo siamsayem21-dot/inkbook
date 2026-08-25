@@ -44,11 +44,11 @@ export default async function ClientThreadPage({ params }: Props) {
     <div className="max-w-2xl">
       <Link
         href={`/portal/${params.studio}/messages`}
-        className="text-[10px] uppercase tracking-widest text-zinc-500 hover:text-zinc-300 transition-colors"
+        className="text-[10px] uppercase tracking-widest text-zinc-500 hover:text-zinc-900 transition-colors"
       >
         ← All Messages
       </Link>
-      <h1 className="font-serif text-2xl md:text-3xl tracking-wide mt-4 mb-6">{studio.name}</h1>
+      <h1 className="font-serif text-2xl md:text-3xl tracking-wide mt-4 mb-6 text-zinc-900">{studio.name}</h1>
 
       <ThreadView
         threadId={thread.id}

@@ -74,17 +74,17 @@ export default async function PortalConsentPage({ params }: Props) {
     <div className="max-w-xl mx-auto">
       <Link
         href={projectPath}
-        className="text-[10px] uppercase tracking-widest text-zinc-500 hover:text-zinc-300 transition-colors"
+        className="text-[10px] uppercase tracking-widest text-zinc-500 hover:text-zinc-900 transition-colors"
       >
         ← Back to Project
       </Link>
 
       <div className="mt-4 mb-8">
-        <h1 className="font-serif text-2xl md:text-3xl tracking-wide mb-1">Sign Consent Form</h1>
+        <h1 className="font-serif text-2xl md:text-3xl tracking-wide mb-1 text-zinc-900">Sign Consent Form</h1>
         <p className="text-zinc-500 text-sm">Required before your session can be confirmed.</p>
       </div>
 
-      <div className="bg-white rounded-2xl p-6">
+      <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6">
         <ConsentForm bookingId={booking.id} studioSlug={params.studio} artistId={consult.artist_id} redirectTo={projectPath} />
       </div>
     </div>

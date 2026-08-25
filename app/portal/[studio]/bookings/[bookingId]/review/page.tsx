@@ -79,17 +79,17 @@ export default async function LeaveReviewPage({ params }: Props) {
     <div className="max-w-xl mx-auto">
       <Link
         href={bookingPath}
-        className="text-[10px] uppercase tracking-widest text-zinc-500 hover:text-zinc-300 transition-colors"
+        className="text-[10px] uppercase tracking-widest text-zinc-500 hover:text-zinc-900 transition-colors"
       >
         ← Back to Booking
       </Link>
 
       <div className="mt-4 mb-8">
-        <h1 className="font-serif text-2xl md:text-3xl tracking-wide mb-1">Leave a Review</h1>
+        <h1 className="font-serif text-2xl md:text-3xl tracking-wide mb-1 text-zinc-900">Leave a Review</h1>
         <p className="text-zinc-500 text-sm">Tell us about your experience — it helps other clients find great artists.</p>
       </div>
 
-      <div className="bg-white rounded-2xl p-6">
+      <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6">
         <ReviewForm bookingId={params.bookingId} redirectTo={bookingPath} />
       </div>
     </div>

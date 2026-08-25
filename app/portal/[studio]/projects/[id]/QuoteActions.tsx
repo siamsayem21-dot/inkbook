@@ -77,17 +77,17 @@ export default function QuoteActions({
   }
 
   return (
-    <div className="mt-5 pt-5 border-t border-white/[0.06]">
+    <div className="mt-5 pt-5 border-t border-zinc-100">
       {bookingConfirmed ? (
-        <p className="text-xs font-semibold uppercase tracking-widest text-emerald-400 mb-3">✓ Booking Confirmed</p>
+        <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600 mb-3">✓ Booking Confirmed</p>
       ) : depositPaid ? (
-        <p className="text-xs font-semibold uppercase tracking-widest text-emerald-400 mb-3">
+        <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600 mb-3">
           ✓ Deposit Paid{" "}
-          <span className="text-zinc-600 normal-case font-normal">on {fmtDateTime(initialDepositPaidAt!)}</span>
+          <span className="text-zinc-400 normal-case font-normal">on {fmtDateTime(initialDepositPaidAt!)}</span>
         </p>
       ) : acceptedAt ? (
-        <p className="text-xs font-semibold uppercase tracking-widest text-emerald-400 mb-3">
-          ✓ Quote Accepted <span className="text-zinc-600 normal-case font-normal">on {fmtDateTime(acceptedAt)}</span>
+        <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600 mb-3">
+          ✓ Quote Accepted <span className="text-zinc-400 normal-case font-normal">on {fmtDateTime(acceptedAt)}</span>
         </p>
       ) : null}
 
@@ -97,14 +97,14 @@ export default function QuoteActions({
             hasConsentForm ? (
               <span
                 aria-disabled="true"
-                className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 border border-white/[0.15] text-zinc-500 cursor-default"
+                className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 rounded-lg border border-zinc-200 text-zinc-400 cursor-default"
               >
                 Waiting for Booking Confirmation
               </span>
             ) : (
               <Link
                 href={`/portal/${studioSlug}/projects/${projectId}/consent`}
-                className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 transition-opacity hover:opacity-90"
+                className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 rounded-lg transition-opacity hover:opacity-90"
                 style={{ backgroundColor: brandColor, color: textOnBrand }}
               >
                 Sign Consent Form
@@ -116,7 +116,7 @@ export default function QuoteActions({
             type="button"
             onClick={handleContinue}
             disabled={isPending}
-            className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 rounded-lg transition-opacity hover:opacity-90 disabled:opacity-50"
             style={{ backgroundColor: brandColor, color: textOnBrand }}
           >
             {isPending ? "Working…" : "Continue to Deposit"}
@@ -126,7 +126,7 @@ export default function QuoteActions({
             type="button"
             onClick={handleAccept}
             disabled={isPending}
-            className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 rounded-lg transition-opacity hover:opacity-90 disabled:opacity-50"
             style={{ backgroundColor: brandColor, color: textOnBrand }}
           >
             {isPending ? "Working…" : "Accept Quote"}
@@ -137,7 +137,7 @@ export default function QuoteActions({
           type="button"
           onClick={handleAsk}
           disabled={isPending}
-          className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 border border-white/[0.15] text-zinc-300 hover:border-white/30 hover:text-white transition-colors disabled:opacity-50"
+          className="text-[10px] uppercase tracking-widest font-semibold px-5 py-2.5 rounded-lg border border-zinc-300 text-zinc-600 hover:border-zinc-400 hover:text-zinc-900 hover:bg-zinc-50 transition-colors disabled:opacity-50"
         >
           Ask a Question
         </button>

@@ -7,6 +7,7 @@ import { ensureClientAccount } from "@/lib/auth/config";
 import { getBrand } from "@/lib/brand";
 import { getLatestSubmittedConsultation } from "@/lib/ai-consultation/session";
 import ProjectTimeline from "../_components/ProjectTimeline";
+import MotionCard from "@/components/ui/MotionCard";
 
 interface Props {
   params: { studio: string };
@@ -37,24 +38,26 @@ export default async function ClientDashboardPage({ params }: Props) {
 
   return (
     <div className="max-w-3xl">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-2">Client Portal</p>
-      <h1 className="font-serif text-2xl md:text-3xl tracking-wide mb-3">Welcome back</h1>
-      <p className="text-zinc-400 text-sm leading-relaxed">
-        You&apos;re signed in as <span className="text-zinc-200 font-medium">{account?.email}</span> to{" "}
+      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Client Portal</p>
+      <h1 className="font-serif text-2xl md:text-3xl tracking-wide mb-3 text-zinc-900">Welcome back</h1>
+      <p className="text-zinc-500 text-sm leading-relaxed">
+        You&apos;re signed in as <span className="text-zinc-900 font-medium">{account?.email}</span> to{" "}
         {studio.name}&apos;s client portal.
       </p>
 
       {activeProject && (
-        <div className="mt-8 border border-white/[0.08] bg-zinc-900/40 p-5 max-w-md">
-          <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-3">Your Tattoo Project</p>
-          <ProjectTimeline
-            status={activeProject.status}
-            quoteAcceptedAt={activeProject.quoteAcceptedAt}
-            depositPaidAt={activeProject.depositPaidAt}
-            bookingStatus={activeProject.bookingStatus}
-            brandColor={brand.full}
-          />
-        </div>
+        <MotionCard className="mt-8 max-w-md" glowColor={`${brand.full}33`}>
+          <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5">
+            <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-3">Your Tattoo Project</p>
+            <ProjectTimeline
+              status={activeProject.status}
+              quoteAcceptedAt={activeProject.quoteAcceptedAt}
+              depositPaidAt={activeProject.depositPaidAt}
+              bookingStatus={activeProject.bookingStatus}
+              brandColor={brand.full}
+            />
+          </div>
+        </MotionCard>
       )}
 
       <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -62,10 +65,10 @@ export default async function ClientDashboardPage({ params }: Props) {
           <Link
             key={section.href}
             href={`/portal/${params.studio}/${section.href}`}
-            className="border border-white/[0.08] bg-zinc-900/40 hover:border-white/20 transition-colors p-5 group"
+            className="bg-white rounded-2xl border border-zinc-200 shadow-sm hover:border-zinc-300 hover:shadow-elevation-2 transition-all p-5 group"
           >
             <p
-              className="text-sm font-semibold mb-1.5 group-hover:opacity-90"
+              className="text-sm font-semibold mb-1.5 group-hover:opacity-80"
               style={{ color: brand.full }}
             >
               {section.label}
