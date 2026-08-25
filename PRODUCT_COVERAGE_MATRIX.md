@@ -10,10 +10,19 @@ required), NOT_TESTED.
 ## AUTH (3 pages + 1 invite-accept flow)
 | Route | Status | Evidence |
 |---|---|---|
-| `/login` | NOT_TESTED | |
-| `/register` | NOT_TESTED | |
-| `/reset-password` | NOT_TESTED | |
-| `/artist/accept/[token]` | NOT_TESTED | |
+| `/login` | PASS | `scripts/qa-phase-a-auth.mjs` A1: invalid credentials → error shown, stays on page. Password toggle already verified this session (design-pass QA). |
+| `/register` | PASS | A2: short-password client-side validation correctly blocks submit with message, stays on page. |
+| `/reset-password` | PASS | A3: no-session visit correctly redirects to `/login?error=link_expired`. |
+| `/artist/accept/[token]` | NOT_TESTED | Invite-flow, needs a real invite token — scheduled for Owner Phase B (artist invite creation) |
+| `/dashboard` (redirect hub) | PASS | A4 confirms logged-out→`/login`. Owner/Artist branch redirects already proven correct in the design-pass session (code read, `/dashboard/page.tsx` role-branches to `/owner/dashboard`/`/artist/dashboard`/`/register`). |
+
+**Role-boundary security (Phase A5/A6):** Owner (studio, no artist row) visiting
+any `/artist/**` route → server-redirected to `/artist/dashboard` (verified via
+source: every artist sub-page does its own `.eq("user_id", user.id)` artist
+lookup + `redirect("/artist/dashboard")` if none — not just a layout-level
+check). Artist (artist row, no studio) visiting any `/owner/**` route →
+redirected to `/register`. Both confirmed via real login + real navigation,
+not code inspection alone. **0 findings.**
 
 ## OWNER PORTAL (20 top-level + 3 detail routes)
 | Route | Status | Evidence |
