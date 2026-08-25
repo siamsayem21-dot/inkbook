@@ -44,10 +44,10 @@ function Bubble({
     <div className={`flex ${mine ? "justify-end" : "justify-start"}`}>
       <div className="max-w-[85%] sm:max-w-[75%]">
         {!mine && label && (
-          <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1 px-1">{label}</p>
+          <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-1 px-1">{label}</p>
         )}
         <div
-          className={`rounded-2xl px-4 py-2.5 ${mine ? "rounded-br-sm" : "rounded-bl-sm bg-zinc-800/60 text-zinc-100"}`}
+          className={`rounded-2xl px-4 py-2.5 ${mine ? "rounded-br-sm" : "rounded-bl-sm bg-zinc-100 text-zinc-800"}`}
           style={mine ? { backgroundColor: accentColor, color: textOnAccent } : undefined}
         >
           {message.image_url && (
@@ -149,10 +149,10 @@ export default function ThreadView({
   }
 
   return (
-    <div className="border border-white/[0.08] bg-zinc-900/30 flex flex-col h-[75vh] md:h-[70vh]">
+    <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm flex flex-col h-[75vh] md:h-[70vh] overflow-hidden">
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 && (
-          <p className="text-zinc-600 text-sm text-center py-8">No messages yet — say hello.</p>
+          <p className="text-zinc-400 text-sm text-center py-8">No messages yet — say hello.</p>
         )}
         {messages.map((m) => (
           <Bubble

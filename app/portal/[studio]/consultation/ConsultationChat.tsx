@@ -23,7 +23,7 @@ interface Props {
 
 function TypingIndicator({ brandColor }: { brandColor: string }) {
   return (
-    <div data-testid="typing-indicator" className="flex items-center gap-1.5 px-4 py-3 bg-zinc-800/60 rounded-2xl rounded-bl-sm w-fit">
+    <div data-testid="typing-indicator" className="flex items-center gap-1.5 px-4 py-3 bg-zinc-100 rounded-2xl rounded-bl-sm w-fit">
       {[0, 1, 2].map((i) => (
         <span
           key={i}
@@ -40,7 +40,7 @@ function Bubble({ message, brandColor, textOnBrand }: { message: ChatMessage; br
   return (
     <div data-testid="chat-message" data-role={message.role} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-2.5 ${isUser ? "rounded-br-sm" : "rounded-bl-sm bg-zinc-800/60 text-zinc-100"}`}
+        className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-2.5 ${isUser ? "rounded-br-sm" : "rounded-bl-sm bg-zinc-100 text-zinc-800"}`}
         style={isUser ? { backgroundColor: brandColor, color: textOnBrand } : undefined}
       >
         {message.image_url && (
@@ -154,8 +154,8 @@ export default function ConsultationChat({ studioSlug, studioName, chatId, initi
         >
           ✓
         </div>
-        <h2 className="font-serif text-2xl md:text-3xl tracking-wide mb-2">Consultation Submitted!</h2>
-        <p className="text-zinc-400 text-sm leading-relaxed mb-8 max-w-sm mx-auto">
+        <h2 className="font-serif text-2xl md:text-3xl tracking-wide mb-2 text-zinc-900">Consultation Submitted!</h2>
+        <p className="text-zinc-500 text-sm leading-relaxed mb-8 max-w-sm mx-auto">
           Thank you. Your consultation has been sent to {studioName} and they&apos;ll review it shortly.
         </p>
         <div className="max-w-md mx-auto text-left mb-8">
@@ -170,20 +170,20 @@ export default function ConsultationChat({ studioSlug, studioName, chatId, initi
         <button
           type="button"
           onClick={() => router.push(`/portal/${studioSlug}/dashboard`)}
-          className="text-sm font-bold uppercase tracking-widest px-8 py-3.5 transition-opacity hover:opacity-90"
+          className="text-sm font-bold uppercase tracking-widest px-8 py-3.5 rounded-lg transition-opacity hover:opacity-90"
           style={{ backgroundColor: brandColor, color: textOnBrand }}
         >
           Back to Dashboard →
         </button>
         {consultationId && (
-          <p className="text-zinc-700 text-[10px] font-mono mt-6">Reference: {consultationId}</p>
+          <p className="text-zinc-400 text-[10px] font-mono mt-6">Reference: {consultationId}</p>
         )}
       </div>
     );
   }
 
   return (
-    <div className="border border-white/[0.08] bg-zinc-900/30 flex flex-col h-[75vh] md:h-[70vh]">
+    <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm flex flex-col h-[75vh] md:h-[70vh] overflow-hidden">
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((m) => (
           <Bubble key={m.id} message={m} brandColor={brandColor} textOnBrand={textOnBrand} />
@@ -191,9 +191,9 @@ export default function ConsultationChat({ studioSlug, studioName, chatId, initi
         {sending && <TypingIndicator brandColor={brandColor} />}
       </div>
 
-      <div className="border-t border-white/[0.08] p-3">
+      <div className="border-t border-zinc-100 p-3">
         {error && (
-          <div className="border border-red-800/60 text-red-400 text-xs px-3 py-2 bg-red-950/40 mb-2">
+          <div className="border border-red-200 text-red-700 text-xs px-3 py-2 bg-red-50 rounded-lg mb-2">
             {error}
           </div>
         )}
@@ -201,7 +201,7 @@ export default function ConsultationChat({ studioSlug, studioName, chatId, initi
         {imagePreview && (
           <div className="mb-2 relative w-fit">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={imagePreview} alt="Selected" className="h-16 w-16 object-cover rounded-lg border border-white/[0.1]" />
+            <img src={imagePreview} alt="Selected" className="h-16 w-16 object-cover rounded-lg border border-zinc-200" />
             <button
               type="button"
               onClick={removeImage}
@@ -219,7 +219,7 @@ export default function ConsultationChat({ studioSlug, studioName, chatId, initi
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={sending}
-            className="shrink-0 w-10 h-10 flex items-center justify-center border border-white/[0.1] text-zinc-400 hover:text-white hover:border-white/20 transition-colors disabled:opacity-40"
+            className="shrink-0 w-10 h-10 flex items-center justify-center rounded-lg border border-zinc-200 text-zinc-400 hover:text-zinc-700 hover:border-zinc-300 transition-colors disabled:opacity-40"
             aria-label="Attach reference image"
           >
             📎
@@ -236,12 +236,12 @@ export default function ConsultationChat({ studioSlug, studioName, chatId, initi
             onKeyDown={handleKeyDown}
             disabled={sending}
             placeholder="Type your message…"
-            className="flex-1 resize-none bg-zinc-900 border border-white/[0.1] px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-[var(--brand-primary)] transition-colors disabled:opacity-50 max-h-[120px]"
+            className="flex-1 resize-none bg-white border border-zinc-200 rounded-lg px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-[var(--brand-primary)] transition-colors disabled:opacity-50 max-h-[120px]"
           />
           <button
             type="submit"
             disabled={sending || (!text.trim() && !imageFile)}
-            className="shrink-0 text-xs font-bold uppercase tracking-widest px-4 h-10 transition-opacity hover:opacity-90 disabled:opacity-40"
+            className="shrink-0 text-xs font-bold uppercase tracking-widest px-4 h-10 rounded-lg transition-opacity hover:opacity-90 disabled:opacity-40"
             style={{ backgroundColor: brandColor, color: textOnBrand }}
           >
             Send

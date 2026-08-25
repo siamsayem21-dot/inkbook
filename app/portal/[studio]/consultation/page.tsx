@@ -33,15 +33,15 @@ export default async function ConsultationPage({ params }: Props) {
 
   return (
     <div className="max-w-2xl">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-2">Client Portal</p>
-      <h1 className="font-serif text-2xl md:text-3xl tracking-wide mb-3">AI Consultation</h1>
-      <p className="text-zinc-400 text-sm leading-relaxed mb-6">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Client Portal</p>
+      <h1 className="font-serif text-2xl md:text-3xl tracking-wide mb-3 text-zinc-900">AI Consultation</h1>
+      <p className="text-zinc-500 text-sm leading-relaxed mb-6">
         Chat with our AI to share your tattoo idea — it&apos;ll ask a few natural questions and send everything to {studio.name}.
       </p>
 
       {submitted && messages.length <= 1 && (
-        <div className="mb-6 border border-white/[0.08] bg-zinc-900/40 p-5">
-          <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-3">Your Latest Consultation</p>
+        <div className="mb-6 bg-white rounded-2xl border border-zinc-200 shadow-sm p-5">
+          <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-3">Your Latest Consultation</p>
           <ProjectTimeline
             status={submitted.status}
             quoteAcceptedAt={submitted.quoteAcceptedAt}

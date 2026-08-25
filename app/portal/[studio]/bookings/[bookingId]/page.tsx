@@ -67,103 +67,103 @@ export default async function ClientBookingDetailPage({ params }: Props) {
     <div className="max-w-2xl">
       <Link
         href={`/portal/${params.studio}/bookings`}
-        className="text-[10px] uppercase tracking-widest text-zinc-500 hover:text-zinc-300 transition-colors"
+        className="text-[10px] uppercase tracking-widest text-zinc-500 hover:text-zinc-900 transition-colors"
       >
         ← All Bookings
       </Link>
 
       <div className="flex items-start justify-between gap-4 flex-wrap mt-4 mb-2">
-        <h1 className="font-serif text-2xl md:text-3xl tracking-wide">{booking.title}</h1>
+        <h1 className="font-serif text-2xl md:text-3xl tracking-wide text-zinc-900">{booking.title}</h1>
         <span className={`text-[10px] px-2 py-0.5 border rounded-full shrink-0 mt-1.5 ${meta.badge}`}>{meta.label}</span>
       </div>
       <p className="text-zinc-500 text-xs mb-8">
-        <Link href={`/portal/${params.studio}/projects/${booking.consultationId}`} className="hover:text-zinc-300 transition-colors">
+        <Link href={`/portal/${params.studio}/projects/${booking.consultationId}`} className="hover:text-zinc-900 transition-colors">
           View Project →
         </Link>
       </p>
 
       {booking.status === "pending_deposit" && booking.depositExpiresAt && (
-        <div className="border border-amber-500/20 bg-amber-500/[0.06] px-5 py-4 mb-6">
-          <p className="text-amber-400 text-sm">{depositCountdown(booking.depositExpiresAt)}</p>
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 mb-6">
+          <p className="text-amber-800 text-sm">{depositCountdown(booking.depositExpiresAt)}</p>
         </div>
       )}
 
       {booking.status === "awaiting_schedule" && (
-        <div className="border border-violet-500/20 bg-violet-500/[0.06] px-5 py-4 mb-6">
-          <p className="text-violet-300 text-sm">Your deposit is paid — the studio will confirm your date and time shortly.</p>
+        <div className="rounded-2xl border border-violet-200 bg-violet-50 px-5 py-4 mb-6">
+          <p className="text-violet-800 text-sm">Your deposit is paid — the studio will confirm your date and time shortly.</p>
         </div>
       )}
 
       {booking.depositKept && (
-        <div className="border border-red-500/20 bg-red-500/[0.06] px-5 py-4 mb-6">
-          <p className="text-red-400 text-sm">Deposit was not refunded — no-show.</p>
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 mb-6">
+          <p className="text-red-700 text-sm">Deposit was not refunded — no-show.</p>
         </div>
       )}
 
-      <div className="border border-white/[0.08] bg-zinc-900/40 divide-y divide-white/[0.06] mb-6">
+      <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm divide-y divide-zinc-100 mb-6">
         <div className="px-6 py-4 grid grid-cols-2 gap-4">
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Date</p>
-            <p className="text-sm text-zinc-200">{booking.date ? fmtDate(booking.date) : "To be confirmed"}</p>
+            <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-1">Date</p>
+            <p className="text-sm text-zinc-900">{booking.date ? fmtDate(booking.date) : "To be confirmed"}</p>
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Time</p>
-            <p className="text-sm text-zinc-200">{booking.time ? fmt12h(booking.time) : "—"}</p>
+            <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-1">Time</p>
+            <p className="text-sm text-zinc-900">{booking.time ? fmt12h(booking.time) : "—"}</p>
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Artist</p>
-            <p className="text-sm text-zinc-200">{booking.artistName ?? "—"}</p>
+            <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-1">Artist</p>
+            <p className="text-sm text-zinc-900">{booking.artistName ?? "—"}</p>
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Style</p>
-            <p className="text-sm text-zinc-200">{booking.style}</p>
+            <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-1">Style</p>
+            <p className="text-sm text-zinc-900">{booking.style}</p>
           </div>
         </div>
         {booking.description && (
           <div className="px-6 py-4">
-            <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1.5">Description</p>
-            <p className="text-sm text-zinc-200 leading-relaxed">{booking.description}</p>
+            <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-1.5">Description</p>
+            <p className="text-sm text-zinc-900 leading-relaxed">{booking.description}</p>
           </div>
         )}
       </div>
 
-      <div className="border border-white/[0.08] bg-zinc-900/40 p-5 mb-6">
-        <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-4">Payment</p>
+      <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5 mb-6">
+        <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-4">Payment</p>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Deposit</p>
-            <p className="text-sm text-zinc-200">
+            <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-1">Deposit</p>
+            <p className="text-sm text-zinc-900">
               {fmtDollars(booking.depositAmountCents)}{" "}
               {booking.depositPaid ? (
-                <span className="text-emerald-400">— Paid</span>
+                <span className="text-emerald-600">— Paid</span>
               ) : (
-                <span className="text-zinc-500">— Not yet paid</span>
+                <span className="text-zinc-400">— Not yet paid</span>
               )}
             </p>
           </div>
           {balanceDueCents !== null && (
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Remaining Balance</p>
-              <p className="text-sm text-zinc-200">
+              <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-1">Remaining Balance</p>
+              <p className="text-sm text-zinc-900">
                 {fmtDollars(balanceDueCents)}{" "}
                 {booking.remainderCollected ? (
-                  <span className="text-emerald-400">— Paid</span>
+                  <span className="text-emerald-600">— Paid</span>
                 ) : (
-                  <span className="text-zinc-500">— due at your session</span>
+                  <span className="text-zinc-400">— due at your session</span>
                 )}
               </p>
             </div>
           )}
           <div className="col-span-2">
-            <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Consent Form</p>
-            <p className="text-sm text-zinc-200">
+            <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-1">Consent Form</p>
+            <p className="text-sm text-zinc-900">
               {booking.hasConsentForm ? "✓ Signed" : booking.depositPaid ? "Required — not yet signed" : "Sign after your deposit is paid"}
             </p>
           </div>
           {booking.status === "completed" && (
             <div className="col-span-2">
-              <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Aftercare Instructions</p>
-              <p className="text-sm text-zinc-200">
+              <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-1">Aftercare Instructions</p>
+              <p className="text-sm text-zinc-900">
                 {booking.completedAt
                   ? `✓ Sent to your email (${new Date(booking.completedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })})`
                   : "✓ Sent to your email"}
@@ -172,8 +172,8 @@ export default async function ClientBookingDetailPage({ params }: Props) {
           )}
           {booking.status === "completed" && (
             <div className="col-span-2">
-              <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">Review</p>
-              <p className="text-sm text-zinc-200">
+              <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-1">Review</p>
+              <p className="text-sm text-zinc-900">
                 {booking.hasReview ? "✓ Submitted — thank you!" : "Not yet submitted"}
               </p>
             </div>
@@ -195,7 +195,7 @@ export default async function ClientBookingDetailPage({ params }: Props) {
         />
       </div>
 
-      <p className="text-zinc-600 text-xs leading-relaxed">
+      <p className="text-zinc-400 text-xs leading-relaxed">
         Please arrive on time. Late arrivals may result in a shortened session. Your deposit is non-refundable for
         no-shows or cancellations within 48 hours.
       </p>

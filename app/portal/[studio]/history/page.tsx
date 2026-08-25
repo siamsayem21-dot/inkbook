@@ -35,15 +35,15 @@ export default async function ClientHistoryPage({ params }: Props) {
 
   return (
     <div className="max-w-3xl">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-2">Client Portal</p>
-      <h1 className="font-serif text-2xl md:text-3xl tracking-wide mb-3">History</h1>
-      <p className="text-zinc-400 text-sm leading-relaxed mb-8">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Client Portal</p>
+      <h1 className="font-serif text-2xl md:text-3xl tracking-wide mb-3 text-zinc-900">History</h1>
+      <p className="text-zinc-500 text-sm leading-relaxed mb-8">
         Review your past sessions, consultations, and completed work with {studio.name}.
       </p>
 
       {projects.length === 0 && generalThreads.length === 0 ? (
-        <div className="border border-white/[0.08] bg-zinc-900/40 px-6 py-16 text-center max-w-lg">
-          <h2 className="font-serif text-xl md:text-2xl tracking-wide mb-3">No history yet</h2>
+        <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm px-6 py-16 text-center max-w-lg">
+          <h2 className="font-serif text-xl md:text-2xl tracking-wide mb-3 text-zinc-900">No history yet</h2>
           <p className="text-zinc-500 text-sm leading-relaxed">
             Once you start a project with {studio.name}, its story will show up here.
           </p>
@@ -66,20 +66,20 @@ export default async function ClientHistoryPage({ params }: Props) {
 
           {generalThreads.length > 0 && (
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-3">General Conversations</p>
+              <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-3">General Conversations</p>
               <div className="space-y-3">
                 {generalThreads.map((thread) => (
                   <Link
                     key={thread.id}
                     href={`/portal/${params.studio}/messages/${thread.id}`}
-                    className="border border-white/[0.08] bg-zinc-900/40 hover:border-white/20 transition-colors p-5 flex items-start justify-between gap-4 flex-wrap"
+                    className="bg-white rounded-2xl border border-zinc-200 shadow-sm hover:border-zinc-300 hover:shadow-elevation-2 transition-all p-5 flex items-start justify-between gap-4 flex-wrap"
                   >
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-zinc-100">{studio.name}</p>
+                      <p className="text-sm font-semibold text-zinc-900">{studio.name}</p>
                       <p className="text-xs text-zinc-500 truncate mt-1.5">{thread.lastMessagePreview ?? "No messages yet"}</p>
                     </div>
                     {thread.lastMessageAt && (
-                      <span className="text-[10px] text-zinc-600 shrink-0">{fmtDate(thread.lastMessageAt)}</span>
+                      <span className="text-[10px] text-zinc-400 shrink-0">{fmtDate(thread.lastMessageAt)}</span>
                     )}
                   </Link>
                 ))}

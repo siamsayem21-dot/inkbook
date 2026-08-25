@@ -35,24 +35,24 @@ function BookingRow({ studioSlug, booking, brandColor, textOnBrand }: { studioSl
   return (
     <Link
       href={`/portal/${studioSlug}/bookings/${booking.id}`}
-      className="border border-white/[0.08] bg-zinc-900/40 hover:border-white/20 transition-colors p-5 flex items-start justify-between gap-4 flex-wrap"
+      className="bg-white rounded-2xl border border-zinc-200 shadow-sm hover:border-zinc-300 hover:shadow-elevation-2 transition-all p-5 flex items-start justify-between gap-4 flex-wrap"
     >
       <div className="min-w-0">
-        <p className="text-sm font-semibold text-zinc-100 truncate">{booking.title}</p>
+        <p className="text-sm font-semibold text-zinc-900 truncate">{booking.title}</p>
         <div className="flex items-center gap-2 flex-wrap mt-2.5">
           <span className={`text-[10px] px-2 py-0.5 border rounded-full ${meta.badge}`}>{meta.label}</span>
           {booking.artistName && (
-            <span className="text-[10px] text-zinc-500">
-              Artist: <span className="text-zinc-300">{booking.artistName}</span>
+            <span className="text-[10px] text-zinc-400">
+              Artist: <span className="text-zinc-600">{booking.artistName}</span>
             </span>
           )}
         </div>
-        <p className="text-[10px] text-zinc-600 mt-2.5">
+        <p className="text-[10px] text-zinc-400 mt-2.5">
           {booking.date ? `${fmtDate(booking.date)}${booking.time ? ` at ${fmt12h(booking.time)}` : ""}` : "Date to be confirmed"}
         </p>
       </div>
       <span
-        className="shrink-0 text-[10px] uppercase tracking-widest font-semibold px-4 py-2"
+        className="shrink-0 text-[10px] uppercase tracking-widest font-semibold px-4 py-2 rounded-lg"
         style={{ backgroundColor: brandColor, color: textOnBrand }}
       >
         View →
@@ -87,21 +87,21 @@ export default async function ClientBookingsPage({ params }: Props) {
 
   return (
     <div className="max-w-3xl">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-2">Client Portal</p>
-      <h1 className="font-serif text-2xl md:text-3xl tracking-wide mb-3">My Bookings</h1>
-      <p className="text-zinc-400 text-sm leading-relaxed mb-8">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Client Portal</p>
+      <h1 className="font-serif text-2xl md:text-3xl tracking-wide mb-3 text-zinc-900">My Bookings</h1>
+      <p className="text-zinc-500 text-sm leading-relaxed mb-8">
         Track your upcoming appointments, deposits, and session details with {studio.name}.
       </p>
 
       {bookings.length === 0 ? (
-        <div className="border border-white/[0.08] bg-zinc-900/40 px-6 py-16 text-center max-w-lg">
-          <h2 className="font-serif text-xl md:text-2xl tracking-wide mb-3">No bookings yet</h2>
+        <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm px-6 py-16 text-center max-w-lg">
+          <h2 className="font-serif text-xl md:text-2xl tracking-wide mb-3 text-zinc-900">No bookings yet</h2>
           <p className="text-zinc-500 text-sm leading-relaxed mb-8 max-w-sm mx-auto">
             Once you accept a quote and pay your deposit, your booking will show up here.
           </p>
           <Link
             href={`/portal/${params.studio}/projects`}
-            className="inline-block text-[10px] uppercase tracking-widest font-semibold px-6 py-3 transition-opacity hover:opacity-90"
+            className="inline-block text-[10px] uppercase tracking-widest font-semibold px-6 py-3 rounded-lg transition-opacity hover:opacity-90"
             style={{ backgroundColor: brand.full, color: brand.textOnBrand }}
           >
             View Projects
@@ -111,7 +111,7 @@ export default async function ClientBookingsPage({ params }: Props) {
         <div className="space-y-8">
           {upcoming.length > 0 && (
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-3">Upcoming</p>
+              <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-3">Upcoming</p>
               <div className="space-y-3">
                 {upcoming.map((b) => (
                   <BookingRow key={b.id} studioSlug={params.studio} booking={b} brandColor={brand.full} textOnBrand={brand.textOnBrand} />
@@ -121,7 +121,7 @@ export default async function ClientBookingsPage({ params }: Props) {
           )}
           {past.length > 0 && (
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-3">Past</p>
+              <p className="text-[10px] uppercase tracking-widest text-zinc-400 mb-3">Past</p>
               <div className="space-y-3">
                 {past.map((b) => (
                   <BookingRow key={b.id} studioSlug={params.studio} booking={b} brandColor={brand.full} textOnBrand={brand.textOnBrand} />
