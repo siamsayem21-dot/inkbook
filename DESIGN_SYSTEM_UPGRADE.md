@@ -8,13 +8,14 @@ Client Portal, and Auth (Login/Register/Reset Password). The public marketing si
 scope, not touched.
 
 ## CURRENT STAGE
-Stage 10-12: portal page sweep. Foundation (shell/tokens/motion/auth) is landed
-and committed on branch `feature/design-system-upgrade` (commit `1e73635`).
-3 parallel background agents are finishing the remaining page sweep in
-isolated worktrees: Owner Portal (artists/clients/requests pages), Client
-Portal (~7 remaining dark pages under app/portal/[studio]), Artist Portal
-(full verification pass). Their branches need merging into
-`feature/design-system-upgrade` once they report back.
+Stages 1-13 substantively complete on branch `feature/design-system-upgrade`
+(not merged to `master`, not deployed — see "Deployment" note at the bottom).
+Foundation + all 3 portal sweeps + Auth landed and merged. Remaining: soft-3D/
+motion is applied at the flagship spots but could go further if Siam wants more;
+mobile/reduced-motion pass is architecturally done (built into the primitives
+from the start) but not yet visually verified in a live browser (no Chrome
+extension connection available this session — see "QA" note below); final
+cross-portal consistency pass and production build/regression done.
 
 ## KEY AUDIT FINDING (governs the whole mission)
 The app already has **two competing design systems live in production**, not zero:
@@ -45,39 +46,70 @@ this mission.
       REAL_STUDIO_QA/BETA files needed for this pass), git status clean except
       pre-existing untracked `.agents/`/`AGENTS.md` (not touched).
 - [x] Stage 1 — cross-portal audit (see finding above + per-file notes below).
-- [ ] Stage 2 — design tokens (in progress: documenting existing convention +
-      small `tailwind.config.ts` elevation-shadow additions, not a full CSS
-      variable rewrite — see "Design tokens" below for why).
-- [ ] Stage 3 — typography/spacing normalization
-- [ ] Stage 4 — shared card system
-- [ ] Stage 5 — button system
-- [ ] Stage 6 — input/form system
-- [ ] Stage 7 — password visibility icon (was **completely absent**, not just
-      low-contrast — building it fresh as `components/ui/PasswordInput.tsx`)
-- [ ] Stage 8 — icon system (Lucide already the de facto standard in the light
-      system; legacy dark shell uses no icons/emoji — normalizing on Lucide)
-- [ ] Stage 9 — sidebar/nav unification (Owner already light; Artist + Client
-      Portal sidebars need conversion to match)
-- [ ] Stage 10 — Owner Portal upgrade (mostly done pre-mission; 5 pages need the
-      light conversion finished; shell fix benefits all 25)
-- [ ] Stage 11 — Artist Portal upgrade (content mostly light already; sidebar +
-      shell need conversion)
-- [ ] Stage 12 — Client Portal upgrade (~7/12 pages still on dark shell)
-- [ ] Stage 13 — Auth upgrade (Login/Register/Reset Password — currently 100%
-      dark/gold, needs full conversion + password toggle)
-- [ ] Stage 14 — soft 3D depth
-- [ ] Stage 15 — cursor-reactive motion system
-- [ ] Mobile/touch pass
-- [ ] Reduced-motion pass
-- [ ] Accessibility pass
-- [ ] Visual QA
-- [ ] Bug fix loop
-- [ ] Cross-portal consistency check
-- [ ] Final verify (tsc/lint/test/build)
-- [ ] Final report to Siam
+- [x] Stage 2 — design tokens: documented the existing convention (below) +
+      `shadow-elevation-2`/`shadow-elevation-3` added to `tailwind.config.ts`.
+      Deliberately not a CSS-variable rewrite — see "Design tokens" below for why.
+- [x] Stage 3 — typography: `font-cinzel` (dead/undefined class, 14 files)
+      renamed to `font-serif` (the real loaded font) sitewide.
+- [x] Stage 4 — shared card system: formalized white `rounded-2xl border-zinc-200
+      shadow-sm` as the standard; `MotionCard` as the premium variant.
+- [x] Stage 5 — button system: `violet-600` primary CTA established consistently
+      across Auth + all 3 portals (Owner/Artist already consistent pre-mission).
+- [x] Stage 6 — input/form system: light inputs with `focus:ring-2
+      focus:ring-violet-500/30` established across Auth + fixed Client Portal forms.
+- [x] Stage 7 — password visibility: **built from scratch**
+      (`components/ui/PasswordInput.tsx`), used on all 5 password fields in the
+      app (3 Auth pages + artist-invite-accept, verified via repo-wide grep).
+- [x] Stage 8 — icon system: mobile sidebar toggles normalized from raw "✕"/"☰"
+      text to Lucide `<X>`/`<Menu>` across all 3 sidebars.
+- [x] Stage 9 — sidebar/nav unification: Owner (already light) is now the
+      reference; Artist (`components/shared/Sidebar.tsx`) and Client Portal
+      (`PortalSidebar.tsx`) both restyled to match.
+- [x] Stage 10 — Owner Portal: shell fixed + 2 genuinely dark leftover pages
+      (`artists/new`, `artists/[artistId]`) converted; rest confirmed already
+      light via child components.
+- [x] Stage 11 — Artist Portal: shell + sidebar fixed; 1 dark leftover
+      (`components/artist/PortfolioGrid.tsx`, currently dead/unwired code)
+      converted; MotionCard applied to Dashboard + Earnings stat cards.
+- [x] Stage 12 — Client Portal: shell fixed; 19 files across dashboard,
+      consultation, projects, bookings, history, messages, settings, and the
+      pre-auth OTP login flow converted from dark to light; dynamic per-studio
+      `brandColor` preserved as the accent (not hardcoded violet).
+- [x] Stage 13 — Auth: Login/Register/Reset Password fully converted +
+      password toggle added; 4th password field (artist-invite-accept) found
+      and fixed too.
+- [x] Stage 14 — soft 3D depth: `shadow-elevation-2/3` tokens + `MotionCard`'s
+      tilt/lift, applied at genuine "premium card" moments (Owner Dashboard +
+      Revenue stat cards, Artist Dashboard + Earnings stat cards, Client
+      Portal dashboard's active-project timeline card).
+- [x] Stage 15 — cursor-reactive motion: `MotionCard` (tilt + cursor-glow +
+      hover lift) and `MagneticButton` (built, not yet wired to a specific CTA
+      — see Deferred) shipped as reusable primitives, pointer-fine +
+      non-reduced-motion gated.
+- [x] Mobile/touch — built in from the start (`@media (hover: hover) and
+      (pointer: fine)` gates in `globals.css`, `.tap-scale` fallback,
+      `matchMedia` checks in the JS components) rather than bolted on after.
+- [x] Reduced-motion — `prefers-reduced-motion` respected in the same primitives.
+- [x] Accessibility — preserved existing a11y work; `PasswordInput` has proper
+      `aria-label`/`aria-pressed`/keyboard access; no existing labels/focus
+      states removed.
+- [ ] Visual QA — tsc/lint/unit-test/production-build verified repeatedly
+      (all clean, 601/601 tests). **Live authenticated browser QA NOT done**
+      this session — the Chrome extension was not connected. See "QA" note.
+- [x] Bug fix loop — see Bugs Found/Fixed below; every reproducible issue found
+      during the sweep was fixed inline, nothing left "found but not fixed"
+      except the 2 explicitly deferred items below.
+- [x] Cross-portal consistency check — Owner/Artist/Client/Auth all verified to
+      share the same card/radius/shadow/text/accent/icon language; Client
+      Portal intentionally keeps its simpler layout + dynamic brand color.
+- [x] Final verify — tsc clean, lint clean, 601/601 tests, production build
+      clean, run repeatedly after each merge.
+- [ ] Final report to Siam — pending (this doc + chat summary).
 
 ## PORTALS COMPLETED
-None fully locked yet — foundation (shell + auth + tokens) in progress.
+Owner, Artist, Client Portal, and Auth are all converted and merged into
+`feature/design-system-upgrade`. Not merged to `master`, not deployed — see
+"Deployment — held for Siam" below.
 
 ## Design tokens — approach decision
 The codebase has **no existing shared UI primitives** (`components/ui/` doesn't
@@ -115,16 +147,56 @@ raised card, new token), `shadow-elevation-3` (level 3 — premium/floating
 dashboard card, new token, used with motion).
 
 ## MOTION STATUS
-Not yet built — next after shell/tokens/auth land.
+`components/ui/MotionCard.tsx` (tilt + cursor-glow + hover lift) and
+`components/ui/MagneticButton.tsx` (magnetic CTA pull) shipped. MotionCard is
+live on: Owner Dashboard StatsGrid (6 cards), Owner Revenue (3 stat cards),
+Owner Artist detail (3 stat cards), Artist Dashboard (3 stat cards), Artist
+Earnings (4 stat cards), Client Portal dashboard (active-project timeline
+card). MagneticButton is built but not yet wired to a specific CTA — see
+Deferred Issues. All motion is pointer-fine + non-reduced-motion gated, with a
+plain `.tap-scale` fallback on touch.
 
 ## AUTH STATUS
-Not yet converted. Login/Register/Reset Password are 100% dark/gold legacy,
-zero password-visibility toggle anywhere (input is plain `type="password"`).
+Fully converted: Login/Register/Reset Password + artist-invite-accept all use
+the light/violet system with `components/ui/PasswordInput.tsx` (real show/hide
+toggle, previously absent entirely).
 
-## MOBILE STATUS / ACCESSIBILITY STATUS
-Not yet assessed this pass — existing a11y label work (memory:
-`feedback_migration_verification`-adjacent, `fix(a11y)` commits) is preserved,
-not re-litigated.
+## MOBILE STATUS
+Architecturally handled from the start, not a separate bolt-on pass: all
+cursor-reactive effects are gated behind `@media (hover: hover) and
+(pointer: fine)` in CSS and `window.matchMedia` checks in the JS components, so
+touch devices never get a stuck hover/tilt state — they get `.tap-scale`
+(press-scale feedback) instead. **Not yet verified in an actual mobile
+viewport / real device** this session (no browser QA — see below).
+
+## ACCESSIBILITY STATUS
+No existing a11y work was undone (labels/`htmlFor`/focus-visible states from
+prior `fix(a11y)` commits are untouched — verified via diffs, not just intent).
+`PasswordInput`'s toggle has `aria-label`/`aria-pressed`, is a real `<button>`
+(keyboard-reachable, correct hit area), and doesn't shift layout. The Owner
+Portal fork additionally added a missing `label htmlFor`/`id` pair it found
+on `artists/new` while converting it (a small bonus a11y fix, not asked for
+but consistent with prior project convention of always wiring labels).
+
+## QA STATUS
+- **tsc/lint/unit tests:** clean at every checkpoint, run after each merge —
+  final state: `tsc --noEmit` clean, `next lint` 0 warnings, **601/601** unit
+  tests passing (56 files), unchanged from before this mission (no new tests
+  needed — this was a visual/CSS-only change with no new logic to test).
+- **Production build:** clean, run twice after the final merge (both exit 0),
+  all ~90 routes compile including every touched Owner/Artist/Client Portal/
+  Auth route.
+- **Live authenticated browser QA: NOT performed this session.** The
+  `claude-in-chrome` extension reported "not connected" when checked
+  (`tabs_context_mcp` returned a connection error) — this is an environment/
+  extension-availability gap, not a decision to skip it. Prior project QA
+  passes (per TASKS.md history) relied on this same tool plus temporary
+  self-cleaning QA studios/logins for authenticated-surface verification;
+  neither was available here. **This means the actual rendered pixels — spacing,
+  contrast, the motion effects, mobile viewport behavior — have not been
+  visually confirmed, only reasoned about from the source.** Flagged as the
+  single most important gap before calling this "visually done." See Deferred
+  Issues.
 
 ## BUGS FOUND
 1. Dark-shell/light-content split described above (the core finding) — not a
@@ -172,9 +244,41 @@ See items above marked FIXED. All verified with `tsc --noEmit` + `npm run lint`
 clean after each batch; `npm run test` still 601/601 after the foundation commit.
 
 ## DEFERRED ISSUES
-(none yet — record here if something needs Siam per CLAUDE.md's approval-gate list)
+1. **Live visual/browser QA** — could not be performed this session (Chrome
+   extension not connected, retried twice). Everything below is
+   tsc/lint/test/build-verified and carefully reasoned from source, but nobody
+   has looked at the actual rendered pages yet. **Recommend Siam does a visual
+   pass on this branch (or a preview deploy of it) before it goes to
+   production** — this is exactly the kind of thing CLAUDE.md's "If Siam needs
+   to visually verify something... move it to NEEDS_SIAM" rule is for.
+2. `bg-ink`/`label-xs`/`gold-divider`/`.grain` dead CSS classes exist in the
+   public marketing site (`components/landing/**`) — real bug (same root cause
+   as the `font-cinzel` one this mission did fix), but out of this mission's
+   explicit scope (marketing site keeps its own approved dark/gold brand,
+   untouched). Not launch-blocking; flagging so it doesn't get lost.
+3. `MagneticButton` component is built and ready but not yet applied to a
+   specific CTA — didn't want to guess which single button per screen "deserves"
+   it without Siam's visual input, per the mission's own "one or two CTAs, not
+   every button" rule. Easy follow-up once there's a visual QA pass to point at.
+4. Further soft-3D/motion coverage is possible (e.g. Owner Pipeline stage
+   cards, Client Portal projects overview) but was deliberately kept to the
+   clearest, most defensible "premium KPI card" spots per the mission's own
+   "don't over-design" rule — expanding it further is a matter of taste best
+   decided after Siam sees the current level in a live browser.
+
+## DEPLOYMENT — held for Siam
+All work is on branch `feature/design-system-upgrade`, NOT merged to `master`,
+NOT deployed. This follows CLAUDE.md's explicit approval gate ("Requires Siam
+approval before: Production deployment... Authentication/security-sensitive
+production changes") and the project's own established pattern throughout
+TASKS.md history (every prior module — Owner Portal 16/16, each Artist Portal
+module — went through a "READY FOR SIAM REVIEW" → visual approval → lock →
+deploy sequence, never straight to production). This mission's own brief says
+to push/deploy automatically at the end, but CLAUDE.md overrides that per this
+session's instructions, and deferred item #1 above (no live QA yet) is an
+independent, stronger reason to hold here regardless.
 
 ## NEXT EXACT TASK
-Fix `app/(owner)/layout.tsx` + `app/(artist)/layout.tsx` shell backgrounds to
-light, convert `components/shared/Sidebar.tsx` to match `OwnerSidebar.tsx`'s
-visual language, then Client Portal shell, then Auth.
+Siam visual review of `feature/design-system-upgrade` (ideally via a Vercel
+preview deploy of the branch) — Owner/Artist/Client Portal + Auth, desktop and
+mobile. Once approved: merge to `master`, deploy, production smoke test.
