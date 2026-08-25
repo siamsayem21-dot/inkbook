@@ -317,7 +317,7 @@ try {
       else FAIL(`Uploaded photo URL did NOT resolve: ${imgResp?.status ?? "fetch failed"} — ${photoRows[0].image_url}`);
 
       // Style tag
-      const styleBtn = page.locator('button:has-text("+ Add style tag")').first();
+      const styleBtn = page.getByRole("button", { name: /add style tag/i }).first();
       if (await styleBtn.isVisible().catch(() => false)) {
         await styleBtn.click();
         await page.locator('input[placeholder="e.g. Japanese"]').fill("Japanese");
@@ -335,19 +335,21 @@ try {
         FAIL("Style tag button not found after upload");
       }
 
-      // Delete (handles window.confirm dialog)
-      page.once("dialog", (d) => d.accept());
+      // Delete (handles window.confirm dialog) — a single persistent handler,
+      // not a repeated .once(), so a retry attempt can never try to accept an
+      // already-handled dialog (that throws and previously crashed this script).
+      page.on("dialog", (d) => d.accept().catch(() => {}));
       await page.locator('button:has-text("Remove")').first().click({ force: true, trial: false }).catch(async () => {
         // hover to reveal overlay button first
         await page.hover(`img[src="${photoRows[0].image_url}"]`).catch(() => {});
       });
+      await page.waitForTimeout(1000);
       // Ensure removal actually happened — hover then click if the above didn't trigger it
       const stillThere = await reQuery("portfolio_images", photoRows[0].id, "id");
       if (stillThere) {
         // Retry with explicit hover-then-click sequence
         const card = page.locator(".group").filter({ has: page.locator(`img[src="${photoRows[0].image_url}"]`) }).first();
         await card.hover();
-        page.once("dialog", (d) => d.accept());
         await card.locator('button:has-text("Remove")').click();
         await page.waitForTimeout(1500);
       }

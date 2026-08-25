@@ -13,13 +13,35 @@ Entries are grouped by phase/route as they're completed. See
 ---
 
 ## Phase A — Auth
-(populated during Phase A execution)
+See `scripts/qa-phase-a-auth.mjs`. Covered: invalid-credential login (error shown, stays on page), register short-password client-side validation, reset-password no-session redirect to `/login?error=link_expired`, logged-out access to `/owner/dashboard` `/artist/dashboard` `/dashboard` (all → `/login`), Owner-visiting-`/artist/**` boundary (5 routes, all resolve to `/artist/dashboard` empty-state via each page's own server-side artist-row check — verified in source, not assumed), Artist-visiting-`/owner/**` boundary (4 routes, all → `/register`). **0 findings.**
 
 ## Phase B — Owner Portal
-(populated during Phase B execution)
+See `scripts/qa-phase-b-owner.mjs` (Part 1: Artists + Settings — remaining Owner modules covered directly by the coordinator below). Real interactions, DB-verified:
+- OWNER | /owner/artists | empty | page load | navigation | "No Artists Yet" shown | DOM check | PASS
+- OWNER | /owner/artists/new | any | direct nav | navigation | redirect to /owner/artists (after fix) | DOM+DB | FIXED→RETESTED locally (prod pending redeploy) — see EXHAUSTIVE_ISSUES.md
+- OWNER | /owner/artists | empty | "Invite Artist" button + modal form | click+fill+submit | new artist_invites row, studio_id scoped | DB re-query | PASS
+- OWNER | /owner/artists | populated | invited artist row | render | "Invited" badge shown | DOM | PASS
+- OWNER | /owner/artists | populated | duplicate-email invite | click+fill+submit | rejected with "Email already invited to this studio" | DOM+DB (only 1 row) | PASS (re-verified twice after 1 flaky run — see EXHAUSTIVE_ISSUES.md)
+- OWNER | /owner/artists | populated | "Resend" | click | artist_invites.expires_at extended | DB re-query | PASS
+- OWNER | /owner/artists | populated | "Cancel" | click | artist_invites row deleted | DB re-query | PASS
+- OWNER | /owner/artists | populated | "Remove Artist" | click+confirm | artists.user_id nulled, row + booking history preserved | DB re-query | PASS
+- OWNER | /owner/settings/studio | populated | name/address fields + Save | fill+click | studios row updated | DB re-query | PASS
+- OWNER | /owner/artists, /owner/settings/studio | mobile (390x844) | full interaction (not screenshot-only) | click+fill+submit | no overflow, modal usable, real DB row created | DOM+DB | PASS (4 checks)
 
 ## Phase C — Artist Portal
-(populated during Phase C execution)
+See `scripts/qa-phase-c-artist.mjs`. 68 real interactions, desktop+mobile, DB-verified. **0 findings** (1 script bug found and fixed mid-run — `:has-text("+ Add style tag")` selector ambiguity, not a product bug; 1 script crash fixed — double `dialog.accept()` on a retry path). Covered:
+- Route sweep: all 18 Artist routes × desktop + mobile = 36 checks, all 200/on-route/no-overflow.
+- Portfolio: real PNG upload → `portfolio_images` row + resolvable public storage URL; style tag set → DB-confirmed `style="Japanese"`; delete → DB-confirmed row gone.
+- Flash: create → DB row + resolvable image URL + **appears on the live public `/book/[studio]` page**; delete → DB row gone **and** correctly disappears from the public page too.
+- Days Off: add unavailable date → DB-confirmed; **a real booking API call against that exact date is REJECTED (HTTP 409)**; remove the date → the same booking call now succeeds (201). This is the previously-shipped conflict-prevention feature, re-verified end-to-end, not assumed.
+- Consultations: direct-nav to a colleague's assigned consultation → 404; direct-nav to a different studio's consultation → 404; claim + quote save → DB-confirmed `artist_id`/`final_price`/`status`.
+- Custom Requests: approve → DB-confirmed quoted+claimed+deposit amount; decline → DB-confirmed status+reason.
+- Booking detail: without signed consent, "Mark Session Completed" is correctly hidden with a warning; with it available, clicking it → DB-confirmed `status=completed`+`completed_at`; direct-nav to a colleague's booking and a different studio's booking both correctly blocked.
+- Earnings: **real dollar-figure cross-check against a raw DB query** (confirmed+completed bookings this month = $300 from 2 bookings) — matches the page, and a `pending_deposit` $9999 booking + a `cancelled` $8888 booking are correctly excluded (status filter genuinely applied, not just "renders a number").
+- Clients: list correctly shows own client, hides a colleague-only client; direct-nav to a colleague-only client → 404.
+- Session Agreement: create → DB-confirmed `artist_id`/`booking_id`/`price`, appears in the list.
+- Messages: send → DB-confirmed `sender_artist_id`; a colleague's direct-nav to the thread → 404.
+- Cross-studio isolation (Artist C, different studio): zero data leakage on 5 routes + 3 direct-ID probes (booking/client/consultation) — all correctly blocked.
 
 ## Phase D — Client Portal
 (populated during Phase D execution)

@@ -31,8 +31,8 @@ not code inspection alone. **0 findings.**
 | `/owner/consultations` | NOT_TESTED | |
 | `/owner/consultations/[id]` | NOT_TESTED | |
 | `/owner/pipeline` | NOT_TESTED | |
-| `/owner/artists` | NOT_TESTED | |
-| `/owner/artists/new` | NOT_TESTED | |
+| `/owner/artists` | PASS | `scripts/qa-phase-b-owner.mjs` — invite/resend/cancel/remove all DB-verified, empty+populated+mobile states |
+| `/owner/artists/new` | FIXED→RETESTED (locally; prod redeploy pending Siam approval) | Was a dead unwired static form — see EXHAUSTIVE_ISSUES.md |
 | `/owner/artists/[artistId]` | NOT_TESTED | |
 | `/owner/bookings` | NOT_TESTED | |
 | `/owner/bookings/[bookingId]` | NOT_TESTED | |
@@ -51,29 +51,33 @@ not code inspection alone. **0 findings.**
 | `/owner/audit-log` | NOT_TESTED | |
 | `/owner/settings` | NOT_TESTED | |
 | `/owner/settings/billing` | NOT_TESTED | |
-| `/owner/settings/studio` | NOT_TESTED | |
+| `/owner/settings/studio` | PASS | name/address edit → DB-verified persistence |
 
 ## ARTIST PORTAL (11 top-level + 6 detail/sub routes)
 | Route | Status | Evidence |
 |---|---|---|
-| `/artist/dashboard` | NOT_TESTED | |
-| `/artist/consultations` | NOT_TESTED | |
-| `/artist/consultations/[id]` | NOT_TESTED | |
-| `/artist/schedule` | NOT_TESTED | |
-| `/artist/bookings` | NOT_TESTED | |
-| `/artist/bookings/[bookingId]` | NOT_TESTED | |
-| `/artist/requests` | NOT_TESTED | |
-| `/artist/requests/[id]` | NOT_TESTED | |
-| `/artist/messages` | NOT_TESTED | |
-| `/artist/messages/[threadId]` | NOT_TESTED | |
-| `/artist/portfolio` | NOT_TESTED | |
-| `/artist/flash` | NOT_TESTED | |
-| `/artist/earnings` | NOT_TESTED | |
-| `/artist/clients` | NOT_TESTED | |
-| `/artist/clients/[clientId]` | NOT_TESTED | |
-| `/artist/agreements` | NOT_TESTED | |
-| `/artist/agreements/[id]` | NOT_TESTED | |
-| `/artist/agreements/new` | NOT_TESTED | |
+| `/artist/dashboard` | PASS | `scripts/qa-phase-c-artist.mjs` — real login, route sweep desktop+mobile |
+| `/artist/consultations` | PASS | claim workflow + isolation DB-verified |
+| `/artist/consultations/[id]` | PASS | colleague/cross-studio direct-nav both 404 |
+| `/artist/schedule` | PASS | Days Off add/remove DB-verified, real booking-rejection proof (409→201) |
+| `/artist/bookings` | PASS | route sweep + isolation |
+| `/artist/bookings/[bookingId]` | PASS | consent gate, Mark Completed, colleague/cross-studio blocked |
+| `/artist/requests` | PASS | custom-request approve/decline DB-verified |
+| `/artist/requests/[id]` | PASS | |
+| `/artist/messages` | PASS | send + thread isolation DB-verified |
+| `/artist/messages/[threadId]` | PASS | colleague direct-nav → 404 |
+| `/artist/portfolio` | PASS | real upload/style-tag/delete, all DB-verified |
+| `/artist/flash` | PASS | create/delete DB-verified + confirmed live on public studio page |
+| `/artist/earnings` | PASS | dollar-figure cross-checked against raw DB query, status filter confirmed correct |
+| `/artist/clients` | PASS | isolation confirmed (own client shown, colleague-only hidden) |
+| `/artist/clients/[clientId]` | PASS | colleague-only client → 404 |
+| `/artist/agreements` | PASS | create DB-verified, appears in list |
+| `/artist/agreements/[id]` | PASS | |
+| `/artist/agreements/new` | PASS | |
+
+**Artist Portal cross-studio isolation (Artist C, different studio):** 0 data
+leakage across 5 routes + 3 direct-ID probes. **Full Phase C: 0 findings**
+(68 real interactions, desktop+mobile).
 
 ## CLIENT PORTAL — LIVE (`app/portal/[studio]/**`, 7 top-level + 4 sub)
 | Route | Status | Evidence |
