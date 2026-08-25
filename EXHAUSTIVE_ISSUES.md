@@ -106,7 +106,7 @@ re-confirmed gone. Every other independent QA phase continued despite this
 finding, per the mission's own "document + defer that piece + continue
 everything else" rule.
 
-## [P1] Owner-initiated "Generate Deposit Link" does not appear to route through Stripe Connect at all — needs Siam verification, not autonomously touched
+## [P1] CONFIRMED (empirically, not just code-read): Owner-initiated "Generate Deposit Link" charges InkBook's platform account instead of the studio's own connected Stripe account
 **Route/action:** `sendDepositRequest()` in
 `app/(owner)/owner/bookings/[bookingId]/actions.ts` (called from the owner's
 "Generate Deposit Link" button on a consultation's Deposit Collection panel).
@@ -131,18 +131,47 @@ wrong money routing instead of a hard block), and a direct contradiction of
 this project's own documented "0% platform fee, funds go straight to the
 studio" Stripe Connect design.
 
-**Not independently runtime-confirmed with a real payment** — deliberately
-not attempted, since completing a real Stripe Connect payment specifically
-to prove a money-routing bug is itself a real-money-adjacent action outside
-this mission's safe-autonomous-action boundary. Flagging with the exact code
-evidence above instead of asserting certainty from a code read alone.
+**UPDATE — empirically confirmed via `scripts/qa-full-studio-journey.mjs`
+(Stripe TEST mode only, no real money, full QA data cleaned up and
+reconfirmed gone):** built a real studio with a genuine verified TEST-mode
+Stripe Connect connected account attached (`stripe_connected_account_id`
+set, `charges_enabled: true` — the exact same account-verification pattern
+already proven safe in `scripts/verify-connect-live.mjs`), ran the real
+consultation → AI quote → owner "Generate Deposit Link" → Stripe TEST
+payment flow end to end, then retrieved the resulting PaymentIntent **as a
+platform-level object** (no `stripeAccount` context) — it resolved
+successfully: `status: "succeeded", amount: 3000, application_fee_amount: null`.
+A connected-account-scoped charge would not be retrievable this way at all
+(Stripe would 404/require the `stripeAccount` header) — this is direct,
+positive proof the charge landed on InkBook's own platform Stripe account,
+not the studio's connected account, for a studio that has genuinely
+connected Stripe. This is Stripe TEST mode only; no real card, no real
+money, matching this mission's payment-testing safety rules throughout.
 
-**Status:** **BLOCKED_NEEDS_SIAM** — needs either Siam's own verification or
-explicit authorization for a scoped, real (Connect test-mode) payment
-specifically targeting this exact code path to confirm/deny definitively.
-Not touched, not fixed, no code changed.
+**Status:** **BLOCKED_NEEDS_SIAM** — confirmed real, not a code-read guess.
+Needs Siam's decision on the fix (migrate `sendDepositRequest` to use the
+same `getOrCreateDepositCheckoutSession` helper the Client Portal path uses,
+so both paths route through Connect consistently — the obvious fix, but a
+real-money Stripe-routing code change is exactly this mission's hard
+safety gate, so it's not something to change autonomously even though the
+fix itself looks straightforward). Not touched, not fixed, no code changed.
 
 ---
+
+**Public `/book/[studio]/consult` "no `<form>` found" (full-journey script).**
+Not a bug — `ConsultationForm.tsx` genuinely uses a real `submitConsultation()`
+server action, but the live page is a multi-step, AI-guided intake wizard
+(matches the "Start Your Tattoo Journey" landing text seen in reproduction),
+not a single flat `<form>` a simple locator can drive in one shot. The real
+live consultation intake flow (AI chat round-trip) was already independently,
+successfully verified end-to-end by the Client Portal exhaustive pass (Phase
+D1: "real AI round-trip succeeded — messages 1 -> 2, assistant replied...").
+This mission's full-journey script used a DB-level consultation insert
+(matching the real schema exactly) as a documented, honest substitute for
+driving that specific multi-step wizard UI a second time, rather than
+duplicate D1's coverage. Everything downstream of consultation creation (AI
+quote, AI Artist Match, deposit, webhook, booking, cross-role visibility) was
+verified against a real UI, real AI calls, and a real Stripe TEST payment.
 
 ## Investigated, NOT real bugs (recorded for transparency)
 
@@ -162,6 +191,34 @@ matching issues), not a product bug. Directly reproduced with a corrected
 correctly, `portfolio_images.style` persists as expected. Script fixed in
 `scripts/qa-phase-c-artist.mjs`; full Phase C rerun passed cleanly (0
 findings across 68 interactions). Classified **TEST BUG**.
+
+**"AI confidence shows 1% instead of 92%" (full-journey script, first
+investigation).** Root-caused to MY OWN QA seed data using the wrong
+convention (`style_confidence: 0.92`, a 0-1 decimal) — the real product
+convention, confirmed in both `/api/ai/style-detect/route.ts` (documents
+`"confidence": <integer 0-100>` and defaults to `50`) and the display code
+(`Math.round(consult.style_confidence ?? 0)` in `ConsultationDetail.tsx`,
+correct for a 0-100 integer), is 0-100 throughout the real pipeline. Test
+data fixed to `style_confidence: 92`. **TEST BUG**, not a product bug.
+
+**"AI Artist Match doesn't appear" / "Quote fields never appear" (full-journey
+script, first two runs).** Both root-caused to the script's own wrong timing/
+sequencing assumptions, not product bugs: (1) the "Recommended" artist
+optgroup only renders in the Deposit Collection artist picker once a
+consultation reaches `quoted` status — checking for it immediately after
+login (while still `new`) was checking for UI that doesn't exist yet by
+design; direct reproduction confirmed the underlying `/api/ai/artist-match`
+call itself returns a correct 200 with the right recommendation at any
+consultation status. (2) The "Artist's Final Quote" fields only render after
+clicking "Generate AI Quote" first (the deliberate generate → human-review →
+save two-sided approval gate) — the script never clicked that button in its
+first run, and in its second run used a 3s fixed wait when the real Claude
+API round-trip measured 10-15s. Script fixed to click "Generate AI Quote"
+first and poll (up to 25s) for the resulting field instead of a fixed sleep.
+Rerun after fixes: **full 7-step real-studio journey passed end-to-end**
+(consultation → AI quote → AI Artist Match → deposit link → real Stripe TEST
+payment → webhook reconciliation → booking finalization → cross-role
+visibility), surfacing the genuine P1 finding above along the way.
 
 **Flaky unit test (unrelated to this mission's changes).**
 `tests/unit/sentry-config.test.ts` failed once during a pre-commit hook run

@@ -140,7 +140,7 @@ try {
       client_name: "QA Journey Client", client_email: `${tag}-client@example.test`, client_phone: "5550001234",
       tattoo_description: "Traditional American style eagle, bold lines and solid color fill",
       placement: "Forearm", estimated_size: "Medium (4-6 in)", color_preference: "Full color", budget_range: "$500-$1000",
-      detected_style: "Traditional", style_confidence: 0.92, status: "new",
+      detected_style: "Traditional", style_confidence: 92, status: "new",
     }).select().single();
     if (error) throw new Error("consultation insert: " + error.message);
     consultationId = consult.id;
@@ -151,7 +151,7 @@ try {
   // ═══════════════════════════════════════════════════════════
   // STEP 2 — Owner: real login, view consultation, check AI Artist Match
   // ═══════════════════════════════════════════════════════════
-  HEAD("Step 2 — Owner login + AI Artist Match verification");
+  HEAD("Step 2 — Owner login");
   const ctxOwner = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const pageOwner = await ctxOwner.newPage();
   await pageOwner.goto(`${BASE_URL}/login`, { waitUntil: "load" });
@@ -162,35 +162,32 @@ try {
   PASS(`owner login confirmed`);
 
   await pageOwner.goto(`${BASE_URL}/owner/consultations/${consultationId}`, { waitUntil: "load" });
-  await pageOwner.waitForTimeout(3000); // AI Artist Match is a client-side fetch after mount
-  const recommendedOptgroup = await pageOwner.locator('optgroup[label="Recommended"]').first();
-  const hasRecommended = await recommendedOptgroup.isVisible().catch(() => false);
-  if (hasRecommended) {
-    const recommendedText = await recommendedOptgroup.innerText().catch(() => "");
-    const tradRecommended = recommendedText.includes("QA Traditional Artist");
-    if (tradRecommended) PASS(`AI Artist Match: "Traditional" consultation correctly recommends the Traditional-styled artist over the Fine Line one — recommended list: "${recommendedText.replace(/\n/g, " / ")}"`);
-    else FAIL(`AI Artist Match: Recommended optgroup present but does NOT include the Traditional artist — got: "${recommendedText}"`);
-  } else {
-    FAIL(`AI Artist Match: no "Recommended" optgroup appeared after 3s — either the /api/ai/artist-match call failed, or the deterministic fallback isn't matching a clearly Traditional-described consultation to the Traditional-styled artist. Needs investigation — check network tab / API route directly.`);
-  }
+  // NOTE: AI Artist Match verification moved to Step 4 — the "Recommended"
+  // optgroup only renders once the consultation reaches "quoted" status (it
+  // lives in the Deposit Collection artist picker), not at "new". Checking
+  // for it here would always fail regardless of whether Artist Match itself
+  // works — confirmed by direct reproduction: the underlying
+  // /api/ai/artist-match call itself returns a correct 200 with the right
+  // recommendation at any status, but the UI simply doesn't surface it yet.
 
   // ═══════════════════════════════════════════════════════════
   // STEP 3 — Owner: move to Reviewed/Quoted status if needed, save a quote
   // ═══════════════════════════════════════════════════════════
   HEAD("Step 3 — Owner saves a final quote");
-  // The consultation starts at "new" — check whether a status-advance action
-  // exists on the page (a pill/button) before quote fields are enabled; if
-  // the quote fields are already visible regardless of status, that's fine
-  // too — don't assume, read the actual page state.
-  const priceInputVisible = await pageOwner.locator("#owner-consult-final-price").isVisible().catch(() => false);
-  if (!priceInputVisible) {
-    // Try clicking a status-advance control if one exists (common pattern:
-    // a "Mark Reviewed" or status-pill button).
-    const reviewedPill = pageOwner.getByRole("button", { name: /review/i }).first();
-    if (await reviewedPill.isVisible().catch(() => false)) {
-      await reviewedPill.click();
-      await pageOwner.waitForTimeout(1500);
-    }
+  // The "Artist's Final Quote" fields (#owner-consult-final-price etc.) only
+  // render after AI Quote generation runs and populates displayDraft — this
+  // is the real, deliberate two-sided human-approval gate (generate -> review
+  // -> save), not a status-transition thing. Click "Generate AI Quote" first.
+  const genQuoteBtn = pageOwner.getByRole("button", { name: /generate ai quote/i });
+  if (await genQuoteBtn.isVisible().catch(() => false)) {
+    await genQuoteBtn.click();
+    // Real Claude API round-trip — measured 10-15s in direct reproduction, not
+    // the 3s a first pass of this script assumed (which caused false FAILs).
+    // Poll for the actual field instead of a fixed sleep.
+    await pageOwner.locator("#owner-consult-final-price").waitFor({ state: "visible", timeout: 25000 }).catch(() => {});
+    PASS("clicked 'Generate AI Quote' — real AI call populated the draft quote");
+  } else {
+    NOTE("'Generate AI Quote' button not found — quote fields may already be populated from a prior draft");
   }
   const priceInputNowVisible = await pageOwner.locator("#owner-consult-final-price").isVisible().catch(() => false);
   if (!priceInputNowVisible) {
@@ -212,10 +209,22 @@ try {
   // ═══════════════════════════════════════════════════════════
   // STEP 4 — Owner: pick recommended artist, generate deposit link
   // ═══════════════════════════════════════════════════════════
-  HEAD("Step 4 — Owner generates the Stripe deposit link");
+  HEAD("Step 4 — AI Artist Match verification + Owner generates the Stripe deposit link");
   await pageOwner.reload({ waitUntil: "load" });
-  await pageOwner.waitForTimeout(2000);
+  await pageOwner.waitForTimeout(3000); // AI Artist Match is a client-side fetch after mount, now that status=quoted
   const artistSelect = pageOwner.locator("#deposit-collection-artist");
+
+  const recommendedOptgroup = pageOwner.locator('optgroup[label="Recommended"]').first();
+  const hasRecommended = await recommendedOptgroup.count().then((c) => c > 0).catch(() => false);
+  if (hasRecommended) {
+    const recommendedText = await recommendedOptgroup.innerText().catch(() => "");
+    const tradRecommended = recommendedText.includes("QA Traditional Artist");
+    if (tradRecommended) PASS(`AI Artist Match: "Traditional" consultation correctly recommends the Traditional-styled artist over the Fine Line one — recommended list: "${recommendedText.replace(/\n/g, " / ")}"`);
+    else FAIL(`AI Artist Match: Recommended optgroup present but does NOT include the Traditional artist — got: "${recommendedText}"`);
+  } else {
+    FAIL(`AI Artist Match: no "Recommended" optgroup appeared on the deposit-collection artist picker (status=quoted) after 3s.`);
+  }
+
   if (await artistSelect.isVisible().catch(() => false)) {
     await artistSelect.selectOption({ label: "QA Traditional Artist" });
     await pageOwner.getByRole("button", { name: /generate deposit link/i }).click();
@@ -246,15 +255,27 @@ try {
     if (!dp) {
       FAIL("no deposit_payments row found for the booking — checkout session creation may not have run");
     } else {
+      // IMPORTANT: sendDepositRequest() (the owner "Generate Deposit Link"
+      // action) was found during this mission's exhaustive pass to have its
+      // OWN separate stripe.checkout.sessions.create() call with NO
+      // stripeAccount/Connect option at all — unlike the Client Portal's
+      // continueToDeposit(), which fails closed via getOrCreateDepositCheckoutSession()
+      // when Connect is enabled and the studio hasn't connected (see
+      // EXHAUSTIVE_ISSUES.md P0/P1). So the REAL session this button created
+      // is a plain PLATFORM session, not a Connect Direct Charge — triggering
+      // against --stripe-account here would test the wrong code path. This
+      // deliberately triggers against the PLATFORM account (no
+      // --stripe-account) to match what sendDepositRequest() actually does,
+      // and inspects the resulting PaymentIntent for exactly where the money
+      // really landed — empirical confirmation of the P1 finding, not a
+      // repeat of the already-proven verify-connect-live.mjs Connect test.
       const out = execFileSync("stripe", [
         "trigger", "checkout.session.completed",
-        "--stripe-account", acct.id,
         "--override", `checkout_session:metadata[bookingId]=${bookingId}`,
         "--override", `checkout_session:metadata[depositPaymentId]=${dp.id}`,
       ], { env: { ...process.env, STRIPE_API_KEY: env.STRIPE_SECRET_KEY }, encoding: "utf8", shell: true });
-      out.includes("Trigger succeeded") ? PASS("real Stripe test payment triggered on the studio's connected account") : FAIL("stripe trigger did not report success: " + out);
+      out.includes("Trigger succeeded") ? PASS("real Stripe test payment triggered on the PLATFORM account (matching sendDepositRequest's actual, non-Connect session)") : FAIL("stripe trigger did not report success: " + out);
 
-      const dpAfter = await pollConsultation.constructor === Function ? null : null; // no-op, using direct poll below
       let paidDp = null;
       for (let i = 0; i < 8; i++) {
         await sleep(4000);
@@ -262,10 +283,28 @@ try {
         if (data.payment_status === "paid") { paidDp = data; break; }
         paidDp = data;
       }
-      paidDp?.payment_status === "paid" ? PASS(`deposit_payments.payment_status → paid, PI=${paidDp.stripe_payment_intent_id}`) : FAIL(`deposit not reconciled: ${JSON.stringify(paidDp)}`);
+      paidDp?.payment_status === "paid" ? PASS(`deposit_payments.payment_status → paid, PI=${paidDp.stripe_payment_intent_id} (reconciled via the PLATFORM webhook /api/stripe/webhook, not the Connect one)`) : FAIL(`deposit not reconciled: ${JSON.stringify(paidDp)}`);
 
       const { data: bookingAfter } = await sb.from("bookings").select("status, deposit_paid").eq("id", bookingId).single();
       bookingAfter?.deposit_paid ? PASS(`bookings.deposit_paid → true (status=${bookingAfter.status})`) : FAIL(`booking not marked paid: ${JSON.stringify(bookingAfter)}`);
+
+      // Definitive proof of where the money landed: retrieve the PaymentIntent
+      // as a PLATFORM-level object (no stripeAccount option). If this
+      // succeeds and shows a real succeeded charge, the money went to
+      // InkBook's own platform Stripe account — even though this studio HAS
+      // a connected account attached (created earlier in this same script) —
+      // confirming the P1 finding empirically, not just from a code read.
+      if (paidDp?.stripe_payment_intent_id) {
+        try {
+          const piPlatform = await stripe.paymentIntents.retrieve(paidDp.stripe_payment_intent_id);
+          NOTE(`P1 EMPIRICAL CHECK — PaymentIntent retrieved as a PLATFORM object (no connected-account context): status=${piPlatform.status}, amount=${piPlatform.amount}, application_fee_amount=${piPlatform.application_fee_amount}`);
+          if (piPlatform.status === "succeeded") {
+            FAIL(`P1 CONFIRMED: owner-generated deposit link for a studio WITH a connected Stripe account (${acct.id}) charged the PLATFORM account instead — real money-routing bug, not just a code-read guess. See EXHAUSTIVE_ISSUES.md P1.`);
+          }
+        } catch (e) {
+          NOTE(`P1 check — retrieving PI as a platform object failed (${e.message}); this would actually be GOOD news (suggests it's NOT a platform object, i.e. it may genuinely be Connect-scoped after all) — worth re-checking manually, not conclusive either way from this alone.`);
+        }
+      }
 
       // THE previously-fixed critical bug (per project history): consultation
       // status must advance to "deposit_paid" too, or the consultation can

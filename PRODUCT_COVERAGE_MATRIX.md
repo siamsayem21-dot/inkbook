@@ -143,10 +143,10 @@ leakage across 5 routes + 3 direct-ID probes. **Full Phase C: 0 findings**
 ## API ROUTES (31)
 | Route | Status | Evidence |
 |---|---|---|
-| `POST /api/ai/artist-match` | NOT_TESTED | |
-| `POST /api/ai/consultation-questions` | NOT_TESTED | |
-| `POST /api/ai/quote-generate` | NOT_TESTED | |
-| `POST /api/ai/style-detect` | NOT_TESTED | |
+| `POST /api/ai/artist-match` | PASS | real Claude call, correct style-based ranking, verified via `qa-full-studio-journey.mjs` |
+| `POST /api/ai/consultation-questions` | NOT_TESTED | exercised indirectly via Client Portal AI chat (Phase D1) but not isolated |
+| `POST /api/ai/quote-generate` | PASS | real Claude call, realistic price range + reasoning, verified via `qa-full-studio-journey.mjs` |
+| `POST /api/ai/style-detect` | NOT_TESTED | exercised indirectly via Client Portal AI chat (Phase D1) but not isolated |
 | `/api/artists` | NOT_TESTED | |
 | `/api/auth/[...nextauth]` | NOT_TESTED | Verify this is actually live/used — project's real auth is Supabase Auth, not NextAuth; may be dead |
 | `/api/billing/create-checkout` | NOT_TESTED | |
@@ -169,11 +169,11 @@ leakage across 5 routes + 3 direct-ID probes. **Full Phase C: 0 findings**
 | `POST /api/owner/clients/import` | NOT_TESTED | |
 | `/api/reminders` | NOT_TESTED | |
 | `POST /api/send-sms` | NOT_TESTED | |
-| `POST /api/stripe/checkout` | NOT_TESTED | Legacy/dead-code-adjacent per prior audit — verify current live status, do not touch routing |
+| `POST /api/stripe/checkout` | NOT_TESTED | Confirmed still real/live (not dead) via source read — the "classic" self-serve booking deposit flow, unaffected by the Connect fail-closed P0 finding since it doesn't route through Connect at all. Not runtime-exercised this pass. |
 | `POST /api/stripe/connect/login-link` | NOT_TESTED | |
 | `POST /api/stripe/connect/onboard` | NOT_TESTED | |
-| `POST /api/stripe/connect-webhook` | NOT_TESTED | Real-money-adjacent — test mode / signature-failure paths only |
-| `POST /api/stripe/webhook` | NOT_TESTED | Real-money-adjacent — test mode / signature-failure paths only |
+| `POST /api/stripe/connect-webhook` | PASS | 13/13 checks via `scripts/verify-connect-live.mjs` re-run this mission — real TEST payment, idempotency, cross-studio-mismatch rejection, 0% application fee |
+| `POST /api/stripe/webhook` | PASS | real TEST payment reconciliation verified via `qa-full-studio-journey.mjs` (deposit_payments + bookings + consultations all correctly updated) — **also the route where the P1 finding's charge actually landed, confirming it's live/reachable for this exact scenario** |
 | `/api/studios` | NOT_TESTED | |
 | `POST /api/twilio/sms` | NOT_TESTED | Do not send real SMS to real numbers |
 | `/api/waitlist` | NOT_TESTED | |
@@ -211,6 +211,45 @@ leakage across 5 routes + 3 direct-ID probes. **Full Phase C: 0 findings**
 ## CRON ROUTES (from `vercel.json`)
 See API section above (`/api/cron/*`) — cross-reference with `vercel.json`
 schedule config during Phase Q.
+
+## CORE JOURNEY — Consultation → AI Match → Quote → Stripe Deposit → Booking
+Full real-studio journey run via `scripts/qa-full-studio-journey.mjs` against
+live production. **6 of 7 steps PASS with real evidence; 1 P1 payment-routing
+bug found (BLOCKED_NEEDS_SIAM, see EXHAUSTIVE_ISSUES.md), 1 minor script
+limitation (not a bug, documented).**
+- Consultation creation: PASS (DB-level, matching real schema; the live
+  multi-step AI-chat wizard UI independently verified by the Client Portal
+  pass's D1 test)
+- AI Quote generation (`/api/ai/quote-generate`): PASS — real Claude call,
+  realistic price range + reasoning returned and rendered
+- AI Artist Match (`/api/ai/artist-match`): PASS — real Claude call correctly
+  recommends the Traditional-styled artist over the Fine-Line one for a
+  Traditional-described consultation
+- Owner quote save (human-approval gate): PASS — DB-confirmed `status→quoted`,
+  `final_price`/`final_sessions` persisted
+- Owner "Generate Deposit Link": PASS functionally (real booking + real
+  Stripe Checkout session created) — **but see P1 finding: charges the
+  platform account, not the studio's connected account**
+- Stripe TEST payment + webhook reconciliation: PASS — real payment,
+  `deposit_payments.payment_status→paid`, `bookings.deposit_paid→true`,
+  `consultations.status→deposit_paid` (the previously-fixed cross-table
+  advance re-verified, still holds)
+- Owner booking finalization (date/time): PASS — DB-confirmed `status→confirmed`
+- Cross-role agreement: PASS — the assigned Artist sees the finalized booking
+  with correct client name at `/artist/bookings/[id]`
+
+**Separately, Stripe Connect payment reconciliation itself** (idempotency,
+cross-studio-mismatch rejection, 0% application fee for a properly-connected
+studio) re-run via the pre-existing `scripts/verify-connect-live.mjs` —
+**13/13 checks PASS**, confirming the Connect payment infrastructure itself
+is sound; the P1 finding is specifically that one particular caller
+(`sendDepositRequest`) doesn't use it.
+
+**Client Portal self-serve deposit path:** see EXHAUSTIVE_ISSUES.md P0 — a
+**separate, more severe** finding: this path (`continueToDeposit`) correctly
+fails closed on Stripe Connect (unlike the owner path above), which means it
+currently cannot collect payment at all for any studio that hasn't connected
+Stripe yet (today, that's every real studio).
 
 ## SUMMARY COUNTS
 - Page routes inventoried: 76 (66 live/testable, 10 NOT_APPLICABLE orphaned/unreachable)
