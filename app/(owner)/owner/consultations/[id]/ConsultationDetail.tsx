@@ -9,6 +9,7 @@ import {
   startConsultationDeposit,
 } from "@/app/book/[studio]/consult/actions";
 import { sendDepositRequest } from "@/app/(owner)/owner/bookings/[bookingId]/actions";
+import PaymentSetupNotice from "@/components/owner/PaymentSetupNotice";
 import { formatDateTime } from "@/lib/utils";
 import {
   STAGE_MAP,
@@ -926,7 +927,7 @@ export default function ConsultationDetail({
                   {depositLinkLoading ? "Generating link…" : "Generate Deposit Link"}
                 </button>
                 {depositLinkError && (
-                  <p className="text-red-600 text-xs">{depositLinkError}</p>
+                  <PaymentSetupNotice message={depositLinkError} className="text-red-600 text-xs" />
                 )}
               </div>
             ) : (

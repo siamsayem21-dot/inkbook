@@ -3,7 +3,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudioId, getCurrentUser } from "@/lib/auth/config";
 import { logAuditEvent } from "@/lib/audit-log";
-import { getStripe } from "@/lib/stripe/client";
 import { revalidatePath } from "next/cache";
 import { buildSmsMessage, trySendSms } from "@/lib/twilio/client";
 import { sendSessionScheduledEmail, sendBookingCancelledEmail, sendAftercareEmail } from "@/lib/email";
@@ -12,6 +11,7 @@ import { getBookingTotalCents, getBalanceDueCents } from "@/lib/booking-balance"
 import { isAtMonthlyCap } from "@/lib/waitlist";
 import { sendRemainderPaymentRequest } from "@/lib/remainder-payment";
 import { isWithinConflictBuffer, isDateUnavailable } from "@/lib/booking-conflict";
+import { getOrCreateDepositCheckoutSession } from "@/lib/stripe/deposit-checkout";
 
 export async function cancelBooking(bookingId: string): Promise<{ error?: string }> {
   const studioId = await getStudioId();
@@ -385,136 +385,45 @@ export async function sendDepositRequest(
   const artistName = booking.artists?.name ?? "Artist";
   const clientEmail = booking.clients?.email;
 
-  // ── 2. Reuse existing open Stripe session if one exists ───────────────────
-  // Run a filtered query for this booking's pending record with a session
-  const { data: existingRows } = (await supabase
-    .from("deposit_payments" as never)
-    .select("id, stripe_checkout_session_id")
-    .eq("booking_id", bookingId)
-    .eq("payment_type", "deposit")
-    .eq("payment_status", "pending")
-    .not("stripe_checkout_session_id", "is", null)
-    .order("created_at", { ascending: false })
-    .limit(1)) as { data: Array<{ id: string; stripe_checkout_session_id: string }> | null };
-
-  let depositPaymentId: string | null = null;
-
-  if (existingRows && existingRows.length > 0) {
-    const row = existingRows[0];
-    depositPaymentId = row.id;
-
-    // Check if the Stripe session is still open
-    try {
-      const stripe = getStripe();
-      const session = await stripe.checkout.sessions.retrieve(row.stripe_checkout_session_id);
-      if (session.url && session.status === "open") {
-        return { checkoutUrl: session.url };
-      }
-      // Session expired — clear it and fall through to create a fresh one
-      await supabase
-        .from("deposit_payments" as never)
-        .update({ stripe_checkout_session_id: null } as never)
-        .eq("id", row.id);
-    } catch {
-      // Stripe retrieval failed — fall through to create a new session
-    }
-  }
-
-  // ── 3. Create deposit_payment row if none exists yet ──────────────────────
-  if (!depositPaymentId) {
-    const { data: pendingRows } = (await supabase
-      .from("deposit_payments" as never)
-      .select("id")
-      .eq("booking_id", bookingId)
-      .eq("payment_type", "deposit")
-      .eq("payment_status", "pending")
-      .order("created_at", { ascending: false })
-      .limit(1)) as { data: Array<{ id: string }> | null };
-
-    if (pendingRows && pendingRows.length > 0) {
-      depositPaymentId = pendingRows[0].id;
-    } else {
-      const { data: inserted, error: insertError } = (await supabase
-        .from("deposit_payments" as never)
-        .insert({
-          booking_id: bookingId,
-          amount_cents: booking.deposit_amount_cents,
-          payment_status: "pending",
-          payment_type: "deposit",
-        } as never)
-        .select("id")
-        .single()) as { data: { id: string } | null; error: unknown };
-
-      if (insertError || !inserted) {
-        console.error("[sendDepositRequest] insert failed:", insertError);
-        return { error: "Failed to create deposit payment record" };
-      }
-      depositPaymentId = inserted.id;
-    }
-  }
-
-  // ── 4. Create Stripe Checkout Session ─────────────────────────────────────
-  let stripe;
-  try {
-    stripe = getStripe();
-  } catch {
-    return { error: "Stripe is not configured. Add STRIPE_SECRET_KEY to your environment." };
-  }
-
+  // ── 2. Create/reuse the Checkout Session via the shared, Connect-aware
+  // helper ─────────────────────────────────────────────────────────────────
+  // Previously this hand-rolled its own stripe.checkout.sessions.create()
+  // call with no Stripe Connect awareness at all — it always charged
+  // InkBook's platform account, even for a studio with its own connected
+  // account (confirmed empirically as a P1 finding during the exhaustive QA
+  // mission, 2026-08). Fixed per Siam's approved decision (2026-08-26): this
+  // now goes through getOrCreateDepositCheckoutSession(), the exact same
+  // fail-closed, Connect-aware helper the Client Portal self-serve path
+  // already uses — a studio without a connected account gets
+  // PAYMENT_SETUP_REQUIRED_ERROR (no platform-account fallback, ever), and a
+  // connected studio's deposit routes as a Direct Charge to that studio's
+  // own account. The special post-payment redirect this action needs (to
+  // the classic booking flow's consent page, not the owner dashboard) is
+  // preserved by passing it as successUrl/cancelUrl — the helper already
+  // supports arbitrary caller-supplied redirect targets for exactly this
+  // reason (see its own doc comment: "shared by the owner's 'send deposit
+  // link' action and the client portal's self-serve 'pay deposit' action").
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL ??
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
 
-  let session;
-  try {
-    session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      ...(clientEmail ? { customer_email: clientEmail } : {}),
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: `Tattoo deposit — ${artistName}`,
-              description: `${studioName} · Non-refundable on no-show or late cancellation`,
-            },
-            unit_amount: booking.deposit_amount_cents,
-          },
-          quantity: 1,
-        },
-      ],
-      mode: "payment",
-      // After payment, send the client to the consent form page.
-      // Fall back to the owner dashboard only if the studio subdomain is unavailable.
-      success_url: studioSubdomain
-        ? `${baseUrl}/book/${studioSubdomain}/${booking.artist_id}/book/consent?booking_id=${bookingId}`
-        : `${baseUrl}/owner/bookings/${bookingId}?deposit=paid`,
-      cancel_url: studioSubdomain
-        ? `${baseUrl}/book/${studioSubdomain}/${booking.artist_id}/book/deposit?booking_id=${bookingId}&cancelled=true`
-        : `${baseUrl}/owner/bookings/${bookingId}?deposit=cancelled`,
-      metadata: {
-        bookingId,
-        depositPaymentId,
-      },
-    });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    console.error("[sendDepositRequest] Stripe session creation failed:", msg);
-    return { error: `Stripe error: ${msg}` };
-  }
+  const result = await getOrCreateDepositCheckoutSession({
+    bookingId,
+    depositAmountCents: booking.deposit_amount_cents,
+    artistId: booking.artist_id,
+    artistName,
+    studioName,
+    clientEmail,
+    successUrl: studioSubdomain
+      ? `${baseUrl}/book/${studioSubdomain}/${booking.artist_id}/book/consent?booking_id=${bookingId}`
+      : `${baseUrl}/owner/bookings/${bookingId}?deposit=paid`,
+    cancelUrl: studioSubdomain
+      ? `${baseUrl}/book/${studioSubdomain}/${booking.artist_id}/book/deposit?booking_id=${bookingId}&cancelled=true`
+      : `${baseUrl}/owner/bookings/${bookingId}?deposit=cancelled`,
+  });
 
-  // ── 5. Persist stripe_checkout_session_id ────────────────────────────────
-  const { error: updateError } = await supabase
-    .from("deposit_payments" as never)
-    .update({ stripe_checkout_session_id: session.id } as never)
-    .eq("id", depositPaymentId);
-
-  if (updateError) {
-    console.error("[sendDepositRequest] failed to save session id:", updateError);
-    // Still return the URL — the user can proceed, webhook will reconcile later
-  }
-
-  return { checkoutUrl: session.url! };
+  if (result.error) return { error: result.error };
+  return { checkoutUrl: result.checkoutUrl };
 }
 
 // Generates (or reuses) a Stripe Checkout link for the remaining balance on

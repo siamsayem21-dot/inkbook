@@ -3,6 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ensureClientAccount } from "@/lib/auth/config";
 import { getOrCreateDepositCheckoutSession, capDepositAmountCents } from "@/lib/stripe/deposit-checkout";
+import { clientFacingPaymentError } from "@/lib/stripe/connect";
 import { getOrCreateThread } from "@/lib/messaging/threads";
 import { getBalanceDueCents } from "@/lib/booking-balance";
 
@@ -261,7 +262,7 @@ export async function continueToDeposit(projectId: string): Promise<{ checkoutUr
     cancelUrl: `${baseUrl}${returnPath}?checkout=cancelled`,
   });
 
-  if (result.error) return { error: result.error };
+  if (result.error) return { error: clientFacingPaymentError(result.error) };
   return { checkoutUrl: result.checkoutUrl };
 }
 
@@ -386,7 +387,7 @@ export async function payRemainderBalance(bookingId: string): Promise<{ checkout
     cancelUrl: `${baseUrl}${returnPath}?checkout=cancelled`,
   });
 
-  if (result.error) return { error: result.error };
+  if (result.error) return { error: clientFacingPaymentError(result.error) };
   return { checkoutUrl: result.checkoutUrl };
 }
 

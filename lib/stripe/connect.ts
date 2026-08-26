@@ -72,3 +72,18 @@ export async function getStudioConnectStatus(
 // "do not attempt to charge anyone," never "fall back to some other
 // account."
 export const PAYMENT_SETUP_REQUIRED_ERROR = "payment_setup_required";
+
+// Client-facing translation of PAYMENT_SETUP_REQUIRED_ERROR — a real client
+// was previously shown the raw internal error string verbatim (confirmed
+// during the exhaustive QA mission's live reproduction, 2026-08). A client
+// has no way to act on this themselves (only the studio owner can connect
+// Stripe), so this is a plain explanation, not an actionable CTA — compare
+// the owner-facing side (BookingActions.tsx / ConsultationDetail.tsx),
+// which renders a real link to Settings > Billing for the same error code.
+// Any other error string is passed through unchanged.
+export function clientFacingPaymentError(error: string): string {
+  if (error === PAYMENT_SETUP_REQUIRED_ERROR) {
+    return "This studio hasn't finished setting up online payments yet. Please contact them directly to arrange your deposit.";
+  }
+  return error;
+}

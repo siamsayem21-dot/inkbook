@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { cancelBooking, sendDepositRequest, assignSchedule, markCompleted, requestRemainderPayment } from "./actions";
+import PaymentSetupNotice from "@/components/owner/PaymentSetupNotice";
 
 type ConsentForm = {
   id: string;
@@ -292,7 +293,7 @@ export default function BookingActions({
               </p>
             </div>
           )}
-          {remainderError && <p className="text-sm text-red-600 mt-3">{remainderError}</p>}
+          {remainderError && <PaymentSetupNotice message={remainderError} className="text-sm text-red-600 mt-3" />}
         </div>
       )}
 
@@ -407,7 +408,7 @@ export default function BookingActions({
         )}
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <PaymentSetupNotice message={error} />}
 
       {showConsent && consentForm && (
         <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-5 space-y-4">
