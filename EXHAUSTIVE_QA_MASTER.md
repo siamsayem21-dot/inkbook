@@ -134,30 +134,46 @@ this mission passed clean.
   final regressions (Sections 49-54), final build/test gate (55), final
   report (61)
 
-## BUG COUNT
-P0: 1 found / 0 fixed / 1 remaining — Client Portal self-serve deposit/
-remainder payment fails closed for every real studio (Stripe Connect not yet
-connected by any studio). BLOCKED_NEEDS_SIAM — real-money routing change,
-mission hard gate forbids fixing without Siam approval on the rollout
-decision. See EXHAUSTIVE_ISSUES.md line ~37.
-P1: 2 found / 0 fixed / 2 remaining —
-(1) Owner "Generate Deposit Link" (`sendDepositRequest`) charges InkBook's
-platform Stripe account instead of the connected studio's account
-(empirically confirmed via a real TEST-mode PaymentIntent). BLOCKED_NEEDS_SIAM
-— real-money routing change, mission hard gate. See EXHAUSTIVE_ISSUES.md
-line ~109.
+## BUG COUNT (updated 2026-08-26 — Siam approved + directed resolution of all 3 BLOCKED_NEEDS_SIAM items)
+P0: 1 found / 1 fixed / 0 remaining — Client Portal self-serve deposit
+showed the raw internal error `payment_setup_required` to real clients on
+an unconnected studio. Siam's approved fix (Option 2 from the original
+finding): keep the fail-closed guarantee exactly as-is, translate the
+error into a clear client-facing sentence. **FIXED → DEPLOYED
+(commit `4ee18db`, master, production) → RETESTED PASS** — 27/27 checks
+against live production, 0 findings. See EXHAUSTIVE_ISSUES.md line ~37.
+P1: 2 found / 2 fixed / 0 remaining —
+(1) Owner "Generate Deposit Link" (`sendDepositRequest`) charged InkBook's
+platform Stripe account instead of the connected studio's account.
+**FIXED** — refactored to use the same Connect-aware
+`getOrCreateDepositCheckoutSession()` helper the Client Portal path already
+used, plus a real "Connect Stripe in Settings" link replacing raw error
+text. **DEPLOYED → RETESTED PASS** (same 27/27 run as the P0 above — both
+findings share one fix, one deploy, one verification pass). See
+EXHAUSTIVE_ISSUES.md line ~109.
 (2) `cron/sms-reminders` has sent ZERO appointment reminders (SMS AND email)
 in production since the email-reminder feature deployed — a missing
 migration (`20260802000000_appointment_reminder_email.sql` never applied)
 causes its main query to fail on every invocation, silently swallowed, cron
 returns HTTP 200 with `{sent48hr:0,sentDayOf:0}` every single run.
-BLOCKED_NEEDS_SIAM — production schema DDL requires Siam approval per this
-mission's hard gate, even though the fix itself (2 nullable boolean
-columns, already written, idempotent) is trivially safe. See
+**Migration inspected and confirmed additive/minimal/non-destructive.
+BLOCKED_NEEDS_SIAM to physically apply it** — this session has no
+`SUPABASE_ACCESS_TOKEN`/DB connection string/Supabase CLI link (a
+pre-existing, previously-documented constraint — migrations in this
+project have always been hand-run via the Supabase SQL Editor). Siam has
+been asked to run the exact statement and confirmed they would; awaiting
+confirmation before the final reminder regression can run. See
 EXHAUSTIVE_ISSUES.md, "Automations/Cron" section.
 P2: 1 found / 1 fixed / 0 remaining (`/owner/artists/new` dead static form,
 fixed to redirect, retested PASS)
 P3: 0 found / 0 fixed / 0 remaining
+
+**Architectural follow-up surfaced during P1 payment-routing retesting
+(2026-08-26), not fixed — outside this approval's explicit scope:**
+`app/api/stripe/webhook/route.ts`'s deposit-payment handler never
+cross-checks the incoming webhook event's originating Stripe account
+against the studio's own connected-account id — see EXHAUSTIVE_ISSUES.md's
+P1 entry for the full writeup and exact exploit shape.
 
 ## COVERAGE SNAPSHOT
 DESKTOP: Auth/Artist/Client/Owner (both parts)/Public covered (~75%) | MOBILE:

@@ -205,7 +205,7 @@ items not blocking).
 | `app/(owner)/owner/artists/actions.ts` | PASS | `scripts/qa-phase-b-owner.mjs` — invite/resend/cancel/remove all DB-verified |
 | `app/(owner)/owner/audit-log/actions.ts` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B22 — `getAuditLogEntries` filter param DB-verified |
 | `app/(owner)/owner/blacklist/actions.ts` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B18 — add/remove DB+audit_log-verified, plus a real negative booking-API test |
-| `app/(owner)/owner/bookings/[bookingId]/actions.ts` | PASS (sendDepositRequest — see P1 finding) | `scripts/qa-full-studio-journey.mjs` — real invocation surfaced the P1 wrong-Stripe-account bug (EXHAUSTIVE_ISSUES.md); other actions in this file (assignSchedule, markCompleted) not yet independently exercised from the Owner side |
+| `app/(owner)/owner/bookings/[bookingId]/actions.ts` | PASS | `sendDepositRequest` originally surfaced the P1 wrong-Stripe-account bug via `scripts/qa-full-studio-journey.mjs`; **fixed 2026-08-26** (refactored to `getOrCreateDepositCheckoutSession`), deployed, retested via `scripts/qa-payment-routing-fix-verify.mjs` (27/27, 0 findings). `assignSchedule`/`markCompleted` exercised functionally elsewhere in this mission (Owner Bookings testing), not independently re-isolated here |
 | `app/(owner)/owner/flash/actions.ts` | NOT_TESTED | (owner's Flash page is a read-only cross-artist view by design — see page.tsx comment; if this file exposes any owner-side mutation it hasn't been clicked yet) |
 | `app/(owner)/owner/knowledge/actions.ts` | PASS | `scripts/qa-phase-b-owner-part2.mjs` B21 — create/toggle/edit/delete all DB-verified |
 | `app/(owner)/owner/messages/actions.ts` | PASS | Cross-role verified via `scripts/qa-phase-d-client.mjs` (owner receive+reply confirmed real-time) |
@@ -219,7 +219,7 @@ items not blocking).
 | `app/client-portal/[studio]/my-profile/actions.ts` | NOT_APPLICABLE | Belongs to the orphaned prototype tree |
 | `app/portal/[studio]/consultation/actions.ts` | NOT_TESTED |
 | `app/portal/[studio]/messages/actions.ts` | NOT_TESTED |
-| `app/portal/[studio]/projects/[id]/actions.ts` | NOT_TESTED |
+| `app/portal/[studio]/projects/[id]/actions.ts` | PASS | `acceptQuote`/`continueToDeposit`/`askQuoteQuestion`/`payRemainderBalance` all exercised across Phase D (Client Portal) and the P0 fix verification (`scripts/qa-payment-routing-fix-verify.mjs` Tests 5-6) — `continueToDeposit`/`payRemainderBalance` now translate `PAYMENT_SETUP_REQUIRED_ERROR` into a clear client-facing message (fixed 2026-08-26) |
 | `app/portal/[studio]/settings/actions.ts` | NOT_TESTED |
 
 ## CRON ROUTES (from `vercel.json`)
@@ -228,9 +228,9 @@ schedule config during Phase Q.
 
 ## CORE JOURNEY — Consultation → AI Match → Quote → Stripe Deposit → Booking
 Full real-studio journey run via `scripts/qa-full-studio-journey.mjs` against
-live production. **6 of 7 steps PASS with real evidence; 1 P1 payment-routing
-bug found (BLOCKED_NEEDS_SIAM, see EXHAUSTIVE_ISSUES.md), 1 minor script
-limitation (not a bug, documented).**
+live production. **All 7 steps PASS with real evidence** (updated
+2026-08-26 — the payment-routing bug found during this journey is now
+fixed, deployed, and independently retested; see below).
 - Consultation creation: PASS (DB-level, matching real schema; the live
   multi-step AI-chat wizard UI independently verified by the Client Portal
   pass's D1 test)
@@ -241,9 +241,10 @@ limitation (not a bug, documented).**
   Traditional-described consultation
 - Owner quote save (human-approval gate): PASS — DB-confirmed `status→quoted`,
   `final_price`/`final_sessions` persisted
-- Owner "Generate Deposit Link": PASS functionally (real booking + real
-  Stripe Checkout session created) — **but see P1 finding: charges the
-  platform account, not the studio's connected account**
+- Owner "Generate Deposit Link": **PASS** (real booking + real Stripe
+  Checkout session created, now correctly routed to the studio's own
+  connected account — see the P1 fix below; originally found charging the
+  platform account, fixed 2026-08-26)
 - Stripe TEST payment + webhook reconciliation: PASS — real payment,
   `deposit_payments.payment_status→paid`, `bookings.deposit_paid→true`,
   `consultations.status→deposit_paid` (the previously-fixed cross-table
@@ -252,18 +253,28 @@ limitation (not a bug, documented).**
 - Cross-role agreement: PASS — the assigned Artist sees the finalized booking
   with correct client name at `/artist/bookings/[id]`
 
-**Separately, Stripe Connect payment reconciliation itself** (idempotency,
+**Stripe Connect payment reconciliation itself** (idempotency,
 cross-studio-mismatch rejection, 0% application fee for a properly-connected
 studio) re-run via the pre-existing `scripts/verify-connect-live.mjs` —
 **13/13 checks PASS**, confirming the Connect payment infrastructure itself
-is sound; the P1 finding is specifically that one particular caller
-(`sendDepositRequest`) doesn't use it.
+is sound.
 
-**Client Portal self-serve deposit path:** see EXHAUSTIVE_ISSUES.md P0 — a
-**separate, more severe** finding: this path (`continueToDeposit`) correctly
-fails closed on Stripe Connect (unlike the owner path above), which means it
-currently cannot collect payment at all for any studio that hasn't connected
-Stripe yet (today, that's every real studio).
+**P0/P1 payment-routing fix (2026-08-26) — FIXED, DEPLOYED, RETESTED:**
+Both the Client Portal self-serve path (`continueToDeposit`/
+`payRemainderBalance`, P0) and the Owner-initiated path (`sendDepositRequest`,
+P1) now share identical, correct Connect-aware routing via
+`getOrCreateDepositCheckoutSession()`. Full proof via
+`scripts/qa-payment-routing-fix-verify.mjs` against live production —
+**27/27 checks, 0 findings**: unconnected studios fail closed on both
+paths with a clear message (never the raw error, never a platform-account
+fallback); 2 real verified Stripe TEST connected accounts each route
+correctly to their own account only (confirmed not retrievable from the
+platform or the other studio's account, in both directions, on both
+paths); a real double-click race stays idempotent; a real Stripe TEST
+payment reconciles correctly with 0% application fee; webhook retries are
+idempotent; a cross-studio mismatch event does not corrupt an already-paid
+record. See `EXHAUSTIVE_ISSUES.md`'s P0/P1 entries for the full breakdown
+and the one architectural follow-up surfaced (not fixed, out of scope).
 
 ## SUMMARY COUNTS
 - Page routes inventoried: 76 (66 live/testable, 10 NOT_APPLICABLE orphaned/unreachable)

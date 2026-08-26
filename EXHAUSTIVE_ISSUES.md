@@ -34,7 +34,7 @@ Siam production-approval gate as the rest of this mission's fixes.
 
 ---
 
-## [P0] Client Portal self-serve deposit/remainder payment is completely broken for every real studio right now (Stripe Connect fail-closed, no studio has connected yet)
+## [P0 — FIXED 2026-08-26] Client Portal self-serve deposit/remainder payment showed a raw internal error to real clients on unconnected studios
 **Route/action:** `continueToDeposit()` and `payRemainderBalance()` in
 `app/portal/[studio]/projects/[id]/actions.ts`, via the shared
 `getOrCreateDepositCheckoutSession()` in `lib/stripe/deposit-checkout.ts`.
@@ -101,12 +101,30 @@ even that cosmetic layer without Siam's decision on the underlying business
 question, since changing the error message without deciding the real
 behavior risks masking the more important issue.
 
-**Status:** **BLOCKED_NEEDS_SIAM.** Not fixed. QA data cleaned up and
-re-confirmed gone. Every other independent QA phase continued despite this
-finding, per the mission's own "document + defer that piece + continue
-everything else" rule.
+**Status:** **FIXED → DEPLOYED → RETESTED, PASS (2026-08-26).** Siam's
+approved decision was Option 2 above: keep the fail-closed guarantee
+exactly as-is (a studio without a connected Stripe account must never
+charge anyone), and fix the actual bug — the raw internal error string
+shown to a real client.
 
-## [P1] CONFIRMED (empirically, not just code-read): Owner-initiated "Generate Deposit Link" charges InkBook's platform account instead of the studio's own connected Stripe account
+**Fix:** `continueToDeposit()` and `payRemainderBalance()`
+(`app/portal/[studio]/projects/[id]/actions.ts`) now translate
+`PAYMENT_SETUP_REQUIRED_ERROR` via a new `clientFacingPaymentError()`
+helper (`lib/stripe/connect.ts`) into: *"This studio hasn't finished
+setting up online payments yet. Please contact them directly to arrange
+your deposit."* No fallback behavior changed — a studio without Connect
+still cannot be charged, by anyone, ever.
+
+**Deployed to production** (commit `4ee18db`, merged `feature/exhaustive-qa`
+→ `master`, pushed, Vercel deployment confirmed `Ready` and live —
+`Age: 0` on `www.inkbook.tech` immediately after). **Retested against live
+production** via `scripts/qa-payment-routing-fix-verify.mjs` (27 checks,
+0 findings) — Test 5 directly confirms: a real client hitting this exact
+path on an unconnected studio sees the clear message, never the raw
+`payment_setup_required` string. See the P1 finding below for the fuller
+verification suite (both findings share one fix + one test run).
+
+## [P1 — FIXED 2026-08-26] Owner-initiated "Generate Deposit Link" charged InkBook's platform account instead of the studio's own connected Stripe account
 **Route/action:** `sendDepositRequest()` in
 `app/(owner)/owner/bookings/[bookingId]/actions.ts` (called from the owner's
 "Generate Deposit Link" button on a consultation's Deposit Collection panel).
@@ -148,13 +166,79 @@ not the studio's connected account, for a studio that has genuinely
 connected Stripe. This is Stripe TEST mode only; no real card, no real
 money, matching this mission's payment-testing safety rules throughout.
 
-**Status:** **BLOCKED_NEEDS_SIAM** — confirmed real, not a code-read guess.
-Needs Siam's decision on the fix (migrate `sendDepositRequest` to use the
-same `getOrCreateDepositCheckoutSession` helper the Client Portal path uses,
-so both paths route through Connect consistently — the obvious fix, but a
-real-money Stripe-routing code change is exactly this mission's hard
-safety gate, so it's not something to change autonomously even though the
-fix itself looks straightforward). Not touched, not fixed, no code changed.
+**Status:** **FIXED → DEPLOYED → RETESTED, PASS (2026-08-26).** Siam
+explicitly approved exactly the fix this finding already identified as
+obvious: `sendDepositRequest()` (`app/(owner)/owner/bookings/[bookingId]/
+actions.ts`) was refactored to call the same `getOrCreateDepositCheckoutSession()`
+helper the Client Portal path already used, instead of hand-rolling its own
+Connect-unaware `stripe.checkout.sessions.create()` call. Its special
+post-payment redirect (to the classic flow's consent page, not the owner
+dashboard) is preserved via the helper's existing `successUrl`/`cancelUrl`
+parameters — no behavior change there. A new `PaymentSetupNotice`
+component (`components/owner/PaymentSetupNotice.tsx`) also replaced the
+raw error text with a real "Connect Stripe in Settings" link
+(→ `/owner/settings/billing`) wherever an owner hits this same fail-closed
+path, satisfying Siam's explicit requirement that "Owner should be directed
+to connect Stripe from the appropriate settings/onboarding flow."
+
+**Deployed to production** (commit `4ee18db`, merged `feature/exhaustive-qa`
+→ `master`, pushed, Vercel deployment confirmed `Ready`, live —
+`Age: 0` on `www.inkbook.tech` immediately after).
+
+**Retested against live production**, real Stripe TEST mode, via
+`scripts/qa-payment-routing-fix-verify.mjs` — **27 checks, 0 findings**,
+covering every item on Siam's required-proof list:
+- Unconnected studio: owner "Generate Deposit Link" correctly fails closed
+  with the clear message + real Settings link (not the raw error), and
+  **zero Stripe Checkout Session is ever created** — no platform-account
+  fallback occurs (Test 1).
+- Unconnected studio, client path: `continueToDeposit()` shows the clear
+  translated message, never the raw error string (Test 5).
+- Connected Studio A: a real session is created and retrievable **only**
+  under Studio A's own connected account — confirmed NOT retrievable from
+  the platform account, and NOT retrievable under Studio B's account
+  (Test 2).
+- Connected Studio B: same proof, the other direction — retrievable only
+  under its own account, not Studio A's, not the platform's (Test 3).
+- Connected Studio A, client path: `continueToDeposit()` also routes
+  correctly to Studio A's own account, not the platform (Test 6) — proving
+  both the owner-initiated and client-initiated paths now share identical,
+  correct Connect-aware routing.
+- A real rapid double-click race on a fresh booking produces exactly one
+  `deposit_payments` row / one Stripe session, never two (Test 4) — the
+  shared helper's pre-existing reuse logic, unchanged by this fix, holds.
+- A real Stripe TEST payment completed on Studio A's own connected
+  account, delivered via a real webhook, correctly reconciles
+  `deposit_payments.payment_status → paid`, `bookings.deposit_paid → true`
+  (`status → confirmed`), records the real `stripe_payment_intent_id`, and
+  the resulting PaymentIntent has `application_fee_amount: null` —
+  InkBook took 0%, the studio kept 100% (Test 7).
+- Re-triggering the identical webhook event a second time is fully
+  idempotent — `payment_status` stays `paid`, `paid_at` is byte-for-byte
+  unchanged, not just coincidentally the same value (Test 8).
+- A cross-studio mismatch (a webhook event fired on Studio B's account,
+  with metadata claiming Studio A's `depositPaymentId`) does not corrupt
+  Studio A's already-paid record — its `deposit_payments` row is
+  byte-for-byte unchanged after the mismatch attempt (Test 9).
+- All QA data (2 real Stripe TEST connected accounts, 3 synthetic studios,
+  bookings, deposit_payments) confirmed fully cleaned up afterward.
+
+**Architectural observation surfaced during Test 9, not fixed (explicitly
+out of this approval's scope — "do not redesign unrelated Stripe
+architecture"):** `app/api/stripe/webhook/route.ts`'s `handleDepositPayment()`
+never cross-checks the incoming event's originating Stripe account
+(`event.account`) against the studio's own `stripe_connected_account_id` —
+it trusts `session.metadata.depositPaymentId` alone. Test 9 passed only
+because Studio A's deposit was already marked `paid`, so the webhook's own
+idempotency short-circuit (`payment_status === 'paid'` → no-op) absorbed
+the mismatched event before any account-mismatch logic would even matter.
+An *unpaid* `deposit_payments` row targeted this way would not be
+protected by that same short-circuit — a connected-account holder (or
+anyone who can trigger a webhook event on their own account with guessed/
+leaked metadata) could in principle mark someone else's deposit as paid
+without any money actually moving on the correct account. Flagged for
+Siam's awareness as a genuine follow-up hardening item, not addressed
+here.
 
 ---
 
