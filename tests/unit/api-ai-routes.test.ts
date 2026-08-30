@@ -1,4 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+// These routes transitively import lib/studio-knowledge.ts, which wraps a
+// getStudioId() import in React's cache() — unmockable in vitest's node
+// environment. Every other test file that pulls in lib/auth/config.ts
+// mocks it for this reason.
+vi.mock("@/lib/auth/config", () => ({ getStudioId: vi.fn() }));
 import { POST as quoteGenerate } from "@/app/api/ai/quote-generate/route";
 import { POST as consultationQuestions } from "@/app/api/ai/consultation-questions/route";
 import { POST as styleDetect } from "@/app/api/ai/style-detect/route";

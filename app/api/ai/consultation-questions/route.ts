@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
-import { getStudioKnowledge, formatKnowledgeForAI } from "@/lib/studio-knowledge";
+import { getKnowledgeForCaller, formatKnowledgeForAI } from "@/lib/studio-knowledge";
 import { getAIProvider } from "@/lib/ai";
 
 const FALLBACK_QUESTIONS = [
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
     // Inject studio-specific context if available
     const knowledgeContext = studioId
-      ? formatKnowledgeForAI(await getStudioKnowledge(studioId as string))
+      ? formatKnowledgeForAI(await getKnowledgeForCaller(studioId as string))
       : "";
 
     const prompt = `You are an assistant for a professional tattoo studio. A client just submitted a consultation form. Generate 4–5 specific follow-up questions to help the artist prepare and qualify this lead.

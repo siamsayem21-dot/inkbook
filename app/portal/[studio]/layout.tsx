@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUser, ensureClientAccount } from "@/lib/auth/config";
 import { getBrand } from "@/lib/brand";
+import { reconcileGuestConsultations } from "@/lib/client-portal/reconcile-guest-consultations";
 import PortalSidebar from "./_components/PortalSidebar";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +28,8 @@ export default async function ClientPortalLayout({ children, params }: Props) {
 
   const account = await ensureClientAccount();
   if (!account) redirect(`/book/${params.studio}/login`);
+
+  await reconcileGuestConsultations(studio.id, account.id, account.email);
 
   const brand = getBrand(studio.primary_color ?? "#D4AF37");
 

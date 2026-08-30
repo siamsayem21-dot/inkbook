@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { getStudioId } from "@/lib/auth/config";
 import { buildSmsMessage, trySendSms } from "@/lib/twilio/client";
 import { findOrCreateClient } from "@/lib/clients";
 import { isAtMonthlyCap } from "@/lib/waitlist";
@@ -8,18 +9,34 @@ import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-lim
 import { isWithinConflictBuffer, isDateUnavailable } from "@/lib/booking-conflict";
 
 export async function GET(request: NextRequest) {
-  // Bookings contain client PII. Require a valid session.
+  // Bookings contain client PII. Require a valid session — and, since this
+  // previously only checked "is anyone logged in" without ever verifying the
+  // caller-supplied studioId/artistId actually belonged to that session, any
+  // authenticated owner/artist/client of ANY studio could read another
+  // studio's full bookings rows just by passing its id as a query param
+  // (confirmed via a live cross-tenant probe — scripts/qa-fullrun-security-bookings-idor.mjs).
+  // Fixed the same way every other studio-scoped route in this codebase
+  // derives identity: resolve the caller's OWN studio server-side via
+  // getStudioId() and force every query to that studio, ignoring/rejecting a
+  // studioId param that doesn't match rather than trusting it.
   const serverClient = createClient();
   const { data: { user } } = await serverClient.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const callerStudioId = await getStudioId();
+  if (!callerStudioId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { searchParams } = new URL(request.url);
   const studioId = searchParams.get("studioId");
   const artistId = searchParams.get("artistId");
+
+  if (studioId && studioId !== callerStudioId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
   const supabase = createAdminClient();
 
-  let query = supabase.from("bookings").select("*");
-  if (studioId) query = query.eq("studio_id", studioId);
+  let query = supabase.from("bookings").select("*").eq("studio_id", callerStudioId);
   if (artistId) query = query.eq("artist_id", artistId);
 
   const { data, error } = await query.order("created_at", { ascending: false });

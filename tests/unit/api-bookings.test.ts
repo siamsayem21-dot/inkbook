@@ -4,6 +4,10 @@ import { createSupabaseMock, type SupabaseMock } from "../mocks/supabase";
 
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
+// The module wraps its export in React's cache(), which vitest's node
+// environment can't run unmocked — every other test file in this codebase
+// that transitively imports lib/auth/config.ts mocks it for this reason.
+vi.mock("@/lib/auth/config", () => ({ getStudioId: vi.fn() }));
 vi.mock("@/lib/twilio/client", () => ({
   trySendSms: vi.fn(() => Promise.resolve()),
   buildSmsMessage: vi.fn(() => "sms body"),

@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getStudioId } from "@/lib/auth/config";
 
 export type KnowledgeEntry = {
   id: string;
@@ -79,6 +80,28 @@ export async function getPublicFaq(studioId: string): Promise<KnowledgeEntry[]> 
   } catch {
     return [];
   }
+}
+
+/**
+ * Fetch the right knowledge tier for whoever is actually calling an AI route
+ * with this studioId. These AI routes (consultation-questions, quote-generate,
+ * style-detect) are reachable both by the public, unauthenticated consult
+ * wizard AND by the studio's own authenticated owner/artist consultation-detail
+ * views, with the SAME endpoint and no other distinguishing signal — so the
+ * only safe way to decide "does this caller get the studio's private
+ * (is_public=false) notes folded into the AI prompt" is to check whether
+ * their own session actually resolves to this exact studio. Anyone else
+ * (anonymous, or authenticated as a different studio) gets public-only
+ * knowledge — the same tier already shown on that studio's public booking
+ * page — so a caller who only knows/guesses a studioId can never pull a
+ * studio's internal pricing/staff notes into an AI response.
+ */
+export async function getKnowledgeForCaller(studioId: string): Promise<KnowledgeEntry[]> {
+  const sessionStudioId = await getStudioId();
+  if (sessionStudioId && sessionStudioId === studioId) {
+    return getStudioKnowledge(studioId);
+  }
+  return getPublicFaq(studioId);
 }
 
 /**

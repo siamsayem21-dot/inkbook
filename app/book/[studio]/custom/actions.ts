@@ -32,6 +32,26 @@ export async function submitCustomRequest(
 
   const supabase = createAdminClient();
 
+  // Ownership check — artistId is caller-supplied (public, unauthenticated
+  // form); without this, a submitter could pass a DIFFERENT studio's artist
+  // id, which would (a) write a cross-tenant custom_requests.artist_id and
+  // (b) email that unrelated artist this client's PII (name/phone/email/
+  // description) below. Same pattern as startConsultationDeposit()/
+  // bookConsultation() in ../consult/actions.ts. Not a hard reject — an
+  // invalid/foreign artistId is just treated the same as "no preferred
+  // artist" (matches the existing "Any Artist" fallback already used
+  // elsewhere for this field).
+  let verifiedArtistId: string | null = null;
+  if (artistId) {
+    const { data: artistOwnership } = await supabase
+      .from("artists")
+      .select("id")
+      .eq("id", artistId)
+      .eq("studio_id", studioId)
+      .maybeSingle();
+    verifiedArtistId = artistOwnership ? artistId : null;
+  }
+
   // Upload reference photos via admin client (bypasses RLS)
   const photoUrls: string[] = [];
   for (const file of photoFiles) {
@@ -55,7 +75,7 @@ export async function submitCustomRequest(
     .from("custom_requests")
     .insert({
       studio_id:         studioId,
-      artist_id:         artistId || null,
+      artist_id:         verifiedArtistId,
       client_name:       clientName,
       client_email:      clientEmail,
       client_phone:      clientPhone,
@@ -82,9 +102,9 @@ export async function submitCustomRequest(
   let recipientEmail: string | null = null;
   let recipientName = "Studio Owner";
 
-  if (artistId) {
+  if (verifiedArtistId) {
     const { data: a } = await supabase
-      .from("artists").select("name, email").eq("id", artistId).single();
+      .from("artists").select("name, email").eq("id", verifiedArtistId).eq("studio_id", studioId).single();
     if (a) {
       const row = a as { name: string; email: string };
       recipientEmail = row.email;

@@ -38,9 +38,21 @@ export function rankArtistsByStyle(
   detectedStyle: string | null
 ): MatchResult[] {
   const style = detectedStyle?.trim();
-
+  // Case-insensitive on purpose: the AI consultation's canonical style list
+  // (lib/ai-consultation/chat-engine.ts / app/api/ai/style-detect's
+  // VALID_STYLES, e.g. "Fine Line") and the artist styles-picker's own
+  // canonical list (app/(artist)/artist/portfolio/actions.ts's
+  // ACCEPTED_STYLES, e.g. "Fine line") disagree on casing for the same
+  // style name. An exact-match comparison silently failed to recommend an
+  // artist whose accepted styles are a real, correct match — found during
+  // the 2026-08-29 flagship QA journey (a QA studio artist with
+  // styles=["Fine line"] scored 50/not-recommended against a real
+  // Claude-detected "Fine Line", 92% confidence). Normalizing case (and
+  // trimming) here fixes the comparison without needing to reconcile the
+  // two separate hardcoded lists.
+  const styleNormalized = style?.toLowerCase();
   const results = candidates.map((c): MatchResult => {
-    const matchesStyle = Boolean(style) && c.styles.includes(style!);
+    const matchesStyle = Boolean(styleNormalized) && c.styles.some((s) => s.trim().toLowerCase() === styleNormalized);
     if (matchesStyle) {
       return {
         id: c.id,

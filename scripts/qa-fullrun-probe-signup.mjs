@@ -1,0 +1,17 @@
+import { chromium } from "playwright";
+const BASE_URL = process.env.QA_BASE_URL ?? "https://www.inkbook.tech";
+const tag = `probe-${Date.now()}`;
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage();
+await page.goto(`${BASE_URL}/register`, { waitUntil: "load" });
+await page.locator("#register-studio-name").fill("[QA-PROBE] Studio");
+await page.locator("#register-owner-name").fill("QA Probe Owner");
+await page.locator("#register-email").fill(`${tag}@example.test`);
+await page.locator("#register-password").fill("QaFullRun2026!");
+await page.locator("#register-subdomain").fill(`${tag}`);
+await page.getByRole("button", { name: /create account/i }).click();
+await page.waitForTimeout(4000);
+console.log("URL after submit:", page.url());
+const body = await page.evaluate(() => document.body.innerText);
+console.log("BODY SNIPPET:", body.slice(0, 500));
+await browser.close();

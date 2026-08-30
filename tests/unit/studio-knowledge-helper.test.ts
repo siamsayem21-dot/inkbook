@@ -2,9 +2,11 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createSupabaseMock, type SupabaseMock } from "../mocks/supabase";
 
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn() }));
+vi.mock("@/lib/auth/config", () => ({ getStudioId: vi.fn() }));
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getStudioKnowledge, getAllStudioKnowledge, getPublicFaq } from "@/lib/studio-knowledge";
+import { getStudioId } from "@/lib/auth/config";
+import { getStudioKnowledge, getAllStudioKnowledge, getPublicFaq, getKnowledgeForCaller } from "@/lib/studio-knowledge";
 
 let sb: SupabaseMock;
 
@@ -76,6 +78,47 @@ describe("getPublicFaq — public booking page consumer", () => {
     const chain = sb.getChain("studio_knowledge");
     expect(chain.eq).toHaveBeenCalledWith("studio_id", "studio-1");
     expect(chain.eq).toHaveBeenCalledWith("is_active", true);
+    expect(chain.eq).toHaveBeenCalledWith("is_public", true);
+  });
+});
+
+// BUG-SEC-FULLQA-002 regression coverage: the public AI routes (quote-generate,
+// consultation-questions, style-detect) must never fold a studio's private
+// (is_public=false) knowledge into a response for a caller who isn't
+// authenticated as that exact studio — only the requested studioId matching
+// the caller's own session studio unlocks the private tier.
+describe("getKnowledgeForCaller — routing between private and public-only knowledge", () => {
+  it("returns full (private+public) knowledge when the caller's own session studio matches the requested studioId", async () => {
+    vi.mocked(getStudioId).mockResolvedValue("studio-1");
+    sb.queueFrom("studio_knowledge", [
+      { id: "k-1", category: "pricing", title: "Internal pricing note", content: "…", is_active: true, is_public: false, sort_order: 0 },
+    ]);
+
+    await getKnowledgeForCaller("studio-1");
+
+    const chain = sb.getChain("studio_knowledge");
+    expect(chain.eq).toHaveBeenCalledWith("studio_id", "studio-1");
+    expect(chain.eq).toHaveBeenCalledWith("is_active", true);
+    expect(chain.eq).not.toHaveBeenCalledWith("is_public", true);
+  });
+
+  it("falls back to public-only knowledge when the caller has no session (anonymous)", async () => {
+    vi.mocked(getStudioId).mockResolvedValue(null);
+    sb.queueFrom("studio_knowledge", []);
+
+    await getKnowledgeForCaller("studio-1");
+
+    const chain = sb.getChain("studio_knowledge");
+    expect(chain.eq).toHaveBeenCalledWith("is_public", true);
+  });
+
+  it("falls back to public-only knowledge when the caller's session studio does NOT match the requested studioId (cross-tenant probe)", async () => {
+    vi.mocked(getStudioId).mockResolvedValue("studio-2");
+    sb.queueFrom("studio_knowledge", []);
+
+    await getKnowledgeForCaller("studio-1");
+
+    const chain = sb.getChain("studio_knowledge");
     expect(chain.eq).toHaveBeenCalledWith("is_public", true);
   });
 });

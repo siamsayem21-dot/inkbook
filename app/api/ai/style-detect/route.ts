@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
-import { getStudioKnowledge, formatKnowledgeForAI } from "@/lib/studio-knowledge";
+import { getKnowledgeForCaller, formatKnowledgeForAI } from "@/lib/studio-knowledge";
 import { getAIProvider } from "@/lib/ai";
 
 const VALID_STYLES = [
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
       .join("\n");
 
     const knowledgeContext = studioId
-      ? formatKnowledgeForAI(await getStudioKnowledge(studioId as string))
+      ? formatKnowledgeForAI(await getKnowledgeForCaller(studioId as string))
       : "";
 
     const prompt = `You are an expert tattoo style analyst working with a professional tattoo studio.

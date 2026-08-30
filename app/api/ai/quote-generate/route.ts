@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
-import { getStudioKnowledge, formatKnowledgeForAI } from "@/lib/studio-knowledge";
+import { getKnowledgeForCaller, formatKnowledgeForAI } from "@/lib/studio-knowledge";
 import { getAIProvider } from "@/lib/ai";
 
 function fallback() {
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
       : "Open to both";
 
     const knowledgeContext = studioId
-      ? formatKnowledgeForAI(await getStudioKnowledge(studioId as string))
+      ? formatKnowledgeForAI(await getKnowledgeForCaller(studioId as string))
       : "";
 
     const prompt = `You are a professional tattoo studio manager with 15+ years of experience pricing custom tattoo work in the USA.
