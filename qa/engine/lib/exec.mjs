@@ -5,8 +5,26 @@
 // fail. A check that can't run at all (missing prerequisite, e.g. an
 // un-applied migration) reports BLOCKED, never FAIL — those are different
 // things and the report must keep them separate.
-import { spawn } from "child_process";
+import { spawn, execFile } from "child_process";
 import { REPO_ROOT, BASE_URL } from "./env.mjs";
+
+// spawn(..., { shell: true }) on Windows launches the real command under a
+// cmd.exe wrapper. child.kill("SIGKILL") only signals that wrapper — it does
+// NOT reliably kill the actual node.exe (or any browser it launched) running
+// underneath as a grandchild, so a hung check can survive its own "timeout"
+// and become an orphan process (confirmed happening in practice: a
+// standalone script hang left a live node.exe with no corresponding
+// engine-tracked process after the parent shell had already exited). On
+// Windows, kill the whole process tree by pid via taskkill instead; on
+// POSIX, SIGKILL on the child is sufficient since these scripts aren't
+// detached into their own process group.
+function killProcessTree(child) {
+  if (process.platform === "win32" && child.pid) {
+    execFile("taskkill", ["/pid", String(child.pid), "/T", "/F"], () => {});
+  } else {
+    child.kill("SIGKILL");
+  }
+}
 
 /**
  * @param {object} check
@@ -66,7 +84,7 @@ export async function runCheck(check) {
 
     const timer = setTimeout(() => {
       timedOut = true;
-      child.kill("SIGKILL");
+      killProcessTree(child);
     }, timeoutMs);
 
     child.stdout?.on("data", (d) => { stdout += d.toString(); });
