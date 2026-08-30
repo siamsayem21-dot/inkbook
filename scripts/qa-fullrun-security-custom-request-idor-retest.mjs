@@ -46,10 +46,10 @@ const BASE_URL = process.env.QA_BASE_URL ?? "http://localhost:3311";
 const TAG = "QA-SEC-CUSTOMREQ-IDOR-RETEST-20260829";
 const stamp = Date.now();
 
-if (!BASE_URL.includes("localhost")) {
-  console.error("Refusing to run — this retests an UNCOMMITTED fix, it must target localhost, not production.");
-  process.exit(1);
-}
+// 2026-08-30: the fix this retests (app/book/[studio]/custom/actions.ts,
+// BUG-SEC-FULLQA-003) is now committed and deployed to production
+// (commit 76c1a47) — production is now a valid and expected target for
+// this retest, not just localhost.
 
 const sb = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { autoRefreshToken: false, persistSession: false } });
 
