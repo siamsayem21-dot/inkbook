@@ -17,8 +17,22 @@ async function findAuthUserByEmail(email: string): Promise<{ id: string } | null
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);
   try {
+    // .trim() — the REAL root cause of the "stuck on Setting up your
+    // account..." bug (confirmed live via Vercel production logs,
+    // 2026-08-30): process.env.NEXT_PUBLIC_SUPABASE_URL carries a stray
+    // trailing whitespace character in this deployment's stored value.
+    // Every other Supabase call in this codebase goes through
+    // @supabase/supabase-js's createClient(), which tolerates/normalizes
+    // it — this was the ONLY spot building a raw URL via template-literal
+    // concatenation for a native fetch(), and native fetch's URL parser
+    // rejects the embedded space (`https://...supabase.co /auth/v1/...`)
+    // with a hard TypeError. This function only runs on the "invited email
+    // already has an account" branch — the exact real-world case that
+    // triggered this for Siam. Trimming here makes this call robust to the
+    // stray whitespace regardless of whether the Vercel env var itself is
+    // also cleaned up.
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/admin/users?page=1&per_page=1000`,
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()}/auth/v1/admin/users?page=1&per_page=1000`,
       {
         headers: {
           Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createSupabaseMock, type SupabaseMock } from "../mocks/supabase";
 
 // app/artist/accept/[token]/actions.ts builds its own admin client via
@@ -134,5 +134,51 @@ describe("acceptInvite — never rejects, even on an unexpected internal error",
     await expect(
       acceptInvite({ token: "tok", name: "Jane Artist", password: "password123" })
     ).resolves.toEqual({ error: "Something went wrong setting up your account. Please try again." });
+  });
+});
+
+// Regression coverage for the actual confirmed root cause (found live via
+// Vercel production logs, 2026-08-30): this deployment's stored
+// NEXT_PUBLIC_SUPABASE_URL value carries a stray trailing space. Every
+// other Supabase call in this codebase goes through createClient(), which
+// tolerates it — findAuthUserByEmail() was the one spot raw-concatenating
+// the env var into a URL for native fetch(), whose strict URL parser
+// rejected the embedded space (".co /auth/v1/...") with a hard TypeError,
+// only reachable via the "invited email already has an account" branch —
+// exactly Siam's real scenario.
+describe("acceptInvite — findAuthUserByEmail is robust to a trailing space in NEXT_PUBLIC_SUPABASE_URL", () => {
+  const originalUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const originalFetch = global.fetch;
+
+  afterEach(() => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = originalUrl;
+    global.fetch = originalFetch;
+  });
+
+  it("builds a well-formed URL (no embedded space) even when the env var has a trailing space", async () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://kcppekmmyjrbpggqbvuv.supabase.co "; // trailing space, matches prod's real stored value
+
+    createUser.mockResolvedValue({ data: null, error: { code: "email_exists", message: "Email already registered" } });
+
+    let requestedUrl: string | undefined;
+    global.fetch = vi.fn((url: string) => {
+      requestedUrl = url;
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ users: [{ id: "existing-user-1", email: "jane@studio.com" }] }),
+      }) as unknown as ReturnType<typeof fetch>;
+    }) as unknown as typeof fetch;
+
+    sb.queueFrom("artist_invites", INVITE_ROW);
+    sb.queueFrom("artists", null); // existingArtist check: no existing artist row at this studio
+    sb.queueFrom("artists", null); // removedArtist revive check: nothing to revive
+    sb.queueFrom("artists", { id: "new-artist-1" }); // insert succeeds
+    sb.queueFrom("artist_invites", null); // mark accepted
+
+    const result = await acceptInvite({ token: "tok", name: "Jane Artist", password: "password123" });
+
+    expect(requestedUrl).toBe("https://kcppekmmyjrbpggqbvuv.supabase.co/auth/v1/admin/users?page=1&per_page=1000");
+    expect(requestedUrl).not.toMatch(/\.co \//); // the exact malformed shape seen in production logs, must never recur
+    expect(result.error).toBeUndefined();
   });
 });
