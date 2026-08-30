@@ -41,6 +41,22 @@ const FALLBACK_PROMPTS: Record<RequiredField, string> = {
   budget:      "Do you have a budget range in mind for this piece?",
 };
 
+// Asked once each, in order, after every required field is filled — client
+// may answer "no preference"/"none"/"skip", which still counts as filled
+// (a real value, just an opt-out one) so the guard below doesn't re-ask.
+const OPTIONAL_FIELDS = ["preferredArtist", "preferredDates", "medicalNotes", "additionalNotes"] as const;
+type OptionalField = (typeof OPTIONAL_FIELDS)[number];
+
+const OPTIONAL_PROMPTS: Record<OptionalField, string> = {
+  preferredArtist: "Do you have a preferred artist for this piece, or no preference?",
+  preferredDates:  "Any preferred dates for the appointment, or are you flexible?",
+  medicalNotes:    "Any medical conditions, allergies, or skin sensitivities the artist should know about? (Totally fine to say none.)",
+  additionalNotes: "Anything else you'd like the artist to know before we wrap up?",
+};
+
+const ALL_FIELDS = [...REQUIRED_FIELDS, ...OPTIONAL_FIELDS] as const;
+type AnyField = (typeof ALL_FIELDS)[number];
+
 const VALID_STYLES = [
   "Traditional", "Neo Traditional", "Japanese", "Fine Line",
   "Blackwork", "Realism", "Floral", "Geometric", "Tribal", "Watercolor", "Other",
@@ -52,6 +68,23 @@ export function isReadyToSubmit(gathered: GatheredFields): boolean {
 
 function firstMissingRequired(gathered: GatheredFields): RequiredField | null {
   return REQUIRED_FIELDS.find((f) => !gathered[f]?.trim()) ?? null;
+}
+
+function firstMissingOptional(gathered: GatheredFields): OptionalField | null {
+  return OPTIONAL_FIELDS.find((f) => !gathered[f]?.trim()) ?? null;
+}
+
+// The single, deterministic "what should we ask about next" selector — used
+// both to steer the model (system prompt) and as the guard's override target
+// when the model's own next question would be redundant. One question per
+// missing field, chosen from data (which field is missing), not a scripted
+// sequence of turns.
+function nextQuestion(gathered: GatheredFields): { field: AnyField; prompt: string } | null {
+  const req = firstMissingRequired(gathered);
+  if (req) return { field: req, prompt: FALLBACK_PROMPTS[req] };
+  const opt = firstMissingOptional(gathered);
+  if (opt) return { field: opt, prompt: OPTIONAL_PROMPTS[opt] };
+  return null;
 }
 
 function mergeGathered(prev: GatheredFields, next: Partial<GatheredFields>): GatheredFields {
@@ -137,13 +170,43 @@ Rules:
 - If the client shares a reference image, acknowledge it naturally and use it to help clarify style/description.
 - Once ALL required fields above are filled AND you've asked about the optional ones (client may skip them), write a warm closing message letting them know their consultation is being sent to the studio, and set complete=true.
 - Do not set complete=true until every required field has a real answer.
+- Extract EVERY piece of usable information from the client's latest message into "gathered", even if they answered more than one thing at once, phrased it vaguely, or answered a different question than the one you asked — never lose an answer they already gave.
+- You must call the consultation_turn tool on every turn — never reply in plain text.`;
+}
 
-Respond with ONLY a JSON object in exactly this format, no other text:
-{
-  "reply": "<your next message to the client>",
-  "gathered": <a JSON object with ALL fields known so far, merging anything new this turn with everything already known>,
-  "complete": <true only once every required field is filled and you're wrapping up>
-}`;
+// The response shape is enforced structurally via tool_choice (see
+// AnthropicProvider.chat), not by asking nicely in the prompt — a prompt-only
+// "respond with ONLY JSON" instruction was measured to be ignored on ~80% of
+// turns in a real production conversation once several fields were already
+// known (the model would reply with plain conversational prose instead),
+// silently discarding the client's answer every time. `askingAbout` is a
+// second, independent deterministic check: the model self-reports which
+// field (if any) its `reply` is asking about, so the app can verify that
+// against `gathered` instead of trying to infer intent from free text — see
+// the guard in runConsultationTurn.
+function buildConsultationTool() {
+  return {
+    name: "consultation_turn",
+    description: "Record your next reply to the client and the updated consultation state.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        reply: { type: "string", description: "Your next message to the client." },
+        gathered: {
+          type: "object",
+          description: "ALL fields known so far, merging anything new this turn with everything already known. Omit a key if still unknown.",
+          properties: Object.fromEntries(ALL_FIELDS.map((f) => [f, { type: "string" }])),
+        },
+        askingAbout: {
+          type: ["string", "null"],
+          enum: [...ALL_FIELDS, null],
+          description: "Which single field (from the fields-to-gather list) your `reply` is asking the client about, or null if it's not asking about a specific field (e.g. answering a studio question, or the closing message).",
+        },
+        complete: { type: "boolean", description: "true only once every required field is filled and you're wrapping up." },
+      },
+      required: ["reply", "gathered", "complete"],
+    },
+  };
 }
 
 export async function runConsultationTurn(params: {
@@ -154,12 +217,21 @@ export async function runConsultationTurn(params: {
 }): Promise<{ reply: string; gathered: GatheredFields; complete: boolean }> {
   const { studioId, studioName, history, gathered } = params;
 
+  // Deterministic, data-driven fallback (never a fixed conversation script):
+  // ask about whatever field is actually still missing — required first,
+  // then optional. If literally nothing is missing, there's nothing left to
+  // ask, so wrap up and complete right here rather than showing a dead-end
+  // generic message forever (the exact bug this replaces: previously this
+  // branch always said "Thanks — could you tell me a bit more about what
+  // you're looking for?", which never advances and never accepts any new
+  // answer, no matter what the client says next).
   const fallback = () => {
-    const missing = firstMissingRequired(gathered);
+    const next = nextQuestion(gathered);
+    if (next) return { reply: next.prompt, gathered, complete: false };
     return {
-      reply: missing ? FALLBACK_PROMPTS[missing] : "Thanks — could you tell me a bit more about what you're looking for?",
+      reply: `Perfect, that's everything I need! Your consultation is on its way to ${studioName} — they'll be in touch soon.`,
       gathered,
-      complete: false,
+      complete: isReadyToSubmit(gathered),
     };
   };
 
@@ -170,24 +242,36 @@ export async function runConsultationTurn(params: {
     const systemPrompt = buildSystemPrompt(studioName, gathered, knowledgeContext);
     const anthropicMessages = await buildAnthropicMessages(history);
 
-    const text = await getAIProvider().chat({
+    const raw = await getAIProvider().chat({
       system: systemPrompt,
       messages: anthropicMessages,
       maxTokens: 1024,
+      tool: buildConsultationTool(),
     });
 
-    const match = text.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error("No JSON object in response");
-
-    const parsed = JSON.parse(match[0]) as { reply?: string; gathered?: Partial<GatheredFields>; complete?: boolean };
+    const parsed = JSON.parse(raw) as {
+      reply?: string;
+      gathered?: Partial<GatheredFields>;
+      askingAbout?: AnyField | null;
+      complete?: boolean;
+    };
     const merged = mergeGathered(gathered, parsed.gathered ?? {});
     if (merged.style && !VALID_STYLES.includes(merged.style)) merged.style = "Other";
 
-    return {
-      reply: parsed.reply?.trim() || fallback().reply,
-      gathered: merged,
-      complete: Boolean(parsed.complete) && isReadyToSubmit(merged),
-    };
+    let reply = parsed.reply?.trim() || fallback().reply;
+    const complete = Boolean(parsed.complete) && isReadyToSubmit(merged);
+
+    // Anti-loop guard: the model self-reports which field its `reply` is
+    // asking about. If that field is already filled in `merged` (either
+    // from before this turn, or just now from this same turn's answer),
+    // the question is redundant — override deterministically with the
+    // actual next missing field instead of trusting the model's repeat.
+    if (!complete && parsed.askingAbout && ALL_FIELDS.includes(parsed.askingAbout) && merged[parsed.askingAbout]?.trim()) {
+      const next = nextQuestion(merged);
+      if (next) reply = next.prompt;
+    }
+
+    return { reply, gathered: merged, complete };
   } catch (err) {
     console.error("[runConsultationTurn]", err);
     return fallback();

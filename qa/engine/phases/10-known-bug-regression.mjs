@@ -20,6 +20,7 @@ export const LOCKED_REGRESSION_FILES = [
   "tests/unit/artist-match.test.ts",                     // BUG-FLAGSHIP-001 — Artist Match case-sensitivity
   "tests/unit/api-ai-artist-match.test.ts",              // Artist Match API route wiring
   "tests/unit/artist-accept-invite.test.ts",             // Artist Invite infinite loading + existing-account password confusion
+  "tests/unit/ai-consultation-chat-engine.test.ts",       // AI Consultation infinite loop (P1, 2026-08-30) — repeated-question guard, fallback field selection, JSON-format enforcement
 ];
 
 export async function run() {

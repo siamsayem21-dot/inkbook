@@ -11,8 +11,14 @@ function requireApiKey(): string {
 }
 
 export class AnthropicProvider implements AIProvider {
-  async chat({ system, messages, maxTokens = 1024 }: AIChatParams): Promise<string> {
+  async chat({ system, messages, maxTokens = 1024, tool }: AIChatParams): Promise<string> {
     const apiKey = requireApiKey();
+
+    const body: Record<string, unknown> = { model: CHAT_MODEL, max_tokens: maxTokens, system, messages };
+    if (tool) {
+      body.tools = [{ name: tool.name, description: tool.description, input_schema: tool.inputSchema }];
+      body.tool_choice = { type: "tool", name: tool.name };
+    }
 
     const res = await fetch(ANTHROPIC_URL, {
       method: "POST",
@@ -21,16 +27,24 @@ export class AnthropicProvider implements AIProvider {
         "x-api-key": apiKey,
         "anthropic-version": "2023-06-01",
       },
-      body: JSON.stringify({ model: CHAT_MODEL, max_tokens: maxTokens, system, messages }),
+      body: JSON.stringify(body),
     });
-    if (!res.ok) throw new Error(`Anthropic ${res.status}`);
+    if (!res.ok) throw new Error(`Anthropic ${res.status}: ${(await res.text()).slice(0, 500)}`);
 
     const data = await res.json();
+    const blocks = data.content as Array<{ type: string; text?: string; input?: unknown }> | undefined;
+
+    if (tool) {
+      // tool_choice forces a tool_use block — no free-text parsing needed or
+      // wanted here. Anthropic already guarantees `input` matches inputSchema.
+      const toolBlock = blocks?.find((b) => b.type === "tool_use");
+      if (!toolBlock) throw new Error("No tool_use block in response despite forced tool_choice");
+      return JSON.stringify(toolBlock.input);
+    }
+
     // claude-sonnet-5 sometimes emits a leading "thinking" content block before
     // the actual "text" block — find the text block by type, not by position.
-    const textBlock = (data.content as Array<{ type: string; text?: string }> | undefined)?.find(
-      (b) => b.type === "text"
-    );
+    const textBlock = blocks?.find((b) => b.type === "text");
     return textBlock?.text ?? "";
   }
 
