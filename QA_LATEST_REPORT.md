@@ -1,12 +1,12 @@
 # InkBook QA Engine — Latest Report
 
-**Run:** `qa-full-1788102920958` · **Mode:** `full` · **Started:** 2026-08-30T15:15:20.958Z · **Completed:** 2026-08-30T15:53:11.105Z
+**Run:** `qa-full-1788108587692` · **Mode:** `full` · **Started:** 2026-08-30T16:49:47.693Z · **Completed:** 2026-08-30T17:14:51.744Z
 
 ## Totals
 
 | PASS | FAIL | BLOCKED_NEEDS_SIAM | SKIPPED |
 |---|---|---|---|
-| 50 | 1 | 2 | 1 |
+| 49 | 2 | 2 | 1 |
 
 ## preflight
 
@@ -14,10 +14,10 @@
 
 | Check | Status | Duration | Note |
 |---|---|---|---|
-| Production reachable (https://www.inkbook.tech) | ✅ PASS | 1s |  |
+| Production reachable (https://www.inkbook.tech) | ✅ PASS | 2s |  |
 | cron/sms-reminders migration gate (known blocker) | 🚧 BLOCKED_NEEDS_SIAM | 1s | Exit code 2 |
-| TypeScript typecheck | ✅ PASS | 14s |  |
-| ESLint | ✅ PASS | 9s |  |
+| TypeScript typecheck | ✅ PASS | 11s |  |
+| ESLint | ✅ PASS | 8s |  |
 | Schema/migration probe (verify-migrations.mjs) | ✅ PASS | 4s |  |
 
 ## qa-data
@@ -27,15 +27,15 @@
 | Check | Status | Duration | Note |
 |---|---|---|---|
 | QA data write/delete probe (service-role access) | ✅ PASS | 3s |  |
-| Seed persistent full-mode studio (real signup, shared by owner/artist/flagship/mobile full-mode scripts) | ✅ PASS | 33s |  |
+| Seed persistent full-mode studio (real signup, shared by owner/artist/flagship/mobile full-mode scripts) | ✅ PASS | 58s |  |
 
 ## owner
 
-1 PASS, 0 FAIL, 0 BLOCKED, 0 SKIPPED
+0 PASS, 1 FAIL, 0 BLOCKED, 0 SKIPPED
 
 | Check | Status | Duration | Note |
 |---|---|---|---|
-| Owner Portal full real-browser click-through | ✅ PASS | 256s |  |
+| Owner Portal full real-browser click-through | ❌ FAIL | 41s | Exit code 1 |
 
 ## artist
 
@@ -43,24 +43,24 @@
 
 | Check | Status | Duration | Note |
 |---|---|---|---|
-| Artist Dashboard data correctness | ✅ PASS | 1s |  |
+| Artist Dashboard data correctness | ✅ PASS | 2s |  |
 | Artist Earnings booking/payment integration | ✅ PASS | 1s |  |
 | Artist Earnings cross-studio isolation | ✅ PASS | 7s |  |
-| Artist Schedule date navigation + booking integration | ✅ PASS | 12s |  |
-| Artist Schedule timezone + lifecycle | ✅ PASS | 12s |  |
-| Artist Schedule cross-studio isolation | ✅ PASS | 7s |  |
-| Provision disposable artist-isolation fixture | ✅ PASS | 5s |  |
-| Artist Bookings null date/time regression | ✅ PASS | 11s |  |
+| Artist Schedule date navigation + booking integration | ✅ PASS | 10s |  |
+| Artist Schedule timezone + lifecycle | ✅ PASS | 10s |  |
+| Artist Schedule cross-studio isolation | ✅ PASS | 6s |  |
+| Provision disposable artist-isolation fixture | ✅ PASS | 4s |  |
+| Artist Bookings null date/time regression | ✅ PASS | 15s |  |
 | Artist Requests authorization + lifecycle | ✅ PASS | 21s |  |
 | Artist Requests cross-studio isolation | ✅ PASS | 24s |  |
-| Artist Clients isolation + integration | ✅ PASS | 43s |  |
-| Artist Portfolio isolation + integration | ✅ PASS | 13s |  |
+| Artist Clients isolation + integration | ✅ PASS | 33s |  |
+| Artist Portfolio isolation + integration | ✅ PASS | 10s |  |
 | Artist Flash lifecycle-guard + isolation | ✅ PASS | 5s |  |
-| Artist Messages isolation | ✅ PASS | 53s |  |
-| Artist Agreements creation + isolation + immutability | ✅ PASS | 42s |  |
-| Compliance audit log | ✅ PASS | 5s |  |
-| Clean up disposable artist-isolation fixture | ✅ PASS | 10s |  |
-| Artist Portal full real-browser click-through | ✅ PASS | 207s |  |
+| Artist Messages isolation | ✅ PASS | 40s |  |
+| Artist Agreements creation + isolation + immutability | ✅ PASS | 33s |  |
+| Compliance audit log | ✅ PASS | 4s |  |
+| Clean up disposable artist-isolation fixture | ✅ PASS | 9s |  |
+| Artist Portal full real-browser click-through | ✅ PASS | 187s |  |
 
 ## client
 
@@ -68,14 +68,14 @@
 
 | Check | Status | Duration | Note |
 |---|---|---|---|
-| Client Portal My Bookings | ✅ PASS | 21s |  |
-| Client Portal History | ✅ PASS | 29s |  |
+| Client Portal My Bookings | ✅ PASS | 19s |  |
+| Client Portal History | ✅ PASS | 21s |  |
 | Client Portal Settings | ✅ PASS | 6s |  |
-| Client <-> Studio messaging | ✅ PASS | 12s |  |
-| Booking lifecycle completion | ✅ PASS | 38s |  |
-| Remaining balance payment | ✅ PASS | 15s |  |
-| Reviews | ✅ PASS | 16s |  |
-| Waitlist | ✅ PASS | 11s |  |
+| Client <-> Studio messaging | ✅ PASS | 10s |  |
+| Booking lifecycle completion | ✅ PASS | 33s |  |
+| Remaining balance payment | ✅ PASS | 16s |  |
+| Reviews | ✅ PASS | 13s |  |
+| Waitlist | ✅ PASS | 10s |  |
 
 ## flagship
 
@@ -83,8 +83,8 @@
 
 | Check | Status | Duration | Note |
 |---|---|---|---|
-| Flagship journey — right-sized live regression | ✅ PASS | 18s |  |
-| Flagship journey — full, real Stripe TEST payment (success/decline/cancel) | ❌ FAIL | 272s | Exit code 1 |
+| Flagship journey — right-sized live regression | ✅ PASS | 20s |  |
+| Flagship journey — full, real Stripe TEST payment (success/decline/cancel) | ❌ FAIL | 280s | Exit code 1 |
 
 ## security
 
@@ -93,16 +93,16 @@
 | Check | Status | Duration | Note |
 |---|---|---|---|
 | tests/db — RLS isolation + schema integrity (real Postgres) | ⏭️ SKIPPED |  | Requires a local Supabase instance (`supabase start`) — SUPABASE_DB_URL not set. Run manually with `npm run test:db` after starting one, or let CI (.github/workflows/test.yml) run it automatically. |
-| GET /api/bookings cross-tenant IDOR (BUG-SEC-FULLQA-001, P0) | ✅ PASS | 9s |  |
+| GET /api/bookings cross-tenant IDOR (BUG-SEC-FULLQA-001, P0) | ✅ PASS | 8s |  |
 | submitCustomRequest cross-tenant artist assignment (BUG-SEC-FULLQA-003, P1) | ✅ PASS | 12s |  |
-| Public AI routes private-knowledge exposure (BUG-SEC-FULLQA-002, P2) | ✅ PASS | 13s |  |
+| Public AI routes private-knowledge exposure (BUG-SEC-FULLQA-002, P2) | ✅ PASS | 12s |  |
 | Cross-artist + cross-client isolation | ✅ PASS | 16s |  |
-| Custom-requests quote/decline/schedule IDOR (legacy sweep) | ✅ PASS | 15s |  |
+| Custom-requests quote/decline/schedule IDOR (legacy sweep) | ✅ PASS | 14s |  |
 | sendDepositRequest ownership check | ✅ PASS | 5s |  |
 | File upload 3-layer validation | ✅ PASS | 0s |  |
 | AI endpoint rate limiting | ✅ PASS | 0s |  |
 | No customer PII in logs (billing webhook) | ✅ PASS | 1s |  |
-| Stripe Connect payment reconciliation (idempotency, cross-account rejection, 0% fee) | ✅ PASS | 208s |  |
+| Stripe Connect payment reconciliation (idempotency, cross-account rejection, 0% fee) | ✅ PASS | 222s |  |
 
 ## edge-cases
 
@@ -110,7 +110,7 @@
 
 | Check | Status | Duration | Note |
 |---|---|---|---|
-| Error/resilience sweep — malformed IDs, double-submit, nonexistent routes | ✅ PASS | 38s |  |
+| Error/resilience sweep — malformed IDs, double-submit, nonexistent routes | ✅ PASS | 39s |  |
 
 ## mobile
 
@@ -118,8 +118,8 @@
 
 | Check | Status | Duration | Note |
 |---|---|---|---|
-| Mobile critical path (390x844, real taps) | ✅ PASS | 116s |  |
-| Design/motion objective regression (getComputedStyle transforms) | ✅ PASS | 59s |  |
+| Mobile critical path (390x844, real taps) | ✅ PASS | 101s |  |
+| Design/motion objective regression (getComputedStyle transforms) | ✅ PASS | 56s |  |
 
 ## automations
 
@@ -135,7 +135,7 @@
 
 | Check | Status | Duration | Note |
 |---|---|---|---|
-| Locked known-bug regression suite (8 files) | ✅ PASS | 6s |  |
+| Locked known-bug regression suite (8 files) | ✅ PASS | 5s |  |
 
 ## final-regression
 
@@ -151,14 +151,34 @@
 
 | Check | Status | Duration | Note |
 |---|---|---|---|
-| QA data cleanup sweep (dry-run -> verify -> delete -> verify gone) | ✅ PASS | 10s |  |
+| QA data cleanup sweep (dry-run -> verify -> delete -> verify gone) | ✅ PASS | 9s |  |
 
 ## Failures requiring attention
+
+### Owner Portal full real-browser click-through
+**Reason:** Exit code 1
+```
+node:internal/modules/run_main:122
+    triggerUncaughtException(
+    ^
+
+locator.fill: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByPlaceholder('you@studio.com')[22m
+
+    at C:\Users\asiacom\Desktop\inkbook\scripts\qa-fullrun-owner-clickthrough.mjs:210:47 {
+  log: [ "  - waiting for getByPlaceholder('you@studio.com')" ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.14.0
+
+```
 
 ### Flagship journey — full, real Stripe TEST payment (success/decline/cancel)
 **Reason:** Exit code 1
 ```
-(node:17128) Stripe: We recommend building your integration using Accounts v2. See https://docs.stripe.com/api/v2/core/accounts
+(node:13432) Stripe: We recommend building your integration using Accounts v2. See https://docs.stripe.com/api/v2/core/accounts
 (Use `node --trace-warnings ...` to show where the warning was created)
 
 ```
