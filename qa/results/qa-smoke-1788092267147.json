@@ -1,0 +1,179 @@
+{
+  "runId": "qa-smoke-1788092267147",
+  "mode": "smoke",
+  "startedAt": "2026-08-30T12:17:47.147Z",
+  "completedAt": "2026-08-30T12:18:01.066Z",
+  "totals": {
+    "PASS": 4,
+    "FAIL": 0,
+    "BLOCKED_NEEDS_SIAM": 1,
+    "SKIPPED": 0
+  },
+  "phases": {
+    "preflight": {
+      "totals": {
+        "PASS": 1,
+        "FAIL": 0,
+        "BLOCKED_NEEDS_SIAM": 1,
+        "SKIPPED": 0
+      },
+      "checks": [
+        {
+          "id": "preflight.reachable",
+          "label": "Production reachable (https://www.inkbook.tech)",
+          "status": "PASS",
+          "durationMs": 692,
+          "startedAt": "2026-08-30T12:17:47.151Z",
+          "stdout": "reachable, HTTP 200\n",
+          "stderr": ""
+        },
+        {
+          "id": "preflight.sms-reminders-migration",
+          "label": "cron/sms-reminders migration gate (known blocker)",
+          "status": "BLOCKED_NEEDS_SIAM",
+          "reason": "Exit code 2",
+          "durationMs": 1367,
+          "startedAt": "2026-08-30T12:17:47.844Z",
+          "stdout": "BLOCKED_NEEDS_SIAM: migration 20260802000000_appointment_reminder_email.sql is still NOT applied to production.\n  Probe: GET /rest/v1/bookings?select=email_48hr_sent,email_day_of_sent -> HTTP 400: {\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column bookings.email_48hr_sent does not exist\"}\n  This is a one-line additive SQL statement (2 nullable boolean columns), already reviewed multiple times — needs Siam to run it in the Supabase SQL Editor. The QA Engine will never apply it automatically.\n  Until applied: cron/sms-reminders' main query selects these missing columns, fails, the failure is silently swallowed, and the cron returns HTTP 200 with zero reminders sent every day.\n",
+          "stderr": ""
+        }
+      ]
+    },
+    "qa-data": {
+      "totals": {
+        "PASS": 1,
+        "FAIL": 0,
+        "BLOCKED_NEEDS_SIAM": 0,
+        "SKIPPED": 0
+      },
+      "checks": [
+        {
+          "id": "qa-data.write-probe",
+          "label": "QA data write/delete probe (service-role access)",
+          "status": "PASS",
+          "durationMs": 2332,
+          "startedAt": "2026-08-30T12:17:49.217Z"
+        }
+      ]
+    },
+    "owner": {
+      "totals": {
+        "PASS": 0,
+        "FAIL": 0,
+        "BLOCKED_NEEDS_SIAM": 0,
+        "SKIPPED": 0
+      },
+      "checks": []
+    },
+    "artist": {
+      "totals": {
+        "PASS": 0,
+        "FAIL": 0,
+        "BLOCKED_NEEDS_SIAM": 0,
+        "SKIPPED": 0
+      },
+      "checks": []
+    },
+    "client": {
+      "totals": {
+        "PASS": 0,
+        "FAIL": 0,
+        "BLOCKED_NEEDS_SIAM": 0,
+        "SKIPPED": 0
+      },
+      "checks": []
+    },
+    "flagship": {
+      "totals": {
+        "PASS": 0,
+        "FAIL": 0,
+        "BLOCKED_NEEDS_SIAM": 0,
+        "SKIPPED": 0
+      },
+      "checks": []
+    },
+    "security": {
+      "totals": {
+        "PASS": 0,
+        "FAIL": 0,
+        "BLOCKED_NEEDS_SIAM": 0,
+        "SKIPPED": 0
+      },
+      "checks": []
+    },
+    "edge-cases": {
+      "totals": {
+        "PASS": 0,
+        "FAIL": 0,
+        "BLOCKED_NEEDS_SIAM": 0,
+        "SKIPPED": 0
+      },
+      "checks": []
+    },
+    "mobile": {
+      "totals": {
+        "PASS": 0,
+        "FAIL": 0,
+        "BLOCKED_NEEDS_SIAM": 0,
+        "SKIPPED": 0
+      },
+      "checks": []
+    },
+    "automations": {
+      "totals": {
+        "PASS": 0,
+        "FAIL": 0,
+        "BLOCKED_NEEDS_SIAM": 0,
+        "SKIPPED": 0
+      },
+      "checks": []
+    },
+    "known-bug-regression": {
+      "totals": {
+        "PASS": 1,
+        "FAIL": 0,
+        "BLOCKED_NEEDS_SIAM": 0,
+        "SKIPPED": 0
+      },
+      "checks": [
+        {
+          "id": "known-bugs.locked-regression-suite",
+          "label": "Locked known-bug regression suite (8 files)",
+          "status": "PASS",
+          "durationMs": 6876,
+          "startedAt": "2026-08-30T12:17:51.584Z",
+          "stdout": "\n RUN  v4.1.10 C:/Users/asiacom/Desktop/inkbook\n\n\n Test Files  8 passed (8)\n      Tests  70 passed (70)\n   Start at  18:17:56\n   Duration  1.88s (transform 1.86s, setup 441ms, import 2.60s, tests 516ms, environment 2ms)\n\n",
+          "stderr": "\u001b[33mThe plugin \"vite-tsconfig-paths\" is detected. Vite now supports tsconfig paths resolution natively via the \u001b[1mresolve.tsconfigPaths\u001b[22m option. You can remove the plugin and set \u001b[1mresolve.tsconfigPaths: true\u001b[22m in your Vite config instead.\u001b[39m\n"
+        }
+      ]
+    },
+    "final-regression": {
+      "totals": {
+        "PASS": 0,
+        "FAIL": 0,
+        "BLOCKED_NEEDS_SIAM": 0,
+        "SKIPPED": 0
+      },
+      "checks": []
+    },
+    "cleanup": {
+      "totals": {
+        "PASS": 1,
+        "FAIL": 0,
+        "BLOCKED_NEEDS_SIAM": 0,
+        "SKIPPED": 0
+      },
+      "checks": [
+        {
+          "id": "cleanup.sweep",
+          "label": "QA data cleanup sweep (dry-run -> verify -> delete -> verify gone)",
+          "status": "PASS",
+          "durationMs": 2600,
+          "startedAt": "2026-08-30T12:17:58.464Z",
+          "stdout": "\nQA cleanup sweep — APPLY (will delete)\n======================================\nFound 0 QA-tagged studio(s):\n\nFound 2 QA-tagged auth user(s) (inkbook-qa.test / example.test).\n\nResult\n======\nStudios deleted: 0 — remaining QA-tagged studios: 0\nAuth users deleted: 0 — remaining QA-tagged auth users: 2\n\nNOTE — some QA-tagged data remains (may be a genuinely in-progress separate run; re-check before assuming a leak).\n",
+          "stderr": ""
+        }
+      ]
+    }
+  }
+}

@@ -18,13 +18,19 @@
  * three roles (assigned artist, same-studio colleague, different-studio
  * outsider), then deletes everything it made.
  *
- * Requires: local dev server running on http://localhost:3001
- * Run with: node scripts/verify-artist-messages-isolation.mjs
+ * 2026-08-30: previously hardcoded a specific studio/artist id set that
+ * turned out to belong to a real, actively-used studio, not a QA fixture
+ * (investigated and confirmed — see QA_ENGINE.md "Known gaps" history).
+ * Now reads a disposable fixture from qa/artist-fixture.json instead —
+ * provision one first with:
+ *   node scripts/qa-engine-artist-fixture.mjs --provision
+ *
+ * Run with: QA_BASE_URL=<https://www.inkbook.tech|http://localhost:PORT> node scripts/verify-artist-messages-isolation.mjs
  */
 
 import { chromium } from "playwright";
 import { createClient } from "@supabase/supabase-js";
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 
 const env = Object.fromEntries(
   readFileSync(".env.local", "utf8")
@@ -36,20 +42,25 @@ const env = Object.fromEntries(
 const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
 const ANON_KEY     = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SERVICE_KEY  = env.SUPABASE_SERVICE_ROLE_KEY;
-const BASE_URL     = "http://localhost:3001";
+const BASE_URL     = process.env.QA_BASE_URL ?? "https://www.inkbook.tech";
 const PROJECT_REF  = SUPABASE_URL.match(/https:\/\/([^.]+)\./)[1];
 const TAG          = "QA-VERIFY-ARTIST-MESSAGES-T7";
 
-// Studio A: Jamie Chen's studio (owned by mohammadsiam21@gmail.com, who is
-// also separately registered there as an artist named "Siam").
-const STUDIO_A_ID  = "bb0c648e-4f18-4e48-8581-6b7cfd585eea";
-const JAMIE_ID     = "78f9b22a-3b69-46d0-8bdf-773ec4e1f46b";
-const JAMIE_MAIL   = "jamie.chen@inkbook-demo.test";
-const MARCUS_MAIL  = "marcus.lee@inkbook-demo.test";
-const OWNER_MAIL   = "mohammadsiam21@gmail.com";
+if (!existsSync("qa/artist-fixture.json")) {
+  console.error("Missing qa/artist-fixture.json — run: node scripts/qa-engine-artist-fixture.mjs --provision");
+  process.exit(1);
+}
+const FIXTURE = JSON.parse(readFileSync("qa/artist-fixture.json", "utf8"));
 
-// Studio B: a completely different studio/artist.
-const OUTSIDER_MAIL = "testartist@inkbook.tech";
+// Studio A: Jamie's disposable QA studio.
+const STUDIO_A_ID  = FIXTURE.studioA.id;
+const JAMIE_ID     = FIXTURE.jamie.id;
+const JAMIE_MAIL   = FIXTURE.jamie.email;
+const MARCUS_MAIL  = FIXTURE.marcus.email;
+const OWNER_MAIL   = FIXTURE.studioA.ownerEmail;
+
+// Studio B: a completely different, also disposable, studio/artist.
+const OUTSIDER_MAIL = FIXTURE.outsider.email;
 
 let failures = 0;
 const PASS = (msg) => console.log("  PASS:", msg);
@@ -96,13 +107,14 @@ async function buildCookiesFor(email) {
   for (let i = 0; i < sessionStr.length; i += CHUNK_SIZE) chunks.push(sessionStr.slice(i, i + CHUNK_SIZE));
 
   const cookieName = `sb-${PROJECT_REF}-auth-token`;
+  const targetHost = new URL(BASE_URL).hostname;
   return chunks.map((chunk, i) => ({
     name: chunks.length > 1 ? `${cookieName}.${i}` : cookieName,
     value: chunk,
-    domain: "localhost",
+    domain: targetHost,
     path: "/",
     httpOnly: false,
-    secure: false,
+    secure: BASE_URL.startsWith("https"),
     sameSite: "Lax",
   }));
 }

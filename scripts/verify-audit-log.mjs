@@ -22,11 +22,19 @@
  *
  * Requires: SUPABASE_SERVICE_ROLE_KEY in .env.local (no dev server needed —
  * this is a pure data/RLS check, no HTTP/browser involved).
+ *
+ * 2026-08-30: previously hardcoded a specific studio id pair that turned
+ * out to belong to real, actively-used studios, not QA fixtures
+ * (investigated and confirmed — see QA_ENGINE.md "Known gaps" history).
+ * Now reads a disposable fixture from qa/artist-fixture.json instead —
+ * provision one first with:
+ *   node scripts/qa-engine-artist-fixture.mjs --provision
+ *
  * Run with: node scripts/verify-audit-log.mjs
  */
 
 import { createClient } from "@supabase/supabase-js";
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 
 const env = Object.fromEntries(
   readFileSync(".env.local", "utf8")
@@ -39,8 +47,14 @@ const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
 const ANON_KEY = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SERVICE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
 
-const STUDIO_A_ID = "bb0c648e-4f18-4e48-8581-6b7cfd585eea";
-const STUDIO_B_ID = "5fe382a1-fee7-4387-b625-4bf7a52b8f45";
+if (!existsSync("qa/artist-fixture.json")) {
+  console.error("Missing qa/artist-fixture.json — run: node scripts/qa-engine-artist-fixture.mjs --provision");
+  process.exit(1);
+}
+const FIXTURE = JSON.parse(readFileSync("qa/artist-fixture.json", "utf8"));
+
+const STUDIO_A_ID = FIXTURE.studioA.id;
+const STUDIO_B_ID = FIXTURE.studioB.id;
 const TAG = "QA-VERIFY-AUDIT-LOG";
 
 let failures = 0;

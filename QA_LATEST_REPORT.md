@@ -1,12 +1,12 @@
 # InkBook QA Engine — Latest Report
 
-**Run:** `qa-critical-1788090585459` · **Mode:** `critical` · **Started:** 2026-08-30T11:49:45.459Z · **Completed:** 2026-08-30T11:53:44.794Z
+**Run:** `qa-critical-1788092288722` · **Mode:** `critical` · **Started:** 2026-08-30T12:18:08.722Z · **Completed:** 2026-08-30T12:26:01.859Z
 
 ## Totals
 
 | PASS | FAIL | BLOCKED_NEEDS_SIAM | SKIPPED |
 |---|---|---|---|
-| 25 | 0 | 2 | 9 |
+| 35 | 0 | 2 | 1 |
 
 ## preflight
 
@@ -14,10 +14,10 @@
 
 | Check | Status | Duration | Note |
 |---|---|---|---|
-| Production reachable (https://www.inkbook.tech) | ✅ PASS | 0s |  |
+| Production reachable (https://www.inkbook.tech) | ✅ PASS | 1s |  |
 | cron/sms-reminders migration gate (known blocker) | 🚧 BLOCKED_NEEDS_SIAM | 1s | Exit code 2 |
-| TypeScript typecheck | ✅ PASS | 8s |  |
-| ESLint | ✅ PASS | 5s |  |
+| TypeScript typecheck | ✅ PASS | 16s |  |
+| ESLint | ✅ PASS | 9s |  |
 
 ## qa-data
 
@@ -25,7 +25,7 @@
 
 | Check | Status | Duration | Note |
 |---|---|---|---|
-| QA data write/delete probe (service-role access) | ✅ PASS | 2s |  |
+| QA data write/delete probe (service-role access) | ✅ PASS | 3s |  |
 
 ## owner
 
@@ -33,24 +33,26 @@
 
 ## artist
 
-6 PASS, 0 FAIL, 0 BLOCKED, 8 SKIPPED
+16 PASS, 0 FAIL, 0 BLOCKED, 0 SKIPPED
 
 | Check | Status | Duration | Note |
 |---|---|---|---|
-| Artist Dashboard data correctness | ✅ PASS | 1s |  |
+| Artist Dashboard data correctness | ✅ PASS | 2s |  |
 | Artist Earnings booking/payment integration | ✅ PASS | 1s |  |
-| Artist Earnings cross-studio isolation | ✅ PASS | 6s |  |
-| Artist Schedule date navigation + booking integration | ✅ PASS | 9s |  |
-| Artist Schedule timezone + lifecycle | ✅ PASS | 9s |  |
-| Artist Schedule cross-studio isolation | ✅ PASS | 6s |  |
-| Artist Bookings null date/time regression | ⏭️ SKIPPED |  | Requires local dev server (localhost:3001) + a specific hardcoded studio fixture, not confirmed safe against production — see QA_ENGINE.md 'Known gaps'. |
-| Artist Requests authorization + lifecycle | ⏭️ SKIPPED |  | Requires local dev server (localhost:3001) + a specific hardcoded studio fixture, not confirmed safe against production — see QA_ENGINE.md 'Known gaps'. |
-| Artist Requests cross-studio isolation | ⏭️ SKIPPED |  | Requires local dev server (localhost:3001) + a specific hardcoded studio fixture, not confirmed safe against production — see QA_ENGINE.md 'Known gaps'. |
-| Artist Clients isolation + integration | ⏭️ SKIPPED |  | Requires local dev server (localhost:3001) + a specific hardcoded studio fixture, not confirmed safe against production — see QA_ENGINE.md 'Known gaps'. |
-| Artist Portfolio isolation + integration | ⏭️ SKIPPED |  | Requires local dev server (localhost:3001) + a specific hardcoded studio fixture, not confirmed safe against production — see QA_ENGINE.md 'Known gaps'. |
-| Artist Flash lifecycle-guard + isolation | ⏭️ SKIPPED |  | Requires local dev server (localhost:3001) + a specific hardcoded studio fixture, not confirmed safe against production — see QA_ENGINE.md 'Known gaps'. |
-| Artist Messages isolation | ⏭️ SKIPPED |  | Requires local dev server (localhost:3001) + a specific hardcoded studio fixture, not confirmed safe against production — see QA_ENGINE.md 'Known gaps'. |
-| Artist Agreements creation + isolation + immutability | ⏭️ SKIPPED |  | Requires local dev server (localhost:3001) + a specific hardcoded studio fixture, not confirmed safe against production — see QA_ENGINE.md 'Known gaps'. |
+| Artist Earnings cross-studio isolation | ✅ PASS | 7s |  |
+| Artist Schedule date navigation + booking integration | ✅ PASS | 10s |  |
+| Artist Schedule timezone + lifecycle | ✅ PASS | 11s |  |
+| Artist Schedule cross-studio isolation | ✅ PASS | 8s |  |
+| Provision disposable artist-isolation fixture | ✅ PASS | 5s |  |
+| Artist Bookings null date/time regression | ✅ PASS | 11s |  |
+| Artist Requests authorization + lifecycle | ✅ PASS | 18s |  |
+| Artist Requests cross-studio isolation | ✅ PASS | 24s |  |
+| Artist Clients isolation + integration | ✅ PASS | 33s |  |
+| Artist Portfolio isolation + integration | ✅ PASS | 10s |  |
+| Artist Flash lifecycle-guard + isolation | ✅ PASS | 7s |  |
+| Artist Messages isolation | ✅ PASS | 39s |  |
+| Artist Agreements creation + isolation + immutability | ✅ PASS | 33s |  |
+| Clean up disposable artist-isolation fixture | ✅ PASS | 10s |  |
 
 ## client
 
@@ -58,14 +60,14 @@
 
 | Check | Status | Duration | Note |
 |---|---|---|---|
-| Client Portal My Bookings | ✅ PASS | 17s |  |
-| Client Portal History | ✅ PASS | 21s |  |
-| Client Portal Settings | ✅ PASS | 5s |  |
-| Client <-> Studio messaging | ✅ PASS | 10s |  |
-| Booking lifecycle completion | ✅ PASS | 31s |  |
-| Remaining balance payment | ✅ PASS | 13s |  |
+| Client Portal My Bookings | ✅ PASS | 19s |  |
+| Client Portal History | ✅ PASS | 24s |  |
+| Client Portal Settings | ✅ PASS | 6s |  |
+| Client <-> Studio messaging | ✅ PASS | 12s |  |
+| Booking lifecycle completion | ✅ PASS | 35s |  |
+| Remaining balance payment | ✅ PASS | 16s |  |
 | Reviews | ✅ PASS | 15s |  |
-| Waitlist | ✅ PASS | 9s |  |
+| Waitlist | ✅ PASS | 10s |  |
 
 ## flagship
 
@@ -73,7 +75,7 @@
 
 | Check | Status | Duration | Note |
 |---|---|---|---|
-| Flagship journey — right-sized live regression | ✅ PASS | 18s |  |
+| Flagship journey — right-sized live regression | ✅ PASS | 17s |  |
 
 ## security
 
@@ -82,10 +84,10 @@
 | Check | Status | Duration | Note |
 |---|---|---|---|
 | tests/db — RLS isolation + schema integrity (real Postgres) | ⏭️ SKIPPED |  | Requires a local Supabase instance (`supabase start`) — SUPABASE_DB_URL not set. Run manually with `npm run test:db` after starting one, or let CI (.github/workflows/test.yml) run it automatically. |
-| GET /api/bookings cross-tenant IDOR (BUG-SEC-FULLQA-001, P0) | ✅ PASS | 7s |  |
+| GET /api/bookings cross-tenant IDOR (BUG-SEC-FULLQA-001, P0) | ✅ PASS | 8s |  |
 | submitCustomRequest cross-tenant artist assignment (BUG-SEC-FULLQA-003, P1) | ✅ PASS | 12s |  |
-| Public AI routes private-knowledge exposure (BUG-SEC-FULLQA-002, P2) | ✅ PASS | 10s |  |
-| Cross-artist + cross-client isolation | ✅ PASS | 13s |  |
+| Public AI routes private-knowledge exposure (BUG-SEC-FULLQA-002, P2) | ✅ PASS | 11s |  |
+| Cross-artist + cross-client isolation | ✅ PASS | 16s |  |
 
 ## edge-cases
 
@@ -101,7 +103,7 @@
 
 | Check | Status | Duration | Note |
 |---|---|---|---|
-| Cron auth-guard (6 routes) + organic production-evidence check | 🚧 BLOCKED_NEEDS_SIAM | 7s | Exit code 2 |
+| Cron auth-guard (6 routes) + organic production-evidence check | 🚧 BLOCKED_NEEDS_SIAM | 8s | Exit code 2 |
 
 ## known-bug-regression
 
@@ -109,7 +111,7 @@
 
 | Check | Status | Duration | Note |
 |---|---|---|---|
-| Locked known-bug regression suite (8 files) | ✅ PASS | 3s |  |
+| Locked known-bug regression suite (8 files) | ✅ PASS | 5s |  |
 
 ## final-regression
 

@@ -1,21 +1,18 @@
-// Phase 03 — Artist Portal. `critical` mode runs the existing fast,
-// production-safe, DB-only verify-artist-*.mjs scripts (no browser, no
-// hardcoded studio/fixture dependency). `full` mode adds the heavy
-// real-browser click-through.
+// Phase 03 — Artist Portal. `critical` mode runs the fast, production-safe,
+// DB-only verify-artist-*.mjs scripts PLUS the isolation/authz scripts that
+// need a real artist fixture. `full` mode adds the heavy real-browser
+// click-through.
 //
-// A second group of 8 verify-artist-*.mjs scripts (isolation/authz checks
-// for bookings-null-schedule, requests, clients, portfolio, flash,
-// messages, agreements) is deliberately NOT wired in here, even though
-// their logic is real and valuable — investigated 2026-08-30 while
-// building this engine: they hardcode `http://localhost:3001` (a real dev
-// server dependency, not just a default) AND hardcode a specific studio id
-// (`bb0c648e-4f18-4e48-8581-6b7cfd585eea`, currently a studio named
-// "SM CreationS" with real-looking artist accounts, not a `[QA-`-tagged
-// throwaway fixture). Pointing them at production without first confirming
-// with Siam whether that studio is an intentional, sanctioned test fixture
-// would risk exactly what this project's QA rules forbid — touching real
-// studio/client data casually. See QA_ENGINE.md "Known gaps" for the
-// full list and the exact question for Siam.
+// 2026-08-30: a second group of 9 verify-artist-*.mjs / verify-audit-log.mjs
+// scripts hardcoded a specific studio id, which investigation confirmed
+// belongs to a real, actively-used studio ("SM CreationS") — not a QA
+// fixture — plus a second real studio ("Siam Enterprise", the exact studio
+// behind Siam's live P1 bug report earlier this session) used as the
+// "different studio" in cross-studio checks. Per explicit instruction, this
+// engine never touches either. All 9 scripts are now rewired to read a
+// disposable, uniquely QA-tagged fixture from qa/artist-fixture.json
+// instead (provisioned by scripts/qa-engine-artist-fixture.mjs), verified
+// working end-to-end against production with zero real data touched.
 import { runCheck, nodeScript } from "../lib/exec.mjs";
 
 const PRODUCTION_SAFE_SCRIPTS = [
@@ -27,7 +24,9 @@ const PRODUCTION_SAFE_SCRIPTS = [
   ["artist.schedule-isolation", "scripts/verify-artist-schedule-isolation.mjs", "Artist Schedule cross-studio isolation"],
 ];
 
-export const LOCAL_ONLY_FIXTURE_DEPENDENT_SCRIPTS = [
+// Fixture-dependent scripts (need qa/artist-fixture.json — provisioned
+// below, before these run, and torn down after regardless of outcome).
+export const FIXTURE_DEPENDENT_SCRIPTS = [
   ["artist.bookings-null-schedule", "scripts/verify-artist-bookings-null-schedule.mjs", "Artist Bookings null date/time regression"],
   ["artist.requests-authz", "scripts/verify-artist-requests-authz.mjs", "Artist Requests authorization + lifecycle"],
   ["artist.requests-isolation", "scripts/verify-artist-requests-isolation.mjs", "Artist Requests cross-studio isolation"],
@@ -46,13 +45,38 @@ export async function run(mode) {
     results.push(await runCheck({ id, label, ...nodeScript(script), timeoutMs: 60000 }));
   }
 
-  for (const [id, , label] of LOCAL_ONLY_FIXTURE_DEPENDENT_SCRIPTS) {
-    results.push({
-      id, label, status: "SKIPPED",
-      reason: "Requires local dev server (localhost:3001) + a specific hardcoded studio fixture, not confirmed safe against production — see QA_ENGINE.md 'Known gaps'.",
-      durationMs: 0, startedAt: new Date().toISOString(),
-    });
+  const provisionResult = await runCheck({
+    id: "artist.fixture-provision",
+    label: "Provision disposable artist-isolation fixture",
+    ...nodeScript("scripts/qa-engine-artist-fixture.mjs", ["--provision"]),
+    timeoutMs: 30000,
+  });
+  results.push(provisionResult);
+
+  if (provisionResult.status === "PASS") {
+    for (const [id, script, label] of FIXTURE_DEPENDENT_SCRIPTS) {
+      results.push(await runCheck({ id, label, ...nodeScript(script), timeoutMs: 60000 }));
+    }
+  } else {
+    for (const [id, , label] of FIXTURE_DEPENDENT_SCRIPTS) {
+      results.push({
+        id, label, status: "SKIPPED",
+        reason: "Fixture provisioning failed — see artist.fixture-provision.",
+        durationMs: 0, startedAt: new Date().toISOString(),
+      });
+    }
   }
+
+  // Always tear down, even if some checks above failed — never leave the
+  // fixture behind for Phase 12's sweep to have to catch.
+  results.push(
+    await runCheck({
+      id: "artist.fixture-cleanup",
+      label: "Clean up disposable artist-isolation fixture",
+      ...nodeScript("scripts/qa-engine-artist-fixture.mjs", ["--cleanup", "--apply"]),
+      timeoutMs: 30000,
+    })
+  );
 
   if (mode === "full") {
     results.push(

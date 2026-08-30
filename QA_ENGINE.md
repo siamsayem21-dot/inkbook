@@ -63,6 +63,7 @@ Nothing was deleted. Classification:
 | Flagship journey | `qa-reconcile-flagship-regression.mjs` (critical), `qa-fullrun-flagship-journey.mjs` (full) |
 | Owner/Artist full click-through | `qa-fullrun-owner-clickthrough.mjs`, `qa-fullrun-artist-clickthrough.mjs` (full mode only — slow) |
 | Artist Portal (production-safe, DB-level) | `verify-artist-dashboard-data.mjs`, `verify-artist-earnings-integration.mjs`, `verify-artist-earnings-isolation.mjs`, `verify-artist-schedule-nav.mjs`, `verify-artist-schedule-lifecycle.mjs`, `verify-artist-schedule-isolation.mjs` |
+| Artist Portal (fixture-dependent — see "RESOLVED" below) | `verify-artist-bookings-null-schedule.mjs`, `verify-artist-requests-authz.mjs`, `verify-artist-requests-isolation.mjs`, `verify-artist-clients-isolation.mjs`, `verify-artist-portfolio-isolation.mjs`, `verify-artist-flash-isolation.mjs`, `verify-artist-messages-isolation.mjs`, `verify-artist-agreements-isolation.mjs` |
 | Client Portal | `verify-client-bookings.mjs`, `verify-client-history.mjs`, `verify-client-settings.mjs`, `verify-messaging.mjs`, `verify-booking-lifecycle.mjs`, `verify-remainder-payment.mjs`, `verify-reviews.mjs`, `verify-waitlist.mjs` |
 | Mobile/visual | `qa-fullrun-mobile-critical-paths.mjs`, `qa-motion-reverify-production.mjs` (full mode only) |
 | Security (full mode) | `qa-phase-security-idor.mjs`, `verify-deposit-ownership.mjs`, `verify-file-upload-security.mjs`, `verify-rate-limit.mjs`, `verify-pii-logs.mjs`, `verify-audit-log.mjs`, `verify-connect-live.mjs` |
@@ -109,23 +110,41 @@ plus the later existing-account UX fix), `qa-fullrun-append-matrix.mjs`,
 `qa-fullrun-probe-signup.mjs`, `qa-design-system-sweep.mjs`,
 `qa-motion-visual-verify.mjs`.
 
-### NOT wired in — 8 scripts with a real, unresolved safety question
+### RESOLVED (2026-08-30) — 9 scripts rewired onto a disposable fixture instead of real studio data
 `verify-artist-bookings-null-schedule.mjs`, `verify-artist-requests-authz.mjs`,
 `verify-artist-requests-isolation.mjs`, `verify-artist-clients-isolation.mjs`,
 `verify-artist-portfolio-isolation.mjs`, `verify-artist-flash-isolation.mjs`,
-`verify-artist-messages-isolation.mjs`, `verify-artist-agreements-isolation.mjs`.
+`verify-artist-messages-isolation.mjs`, `verify-artist-agreements-isolation.mjs`,
+`verify-audit-log.mjs`.
 
-Investigated while building this engine: each hardcodes
-`http://localhost:3001` (a real dev-server dependency, not just a
-default) **and** hardcodes a specific studio id
-(`bb0c648e-4f18-4e48-8581-6b7cfd585eea`) which, checked directly against
-production, is a real studio named **"SM CreationS"** with real-looking
-artist accounts — not a `[QA-`-tagged throwaway fixture. Pointing these at
-production without confirming with Siam whether that studio is an
-intentional, sanctioned test fixture would risk exactly what this
-project's QA rules forbid (touching real studio data casually). They are
-reported as `SKIPPED` with this exact reason whenever the engine runs
-against production (its default target). See "Next improvements" below.
+**Investigation confirmed real risk, not just ambiguity.** Both hardcoded
+studio ids were checked directly against production:
+- `bb0c648e-4f18-4e48-8581-6b7cfd585eea` ("SM CreationS", subdomain
+  `inkandironstudio` — matches CLAUDE.md's own documented example) — its
+  owner account (`mohammadsiam21@gmail.com`) signed in minutes before this
+  was investigated, and it holds real bookings/clients/portfolio content.
+  Genuinely ambiguous — could not be confirmed disposable.
+- `5fe382a1-fee7-4387-b625-4bf7a52b8f45` ("Siam Enterprise") — **confirmed
+  real**: this is the exact studio behind Siam's live P1 bug report earlier
+  in this same session (the `printhutbd2019@gmail.com` invite).
+
+Per explicit instruction, neither is touched. All 9 scripts were rewired
+to read a disposable, uniquely QA-tagged fixture from
+`qa/artist-fixture.json` instead — provisioned and torn down automatically
+by Phase 03 every `critical`/`full` run (`scripts/qa-engine-artist-fixture.mjs`,
+DRY RUN → verify QA ownership → DELETE → VERIFY GONE, same pattern as the
+Phase 12 safety-net sweep). Fixed 3 additional real-data leaks the same
+investigation surfaced: `OWNER_MAIL = "mohammadsiam21@gmail.com"` (a real
+personal email, used to test the "studio owner" role) and
+`STUDIO_A_SUBDOMAIN = "inkandironstudio"` / `STUDIO_B_SUBDOMAIN = "siam3nt"`
+(real subdomains). Also fixed the `domain: "localhost"` / `secure: false`
+cookie hardcoding in every script's `buildCookiesFor()` helper to derive
+from `QA_BASE_URL` instead, so these now run against production (or any
+target) rather than requiring a specific local dev server port.
+
+**Verified 2026-08-30:** all 9 scripts run clean against live production
+using the disposable fixture — 0 FAIL, zero real studio/client/artist data
+read, written, or touched. Wired into Phase 03 (`critical`/`full` modes).
 
 ---
 
@@ -224,14 +243,9 @@ impractical multi-hour run into mandatory CI.
 
 ## Known gaps / next improvements
 
-1. **8 artist isolation scripts not wired in** (see "NOT wired in" above)
-   — needs Siam's answer on whether `bb0c648e-4f18-4e48-8581-6b7cfd585eea`
-   ("SM CreationS") is a sanctioned test fixture. If yes: trivial fix
-   (parameterize `BASE_URL` + cookie domain, already proven safe pattern
-   used elsewhere in this codebase). If no: these 8 scripts need
-   rewriting to use fresh, self-contained `[QA-`-tagged data like every
-   other check in this engine, which is more work but the more correct
-   long-term fix regardless of the fixture-studio answer.
+1. ~~8 artist isolation scripts not wired in~~ — **RESOLVED 2026-08-30**,
+   see "RESOLVED" above. All 9 now run against a disposable fixture, wired
+   into Phase 03.
 2. **No dedicated Client Portal full click-through script** exists in this
    project's history — Client coverage currently comes from the Flagship
    journey's real client-facing steps plus the `critical`-mode verify-*.mjs
