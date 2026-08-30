@@ -182,3 +182,69 @@ describe("acceptInvite — findAuthUserByEmail is robust to a trailing space in 
     expect(result.error).toBeUndefined();
   });
 });
+
+// 2026-08-30 UX fix regression coverage: when the invite-accept PAGE has
+// already determined (server-side, before rendering) that this email has
+// a real existing account, the form never collects a password — acceptInvite()
+// is called with password omitted entirely. This must link the existing
+// account WITHOUT ever calling createUser (so it can never touch that
+// account's real password), and must never insert a duplicate artist row.
+describe("acceptInvite — existing-account path (password omitted, page already knew the account exists)", () => {
+  const originalFetch = global.fetch;
+  afterEach(() => { global.fetch = originalFetch; });
+
+  it("links the existing account and creates an artist row, without ever calling createUser", async () => {
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ users: [{ id: "existing-user-9", email: "jane@studio.com" }] }),
+      })
+    ) as unknown as typeof fetch;
+
+    sb.queueFrom("artist_invites", INVITE_ROW);
+    sb.queueFrom("artists", null); // existingArtist check: none yet at this studio
+    sb.queueFrom("artists", null); // removedArtist revive check: nothing to revive
+    sb.queueFrom("artists", { id: "linked-artist-1" }); // insert succeeds
+    sb.queueFrom("artist_invites", null); // mark accepted
+
+    const result = await acceptInvite({ token: "tok", name: "Jane Artist" }); // no password
+
+    expect(result.error).toBeUndefined();
+    expect(createUser).not.toHaveBeenCalled(); // never attempted to create/overwrite an account
+    const artistsInsertChain = sb.getChain("artists", 3); // 1: existingArtist check, 2: removedArtist revive check, 3: insert
+    expect(artistsInsertChain.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ studio_id: "studio-1", user_id: "existing-user-9", email: "jane@studio.com" })
+    );
+  });
+
+  it("treats an already-linked artist at this studio as already accepted, still without calling createUser", async () => {
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ users: [{ id: "existing-user-10", email: "jane@studio.com" }] }),
+      })
+    ) as unknown as typeof fetch;
+
+    sb.queueFrom("artist_invites", INVITE_ROW);
+    sb.queueFrom("artists", { id: "already-linked-artist" }); // existingArtist check: found
+    sb.queueFrom("artist_invites", null); // mark accepted
+
+    const result = await acceptInvite({ token: "tok", name: "Jane Artist" });
+
+    expect(result.error).toBeUndefined();
+    expect(createUser).not.toHaveBeenCalled();
+  });
+
+  it("fails clearly (does not create a new account) if the account was removed between page load and submit", async () => {
+    global.fetch = vi.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve({ users: [] }) })
+    ) as unknown as typeof fetch;
+
+    sb.queueFrom("artist_invites", INVITE_ROW);
+
+    const result = await acceptInvite({ token: "tok", name: "Jane Artist" });
+
+    expect(result.error).toBe("We couldn't find your existing account — please refresh this page and try again.");
+    expect(createUser).not.toHaveBeenCalled();
+  });
+});

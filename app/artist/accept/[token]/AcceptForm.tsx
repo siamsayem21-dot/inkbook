@@ -11,11 +11,13 @@ export default function AcceptForm({
   inviteeName,
   studioName,
   email,
+  hasExistingAccount,
 }: {
   token: string;
   inviteeName: string;
   studioName: string;
   email: string;
+  hasExistingAccount: boolean;
 }) {
   const router = useRouter();
   const [name, setName] = useState(inviteeName);
@@ -23,6 +25,18 @@ export default function AcceptForm({
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+
+  // Kept from the 2026-08-30 P1 fix: any unhandled rejection from either
+  // async call below used to leave the button stuck on "Setting up your
+  // account..." forever with no visible error. try/catch + a bounded
+  // timeout guarantee the user always gets feedback.
+  function timeout(ms: number): Promise<never> {
+    return new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("This is taking longer than expected. Please try again.")), ms)
+    );
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,41 +46,44 @@ export default function AcceptForm({
       setError("Name must be at least 2 characters.");
       return;
     }
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
-      return;
-    }
-    if (password !== confirm) {
-      setError("Passwords do not match.");
-      return;
+    if (!hasExistingAccount) {
+      if (password.length < 8) {
+        setError("Password must be at least 8 characters.");
+        return;
+      }
+      if (password !== confirm) {
+        setError("Passwords do not match.");
+        return;
+      }
     }
 
     setLoading(true);
 
-    // Neither the server action call nor the client-side sign-in call below
-    // was ever wrapped in try/catch — an unhandled rejection from either one
-    // (a transient server error, a Next.js server-action edge case, a
-    // network blip) left the button stuck on "Setting up your account..."
-    // forever with no visible error, since nothing ever reached
-    // setLoading(false). The 30s timeout race is a second, independent
-    // safeguard: even if a request genuinely never settles (rather than
-    // rejecting), the user still gets feedback instead of an infinite spinner.
-    function timeout(ms: number): Promise<never> {
-      return new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("This is taking longer than expected. Please try again.")), ms)
-      );
-    }
-
     try {
-      // Server action: creates auth user + artist row + marks invite accepted
+      // Server action: for a new account, creates the auth user + artist
+      // row + marks the invite accepted. For an existing account
+      // (hasExistingAccount), links the artist row to that account without
+      // ever touching its real password — no `password` is sent at all.
       const result = await Promise.race([
-        acceptInvite({ token, name: name.trim(), password }),
+        acceptInvite(
+          hasExistingAccount
+            ? { token, name: name.trim() }
+            : { token, name: name.trim(), password }
+        ),
         timeout(30000),
       ]);
 
       if (result.error) {
         setError(result.error);
         setLoading(false);
+        return;
+      }
+
+      if (hasExistingAccount) {
+        // We deliberately never collected this account's real password —
+        // there's nothing to sign in with here. Send them to log in with
+        // the password they already have.
+        router.push("/login?activated=1");
         return;
       }
 
@@ -95,6 +112,26 @@ export default function AcceptForm({
     }
   }
 
+  async function handleForgotPassword() {
+    setResetLoading(true);
+    setError(null);
+    try {
+      const supabase = createClient();
+      const { error: resetError } = await Promise.race([
+        supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+        }),
+        timeout(15000),
+      ]);
+      if (resetError) setError(resetError.message);
+      else setResetSent(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't send the reset email — please try again.");
+    } finally {
+      setResetLoading(false);
+    }
+  }
+
   const mismatch = confirm.length > 0 && password !== confirm;
 
   return (
@@ -102,6 +139,14 @@ export default function AcceptForm({
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
           {error}
+        </div>
+      )}
+
+      {hasExistingAccount && (
+        <div className="bg-violet-50 border border-violet-200 text-violet-900 text-sm rounded-lg px-4 py-3">
+          You already have an InkBook account with this email. Accept this
+          invitation to join <span className="font-medium">{studioName}</span>,
+          then sign in with your existing password.
         </div>
       )}
 
@@ -131,23 +176,27 @@ export default function AcceptForm({
         />
       </div>
 
-      <PasswordInput
-        id="accept-password"
-        label="Set a password *"
-        placeholder="At least 8 characters"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+      {!hasExistingAccount && (
+        <>
+          <PasswordInput
+            id="accept-password"
+            label="Set a password *"
+            placeholder="At least 8 characters"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
-      <PasswordInput
-        id="accept-confirm-password"
-        label="Confirm password *"
-        placeholder="Repeat your password"
-        value={confirm}
-        onChange={(e) => setConfirm(e.target.value)}
-        error={mismatch}
-      />
-      {mismatch && <p className="text-red-600 text-xs -mt-3">Passwords do not match</p>}
+          <PasswordInput
+            id="accept-confirm-password"
+            label="Confirm password *"
+            placeholder="Repeat your password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            error={mismatch}
+          />
+          {mismatch && <p className="text-red-600 text-xs -mt-3">Passwords do not match</p>}
+        </>
+      )}
 
       <button
         type="submit"
@@ -160,12 +209,31 @@ export default function AcceptForm({
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            Setting up your account…
+            {hasExistingAccount ? "Accepting…" : "Setting up your account…"}
           </>
+        ) : hasExistingAccount ? (
+          `Accept Invitation`
         ) : (
           `Join ${studioName} →`
         )}
       </button>
+
+      {hasExistingAccount && (
+        resetSent ? (
+          <p className="text-center text-xs text-emerald-600">
+            Check your inbox for {email} and click the link to reset your password.
+          </p>
+        ) : (
+          <button
+            type="button"
+            onClick={handleForgotPassword}
+            disabled={resetLoading}
+            className="text-center text-xs text-zinc-500 hover:text-violet-600 transition-colors disabled:opacity-50"
+          >
+            {resetLoading ? "Sending…" : "Forgot password?"}
+          </button>
+        )
+      )}
     </form>
   );
 }

@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { findAuthUserByEmail } from "@/lib/auth/find-user-by-email";
 import Link from "next/link";
 import AcceptForm from "./AcceptForm";
 
@@ -84,6 +85,14 @@ export default async function AcceptInvitePage({
 
   const studioName = (studio as { name: string } | null)?.name ?? "your studio";
 
+  // Determine BEFORE rendering whether this email already has a real
+  // InkBook account — so the form never shows misleading "Set a password"
+  // fields for someone who already has a real password (2026-08-30 UX
+  // fix). A lookup failure here safely falls back to the new-user UI;
+  // acceptInvite()'s own createUser-then-catch-email_exists fallback
+  // (unchanged) still handles that case correctly either way.
+  const existingUser = await findAuthUserByEmail(inv.invited_email);
+
   return (
     <div className="min-h-screen bg-[#FAF9FC] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
@@ -111,6 +120,7 @@ export default async function AcceptInvitePage({
             inviteeName={inv.invited_name}
             studioName={studioName}
             email={inv.invited_email}
+            hasExistingAccount={!!existingUser}
           />
         </div>
 

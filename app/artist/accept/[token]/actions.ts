@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@supabase/supabase-js";
+import { findAuthUserByEmail } from "@/lib/auth/find-user-by-email";
 
 function adminClient() {
   return createClient(
@@ -10,49 +11,15 @@ function adminClient() {
   );
 }
 
-async function findAuthUserByEmail(email: string): Promise<{ id: string } | null> {
-  // Bounded — an unbounded raw fetch here had no timeout at all, so a slow/
-  // stalled connection to this endpoint could hold the whole server action
-  // open indefinitely with nothing to abort it.
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
-  try {
-    // .trim() — the REAL root cause of the "stuck on Setting up your
-    // account..." bug (confirmed live via Vercel production logs,
-    // 2026-08-30): process.env.NEXT_PUBLIC_SUPABASE_URL carries a stray
-    // trailing whitespace character in this deployment's stored value.
-    // Every other Supabase call in this codebase goes through
-    // @supabase/supabase-js's createClient(), which tolerates/normalizes
-    // it — this was the ONLY spot building a raw URL via template-literal
-    // concatenation for a native fetch(), and native fetch's URL parser
-    // rejects the embedded space (`https://...supabase.co /auth/v1/...`)
-    // with a hard TypeError. This function only runs on the "invited email
-    // already has an account" branch — the exact real-world case that
-    // triggered this for Siam. Trimming here makes this call robust to the
-    // stray whitespace regardless of whether the Vercel env var itself is
-    // also cleaned up.
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()}/auth/v1/admin/users?page=1&per_page=1000`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-          apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
-        },
-        signal: controller.signal,
-      }
-    );
-    if (!res.ok) return null;
-    const data = (await res.json()) as { users?: Array<{ id: string; email: string }> };
-    return data.users?.find(u => u.email === email) ?? null;
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
-
 export async function acceptInvite(data: {
   token: string;
   name: string;
-  password: string;
+  // Optional as of 2026-08-30: the invite-accept page now checks upfront
+  // (page.tsx, via the same findAuthUserByEmail) whether this email
+  // already has an account and, if so, never shows password fields at
+  // all — omitted here means "link my existing account, don't create a
+  // new one." See acceptInviteInner's early branch below.
+  password?: string;
 }): Promise<{ error?: string }> {
   try {
     return await acceptInviteInner(data);
@@ -72,9 +39,9 @@ export async function acceptInvite(data: {
 async function acceptInviteInner(data: {
   token: string;
   name: string;
-  password: string;
+  password?: string;
 }): Promise<{ error?: string }> {
-  if (data.password.length < 8) {
+  if (data.password !== undefined && data.password.length < 8) {
     return { error: "Password must be at least 8 characters" };
   }
 
@@ -102,32 +69,20 @@ async function acceptInviteInner(data: {
   let userId: string;
   let createdNewUser = false;
 
-  const { data: authData, error: createError } = await supabase.auth.admin.createUser({
-    email: inv.invited_email,
-    password: data.password,
-    email_confirm: true,
-    user_metadata: { full_name: data.name },
-  });
-
-  if (createError) {
-    // GoTrue returns error_code "email_exists" when the address is already registered.
-    // Instead of blocking the invite, link the existing account to this studio as an artist.
-    const isEmailExists =
-      (createError as unknown as { code?: string }).code === "email_exists" ||
-      createError.message?.toLowerCase().includes("already been registered");
-
-    if (!isEmailExists) {
-      console.error("[acceptInvite] createUser failed:", createError.message);
-      return { error: createError.message ?? "Failed to create account — please try again" };
-    }
-
+  if (data.password === undefined) {
+    // Existing-account path: the client already knows (page.tsx checked
+    // before rendering) that this email has a real account, so it never
+    // collected a password — skip createUser entirely rather than
+    // deliberately calling it just to catch the email_exists error, and
+    // NEVER touch this account's real password. If the account no longer
+    // exists (rare TOCTOU — deleted between page load and submit), fail
+    // clearly instead of silently creating an unwanted new one.
     const existing = await findAuthUserByEmail(inv.invited_email);
     if (!existing) {
-      console.error("[acceptInvite] email_exists but user not found:", inv.invited_email);
-      return { error: "Account conflict — please contact your studio owner." };
+      console.error("[acceptInvite] expected existing account not found:", inv.invited_email);
+      return { error: "We couldn't find your existing account — please refresh this page and try again." };
     }
 
-    // If they already have an artist row at this studio, treat as already accepted
     const { data: existingArtist } = await supabase
       .from("artists")
       .select("id")
@@ -146,8 +101,55 @@ async function acceptInviteInner(data: {
     userId = existing.id;
     createdNewUser = false;
   } else {
-    userId = authData.user.id;
-    createdNewUser = true;
+    const { data: authData, error: createError } = await supabase.auth.admin.createUser({
+      email: inv.invited_email,
+      password: data.password,
+      email_confirm: true,
+      user_metadata: { full_name: data.name },
+    });
+
+    if (createError) {
+      // GoTrue returns error_code "email_exists" when the address is already
+      // registered — a race the page-level check above can't fully rule out
+      // (e.g. the account was created in the moments between page load and
+      // submit). Instead of blocking the invite, link the existing account
+      // to this studio as an artist, same as the branch above.
+      const isEmailExists =
+        (createError as unknown as { code?: string }).code === "email_exists" ||
+        createError.message?.toLowerCase().includes("already been registered");
+
+      if (!isEmailExists) {
+        console.error("[acceptInvite] createUser failed:", createError.message);
+        return { error: createError.message ?? "Failed to create account — please try again" };
+      }
+
+      const existing = await findAuthUserByEmail(inv.invited_email);
+      if (!existing) {
+        console.error("[acceptInvite] email_exists but user not found:", inv.invited_email);
+        return { error: "Account conflict — please contact your studio owner." };
+      }
+
+      const { data: existingArtist } = await supabase
+        .from("artists")
+        .select("id")
+        .eq("user_id", existing.id)
+        .eq("studio_id", inv.studio_id)
+        .maybeSingle();
+
+      if (existingArtist) {
+        await supabase
+          .from("artist_invites")
+          .update({ accepted_at: new Date().toISOString(), artist_id: (existingArtist as { id: string }).id })
+          .eq("token", data.token);
+        return {};
+      }
+
+      userId = existing.id;
+      createdNewUser = false;
+    } else {
+      userId = authData.user.id;
+      createdNewUser = true;
+    }
   }
 
   // Revive a previously-removed artist's row instead of inserting a
