@@ -1,17 +1,27 @@
-// Phase 01 — QA Data. Every downstream check in this engine is
-// self-contained (creates and deletes its own QA-tagged data — the
-// established, proven pattern throughout this project's QA history), so
-// there is no shared persistent fixture to seed here. This phase instead
-// verifies the QA Engine itself can safely write and clean up data before
-// any check that depends on that capability runs — catching a credentials/
-// permissions problem here, in one place, instead of as a confusing
-// failure deep inside an unrelated later phase.
+// Phase 01 — QA Data. Every check in `smoke`/`critical` is self-contained
+// (creates and deletes its own QA-tagged data), so there is no shared
+// fixture to seed for those modes — this phase just verifies the engine
+// itself can safely write and clean up data before anything downstream
+// depends on that capability.
+//
+// `full` mode is different: qa-fullrun-owner-clickthrough.mjs,
+// qa-fullrun-artist-clickthrough.mjs, qa-fullrun-flagship-journey.mjs, and
+// qa-fullrun-mobile-critical-paths.mjs all read a single PERSISTENT studio
+// from qa-manifests/fullqa-20260829-studio.json (real signup via browser,
+// shared across those 4 scripts rather than each re-signing-up its own —
+// by original design from the mission that first wrote them). Found
+// 2026-08-30: that studio had been deleted during an earlier session's
+// final cleanup, so the manifest was a stale reference — all 4 scripts
+// failed immediately on a foreign-key violation. Re-seeding it fresh here,
+// every `full` run, fixes this permanently (not just a one-time patch).
 import { createClient } from "@supabase/supabase-js";
 import { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, QA_TAG_PREFIX } from "../lib/env.mjs";
+import { runCheck, nodeScript } from "../lib/exec.mjs";
 
-export async function run() {
+export async function run(mode) {
   const startedAt = Date.now();
   const id = { id: "qa-data.write-probe", label: "QA data write/delete probe (service-role access)" };
+  let probeResult;
   try {
     const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { autoRefreshToken: false, persistSession: false } });
     const { data: owner, error: ownerErr } = await sb.auth.admin.createUser({
@@ -34,8 +44,19 @@ export async function run() {
 
     if ((gone ?? []).length !== 0) throw new Error("probe studio delete did not verify gone");
 
-    return [{ ...id, status: "PASS", durationMs: Date.now() - startedAt, startedAt: new Date(startedAt).toISOString() }];
+    probeResult = { ...id, status: "PASS", durationMs: Date.now() - startedAt, startedAt: new Date(startedAt).toISOString() };
   } catch (e) {
-    return [{ ...id, status: "FAIL", reason: e.message, durationMs: Date.now() - startedAt, startedAt: new Date(startedAt).toISOString() }];
+    probeResult = { ...id, status: "FAIL", reason: e.message, durationMs: Date.now() - startedAt, startedAt: new Date(startedAt).toISOString() };
   }
+
+  if (mode !== "full") return [probeResult];
+
+  const seedResult = await runCheck({
+    id: "qa-data.seed-persistent-fullrun-studio",
+    label: "Seed persistent full-mode studio (real signup, shared by owner/artist/flagship/mobile full-mode scripts)",
+    ...nodeScript("scripts/qa-fullrun-seed-studio.mjs"),
+    timeoutMs: 5 * 60 * 1000,
+  });
+
+  return [probeResult, seedResult];
 }

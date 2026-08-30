@@ -47,7 +47,11 @@ export async function run(mode) {
       ["security.file-upload", "scripts/verify-file-upload-security.mjs", "File upload 3-layer validation"],
       ["security.rate-limit", "scripts/verify-rate-limit.mjs", "AI endpoint rate limiting"],
       ["security.pii-logs", "scripts/verify-pii-logs.mjs", "No customer PII in logs (billing webhook)"],
-      ["security.audit-log", "scripts/verify-audit-log.mjs", "Compliance audit log"],
+      // verify-audit-log.mjs deliberately NOT here — it depends on
+      // qa/artist-fixture.json, which only exists during Phase 03 (Artist),
+      // which tears it down before Phase 06 (this phase) ever runs. Moved
+      // into Phase 03's fixture-dependent block instead (2026-08-30, fixed
+      // after the first real `full` run caught this ordering bug).
       ["security.connect-live", "scripts/verify-connect-live.mjs", "Stripe Connect payment reconciliation (idempotency, cross-account rejection, 0% fee)"],
     ];
     for (const [id, script, label] of fullOnly) {

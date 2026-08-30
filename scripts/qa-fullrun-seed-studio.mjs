@@ -100,6 +100,21 @@ try {
   await page.waitForURL(/\/owner\/dashboard/, { timeout: 20000 });
   PASS(`owner login via /login UI works → ${page.url()}`);
 
+  // A fresh signup defaults to plan='solo' (1-artist seat cap) — real,
+  // correct, intentional product behavior (documented as BUG-OWN-FULLQA-001,
+  // a P3 backlog UX item: the cap enforcement itself is fine, there's just
+  // no in-flow upgrade CTA yet). This script needs 2 artist seats, so bump
+  // the plan directly via the service-role client, same workaround already
+  // used successfully the first time this script ran (2026-08-29) — that
+  // time it was applied ad hoc outside the script and never captured here,
+  // which is exactly why re-running this script cold (2026-08-30, after
+  // the original persistent studio had since been cleaned up) failed on
+  // the real, correctly-disabled "Invite Artist" button. Idempotent: a
+  // no-op if the plan is already "studio" or higher (e.g. reusing branch).
+  await sb.from("studios").update({ plan: "studio" }).eq("id", studioRow.id);
+  await page.reload({ waitUntil: "load" }); // page had already rendered the stale plan/seat-count before this update
+  PASS("bumped studio plan to 'studio' (2-seat) so both artist invites can proceed");
+
   // ═══════════════════════════════════════════════════════════
   // 2 — Invite 2 artists via real Invite Artist modal, accept via real UI
   // ═══════════════════════════════════════════════════════════

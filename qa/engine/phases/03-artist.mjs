@@ -53,12 +53,20 @@ export async function run(mode) {
   });
   results.push(provisionResult);
 
+  // security.audit-log lives here (not Phase 06) specifically because it
+  // needs the fixture, which only exists in this window — moved 2026-08-30
+  // after the first real `full` run caught it running too late.
+  const fullModeFixtureDependent = mode === "full"
+    ? [["security.audit-log", "scripts/verify-audit-log.mjs", "Compliance audit log"]]
+    : [];
+  const allFixtureDependent = [...FIXTURE_DEPENDENT_SCRIPTS, ...fullModeFixtureDependent];
+
   if (provisionResult.status === "PASS") {
-    for (const [id, script, label] of FIXTURE_DEPENDENT_SCRIPTS) {
+    for (const [id, script, label] of allFixtureDependent) {
       results.push(await runCheck({ id, label, ...nodeScript(script), timeoutMs: 60000 }));
     }
   } else {
-    for (const [id, , label] of FIXTURE_DEPENDENT_SCRIPTS) {
+    for (const [id, , label] of allFixtureDependent) {
       results.push({
         id, label, status: "SKIPPED",
         reason: "Fixture provisioning failed — see artist.fixture-provision.",

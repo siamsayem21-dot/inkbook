@@ -864,26 +864,38 @@ console.log(`\n\n=== JOB C COMPLETE — ${results.length} actions tested: ${pass
 
 function esc(s) { return String(s ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ").slice(0, 300); }
 
-let matrixOut = "\n## Artist Portal — Job C full click-through (2026-08-29)\n\n";
-matrixOut += "Reused the persistent QA studio + 2 real QA artists (manifest `qa-manifests/fullqa-20260829-studio.json`), both logged in via the real /login UI with their manifest creds. New supporting QA data (bookings/consultations/requests/message thread/portfolio/flash/agreement) created and self-cleaned by this script; the persistent studio/owner/artist1/artist2 rows were left untouched. Route sweep = desktop then mobile (390x844) for artist1.\n\n";
-matrixOut += "| ID | PERSONA | ROUTE | SCREEN | ACTION | EXPECTED | ACTUAL | CONSOLE | NETWORK | PERSISTENCE | CROSS-ROLE | STATUS | EVIDENCE | RETESTED |\n";
-matrixOut += "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n";
-for (const r of results) {
-  matrixOut += `| ${r.id} | ${esc(r.persona)} | ${esc(r.route)} | ${esc(r.screen)} | ${esc(r.action)} | ${esc(r.expected)} | ${esc(r.actual)} | ${esc(r.console)} | ${esc(r.network)} | ${esc(r.persistence)} | ${esc(r.crossRole)} | ${r.status} | ${esc(r.evidence)} | Yes — live run 2026-08-29 |\n`;
-}
-appendFileSync("FUNCTIONAL_TEST_MATRIX.md", matrixOut);
-console.log(`Appended ${results.length} rows to FUNCTIONAL_TEST_MATRIX.md`);
-
-if (bugs.length) {
-  let bugOut = "";
-  for (const b of bugs) {
-    bugOut += `\n## ${b.id} — cross-role isolation failure\n\n`;
-    bugOut += `- **PERSONA:** ${b.persona}\n- **ROUTE:** \`${b.route}\`\n- **ACTION:** ${b.action}\n- **EXPECTED:** ${b.expected}\n- **ACTUAL:** ${b.actual}\n- **REPRO:** ${b.repro}\n- **CONSOLE:** ${b.console || "none"}\n- **NETWORK:** ${b.network || "none"}\n- **SEVERITY:** ${b.severity}\n- **ROOT CAUSE:** ${b.rootCause}\n- **FILES:** ${b.files}\n- **FIX:** ${b.fix}\n- **RETEST:** ${b.retest}\n- **STATUS:** ${b.status}\n`;
+// Gated behind an explicit opt-in: this script runs on every `--full` QA
+// Engine invocation now, and an unconditional appendFileSync here used to
+// duplicate rows/sections into these docs on every rerun (caught 2026-08-30
+// after several same-day reruns had already produced 3-4x duplicate
+// BUG-FLAGSHIP-*/ART-* entries). The QA Engine's own qa/results/latest.json
+// + QA_LATEST_REPORT.md are the authoritative, freshly-regenerated source of
+// truth for routine runs; set QA_APPEND_DOCS=1 only for a deliberate,
+// one-time doc-update pass.
+if (process.env.QA_APPEND_DOCS === "1") {
+  let matrixOut = "\n## Artist Portal — Job C full click-through (2026-08-29)\n\n";
+  matrixOut += "Reused the persistent QA studio + 2 real QA artists (manifest `qa-manifests/fullqa-20260829-studio.json`), both logged in via the real /login UI with their manifest creds. New supporting QA data (bookings/consultations/requests/message thread/portfolio/flash/agreement) created and self-cleaned by this script; the persistent studio/owner/artist1/artist2 rows were left untouched. Route sweep = desktop then mobile (390x844) for artist1.\n\n";
+  matrixOut += "| ID | PERSONA | ROUTE | SCREEN | ACTION | EXPECTED | ACTUAL | CONSOLE | NETWORK | PERSISTENCE | CROSS-ROLE | STATUS | EVIDENCE | RETESTED |\n";
+  matrixOut += "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n";
+  for (const r of results) {
+    matrixOut += `| ${r.id} | ${esc(r.persona)} | ${esc(r.route)} | ${esc(r.screen)} | ${esc(r.action)} | ${esc(r.expected)} | ${esc(r.actual)} | ${esc(r.console)} | ${esc(r.network)} | ${esc(r.persistence)} | ${esc(r.crossRole)} | ${r.status} | ${esc(r.evidence)} | Yes — live run 2026-08-29 |\n`;
   }
-  appendFileSync("FUNCTIONAL_BUG_LOG.md", bugOut);
-  console.log(`Appended ${bugs.length} bug(s) to FUNCTIONAL_BUG_LOG.md`);
+  appendFileSync("FUNCTIONAL_TEST_MATRIX.md", matrixOut);
+  console.log(`Appended ${results.length} rows to FUNCTIONAL_TEST_MATRIX.md`);
+
+  if (bugs.length) {
+    let bugOut = "";
+    for (const b of bugs) {
+      bugOut += `\n## ${b.id} — cross-role isolation failure\n\n`;
+      bugOut += `- **PERSONA:** ${b.persona}\n- **ROUTE:** \`${b.route}\`\n- **ACTION:** ${b.action}\n- **EXPECTED:** ${b.expected}\n- **ACTUAL:** ${b.actual}\n- **REPRO:** ${b.repro}\n- **CONSOLE:** ${b.console || "none"}\n- **NETWORK:** ${b.network || "none"}\n- **SEVERITY:** ${b.severity}\n- **ROOT CAUSE:** ${b.rootCause}\n- **FILES:** ${b.files}\n- **FIX:** ${b.fix}\n- **RETEST:** ${b.retest}\n- **STATUS:** ${b.status}\n`;
+    }
+    appendFileSync("FUNCTIONAL_BUG_LOG.md", bugOut);
+    console.log(`Appended ${bugs.length} bug(s) to FUNCTIONAL_BUG_LOG.md`);
+  } else {
+    console.log("No new bugs to log.");
+  }
 } else {
-  console.log("No new bugs to log.");
+  console.log("QA_APPEND_DOCS not set — skipping FUNCTIONAL_TEST_MATRIX.md/FUNCTIONAL_BUG_LOG.md append (see qa/results/latest.json + QA_LATEST_REPORT.md for this run's authoritative results).");
 }
 
 writeFileSync("qa-manifests/fullqa-20260829-artist-clickthrough-results.json", JSON.stringify({ results, bugs }, null, 2));

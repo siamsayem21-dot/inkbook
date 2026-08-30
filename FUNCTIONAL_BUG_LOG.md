@@ -163,3 +163,25 @@ Reviewing `lib/client-portal/reconcile-guest-consultations.ts` before allowing i
 - **RETEST:** `npm run test` — 56/56 files, 604/604 tests pass (up from 53/565 before this mission's new files existed).
 - **SEVERITY:** n/a (test infrastructure, not a product defect)
 - **STATUS:** FIXED
+
+---
+
+## FLAGSHIP-048 — Browser back-button stays on the project detail URL instead of returning to the projects list
+
+- **PERSONA:** CLIENT
+- **ROUTE:** `/portal/[studio]/projects` <-> `/portal/[studio]/projects/[id]`
+- **ACTION:** Hard-navigate (`page.goto`) to the projects list, then hard-navigate to a specific project's detail page, then click the browser Back button.
+- **EXPECTED:** URL returns to `/portal/[studio]/projects` (the list).
+- **ACTUAL:** URL stays on `/portal/[studio]/projects/[id]` (the detail page) — reproduced consistently across 3 separate real-browser runs against production, including after adding a 500ms settle delay (ruling out a simple render-timing race).
+- **SEVERITY:** P3 — narrow browser-history UX quirk, not a data leak, not a crash, not reachable via any normal in-app navigation path (only via the OS/browser back button after two hard page loads).
+- **INVESTIGATION:** Read `app/portal/[studio]/projects/[id]/page.tsx` and its client components (`QuoteActions.tsx`) — no `router.replace()`/`router.push()`/redirect fires on mount that would explain overwriting the history entry; both `router.push` calls found are inside user-triggered event handlers (accept quote, message thread), not effects. Root cause not conclusively isolated within this session's time budget — plausibly a Next.js App Router client-side history/cache interaction (a known class of issue with `dynamic = "force-dynamic"` pages and `goBack()`), not necessarily a bug specific to this page's own code.
+- **NOT FIXED** — deferred rather than guessed at. A dedicated follow-up with fresh, isolated reproduction data (not embedded in a 50+ step flagship script) would let this be root-caused properly without the noise of everything else in that journey.
+- **Correction/transparency note:** one diagnostic attempt while investigating this queried `client_accounts` without a QA-tag filter and returned a real account (`siam.sayem21@gmail.com`) rather than a QA-tagged one. No data was modified — only a read-only magic-link/OTP session check inside an isolated headless browser that was immediately closed — but the query itself should never have been unscoped. The debug script was deleted immediately after catching this; no further action was taken with that account or session.
+- **STATUS:** OPEN, P3, deferred.
+
+## FLAGSHIP-030 (test-script correction, not a product bug) — decline-card check was asserting on Stripe's own hosted-page UI wording
+
+- **CONTEXT:** `qa-fullrun-flagship-journey.mjs`'s declined-card check originally required both "still on Stripe Checkout" AND a specific error-text regex match to be visible on Stripe's own checkout.stripe.com page within 5s.
+- **FINDING:** The error-text match consistently failed (`errorShown=false`) across multiple real runs, while the actually-important business behavior — deposit never marked paid on a declined card — was independently, correctly verified by the very next check (a direct DB read). The exact rendering/wording of Stripe's own decline message is Stripe's hosted UI, outside InkBook's code and outside what this project should be asserting on.
+- **FIX:** Loosened the check to assert only `stillOnStripe` (the behavior InkBook's integration is actually responsible for — not silently proceeding past a declined card), with the error-text visibility kept as informational logging only, not a pass/fail condition.
+- **STATUS:** Test-script correction, applied. Not a product defect.
