@@ -11,21 +11,51 @@ function adminClient() {
 }
 
 async function findAuthUserByEmail(email: string): Promise<{ id: string } | null> {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/admin/users?page=1&per_page=1000`,
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-        apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      },
-    }
-  );
-  if (!res.ok) return null;
-  const data = (await res.json()) as { users?: Array<{ id: string; email: string }> };
-  return data.users?.find(u => u.email === email) ?? null;
+  // Bounded — an unbounded raw fetch here had no timeout at all, so a slow/
+  // stalled connection to this endpoint could hold the whole server action
+  // open indefinitely with nothing to abort it.
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/admin/users?page=1&per_page=1000`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+          apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        },
+        signal: controller.signal,
+      }
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as { users?: Array<{ id: string; email: string }> };
+    return data.users?.find(u => u.email === email) ?? null;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export async function acceptInvite(data: {
+  token: string;
+  name: string;
+  password: string;
+}): Promise<{ error?: string }> {
+  try {
+    return await acceptInviteInner(data);
+  } catch (err) {
+    // A previously-unhandled exception anywhere in this flow (any of the
+    // several Supabase admin calls below, or the fetch above) would
+    // propagate as a raw server-action rejection instead of the normal
+    // { error } shape the client already knows how to display — this is
+    // the server-side half of the fix for the "stuck on Setting up your
+    // account..." bug (see AcceptForm.tsx's client-side try/catch for the
+    // other half).
+    console.error("[acceptInvite] unexpected error:", err);
+    return { error: "Something went wrong setting up your account. Please try again." };
+  }
+}
+
+async function acceptInviteInner(data: {
   token: string;
   name: string;
   password: string;

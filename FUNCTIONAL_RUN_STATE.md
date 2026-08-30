@@ -66,3 +66,24 @@ Additional work done during reconciliation:
   still present and unchanged, nothing committed, nothing discarded.
 
 **SECURITY RECONCILIATION: ALL FOUND LEAKS FIXED AND RETESTED.**
+
+---
+
+## Production Deploy + Post-Deploy Verification (2026-08-30)
+
+Approved by Siam. Committed (`76c1a47`), pushed to `origin/master`,
+Vercel auto-deploy triggered on push, confirmed `Ready` and aliased to
+`www.inkbook.tech` (`Age: 0` header confirmed serving the fresh build).
+Smoke checks: `/`, `/login`, `/register`, `/pricing` all 200;
+`/owner/dashboard`, `/artist/dashboard` correctly 307-redirect (auth-gated).
+
+All 4 security/privacy retests + isolation + flagship-chain regression
+re-run against **live production** (not local dev) — 0 findings across
+the board. Small follow-up commit (`c16475f`) removed a stale
+localhost-only guard in one retest script now that its fix is deployed.
+
+`cron/sms-reminders` migration re-confirmed still not applied (read-only
+probe) — untouched, remains BLOCKED_NEEDS_SIAM. No Stripe/payment
+configuration changed. No database migration run or modified.
+
+**FINAL VERDICT: PRODUCTION DEPLOY VERIFIED CLEAN.**

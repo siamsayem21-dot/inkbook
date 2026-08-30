@@ -114,3 +114,25 @@ describe("acceptInvite — revive a removed artist instead of duplicating on re-
     expect(secondArtistsChain.update).not.toHaveBeenCalled();
   });
 });
+
+// Regression coverage for the "stuck on Setting up your account..." P1 bug
+// (2026-08-30, reported live by Siam). Root cause: this file had no
+// try/catch anywhere — any unexpected exception rejected the whole server
+// action instead of resolving with the normal { error } shape the client
+// already knows how to display, leaving the client's loading state stuck
+// forever (see AcceptForm.tsx's matching client-side fix). This proves the
+// server half: acceptInvite() must never reject, no matter what throws
+// inside it.
+describe("acceptInvite — never rejects, even on an unexpected internal error", () => {
+  it("catches an exception thrown mid-flow and returns a normal { error } response instead of rejecting", async () => {
+    createUser.mockImplementation(() => {
+      throw new Error("simulated unexpected failure (e.g. a transient network/infra issue)");
+    });
+
+    sb.queueFrom("artist_invites", INVITE_ROW); // token lookup succeeds
+
+    await expect(
+      acceptInvite({ token: "tok", name: "Jane Artist", password: "password123" })
+    ).resolves.toEqual({ error: "Something went wrong setting up your account. Please try again." });
+  });
+});

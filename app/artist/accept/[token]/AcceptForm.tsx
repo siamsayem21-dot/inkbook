@@ -43,30 +43,56 @@ export default function AcceptForm({
 
     setLoading(true);
 
-    // Server action: creates auth user + artist row + marks invite accepted
-    const result = await acceptInvite({ token, name: name.trim(), password });
+    // Neither the server action call nor the client-side sign-in call below
+    // was ever wrapped in try/catch — an unhandled rejection from either one
+    // (a transient server error, a Next.js server-action edge case, a
+    // network blip) left the button stuck on "Setting up your account..."
+    // forever with no visible error, since nothing ever reached
+    // setLoading(false). The 30s timeout race is a second, independent
+    // safeguard: even if a request genuinely never settles (rather than
+    // rejecting), the user still gets feedback instead of an infinite spinner.
+    function timeout(ms: number): Promise<never> {
+      return new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("This is taking longer than expected. Please try again.")), ms)
+      );
+    }
 
-    if (result.error) {
-      setError(result.error);
+    try {
+      // Server action: creates auth user + artist row + marks invite accepted
+      const result = await Promise.race([
+        acceptInvite({ token, name: name.trim(), password }),
+        timeout(30000),
+      ]);
+
+      if (result.error) {
+        setError(result.error);
+        setLoading(false);
+        return;
+      }
+
+      // Sign in with the credentials they just set
+      const supabase = createClient();
+      const { error: signInError } = await Promise.race([
+        supabase.auth.signInWithPassword({ email, password }),
+        timeout(15000),
+      ]);
+
+      if (signInError) {
+        // Account was created — just redirect to login, user can sign in manually
+        router.push("/login?activated=1");
+        return;
+      }
+
+      router.push("/artist/dashboard");
+      router.refresh();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong setting up your account. Please try again — if it keeps happening, contact your studio owner."
+      );
       setLoading(false);
-      return;
     }
-
-    // Sign in with the credentials they just set
-    const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (signInError) {
-      // Account was created — just redirect to login, user can sign in manually
-      router.push("/login?activated=1");
-      return;
-    }
-
-    router.push("/artist/dashboard");
-    router.refresh();
   }
 
   const mismatch = confirm.length > 0 && password !== confirm;
