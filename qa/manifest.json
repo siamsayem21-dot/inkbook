@@ -1,0 +1,97 @@
+{
+  "$schema": "InkBook QA Engine manifest v1 — see QA_ENGINE.md",
+  "generatedFrom": "FUNCTIONAL_TEST_MATRIX.md (2026-08-29/30 full ground-up QA re-run) + this project's full QA history",
+  "note": "Every row here should map to a real engine check (see 'coveredBy') or an explicit, honest gap ('coveredBy': null, with 'gap' explaining why). No important feature should silently disappear from this list.",
+  "surfaces": {
+    "OWNER": [
+      { "route": "/owner/dashboard", "persona": "OWNER", "screen": "Dashboard", "action": "view revenue/bookings summary", "criticality": "high", "coveredBy": "owner.full-clickthrough (full mode)" },
+      { "route": "/owner/consultations", "persona": "OWNER", "screen": "Consultations", "action": "view/quote/status-change", "criticality": "high", "coveredBy": "flagship.critical-regression, owner.full-clickthrough" },
+      { "route": "/owner/pipeline", "persona": "OWNER", "screen": "Pipeline", "action": "view lead pipeline", "criticality": "medium", "coveredBy": "owner.full-clickthrough (full mode)" },
+      { "route": "/owner/bookings", "persona": "OWNER", "screen": "Bookings", "action": "view/assign/mark-completed/cancel/generate-deposit-link", "criticality": "critical", "coveredBy": "flagship.critical-regression, security.bookings-idor, owner.full-clickthrough" },
+      { "route": "/owner/requests", "persona": "OWNER", "screen": "Requests (Custom Requests)", "action": "view/approve/decline/quote", "criticality": "high", "coveredBy": "security.custom-request-idor, owner.full-clickthrough" },
+      { "route": "/owner/clients", "persona": "OWNER", "screen": "Clients (CRM)", "action": "view/search/filter", "criticality": "medium", "coveredBy": "owner.full-clickthrough (full mode)" },
+      { "route": "/owner/revenue", "persona": "OWNER", "screen": "Revenue", "action": "view trends", "criticality": "medium", "coveredBy": "owner.full-clickthrough (full mode)" },
+      { "route": "/owner/artists", "persona": "OWNER", "screen": "Artists", "action": "invite/resend/cancel-invite/remove", "criticality": "critical", "coveredBy": "known-bugs (artist-accept-invite.test.ts), owner.full-clickthrough" },
+      { "route": "/owner/blacklist", "persona": "OWNER", "screen": "Blacklist", "action": "add/remove, enforcement", "criticality": "high", "coveredBy": "owner.full-clickthrough (full mode)" },
+      { "route": "/owner/consent-forms", "persona": "OWNER", "screen": "Consent Forms", "action": "view", "criticality": "medium", "coveredBy": "owner.full-clickthrough (full mode)" },
+      { "route": "/owner/waitlist", "persona": "OWNER", "screen": "Waitlist", "action": "view/promote", "criticality": "medium", "coveredBy": "client.waitlist" },
+      { "route": "/owner/reviews", "persona": "OWNER", "screen": "Reviews", "action": "approve/add testimonial", "criticality": "low", "coveredBy": "client.reviews, owner.full-clickthrough" },
+      { "route": "/owner/knowledge", "persona": "OWNER", "screen": "Knowledge", "action": "create/toggle/edit/delete", "criticality": "medium", "coveredBy": "security.knowledge-leak, owner.full-clickthrough" },
+      { "route": "/owner/messages", "persona": "OWNER", "screen": "Messages", "action": "reply", "criticality": "medium", "coveredBy": "client.messaging" },
+      { "route": "/owner/settings", "persona": "OWNER", "screen": "Settings (studio/billing)", "action": "edit", "criticality": "medium", "coveredBy": "owner.full-clickthrough (full mode)" },
+      { "route": "/owner/flash", "persona": "OWNER", "screen": "Flash (cross-artist view)", "action": "view", "criticality": "low", "coveredBy": "owner.full-clickthrough (full mode)" },
+      { "route": "/owner/audit-log", "persona": "OWNER", "screen": "Audit Log", "action": "view", "criticality": "low", "coveredBy": "security.audit-log (full mode)" }
+    ],
+    "ARTIST": [
+      { "route": "/artist/dashboard", "persona": "ARTIST", "screen": "Dashboard", "action": "view earnings/bookings", "criticality": "high", "coveredBy": "artist.dashboard-data" },
+      { "route": "/artist/consultations", "persona": "ARTIST", "screen": "Consultations", "action": "claim/quote", "criticality": "high", "coveredBy": "flagship.critical-regression, artist.full-clickthrough" },
+      { "route": "/artist/requests", "persona": "ARTIST", "screen": "Requests", "action": "approve/decline", "criticality": "high", "coveredBy": null, "gap": "SKIPPED — verify-artist-requests-authz.mjs/verify-artist-requests-isolation.mjs not wired in, see QA_ENGINE.md 'Known gaps' (localhost-only + fixture-studio dependency)" },
+      { "route": "/artist/bookings", "persona": "ARTIST", "screen": "Bookings", "action": "mark completed/cancel", "criticality": "critical", "coveredBy": null, "gap": "SKIPPED — verify-artist-bookings-null-schedule.mjs not wired in, same reason" },
+      { "route": "/artist/schedule", "persona": "ARTIST", "screen": "Schedule/Availability", "action": "add/remove days off", "criticality": "high", "coveredBy": "artist.schedule-nav, artist.schedule-lifecycle, artist.schedule-isolation" },
+      { "route": "/artist/messages", "persona": "ARTIST", "screen": "Messages", "action": "send/receive", "criticality": "medium", "coveredBy": null, "gap": "SKIPPED — verify-artist-messages-isolation.mjs not wired in, same reason" },
+      { "route": "/artist/portfolio", "persona": "ARTIST", "screen": "Portfolio", "action": "upload/tag/delete", "criticality": "medium", "coveredBy": null, "gap": "SKIPPED — verify-artist-portfolio-isolation.mjs not wired in, same reason" },
+      { "route": "/artist/flash", "persona": "ARTIST", "screen": "Flash", "action": "create/edit/delete", "criticality": "medium", "coveredBy": null, "gap": "SKIPPED — verify-artist-flash-isolation.mjs not wired in, same reason" },
+      { "route": "/artist/earnings", "persona": "ARTIST", "screen": "Earnings", "action": "view", "criticality": "high", "coveredBy": "artist.earnings-integration, artist.earnings-isolation" },
+      { "route": "/artist/clients", "persona": "ARTIST", "screen": "Clients", "action": "view", "criticality": "low", "coveredBy": null, "gap": "SKIPPED — verify-artist-clients-isolation.mjs not wired in, same reason" },
+      { "route": "/artist/agreements", "persona": "ARTIST", "screen": "Agreements", "action": "create/view", "criticality": "high", "coveredBy": null, "gap": "SKIPPED — verify-artist-agreements-isolation.mjs not wired in, same reason" },
+      { "route": "/artist/accept/[token]", "persona": "ARTIST", "screen": "Invite Accept", "action": "new-user setup / existing-account link", "criticality": "critical", "coveredBy": "known-bugs (artist-accept-invite.test.ts), qa-invite-existing-account-ux-verify.mjs (full mode)" }
+    ],
+    "CLIENT": [
+      { "route": "/book/[studio]", "persona": "PUBLIC/CLIENT", "screen": "Public studio page", "action": "browse artists/portfolio/flash", "criticality": "critical", "coveredBy": "flagship.critical-regression, flagship.full-journey" },
+      { "route": "/book/[studio]/consult", "persona": "CLIENT", "screen": "AI Consultation wizard", "action": "submit, style detection", "criticality": "critical", "coveredBy": "flagship.critical-regression, flagship.full-journey" },
+      { "route": "/book/[studio]/custom", "persona": "CLIENT", "screen": "Custom Request form", "action": "submit with artist preference", "criticality": "high", "coveredBy": "security.custom-request-idor" },
+      { "route": "/portal/[studio]/projects", "persona": "CLIENT", "screen": "Client Portal — Projects", "action": "view quote, accept, pay deposit", "criticality": "critical", "coveredBy": "flagship.critical-regression, flagship.full-journey" },
+      { "route": "/portal/[studio]/bookings", "persona": "CLIENT", "screen": "My Bookings", "action": "view", "criticality": "high", "coveredBy": "client.bookings" },
+      { "route": "/portal/[studio]/history", "persona": "CLIENT", "screen": "History", "action": "view timeline", "criticality": "medium", "coveredBy": "client.history" },
+      { "route": "/portal/[studio]/settings", "persona": "CLIENT", "screen": "Settings", "action": "edit name", "criticality": "low", "coveredBy": "client.settings" },
+      { "route": "/portal/[studio]/messages", "persona": "CLIENT", "screen": "Messages", "action": "send/receive", "criticality": "medium", "coveredBy": "client.messaging" },
+      { "route": "/book/[studio]/[artistId]/book/consent", "persona": "CLIENT", "screen": "Consent form", "action": "submit (details/ID photo/signature)", "criticality": "critical", "coveredBy": "flagship.full-journey" },
+      { "route": "N/A", "persona": "CLIENT", "screen": "Reviews", "action": "submit", "criticality": "low", "coveredBy": "client.reviews" },
+      { "route": "N/A", "persona": "CLIENT", "screen": "Waitlist", "action": "join / get promoted", "criticality": "low", "coveredBy": "client.waitlist" }
+    ],
+    "PUBLIC": [
+      { "route": "/", "persona": "PUBLIC", "screen": "Marketing home", "action": "load", "criticality": "medium", "coveredBy": "preflight.reachable" },
+      { "route": "/login", "persona": "PUBLIC", "screen": "Login", "action": "sign in / forgot password", "criticality": "critical", "coveredBy": "known-bugs (artist-accept-invite.test.ts), flagship checks (login as artist/owner)" },
+      { "route": "/register", "persona": "PUBLIC", "screen": "Owner signup", "action": "create studio", "criticality": "critical", "coveredBy": "owner.full-clickthrough (full mode)" },
+      { "route": "/pricing", "persona": "PUBLIC", "screen": "Pricing", "action": "load", "criticality": "low", "coveredBy": "preflight (route sweep, full mode)" }
+    ],
+    "AUTH": [
+      { "route": "N/A", "persona": "ALL", "screen": "Role-boundary enforcement", "action": "wrong role cannot access another portal", "criticality": "critical", "coveredBy": "security.isolation-recheck, tests/db (when local Supabase available)" },
+      { "route": "N/A", "persona": "ALL", "screen": "Session persistence", "action": "refresh keeps session", "criticality": "high", "coveredBy": "flagship checks (refresh/persistence assertions), qa-invite-existing-account-ux-verify.mjs" }
+    ],
+    "API": [
+      { "route": "GET /api/bookings", "persona": "OWNER/ARTIST", "screen": "N/A", "action": "cross-tenant param trust", "criticality": "critical", "coveredBy": "security.bookings-idor" },
+      { "route": "POST /api/ai/{consultation-questions,quote-generate,style-detect}", "persona": "PUBLIC/OWNER/ARTIST", "screen": "N/A", "action": "knowledge-tier authorization", "criticality": "critical", "coveredBy": "security.knowledge-leak" },
+      { "route": "app/book/[studio]/custom/actions.ts submitCustomRequest", "persona": "PUBLIC", "screen": "N/A", "action": "artistId ownership check", "criticality": "critical", "coveredBy": "security.custom-request-idor" },
+      { "route": "app/artist/accept/[token]/actions.ts acceptInvite", "persona": "PUBLIC (invite link)", "screen": "N/A", "action": "account creation / existing-account link", "criticality": "critical", "coveredBy": "known-bugs (artist-accept-invite.test.ts)" },
+      { "route": "app/api/cron/*", "persona": "SYSTEM", "screen": "N/A", "action": "auth-guard + scheduled execution", "criticality": "high", "coveredBy": "automations.cron-organic-evidence" },
+      { "route": "app/api/custom-requests/[id]/{quote,decline,schedule}", "persona": "OWNER", "screen": "N/A", "action": "cross-tenant IDOR", "criticality": "high", "coveredBy": "security.custom-requests-idor-legacy (full mode)" },
+      { "route": "app/api/stripe/checkout, app/api/stripe/webhook", "persona": "CLIENT/SYSTEM", "screen": "N/A", "action": "deposit checkout + reconciliation", "criticality": "critical", "coveredBy": "flagship.critical-regression, security.connect-live (full mode)" }
+    ],
+    "AUTOMATIONS": [
+      { "route": "/api/cron/cancel-expired", "persona": "SYSTEM", "screen": "N/A", "action": "auto-cancel unpaid deposits", "criticality": "high", "coveredBy": "automations.cron-organic-evidence" },
+      { "route": "/api/cron/sms-reminders", "persona": "SYSTEM", "screen": "N/A", "action": "48hr/day-of reminders", "criticality": "high", "coveredBy": "preflight.sms-reminders-migration (BLOCKED_NEEDS_SIAM until migration applied)" },
+      { "route": "/api/cron/no-show", "persona": "SYSTEM", "screen": "N/A", "action": "mark no-shows, keep deposit", "criticality": "high", "coveredBy": "automations.cron-organic-evidence" },
+      { "route": "/api/cron/payment-reminders", "persona": "SYSTEM", "screen": "N/A", "action": "unpaid deposit/remainder reminders", "criticality": "medium", "coveredBy": "automations.cron-organic-evidence" },
+      { "route": "/api/cron/review-requests", "persona": "SYSTEM", "screen": "N/A", "action": "post-completion review prompt", "criticality": "low", "coveredBy": "automations.cron-organic-evidence" },
+      { "route": "/api/cron/waitlist-notify", "persona": "SYSTEM", "screen": "N/A", "action": "notify on slot opening", "criticality": "medium", "coveredBy": "automations.cron-organic-evidence" }
+    ],
+    "SECURITY": [
+      { "route": "N/A", "persona": "ALL", "screen": "Cross-studio isolation", "action": "no cross-tenant data leak", "criticality": "critical", "coveredBy": "security.bookings-idor, security.isolation-recheck, security.custom-request-idor, security.knowledge-leak" },
+      { "route": "N/A", "persona": "ALL", "screen": "Cross-artist isolation", "action": "artist A cannot see artist B-only data", "criticality": "critical", "coveredBy": "security.isolation-recheck, artist.earnings-isolation, artist.schedule-isolation" },
+      { "route": "N/A", "persona": "ALL", "screen": "Cross-client isolation", "action": "client A cannot see client B-only data", "criticality": "critical", "coveredBy": "security.isolation-recheck" },
+      { "route": "N/A", "persona": "ALL", "screen": "RLS policies", "action": "real-Postgres policy enforcement", "criticality": "high", "coveredBy": "security.db-rls-isolation (requires local Supabase — SKIPPED otherwise)" },
+      { "route": "N/A", "persona": "ALL", "screen": "File upload validation", "action": "magic-byte/MIME/extension checks", "criticality": "high", "coveredBy": "security.file-upload (full mode)" },
+      { "route": "N/A", "persona": "ALL", "screen": "Rate limiting", "action": "AI endpoints / OTP / consult-submit", "criticality": "medium", "coveredBy": "security.rate-limit (full mode)" },
+      { "route": "N/A", "persona": "ALL", "screen": "PII in logs", "action": "no customer email/PII in console output", "criticality": "medium", "coveredBy": "security.pii-logs (full mode)" },
+      { "route": "N/A", "persona": "ALL", "screen": "Stripe Connect payment routing", "action": "idempotency, cross-account rejection, 0% platform fee", "criticality": "critical", "coveredBy": "security.connect-live (full mode)" },
+      { "route": "app/api/stripe/webhook/route.ts", "persona": "SYSTEM", "screen": "N/A", "action": "webhook originating-account cross-check", "criticality": "high", "coveredBy": null, "gap": "Known architectural gap, flagged not fixed (2026-08-26/30) — handleDepositPayment() doesn't cross-check the event's Stripe account against the studio's connected account id. Real-money trust-boundary change, needs Siam sign-off before any fix. Not auto-checked by this engine; re-confirm via code read when touching that file." }
+    ],
+    "MOBILE": [
+      { "route": "/book/[studio]", "persona": "PUBLIC", "screen": "Public studio (mobile)", "action": "browse, tap CTAs", "criticality": "high", "coveredBy": "mobile.critical-paths (full mode)" },
+      { "route": "/book/[studio]/consult", "persona": "CLIENT", "screen": "AI Consultation (mobile)", "action": "submit", "criticality": "high", "coveredBy": "mobile.critical-paths (full mode)" },
+      { "route": "/owner/*", "persona": "OWNER", "screen": "Owner urgent actions (mobile)", "action": "view/act", "criticality": "medium", "coveredBy": "mobile.critical-paths (full mode)" },
+      { "route": "N/A", "persona": "ALL", "screen": "Design/motion regression", "action": "objective getComputedStyle transform checks", "criticality": "low", "coveredBy": "mobile.design-motion-reverify (full mode)" }
+    ]
+  }
+}

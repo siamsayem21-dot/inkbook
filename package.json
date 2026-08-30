@@ -21,6 +21,9 @@
     "test:visual:v3:auto": "node scripts/visual-qa/auto-fix-loop.mjs --auto",
     "test:visual:v3:report": "node scripts/visual-qa/final-report.mjs",
     "test:all": "npm run test && npm run test:ct && npm run test:db && npm run test:e2e",
+    "qa:inkbook": "node qa/engine/runner.mjs",
+    "qa:inkbook:critical": "node qa/engine/runner.mjs --critical",
+    "qa:inkbook:full": "node qa/engine/runner.mjs --full",
     "prepare": "husky"
   },
   "dependencies": {

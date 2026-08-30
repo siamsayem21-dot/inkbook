@@ -51,4 +51,28 @@ describe("rankArtistsByStyle", () => {
     const r2 = rankArtistsByStyle(candidates, "Traditional");
     expect(r1).toEqual(r2);
   });
+
+  // Permanent regression lock for BUG-FLAGSHIP-001 (found 2026-08-29): two
+  // separate hardcoded canonical style-name lists in this codebase disagree
+  // on casing for at least "Fine Line" (style-detect's VALID_STYLES) vs
+  // "Fine line" (the artist styles-picker's ACCEPTED_STYLES). An artist who
+  // picked their real accepted style from the picker could never be
+  // recommended by Artist Match for an AI-detected style that differs only
+  // in case — an exact-match comparison silently failed. The live product
+  // is protected by a separate AI-refinement layer that usually masks this,
+  // but the deterministic fallback (this function) must be correct on its
+  // own, since that's the only thing that runs when AI refinement is
+  // unavailable or fails.
+  it("matches case-insensitively — an artist's exact accepted style must recommend regardless of casing (BUG-FLAGSHIP-001)", () => {
+    const candidates = [artist("a", "Fine Line Artist", ["Fine line"])]; // lowercase "l", matches the real portfolio styles-picker's list
+    const result = rankArtistsByStyle(candidates, "Fine Line"); // uppercase "L", matches style-detect's list
+    expect(result[0].isRecommended).toBe(true);
+    expect(result[0].score).toBe(100);
+  });
+
+  it("matches regardless of surrounding whitespace in a stored style", () => {
+    const candidates = [artist("a", "Padded Style Artist", ["  Traditional  "])];
+    const result = rankArtistsByStyle(candidates, "Traditional");
+    expect(result[0].isRecommended).toBe(true);
+  });
 });

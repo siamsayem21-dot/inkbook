@@ -123,3 +123,10 @@ if (failed === 0) {
   console.log("❌  Missing migrations. Open Supabase SQL Editor and run the");
   console.log("    numbered migration blocks from DEPLOY.md in order (1 → 2 → 3).\n");
 }
+
+// 2026-08-30 (QA Engine): this script previously always exited 0 regardless
+// of `failed`, so any automated runner (including the new QA Engine) would
+// silently record a PASS even with missing migrations. Every other QA
+// script in this project already follows the exit-0-only-on-success
+// convention; this brings the oldest one in line with it.
+process.exit(failed > 0 ? 1 : 0);

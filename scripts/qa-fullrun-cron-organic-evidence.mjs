@@ -144,4 +144,20 @@ await evidenceCheck(
 
 HEAD(`AUTOMATIONS/CRON COMPLETE — ${failures} finding(s)`);
 if (findings.length) findings.forEach((f) => console.log(" -", f));
+
+// 2026-08-30 (QA Engine): if every single finding is attributable to the
+// already-known, already-tracked cron/sms-reminders migration gap (a
+// distinct, dedicated check — scripts/qa-engine-sms-reminders-migration-
+// gate.mjs — already reports this as BLOCKED_NEEDS_SIAM), don't ALSO
+// report it here as an undifferentiated generic FAIL. Any OTHER finding
+// (a genuinely new/different cron problem) still fails normally.
+const allFindingsAreKnownMigrationGap =
+  findings.length > 0 &&
+  findings.every((f) => f.includes("email_48hr_sent does not exist") || f.includes("email_day_of_sent does not exist"));
+
+if (allFindingsAreKnownMigrationGap) {
+  console.log("\n(All finding(s) above are the already-tracked cron/sms-reminders migration gap — reporting BLOCKED_NEEDS_SIAM, not FAIL. See scripts/qa-engine-sms-reminders-migration-gate.mjs.)");
+  process.exit(2);
+}
+
 process.exit(failures > 0 ? 1 : 0);
