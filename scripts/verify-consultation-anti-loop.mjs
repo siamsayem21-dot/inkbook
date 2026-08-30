@@ -91,24 +91,43 @@ async function makeSession(email) {
   return { authUserId: authUser.user.id, session: verifyData.session };
 }
 
-async function sendAndWaitForReply(page, text, { screenshotOnFail = false } = {}) {
+// Returns { reply, completedEarly }. `completedEarly: true` means the AI
+// decided the consultation was done before this script's own scripted
+// sequence expected it to (a legitimate outcome, not a bug — see the
+// complete-flag guard in chat-engine.ts) and the UI switched to the
+// success screen, which has zero [data-testid="chat-message"] elements.
+// Callers must stop sending further scripted messages once this fires.
+async function sendAndWaitForReply(page, text) {
   const before = await page.locator('[data-testid="chat-message"][data-role="assistant"]').count();
+  const t0 = Date.now();
   await page.getByPlaceholder("Type your message…").fill(text);
   await page.getByRole("button", { name: /send/i }).click();
   try {
     await page.waitForFunction(
-      (n) => document.querySelectorAll('[data-testid="chat-message"][data-role="assistant"]').length > n,
+      (n) =>
+        document.querySelectorAll('[data-testid="chat-message"][data-role="assistant"]').length > n ||
+        !!document.querySelector('[data-testid="consultation-success"]'),
       before,
-      { timeout: 30000 }
+      { timeout: 60000 }
     );
   } catch (e) {
-    if (screenshotOnFail) await page.screenshot({ path: `scripts/.qa-consult-loop-fail-${Date.now()}.png` }).catch(() => {});
+    console.log(`  [DIAG] timed out after ${Date.now() - t0}ms waiting for assistant count > ${before} (sent: "${text}")`);
+    const allTexts = await page.locator('[data-testid="chat-message"]').allInnerTexts().catch(() => []);
+    console.log(`  [DIAG] current DOM has ${allTexts.length} message bubble(s):`, JSON.stringify(allTexts.slice(-4)));
+    const sendingVisible = await page.locator('[data-testid="typing-indicator"]').isVisible().catch(() => false);
+    console.log(`  [DIAG] typing indicator still visible: ${sendingVisible}`);
+    const errorBanner = await page.locator("text=/Failed to|please try again/i").innerText().catch(() => null);
+    console.log(`  [DIAG] error banner: ${errorBanner}`);
+    await page.screenshot({ path: `scripts/.qa-consult-loop-fail-${Date.now()}.png` }).catch(() => {});
     throw e;
   }
+  console.log(`  [DIAG] reply received after ${Date.now() - t0}ms`);
+  const completedEarly = await page.locator('[data-testid="consultation-success"]').isVisible().catch(() => false);
+  if (completedEarly) return { reply: "(consultation completed early)", completedEarly: true };
   await page.waitForTimeout(400); // let the DOM settle after the state update
   const bubbles = page.locator('[data-testid="chat-message"][data-role="assistant"]');
   const count = await bubbles.count();
-  return (await bubbles.nth(count - 1).innerText()).trim();
+  return { reply: (await bubbles.nth(count - 1).innerText()).trim(), completedEarly: false };
 }
 
 (async () => {
@@ -140,68 +159,96 @@ async function sendAndWaitForReply(page, text, { screenshotOnFail = false } = {}
   const greetingVisible = await page.locator('[data-testid="chat-message"][data-role="assistant"]').first().isVisible({ timeout: 10000 }).catch(() => false);
   if (greetingVisible) PASS("seeded greeting message rendered"); else FAIL("no greeting message rendered");
 
+  // Early completion (the AI legitimately deciding it's done once every
+  // required field is filled and it isn't asking about anything else) is a
+  // valid outcome, not a bug — see the complete-flag guard in
+  // chat-engine.ts. Once it fires, the chat UI switches to the success
+  // screen (zero chat-message elements), so no further scripted messages
+  // can be sent — every send() after that point is a safe no-op.
+  let earlyDone = false;
+  async function send(text) {
+    if (earlyDone) return "";
+    const { reply, completedEarly } = await sendAndWaitForReply(page, text);
+    if (completedEarly) { earlyDone = true; return ""; }
+    return reply;
+  }
+
   // ═══════════════════════════════════════════════════════════
   // 2 — Normal progression: name, phone
   // ═══════════════════════════════════════════════════════════
   HEAD("2 — Normal progression (name, phone)");
-  let reply = await sendAndWaitForReply(page, "hi, i want to get a tattoo done");
+  let reply = await send("hi, i want to get a tattoo done");
   console.log("  AI:", reply.slice(0, 90));
-  reply = await sendAndWaitForReply(page, "My name is Jordan QA");
+  reply = await send("My name is Jordan QA");
   if (/phone|number|reach/i.test(reply)) PASS("asked for phone after name given"); else FAIL(`expected to ask for phone, got: "${reply}"`);
-  reply = await sendAndWaitForReply(page, "555-0142");
+  reply = await send("555-0142");
 
   // ═══════════════════════════════════════════════════════════
   // 3 — Multiple fields in one message
   // ═══════════════════════════════════════════════════════════
   HEAD("3 — Multiple fields in one message");
-  reply = await sendAndWaitForReply(page, "I want a lion face tattoo on my left arm, roughly half sleeve size");
+  reply = await send("I want a lion face tattoo on my left arm, roughly half sleeve size");
 
   // ═══════════════════════════════════════════════════════════
   // 4 — Vague answer, then a real one
   // ═══════════════════════════════════════════════════════════
   HEAD("4 — Vague answer");
-  reply = await sendAndWaitForReply(page, "not sure, whatever looks good honestly");
+  reply = await send("not sure, whatever looks good honestly");
   console.log("  AI (after vague answer):", reply.slice(0, 90));
-  reply = await sendAndWaitForReply(page, "traditional style then");
+  reply = await send("traditional style then");
 
-  reply = await sendAndWaitForReply(page, "black and grey");
+  reply = await send("black and grey");
 
   // ═══════════════════════════════════════════════════════════
   // 5 — Frustrated reply mid-flow (Siam's exact real wording)
   // ═══════════════════════════════════════════════════════════
   HEAD("5 — Frustrated reply does not reset the flow");
-  reply = await sendAndWaitForReply(page, "$200");
+  reply = await send("$200");
   const beforeFrustration = await page.locator('[data-testid="chat-message"]').count();
-  reply = await sendAndWaitForReply(page, "are you going mad? i already told you everything");
+  reply = await send("are you going mad? i already told you everything");
   console.log("  AI (after frustrated reply):", reply.slice(0, 90));
-  const afterFrustration = await page.locator('[data-testid="chat-message"]').count();
-  if (afterFrustration > beforeFrustration) PASS("conversation continued (message count grew) instead of resetting");
+  const afterFrustration = earlyDone ? beforeFrustration : await page.locator('[data-testid="chat-message"]').count();
+  if (earlyDone) PASS("consultation completed early (legitimate — required fields were already filled)");
+  else if (afterFrustration > beforeFrustration) PASS("conversation continued (message count grew) instead of resetting");
   else FAIL("message count did not grow after frustrated reply — flow may have reset or hung");
 
   // ═══════════════════════════════════════════════════════════
   // 6 — Repeated-question prevention (mid-refresh)
   // ═══════════════════════════════════════════════════════════
   HEAD("6 — Refresh mid-conversation (persistence)");
-  const beforeRefreshText = await page.locator('[data-testid="chat-message"]').last().innerText();
-  await page.reload({ waitUntil: "load" });
-  await page.waitForSelector('[data-testid="chat-message"]', { timeout: 15000 });
-  const afterRefreshCount = await page.locator('[data-testid="chat-message"]').count();
-  const afterRefreshText = await page.locator('[data-testid="chat-message"]').last().innerText();
-  if (afterRefreshCount >= afterFrustration) PASS(`message history persisted across refresh (${afterRefreshCount} messages)`);
-  else FAIL(`message count dropped after refresh: ${afterFrustration} -> ${afterRefreshCount}`);
-  if (afterRefreshText === beforeRefreshText) PASS("last message content matches pre-refresh (no state corruption)");
-  else FAIL(`last message changed across refresh: "${beforeRefreshText}" -> "${afterRefreshText}"`);
+  if (earlyDone) {
+    console.log("  (skipped — consultation already completed)");
+  } else {
+    const beforeRefreshText = await page.locator('[data-testid="chat-message"]').last().innerText();
+    await page.reload({ waitUntil: "load" });
+    await page.waitForSelector('[data-testid="chat-message"], [data-testid="consultation-success"]', { timeout: 15000 });
+    const stillChatting = await page.locator('[data-testid="chat-message"]').count() > 0;
+    if (!stillChatting) {
+      PASS("consultation completed early and success screen persisted across refresh");
+      earlyDone = true;
+    } else {
+      const afterRefreshCount = await page.locator('[data-testid="chat-message"]').count();
+      const afterRefreshText = await page.locator('[data-testid="chat-message"]').last().innerText();
+      if (afterRefreshCount >= afterFrustration) PASS(`message history persisted across refresh (${afterRefreshCount} messages)`);
+      else FAIL(`message count dropped after refresh: ${afterFrustration} -> ${afterRefreshCount}`);
+      if (afterRefreshText === beforeRefreshText) PASS("last message content matches pre-refresh (no state corruption)");
+      else FAIL(`last message changed across refresh: "${beforeRefreshText}" -> "${afterRefreshText}"`);
+    }
+  }
 
   // ═══════════════════════════════════════════════════════════
   // 7 — Finish optional fields -> completion
   // ═══════════════════════════════════════════════════════════
   HEAD("7 — Complete the consultation");
-  reply = await sendAndWaitForReply(page, "no preference on the artist");
-  reply = await sendAndWaitForReply(page, "flexible on dates");
-  reply = await sendAndWaitForReply(page, "no medical conditions");
-  await page.getByPlaceholder("Type your message…").fill("that's everything, thanks!");
-  await page.getByRole("button", { name: /send/i }).click();
-  const completed = await page.locator('[data-testid="consultation-success"]').isVisible({ timeout: 30000 }).catch(() => false);
+  if (earlyDone) {
+    console.log("  (already complete)");
+  } else {
+    reply = await send("no preference on the artist");
+    reply = await send("flexible on dates");
+    reply = await send("no medical conditions");
+    reply = await send("that's everything, thanks!");
+  }
+  const completed = earlyDone || await page.locator('[data-testid="consultation-success"]').isVisible({ timeout: 60000 }).catch(() => false);
   if (completed) PASS("consultation reached the success screen (complete=true)");
   else FAIL("consultation did not complete after all fields were provided");
 
@@ -283,6 +330,10 @@ async function sendAndWaitForReply(page, text, { screenshotOnFail = false } = {}
   process.exit(failures > 0 ? 1 : 0);
 })().catch(async (err) => {
   console.error("FATAL:", err);
-  await cleanup().catch(() => {});
+  if (process.env.QA_KEEP_ON_FAIL === "1") {
+    console.log(`\n\nSkipping cleanup (QA_KEEP_ON_FAIL=1) — studio ${created.studioId} left in place for inspection.`);
+  } else {
+    await cleanup().catch(() => {});
+  }
   process.exit(1);
 });

@@ -257,6 +257,30 @@ describe("runConsultationTurn — completion", () => {
     const result = await runConsultationTurn({ ...BASE_PARAMS, history: [userMsg("black and grey")], gathered });
     expect(result.complete).toBe(false);
   });
+
+  it("does NOT complete when the model sets complete=true while its own reply is simultaneously asking a real, still-unanswered question — the real bug this replaces", async () => {
+    // Observed live: the model set complete=true while its `reply` text was
+    // simultaneously asking "Do you have any preferred dates... or are you
+    // flexible?" (askingAbout="preferredDates", genuinely not yet in
+    // gathered) — the app trusted the flag and submitted the consultation
+    // mid-question, cutting the conversation short before the client ever
+    // saw or answered that question.
+    chatMock.mockResolvedValueOnce(
+      toolReply({
+        reply: "Perfect, no preference noted! Do you have any preferred dates or timeframe, or are you flexible?",
+        gathered: { preferredArtist: "No preference" },
+        askingAbout: "preferredDates",
+        complete: true,
+      })
+    );
+    const gathered: GatheredFields = {
+      name: "Jane", phone: "555-0100", description: "lion face", placement: "left arm",
+      size: "half sleeve", style: "Traditional", color: "Black & grey", budget: "$200",
+    };
+    const result = await runConsultationTurn({ ...BASE_PARAMS, history: [userMsg("no preference on the artist")], gathered });
+    expect(result.complete).toBe(false);
+    expect(result.gathered.preferredArtist).toBe("No preference");
+  });
 });
 
 describe("runConsultationTurn — style validation", () => {
