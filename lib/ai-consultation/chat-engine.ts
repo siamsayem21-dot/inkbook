@@ -259,7 +259,18 @@ export async function runConsultationTurn(params: {
     if (merged.style && !VALID_STYLES.includes(merged.style)) merged.style = "Other";
 
     let reply = parsed.reply?.trim() || fallback().reply;
-    const complete = Boolean(parsed.complete) && isReadyToSubmit(merged);
+    // Forcing tool_choice guarantees the JSON *shape* matches the schema,
+    // not that boolean fields are semantically consistent with `reply`'s
+    // text — observed live: the model wrote a clear, correct closing/recap
+    // message ("I'm sending your consultation over to the studio now...")
+    // but left `complete: false`, permanently stalling the conversation
+    // (required fields were all filled, so there was nothing left to
+    // extract on any future turn either). Same fix philosophy as the
+    // askingAbout guard below: don't trust the model's self-reported flag
+    // alone — a reply that isn't asking about any specific field, once
+    // every required field is filled, IS a completion regardless of what
+    // the model wrote into `complete`.
+    const complete = isReadyToSubmit(merged) && (Boolean(parsed.complete) || !parsed.askingAbout);
 
     // Anti-loop guard: the model self-reports which field its `reply` is
     // asking about. If that field is already filled in `merged` (either

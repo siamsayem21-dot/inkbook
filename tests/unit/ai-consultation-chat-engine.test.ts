@@ -216,6 +216,47 @@ describe("runConsultationTurn — completion", () => {
     const result = await runConsultationTurn({ ...BASE_PARAMS, history: [userMsg("none")], gathered });
     expect(result.complete).toBe(true);
   });
+
+  it("completes even when the model leaves complete=false, as long as it wrote a closing reply and isn't asking about anything — the real bug this replaces", async () => {
+    // Observed live: the model wrote a correct, warm closing/recap message
+    // ("I'm sending your consultation over to the studio now...") with
+    // askingAbout=null, but left complete=false — tool_choice guarantees
+    // the JSON shape, not that boolean fields are semantically consistent
+    // with the reply text. Every required field is already filled, so this
+    // must not stall the conversation forever waiting for a flag the model
+    // never flips.
+    chatMock.mockResolvedValueOnce(
+      toolReply({
+        reply: "Perfect! Here's a quick recap... I'm sending your consultation over to the studio now.",
+        gathered: {},
+        askingAbout: null,
+        complete: false,
+      })
+    );
+    const gathered: GatheredFields = {
+      name: "Jordan", phone: "555-0142", description: "Lion face tattoo", placement: "Left arm",
+      size: "Half sleeve", style: "Traditional", color: "Black & grey", budget: "$200",
+    };
+    const result = await runConsultationTurn({ ...BASE_PARAMS, history: [userMsg("that's everything, thanks!")], gathered });
+    expect(result.complete).toBe(true);
+  });
+
+  it("does NOT force-complete while the model is still actively asking about a specific field, even with complete=false and required fields already done", async () => {
+    chatMock.mockResolvedValueOnce(
+      toolReply({
+        reply: "Do you have a preferred artist for this piece, or no preference?",
+        gathered: {},
+        askingAbout: "preferredArtist",
+        complete: false,
+      })
+    );
+    const gathered: GatheredFields = {
+      name: "Jane", phone: "555-0100", description: "lion face", placement: "left arm",
+      size: "half sleeve", style: "Traditional", color: "Black & grey", budget: "$200",
+    };
+    const result = await runConsultationTurn({ ...BASE_PARAMS, history: [userMsg("black and grey")], gathered });
+    expect(result.complete).toBe(false);
+  });
 });
 
 describe("runConsultationTurn — style validation", () => {
