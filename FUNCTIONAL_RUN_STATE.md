@@ -87,3 +87,21 @@ probe) — untouched, remains BLOCKED_NEEDS_SIAM. No Stripe/payment
 configuration changed. No database migration run or modified.
 
 **FINAL VERDICT: PRODUCTION DEPLOY VERIFIED CLEAN.**
+
+---
+
+## P1 Live Bug — Artist Invite Acceptance Hang (2026-08-30, reported live by Siam)
+
+**Report:** `/artist/accept/[token]` stuck indefinitely on "Setting up your account..." — no success, no redirect, no visible error.
+
+**Investigation:** Clean repro attempts (fresh email, and owner-already-logged-in-same-browser) both completed normally in ~4s — did not reproduce the hang. Read-only inspection of real production data found Siam's actual invite (Studio "Siam Enterprise" → `printhutbd2019@gmail.com`, created 2026-08-30, matching the report's timeframe) still pending/unaccepted, with NO artist row ever created — confirming a genuine stuck state. That email already had an unrelated auth account from 2026-08-09, routing through the "email already exists" branch (`findAuthUserByEmail()`), a code path the initial clean repros hadn't covered.
+
+**Fix 1 (defense-in-depth, commit `e508bca`):** Neither `AcceptForm.tsx`'s submit handler nor `acceptInvite()` had any try/catch — any unhandled exception on either side left the UI's loading state stuck forever with zero feedback. Added try/catch/finally + client-side timeouts (30s/15s) on the client, and a top-level try/catch on the server action so it can never reject, only ever resolve with `{ error }`. This alone converts "silent infinite hang" into "visible error within bounded time," regardless of cause.
+
+**Fix 2 (actual root cause, commit `917b5e6`):** Deploying Fix 1 and re-running the exact real-world scenario (existing-email invite) against production surfaced the real exception via Vercel logs: `findAuthUserByEmail()`'s raw `fetch()` call built a malformed URL — `NEXT_PUBLIC_SUPABASE_URL` carries a stray trailing space in this deployment's stored value (confirmed absent from `.env.local` — production-only), and native `fetch`'s strict URL parser rejects the embedded space. This was the only place in the entire codebase raw-concatenating this env var for a native `fetch()` (verified via grep) — every other call goes through `@supabase/supabase-js`'s `createClient()`, which tolerates it. Fixed with `.trim()` at that one call site.
+
+**Verification:** Reproduced the real crash live against production (via Vercel logs) before the second fix, confirmed resolved after — the exact same scenario now completes cleanly (artist row created, invite marked accepted, correctly redirects to `/login?activated=1` since the invite can't silently change an existing account's real password — verified logging in with the real pre-existing password reaches `/artist/dashboard` correctly). New unit test proves the malformed-URL shape can never recur. Full suite green both times (typecheck, lint, unit tests, production build). Both fixes deployed and live on `www.inkbook.tech`.
+
+**Not touched:** Siam's real, unaccepted invite to `printhutbd2019@gmail.com` (still valid, expires 2026-09-06) — left alone since it's real, non-QA data; the fix is live, so it should now work if re-attempted. Not auto-completed on Siam's behalf.
+
+**Housekeeping:** cleaned up one leftover QA studio + 2 auth users from an early repro script's own cleanup bug (fixed a `.catch()`-chaining mistake mid-investigation).
