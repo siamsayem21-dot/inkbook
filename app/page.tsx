@@ -670,7 +670,7 @@ export default function HomePage() {
                 style={heroItemStyle(0, "translateY(-10px)")}>
                 Tattoo Business Operating System
               </span>
-              <h1 className="font-bold leading-[1.1] mt-4 text-[#111111]">
+              <h1 className="font-bold leading-[1.1] mt-4 text-red-600">
                 <span className="hero-item block text-4xl sm:text-5xl lg:text-6xl xl:text-7xl" style={heroItemStyle(150, "translateY(20px)")}>
                   Stop chasing inquiries.
                 </span>
