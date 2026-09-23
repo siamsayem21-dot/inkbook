@@ -124,7 +124,7 @@ describe("GET /api/cron/sms-reminders", () => {
   it("sends SMS + email 48hr and day-of reminders and marks all four flags", async () => {
     sb.queueFrom("bookings", [
       candidateRow({ id: "bk-48", client_id: "c1", artist_id: "a1", date: "2026-08-04", time: "14:00:00" }),
-      candidateRow({ id: "bk-dayof", client_id: "c2", artist_id: "a2", date: "2026-08-02", time: "10:00:00" }),
+      candidateRow({ id: "bk-dayof", client_id: "c2", artist_id: "a2", date: "2026-08-02", time: "18:00:00" }), // later than the fixed 12:00 UTC "now" so the new time-passed guard (below) doesn't skip it
     ]);
 
     sb.queueFrom("studios", { name: "Ink & Iron", address: "123 Main St", timezone: "UTC" });
@@ -163,7 +163,10 @@ describe("GET /api/cron/sms-reminders", () => {
     vi.setSystemTime(new Date("2026-08-02T03:00:00.000Z"));
 
     sb.queueFrom("bookings", [
-      candidateRow({ id: "bk-hi", date: "2026-08-01" }),
+      // Local start time (18:00) is later than the studio-local "now"
+      // (17:00) computed below, so the time-passed guard doesn't skip it —
+      // this test is about date-line crossing, not the time-of-day guard.
+      candidateRow({ id: "bk-hi", date: "2026-08-01", time: "18:00:00" }),
     ]);
     sb.queueFrom("studios", { name: "Aloha Ink", address: null, timezone: "Pacific/Honolulu" });
     sb.queueFrom("clients", { full_name: "Kai", email: "kai@example.com", phone: "8085550000" });
