@@ -44,6 +44,25 @@ function localDateString(when: Date, timeZone: string): string | null {
   }
 }
 
+// Studio-local clock time ("HH:MM", 24h) for `when` -- used to tell whether
+// a same-day appointment's start time has already passed, so a "day of"
+// reminder is never sent for a slot that's already over (e.g. an early
+// morning appointment in a studio whose local morning has already passed
+// by the time this cron runs at 09:00 UTC). Same null-on-bad-timezone
+// contract as localDateString, for the same reason.
+function localTimeString(when: Date, timeZone: string): string | null {
+  try {
+    return new Intl.DateTimeFormat("en-GB", {
+      timeZone,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(when);
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -114,6 +133,21 @@ export async function GET(request: NextRequest) {
     // Outside this studio's local target window for today's run — still
     // eligible on a future run, so it's simply skipped, not marked.
     if (!reminderType) continue;
+
+    // A "day of" reminder for a slot whose local start time has already
+    // passed (e.g. an early-morning appointment in a studio whose local
+    // morning is over before this cron runs at 09:00 UTC) would arrive
+    // after the fact — skip it rather than send a reminder for an
+    // appointment that's already happened. Left unmarked: harmless, since
+    // tomorrow's run will find this booking's date no longer matches
+    // todayLocal/twoDaysOutLocal and it will simply age out of the window.
+    // row.time is a Postgres TIME value ("HH:MM:SS"); compare on "HH:MM".
+    if (reminderType === "day_of") {
+      const nowLocalTime = localTimeString(now, studio.timezone || "UTC");
+      if (nowLocalTime !== null && row.time && nowLocalTime >= row.time.slice(0, 5)) {
+        continue;
+      }
+    }
 
     const smsAlreadySent = reminderType === "48hr" ? row.sms_48hr_sent : row.sms_day_of_sent;
     const emailAlreadySent = reminderType === "48hr" ? row.email_48hr_sent : row.email_day_of_sent;
