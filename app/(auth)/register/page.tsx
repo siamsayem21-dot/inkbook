@@ -154,19 +154,19 @@ export default function RegisterPage() {
         />
 
         <div>
-          <label htmlFor="register-subdomain" className="text-xs font-medium text-zinc-500 block mb-2">Subdomain</label>
+          <label htmlFor="register-subdomain" className="text-xs font-medium text-zinc-500 block mb-2">Booking page address</label>
           <div className="flex items-center">
+            <span className="rounded-l-lg bg-zinc-50 border border-zinc-200 border-r-0 px-3 py-2.5 text-xs text-zinc-500 shrink-0">
+              inkbook.tech/book/
+            </span>
             <input
               id="register-subdomain"
               type="text"
               placeholder="inkandironstudio"
               value={subdomain}
               onChange={(e) => setSubdomain(e.target.value.toLowerCase())}
-              className="flex-1 rounded-l-lg border border-zinc-200 border-r-0 px-4 py-2.5 text-sm bg-white text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition-colors"
+              className="flex-1 min-w-0 rounded-r-lg border border-zinc-200 px-4 py-2.5 text-sm bg-white text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition-colors"
             />
-            <span className="rounded-r-lg bg-zinc-50 border border-zinc-200 px-3 py-2.5 text-xs text-zinc-500 shrink-0">
-              .inkbook.app
-            </span>
           </div>
         </div>
         <div>

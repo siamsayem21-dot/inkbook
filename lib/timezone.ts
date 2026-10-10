@@ -25,9 +25,32 @@ export function isValidIanaTimezone(value: unknown): value is string {
 
 const CANONICAL_ZONES = Array.from(new Set(Intl.supportedValuesOf("timeZone"))).sort();
 
+// InkBook sells to USA + Canada, so their zones go first instead of making an
+// owner scroll past every Africa/* entry. Only zones this runtime actually
+// knows are included, and each appears once in the final list.
+const NORTH_AMERICA_ZONES = [
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Phoenix",
+  "America/Los_Angeles",
+  "America/Anchorage",
+  "Pacific/Honolulu",
+  "America/Toronto",
+  "America/Winnipeg",
+  "America/Regina",
+  "America/Edmonton",
+  "America/Vancouver",
+  "America/Halifax",
+  "America/St_Johns",
+].filter(isValidIanaTimezone);
+
 // UTC prepended — it's a valid, commonly expected value (and studios.timezone's
 // own DB default) but Intl.supportedValuesOf('timeZone') omits it, so it
 // wouldn't otherwise appear as a selectable option.
 export function sortedIanaTimezones(): string[] {
-  return ["UTC"].concat(CANONICAL_ZONES);
+  const featured = new Set(NORTH_AMERICA_ZONES);
+  return ["UTC"]
+    .concat(NORTH_AMERICA_ZONES)
+    .concat(CANONICAL_ZONES.filter((tz) => !featured.has(tz)));
 }

@@ -2116,14 +2116,14 @@ export default function HomePage() {
           <div className="text-center">
             <span className="text-xs uppercase tracking-widest text-[#D4A853] font-semibold">Pricing</span>
             <h2 className="text-3xl lg:text-4xl font-bold text-white mt-4">Simple, transparent pricing.</h2>
-            <p className="text-base text-gray-400 mt-3">14-day free trial. No credit card required. No transaction fees.</p>
+            <p className="text-base text-gray-400 mt-3">14-day free trial. No credit card required. Plus a 1% transaction fee on bookings — only when you earn.</p>
           </div>
 
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
             <div className="scale-reveal rounded-2xl p-8" data-delay="0"
               style={{ background: "#1A1A1A", border: "1px solid #2A2A2A" }}
               onMouseMove={handlePricingMove} onMouseLeave={handlePricingLeave}>
-              <p className="text-sm font-semibold text-gray-400">Solo Artist</p>
+              <p className="text-sm font-semibold text-gray-400">Solo</p>
               <div className="flex items-end gap-1 mt-3 mb-1">
                 <span className="text-5xl font-bold text-white">$49</span>
                 <span className="text-sm text-gray-500 mb-2">/mo</span>
@@ -2158,9 +2158,9 @@ export default function HomePage() {
             <div className="scale-reveal rounded-2xl p-8" data-delay="400"
               style={{ background: "#1A1A1A", border: "1px solid #2A2A2A" }}
               onMouseMove={handlePricingMove} onMouseLeave={handlePricingLeave}>
-              <p className="text-sm font-semibold text-gray-400">Studio Pro</p>
+              <p className="text-sm font-semibold text-gray-400">Pro</p>
               <div className="flex items-end gap-1 mt-3 mb-1">
-                <span className="text-5xl font-bold text-white">$169</span>
+                <span className="text-5xl font-bold text-white">$129</span>
                 <span className="text-sm text-gray-500 mb-2">/mo</span>
               </div>
               <p className="text-sm text-gray-500 mb-8">For larger studios with advanced needs.</p>

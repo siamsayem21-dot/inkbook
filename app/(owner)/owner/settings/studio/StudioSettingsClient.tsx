@@ -136,16 +136,16 @@ export default function StudioSettingsClient({
       <div>
         <label htmlFor="studio-subdomain" className="text-sm text-zinc-500 block mb-1.5">Subdomain (read-only)</label>
         <div className="flex items-center">
+          <span className="bg-zinc-100 border border-r-0 border-zinc-200 rounded-l-lg px-3 py-2.5 text-sm text-zinc-400 shrink-0">
+            inkbook.tech/book/
+          </span>
           <input
             id="studio-subdomain"
             type="text"
             value={initialSubdomain}
             readOnly
-            className="flex-1 bg-zinc-100 border border-zinc-200 rounded-l-lg px-4 py-2.5 text-sm text-zinc-400 cursor-not-allowed"
+            className="flex-1 min-w-0 bg-zinc-100 border border-zinc-200 rounded-r-lg px-4 py-2.5 text-sm text-zinc-400 cursor-not-allowed"
           />
-          <span className="bg-zinc-100 border border-l-0 border-zinc-200 rounded-r-lg px-3 py-2.5 text-sm text-zinc-400">
-            .inkbook.app
-          </span>
         </div>
         <p className="text-xs text-zinc-400 mt-1">Contact support to change your subdomain.</p>
       </div>
