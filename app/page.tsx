@@ -638,7 +638,7 @@ export default function HomePage() {
             ))}
           </nav>
           <div className="hidden md:flex items-center gap-3">
-            <a href="#book-demo" className="border border-gray-300 rounded-full px-5 py-2 text-sm font-medium text-[#111111] hover:border-gray-400 transition-colors">Book Demo</a>
+            <a href="mailto:support@inkbook.tech?subject=InkBook%20demo%20request" className="border border-gray-300 rounded-full px-5 py-2 text-sm font-medium text-[#111111] hover:border-gray-400 transition-colors">Book Demo</a>
             <a href="/register" className="bg-black text-white rounded-full px-5 py-2 text-sm font-medium hover:bg-[#2A2A2A] transition-colors">Start Free Trial</a>
           </div>
           <button className="md:hidden p-1.5 rounded-md text-[#111111]" onClick={() => setMobileOpen((o) => !o)} aria-label="Toggle menu">
@@ -652,7 +652,7 @@ export default function HomePage() {
                 className="py-2.5 text-sm font-medium text-gray-500" onClick={() => setMobileOpen(false)}>{link}</a>
             ))}
             <div className="flex flex-col gap-2 pt-3">
-              <a href="#book-demo" className="py-2.5 text-sm font-medium rounded-full border border-gray-300 text-center text-[#111111]">Book Demo</a>
+              <a href="mailto:support@inkbook.tech?subject=InkBook%20demo%20request" className="py-2.5 text-sm font-medium rounded-full border border-gray-300 text-center text-[#111111]">Book Demo</a>
               <a href="/register" className="py-2.5 text-sm font-medium rounded-full bg-black text-white text-center">Start Free Trial</a>
             </div>
           </div>
@@ -685,7 +685,7 @@ export default function HomePage() {
                 <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "center" }}>
                   <div className="flex flex-wrap gap-4">
                     <a href="/register" className="bg-black text-white rounded-full px-8 py-4 text-base font-medium hover:bg-[#2A2A2A] transition-colors">Start Free Trial</a>
-                    <a href="#book-demo" className="border border-gray-300 rounded-full px-8 py-4 text-base text-[#111111] hover:border-gray-400 transition-colors">Book Demo</a>
+                    <a href="mailto:support@inkbook.tech?subject=InkBook%20demo%20request" className="border border-gray-300 rounded-full px-8 py-4 text-base text-[#111111] hover:border-gray-400 transition-colors">Book Demo</a>
                   </div>
                   <p className="mt-4 text-sm text-gray-400">14-day free trial · No credit card required</p>
                 </div>
@@ -2188,7 +2188,7 @@ export default function HomePage() {
           <p className="text-sm text-gray-400 mt-4">Start your 14-day free trial. No credit card required.</p>
           <div className="mt-8 flex flex-wrap gap-4 justify-center">
             <a href="/register" className="bg-[#D4A853] text-black font-semibold rounded-full px-8 py-4 text-sm hover:opacity-90 transition-opacity">Start Free Trial</a>
-            <a href="#book-demo" className="border border-gray-600 text-white rounded-full px-8 py-4 text-sm hover:border-gray-400 transition-colors">Book Demo</a>
+            <a href="mailto:support@inkbook.tech?subject=InkBook%20demo%20request" className="border border-gray-600 text-white rounded-full px-8 py-4 text-sm hover:border-gray-400 transition-colors">Book Demo</a>
           </div>
           <p className="text-xs text-gray-500 mt-8">Join tattoo artists and studios already automating their client journey.</p>
         </div>
@@ -2199,14 +2199,18 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto flex flex-wrap justify-between items-center gap-4">
           <span className="text-white font-semibold">InkBook</span>
           <nav className="flex flex-wrap gap-6">
-            {["Features", "Book Demo", "Privacy", "Terms"].map((link) => (
-              <a key={link} href={`#${link.toLowerCase().replace(" ", "-")}`}
-                className="text-sm text-gray-400 hover:text-white transition-colors">{link}</a>
+            {[
+              { label: "Features", href: "#features" },
+              { label: "Book Demo", href: "mailto:support@inkbook.tech?subject=InkBook%20demo%20request" },
+              { label: "Privacy", href: "/privacy" },
+              { label: "Terms", href: "/terms" },
+            ].map(({ label, href }) => (
+              <a key={label} href={href}
+                className="text-sm text-gray-400 hover:text-white transition-colors">{label}</a>
             ))}
           </nav>
-          <p className="text-sm text-gray-500">© 2025 InkBook. All rights reserved.</p>
+          <p className="text-sm text-gray-500">© {new Date().getFullYear()} InkBook. All rights reserved.</p>
         </div>
-        <p className="text-sm text-gray-500 max-w-6xl mx-auto text-center mt-4">Copyright © 2026 InkBook</p>
       </footer>
 
     </div>
