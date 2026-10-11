@@ -1,3 +1,5 @@
+import PoweredByBadge from "@/components/booking/PoweredByBadge";
+
 interface BookingDetails {
   artistName: string;
   date: string;
@@ -64,6 +66,10 @@ export default function BookingConfirmation({ booking, studioSlug }: Props) {
       >
         Back to studio
       </a>
+
+      <div className="pt-2">
+        <PoweredByBadge />
+      </div>
     </div>
   );
 }
